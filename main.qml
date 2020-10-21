@@ -74,28 +74,16 @@ ApplicationWindow {
         currentIndex: 1
         anchors.fill: parent
 
-        Item { id: thermostat
-
             Loader {
-                anchors.fill: parent
+                id: thermostat
                 source: "Thermostat.qml"
              }
 
 
-        }
-
-
-
-        Item {
-            id: screensaver
-
             Loader {
-                anchors.fill: parent
-                id: screensaverLoader
+                id: screensaver
                 source: "Screensaver.qml"
              }
-
-        }
 
 
         Item {

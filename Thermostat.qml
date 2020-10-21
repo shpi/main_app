@@ -3,11 +3,10 @@ import QtQuick.Controls 2.12
 
 Item {
 
-    anchors.fill: parent
-
 
 Dial {
     id: dialTherm
+    width: parent.width * 0.8
     height: parent.height * 0.8
     anchors.centerIn : parent
     enabled: false
