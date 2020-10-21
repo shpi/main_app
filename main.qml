@@ -82,13 +82,14 @@ ApplicationWindow {
 
             Loader {
                 id: screensaver
+                property bool _isCurrentItem: SwipeView.isCurrentItem
                 source: "Screensaver.qml"
              }
 
-
-        Item {
-            id: thirdPage
-        }
+            Loader {
+                id: verticalTabs
+                source: "VerticalTabs.qml"
+             }
     }
 
     PageIndicator {
