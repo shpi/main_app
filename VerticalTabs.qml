@@ -188,13 +188,13 @@ Item {
 
         Item {
             Flickable {
+            id: flickable
             anchors.fill:parent
             contentHeight: parent.height * 1.7
 
             Loader {
 
                 anchors.fill:parent
-
                 id: verticalTabs
                 source: "ThermostatWeek.qml"
              }

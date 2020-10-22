@@ -37,6 +37,8 @@ Rectangle {
 
 
             parent.active = true
+            flickable.contentY = parent.y - (parent.height/2)
+
 
         }
     }
