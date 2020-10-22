@@ -14,8 +14,8 @@ Rectangle {
     property real colortemp: ((temperature - cold) / (warm - cold))
     color: Qt.rgba(colortemp, 0, 1-colortemp, 1)
     anchors.verticalCenter: parent.verticalCenter
-    width: parent.active ? parent.height  / 3.75 : parent.height / 1.25
-    height: parent.active ? parent.height  / 3.75 : parent.height / 1.25
+    width: 80
+    height: 80
 
     border.color: "black"
     border.width: 1
@@ -51,18 +51,20 @@ Rectangle {
             parent.time = (parent.value - minutes) / 60 + ":"
                     + (parent.minutes < 10 ? "0" : "") + parent.minutes
         }
-        onClicked: {
 
-            for (var i = 0; i < parent.parent.parent.children.length; i++)
-            parent.parent.parent.children[i].active = false
 
-            parent.parent.active = true}
-        onPressAndHold: { parent.parent.active = true;
+        onPressAndHold:  {
+                         for (var i = 0; i < weekdays.children.length; i++)
+                             if (typeof weekdays.children[i].active !== "undefined") weekdays.children[i].active = false
+
+                          parent.parent.active = true;
                           loader.value = parent.temperature;
                           loader.visible = true;
-                          loader.z = parent.z +1;
+                          loader.z = parent.z + 1;
                           loader.parent = parent;
                           loader.anchors.centerIn = parent.center
+                          flickable.contentY = parent.parent.y - (150)
+
                         }
 
     }

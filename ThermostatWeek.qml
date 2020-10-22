@@ -8,66 +8,28 @@ Item {
 
 
 Column {
+     property var weekday: ["Sunday", "Monday", "Tuesday","Wednesday","Thursday","Friday","Saturday"]
+     id: weekdays
      anchors.horizontalCenter: parent.horizontalCenter
      anchors.verticalCenter: parent.verticalCenter
      anchors.fill: parent
      anchors.top: parent.top
      spacing: 1
 
-
-     TWeekDay {
-      dayname: "MONDAY"
-      even: true
-     TWeekKnob {value:1440;to:1440;from:0}
-     TWeekKnob {value:550;to:1440;from:0}
-
-    }
+     Repeater{
 
 
-    TWeekDay {
-     dayname: "TUESDAY"
-     TWeekKnob {value:1440;to:1440;from:0}
-     TWeekKnob {value:550;to:1440;from:0}
+         model: 13
+
+     ThermostatWeekDay {
+      dayname: (((index+7) / 7).toFixed(0))  + "." + parent.weekday[(index%7)]
+      even: index % 2 ? true : false
+     ThermostatWeekKnob {value:1440;to:1440;from:0}
+     ThermostatWeekKnob {value:550;to:1440;from:0}
 
     }
+     }
 
-    TWeekDay {
-     dayname: "WEDNESDAY"
-     even: true
-     TWeekKnob {value:1440;to:1440;from:0}
-     TWeekKnob {value:550;to:1440;from:0}
-
-    }
-
-    TWeekDay {
-     dayname: "THURSDAY"
-     TWeekKnob {value:1440;to:1440;from:0}
-     TWeekKnob {value:550;to:1440;from:0}
-
-    }
-
-    TWeekDay {
-     dayname: "FRIDAY"
-     even: true
-     TWeekKnob {value:1440;to:1440;from:0}
-     TWeekKnob {value:550;to:1440;from:0}
-
-    }
-
-    TWeekDay {
-     dayname: "SATURDAY"
-     TWeekKnob {value:1440;to:1440;from:0}
-     TWeekKnob {value:550;to:1440;from:0}
-
-    }
-
-    TWeekDay {
-     dayname: "SUNDAY"
-     even: true
-     TWeekKnob {value:1440;to:1440;from:0}
-     TWeekKnob {value:550;to:1440;from:0}
-
-    }
 
 
 }
@@ -76,8 +38,8 @@ Row {
     anchors.top: parent.top
     height: parent.height
     anchors.centerIn: parent
-    width: parent.width - (300/2.5)  //weekknob width
-    spacing: (parent.width / 13) -2
+    width: parent.width - 80  //weekknob width
+    spacing: ((parent.width) / 14) +1
 
 
 
@@ -93,7 +55,7 @@ Repeater{
     Label {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
-    text: index * 2 + ":00"
+    text: index * 2
     font.pointSize: 8
 
     }
@@ -101,7 +63,8 @@ Repeater{
     Label {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.bottom
-    text: index * 2 + ":00"
+    text: index * 2
+    font.pointSize: 8
     }
     }
 

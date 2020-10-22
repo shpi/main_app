@@ -5,15 +5,20 @@ import QtQuick.Controls 2.12
 
     Slider {
         id: control
-        anchors.fill: parent
         orientation: Qt.Vertical
         from: 15
         value: parent.value
         to: 35
         onPressedChanged: {
 
-           if (!pressed) loader.visible = false
-                           loader.value = value
+           if (!pressed) {
+               loader.visible = false
+               for (var i = 0; i < weekdays.children.length; i++)
+                   if (typeof weekdays.children[i].active !== "undefined") weekdays.children[i].active = false
+
+           }
+
+           loader.value = value
 
         }
         onMoved: {parent.parent.temperature = value}

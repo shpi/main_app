@@ -14,7 +14,7 @@ Rectangle {
     border.color: "grey"
     border.width: 1
     color: even ? "#fff" : "#aaa"
-
+    Behavior on height { NumberAnimation {} }
     Label {
 
         anchors.verticalCenter: parent.verticalCenter
@@ -27,21 +27,6 @@ Rectangle {
         font.pointSize: parent.active ? 40 : 20
     }
 
-    MouseArea {
-        anchors.fill: parent
-        //enabled: !parent.active
-        onClicked: {
-
-            for (var i = 0; i < parent.parent.children.length; i++)
-            parent.parent.children[i].active = false
-
-
-            parent.active = true
-            flickable.contentY = parent.y - (parent.height/2)
-
-
-        }
-    }
 
 
 

@@ -1,3 +1,3 @@
 {
-    "files": ["main.py","TWeekKnob.qml","Screensaver.qml","TWeekDay.qml","backgrounds/","VerticalTabs.qml","fonts/opensans.ttf","Thermostat.qml","fonts/Icons.qml","fonts/qmldir","main.qml","ThermostatWeek.qml","backlight.py","KnobSlider.qml"]
+    "files": ["Screensaver.qml","VerticalTabs.qml","fonts/Icons.qml","Thermostat.qml","ThermostatWeek.qml","backgrounds/","fonts/opensans.ttf","main.py","main.qml","ThermostatWeekKnob.qml","KnobSlider.qml","ThermostatWeekDay.qml","fonts/qmldir","backlight.py","ThermostatSettings.qml"]
 }
