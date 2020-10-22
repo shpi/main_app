@@ -1,5 +1,5 @@
-import QtQuick 2.0
-import Qt.labs.folderlistmodel 2.15
+import QtQuick 2.12
+import Qt.labs.folderlistmodel 2.12
 
 
 Item {
