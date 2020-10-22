@@ -44,8 +44,8 @@ Dial {
 
     Shape {
         id: thermostatrange
-        width: parent.height * 1.1
-        height: parent.height * 1.1
+        width: parent.height * 1.2
+        height: parent.height * 1.2
         anchors.centerIn: parent
         layer.enabled: true
         layer.smooth: true

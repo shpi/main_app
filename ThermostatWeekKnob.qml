@@ -40,7 +40,9 @@ Rectangle {
 
 
     MouseArea {
-        anchors.fill: parent
+        anchors.centerIn:parent
+        width: 120
+        height: 120
         drag.target: parent
         drag.axis: Drag.XAxis
         drag.minimumX: 0

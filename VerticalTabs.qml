@@ -11,7 +11,7 @@ Item {
     TabBar {
         anchors.top: parent.top
         anchors.left: parent.left
-        width: parent.width * 0.3
+        width: parent.width * 0.4
         id: tabBar
         height: parent.height
 
@@ -52,7 +52,7 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         height: parent.height
-        width: parent.width * 0.9
+        width: parent.width * 0.87
         currentIndex: tabBar.currentIndex
         orientation: Qt.Vertical
 
@@ -93,8 +93,8 @@ Item {
 
                 Shape {
                     id: thermostatrange
-                    width: parent.height * 1.1
-                    height: parent.height * 1.1
+                    width: parent.height * 1.2
+                    height: parent.height * 1.2
                     anchors.centerIn: parent
                     layer.enabled: true
                     layer.smooth: true
@@ -131,8 +131,8 @@ Item {
                             moveToStart: false
                             centerX: outer.centerX
                             centerY: outer.centerY
-                            radiusX: (thermostatrange.width / 2) * 0.9
-                            radiusY: (thermostatrange.width / 2) * 0.9
+                            radiusX: (thermostatrange.width / 2) * 0.83
+                            radiusY: (thermostatrange.width / 2) * 0.83
                             startAngle: outer.startAngle + outer.sweepAngle
                             sweepAngle: -outer.sweepAngle
                         }

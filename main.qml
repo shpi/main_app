@@ -76,7 +76,7 @@ ApplicationWindow {
 
             Loader {
                 id: thermostat
-                source: "Thermostat.qml"
+                source: "fingerpaint.qml"
              }
 
 
