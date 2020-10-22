@@ -10,7 +10,7 @@ Rectangle {
 
     opacity: 0.7
     width: parent.width
-    height: active ? 200 : 100
+    height: active ? 300 : 100
     border.color: "grey"
     border.width: 1
     color: even ? "#fff" : "#aaa"
@@ -21,7 +21,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.leftMargin: 10
         text: parent.dayname
-        opacity: active ? 1 : 0.7
+
         color: even ? "#aaa" : "#FFF"
 
         font.pointSize: parent.active ? 40 : 20
@@ -31,13 +31,12 @@ Rectangle {
         anchors.fill: parent
         //enabled: !parent.active
         onClicked: {
-            var active2 = parent.active
 
             for (var i = 0; i < parent.parent.children.length; i++)
             parent.parent.children[i].active = false
 
 
-            parent.active = !active2
+            parent.active = true
 
         }
     }

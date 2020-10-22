@@ -76,7 +76,7 @@ Row {
     anchors.top: parent.top
     height: parent.height
     anchors.centerIn: parent
-    width: parent.width - (200/3)  //weekknob width
+    width: parent.width - (300/2.5)  //weekknob width
     spacing: (parent.width / 13) -2
 
 
@@ -108,6 +108,19 @@ Repeater{
 }
 
 
+
 }
+
+Loader {
+       property int value: 0
+       id: loader
+       focus: true
+       width: parent.width
+       height: 280
+       anchors.centerIn:parent
+       source: "KnobSlider.qml"
+       visible: false
+   }
+
 
 }

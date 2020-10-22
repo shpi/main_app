@@ -14,9 +14,9 @@ Rectangle {
     property real colortemp: ((temperature - cold) / (warm - cold))
     color: Qt.rgba(colortemp, 0, 1-colortemp, 1)
     anchors.verticalCenter: parent.verticalCenter
-    width: parent.active ? parent.height  / 3 : parent.height / 1.5
-    height: parent.active ? parent.height  / 3 : parent.height / 1.5
-    opacity: active ? 1 : 0.5
+    width: parent.active ? parent.height  / 3.75 : parent.height / 1.25
+    height: parent.active ? parent.height  / 3.75 : parent.height / 1.25
+
     border.color: "black"
     border.width: 1
     radius: height / 2
@@ -25,7 +25,7 @@ Rectangle {
     Label {
         anchors.centerIn: parent
         text: parent.temperature
-        font.pointSize: parent.parent.active ? 20 : 8
+        font.pointSize: parent.parent.active ? 22 : 17
     }
 
     Label {
@@ -36,40 +36,8 @@ Rectangle {
         visible: parent.parent.active
     }
 
-    Label {
 
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.bottom
-        text: "-"
-        visible: (parent.parent.active)
-        font.pointSize: 40
-        MouseArea {
-            enabled: parent.visible
-            anchors.fill: parent
-            onClicked: { parent.parent.temperature--;
-                //var color = ((parent.parent.temperature - parent.parent.cold) / (parent.parent.warm - parent.parent.cold))
-               // parent.parent.color = Qt.rgba(color, 0, 1-color, 1)
-            }
-        }
-    }
 
-    Label {
-
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.top
-        text: "+"
-        visible: (parent.parent.active)
-        font.pointSize: 40
-        MouseArea {
-            enabled: parent.visible
-            anchors.fill: parent
-            onClicked: {parent.parent.temperature++;
-                        //var color = ((parent.parent.temperature - parent.parent.cold) / (parent.parent.warm - parent.parent.cold))
-                        //parent.parent.color = Qt.rgba(color, 0, 1-color, 1)
-                        }
-
-        }
-    }
 
     MouseArea {
         anchors.fill: parent
@@ -83,7 +51,19 @@ Rectangle {
             parent.time = (parent.value - minutes) / 60 + ":"
                     + (parent.minutes < 10 ? "0" : "") + parent.minutes
         }
+        onClicked: {
 
+            for (var i = 0; i < parent.parent.parent.children.length; i++)
+            parent.parent.parent.children[i].active = false
+
+            parent.parent.active = true}
+        onPressAndHold: { parent.parent.active = true;
+                          loader.value = parent.temperature;
+                          loader.visible = true;
+                          loader.z = parent.z +1;
+                          loader.parent = parent;
+                          loader.anchors.centerIn = parent.center
+                        }
 
     }
 }
