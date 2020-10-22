@@ -2,7 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.12
 import QtGraphicalEffects 1.12
 import QtQuick.Shapes 1.15
-import QtQuick.Layouts 1.15
+
 
 import "fonts/"
 
@@ -36,7 +36,7 @@ Item {
                 height: parent.height / 3
                 id: secondButton
 
-                text: Icons.clock
+                text: Icons.settings
                 font.family: localFont.name
                 font.pointSize: 30
                 anchors.top: firstButton.bottom
@@ -44,7 +44,7 @@ Item {
             }
             TabButton {
                 height: parent.height / 3
-                text: Icons.settings
+                text: Icons.clock
                 font.family: localFont.name
                 font.pointSize: 30
                 anchors.top: secondButton.bottom
@@ -174,28 +174,7 @@ Item {
                }
 
 }
-        Item {
 
-            RangeSlider {
-
-
-                anchors.centerIn: parent
-                width: parent.width * 0.8
-                from: 1
-                to: 100
-                first.value: 25
-                second.value: 75
-
-                Text {
-
-                    anchors.bottom: parent.top
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "aktive Heizzeit"
-
-                }
-            }
-
-        }
         Item {
 
             Rectangle {
@@ -206,6 +185,22 @@ Item {
 
       }
   }
+
+        Item {
+            Flickable {
+            anchors.fill:parent
+            contentHeight: parent.height * 1.5
+
+            Loader {
+                anchors.centerIn:parent
+                anchors.top: parent.top
+                width: parent.width
+                id: verticalTabs
+                source: "ThermostatWeek.qml"
+             }
+
+        }}
+
 
  }
 

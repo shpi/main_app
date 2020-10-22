@@ -1,0 +1,79 @@
+import QtQuick 2.15
+import QtQuick.Controls 2.12
+
+Rectangle {
+    property int value: 0
+    property string time: (value - minutes) / 60 + ":" + (minutes < 10 ? "0" : "") + minutes
+    property int minutes: value % 60
+    property int temperature: 25
+    property int to: 1440
+    property int from: 0
+    property int width2: parent.width
+
+    anchors.verticalCenter: parent.verticalCenter
+    width: parent.active ? parent.height  / 3 : parent.height / 1.5
+    height: parent.active ? parent.height  / 3 : parent.height / 1.5
+    opacity: active ? 0.9 : 0.5
+    border.color: "black"
+    border.width: 1
+    radius: height / 2
+    x: value * ((width2 - width) / to)
+
+    Label {
+        anchors.centerIn: parent
+        text: parent.temperature
+        font.pointSize: parent.parent.active ? 20 : 8
+    }
+
+    Label {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.bottom
+        text: parent.time
+        font.pointSize:  10
+        visible: parent.parent.active
+    }
+
+    Label {
+
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.bottom
+        text: "-"
+        visible: (parent.parent.active)
+        font.pointSize: 40
+        MouseArea {
+            enabled: parent.visible
+            anchors.fill: parent
+            onClicked: parent.parent.temperature--
+        }
+    }
+
+    Label {
+
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.top
+        text: "+"
+        visible: (parent.parent.active)
+        font.pointSize: 40
+        MouseArea {
+            enabled: parent.visible
+            anchors.fill: parent
+            onClicked: parent.parent.temperature++
+        }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        drag.target: parent
+        drag.axis: Drag.XAxis
+        drag.minimumX: 0
+        drag.maximumX: parent.width2 - parent.width
+        onPositionChanged: {
+            parent.value = parent.x / (parent.width2 - parent.width) * parent.to
+            parent.minutes = parent.value % 60
+            parent.time = (parent.value - minutes) / 60 + ":"
+                    + (parent.minutes < 10 ? "0" : "") + parent.minutes
+        }
+
+
+    }
+}

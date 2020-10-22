@@ -1,3 +1,3 @@
 {
-    "files": ["Screensaver.qml","fonts/Icons.qml","Thermostat.qml","main.py","backlight.py","fonts/opensans.ttf","main.qml","fonts/qmldir","backgrounds/","VerticalTabs.qml"]
+    "files": ["main.py","VerticalTabs.qml","TWeekKnob.qml","fonts/opensans.ttf","main.qml","ThermostatWeek.qml","Screensaver.qml","fonts/qmldir","backlight.py","backgrounds/","fonts/Icons.qml","Thermostat.qml","TWeekDay.qml"]
 }

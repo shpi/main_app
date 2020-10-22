@@ -22,7 +22,7 @@ ApplicationWindow {
         height: window.height / 2
         edge: Qt.TopEdge
         interactive: true
-        position: 1
+        position: 0
         visible: true
         opacity: 0.8
         background: Rectangle {
