@@ -5,7 +5,7 @@ import QtQuick.Controls 2.12
 Rectangle {
     property string dayname
     property bool active: false
-
+    property bool even: false
 
 
     opacity: 0.7
@@ -13,14 +13,18 @@ Rectangle {
     height: active ? 300 : 60
     border.color: "grey"
     border.width: 1
+    color: even ? "#fff" : "#BBB"
 
     Label {
 
-        anchors.centerIn: parent
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.left: parent.left
+        anchors.leftMargin: 10
         text: parent.dayname
-        color: active ? "red" : "black"
-        font.pointSize: parent.active ? 20 : 10
+        opacity: active ? 1 : 0.7
+        color: even ? "#BBB" : "#FFF"
+
+        font.pointSize: parent.active ? 30 : 20
     }
 
     MouseArea {

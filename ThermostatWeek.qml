@@ -2,7 +2,6 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 
 
-
 Column {
      anchors.horizontalCenter: parent.horizontalCenter
      anchors.verticalCenter: parent.verticalCenter
@@ -10,7 +9,8 @@ Column {
      spacing: 1
 
      TWeekDay {
-      dayname: "Monday"
+      dayname: "MONDAY"
+      even: true
      TWeekKnob {value:1440;to:1440;from:0}
      TWeekKnob {value:550;to:1440;from:0}
 
@@ -18,42 +18,45 @@ Column {
 
 
     TWeekDay {
-     dayname: "Tuesday"
+     dayname: "TUESDAY"
      TWeekKnob {value:1440;to:1440;from:0}
      TWeekKnob {value:550;to:1440;from:0}
 
     }
 
     TWeekDay {
-     dayname: "Wednesday"
+     dayname: "WEDNESDAY"
+     even: true
      TWeekKnob {value:1440;to:1440;from:0}
      TWeekKnob {value:550;to:1440;from:0}
 
     }
 
     TWeekDay {
-     dayname: "Thursday"
+     dayname: "THURSDAY"
      TWeekKnob {value:1440;to:1440;from:0}
      TWeekKnob {value:550;to:1440;from:0}
 
     }
 
     TWeekDay {
-     dayname: "Friday"
+     dayname: "FRIDAY"
+     even: true
      TWeekKnob {value:1440;to:1440;from:0}
      TWeekKnob {value:550;to:1440;from:0}
 
     }
 
     TWeekDay {
-     dayname: "Saturday"
+     dayname: "SATURDAY"
      TWeekKnob {value:1440;to:1440;from:0}
      TWeekKnob {value:550;to:1440;from:0}
 
     }
 
     TWeekDay {
-     dayname: "Sunday"
+     dayname: "SUNDAY"
+     even: true
      TWeekKnob {value:1440;to:1440;from:0}
      TWeekKnob {value:550;to:1440;from:0}
 
