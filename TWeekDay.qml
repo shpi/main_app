@@ -10,10 +10,10 @@ Rectangle {
 
     opacity: 0.7
     width: parent.width
-    height: active ? 300 : 60
+    height: active ? 200 : 100
     border.color: "grey"
     border.width: 1
-    color: even ? "#fff" : "#BBB"
+    color: even ? "#fff" : "#aaa"
 
     Label {
 
@@ -22,9 +22,9 @@ Rectangle {
         anchors.leftMargin: 10
         text: parent.dayname
         opacity: active ? 1 : 0.7
-        color: even ? "#BBB" : "#FFF"
+        color: even ? "#aaa" : "#FFF"
 
-        font.pointSize: parent.active ? 30 : 20
+        font.pointSize: parent.active ? 40 : 20
     }
 
     MouseArea {
@@ -41,5 +41,8 @@ Rectangle {
 
         }
     }
+
+
+
 }
 

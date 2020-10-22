@@ -9,11 +9,14 @@ Rectangle {
     property int to: 1440
     property int from: 0
     property int width2: parent.width
-
+    property int cold: 15
+    property int warm: 32
+    property real colortemp: ((temperature - cold) / (warm - cold))
+    color: Qt.rgba(colortemp, 0, 1-colortemp, 1)
     anchors.verticalCenter: parent.verticalCenter
     width: parent.active ? parent.height  / 3 : parent.height / 1.5
     height: parent.active ? parent.height  / 3 : parent.height / 1.5
-    opacity: active ? 0.9 : 0.5
+    opacity: active ? 1 : 0.5
     border.color: "black"
     border.width: 1
     radius: height / 2
@@ -43,7 +46,10 @@ Rectangle {
         MouseArea {
             enabled: parent.visible
             anchors.fill: parent
-            onClicked: parent.parent.temperature--
+            onClicked: { parent.parent.temperature--;
+                //var color = ((parent.parent.temperature - parent.parent.cold) / (parent.parent.warm - parent.parent.cold))
+               // parent.parent.color = Qt.rgba(color, 0, 1-color, 1)
+            }
         }
     }
 
@@ -57,7 +63,11 @@ Rectangle {
         MouseArea {
             enabled: parent.visible
             anchors.fill: parent
-            onClicked: parent.parent.temperature++
+            onClicked: {parent.parent.temperature++;
+                        //var color = ((parent.parent.temperature - parent.parent.cold) / (parent.parent.warm - parent.parent.cold))
+                        //parent.parent.color = Qt.rgba(color, 0, 1-color, 1)
+                        }
+
         }
     }
 
@@ -68,7 +78,7 @@ Rectangle {
         drag.minimumX: 0
         drag.maximumX: parent.width2 - parent.width
         onPositionChanged: {
-            parent.value = parent.x / (parent.width2 - parent.width) * parent.to
+            parent.value = (parent.x )/ (parent.width2 - parent.width) * parent.to
             parent.minutes = parent.value % 60
             parent.time = (parent.value - minutes) / 60 + ":"
                     + (parent.minutes < 10 ? "0" : "") + parent.minutes

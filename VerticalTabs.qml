@@ -189,12 +189,12 @@ Item {
         Item {
             Flickable {
             anchors.fill:parent
-            contentHeight: parent.height * 1.5
+            contentHeight: parent.height * 1.7
 
             Loader {
-                anchors.centerIn:parent
-                anchors.top: parent.top
-                width: parent.width
+
+                anchors.fill:parent
+
                 id: verticalTabs
                 source: "ThermostatWeek.qml"
              }
