@@ -52,7 +52,7 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         height: parent.height
-        width: parent.width * 0.87
+        width: parent.width - (tabBar.width / 3)
         currentIndex: tabBar.currentIndex
         orientation: Qt.Vertical
 
@@ -164,6 +164,51 @@ Item {
                     view.interactive = false
                 }
             }
+
+
+            RoundButton {
+            id: cooling
+            text: Icons.freeze
+            font.pointSize: 60
+            font.family: localFont.name
+            palette.buttonText:  "blue"
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.bottomMargin: 20
+            anchors.leftMargin: 20
+
+            }
+
+
+            RoundButton {
+            id: heating
+            text: Icons.fire
+
+            font.pointSize: 60
+            font.family: localFont.name
+            palette.buttonText:  "orange"
+            anchors.bottom: parent.bottom
+            anchors.right: parent.right
+            anchors.bottomMargin: 20
+            anchors.rightMargin: 20
+
+            }
+
+            RoundButton {
+            id: fan
+            text: Icons.fan
+
+            font.pointSize: 60
+            font.family: localFont.name
+            palette.buttonText:  "blue"
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.topMargin: 20
+            anchors.rightMargin: 20
+
+            }
+
+
         }
 
         Item {
@@ -188,7 +233,6 @@ Item {
                 contentHeight: parent.height * 1.7
                 Behavior on contentY { NumberAnimation {} }
                 Loader {
-
                     anchors.fill: parent
                     source: "ThermostatWeek.qml"
                 }

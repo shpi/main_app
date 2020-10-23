@@ -3,8 +3,6 @@ import QtQuick.Controls 2.12
 
 Item {
     anchors.fill: parent
-    anchors.top: parent.top
-
 
 
 Column {
@@ -13,7 +11,6 @@ Column {
      anchors.horizontalCenter: parent.horizontalCenter
      anchors.verticalCenter: parent.verticalCenter
      anchors.fill: parent
-     anchors.top: parent.top
      spacing: 1
 
      Repeater{
@@ -22,7 +19,7 @@ Column {
          model: 13
 
      ThermostatWeekDay {
-      dayname: (((index+7) / 7).toFixed(0))  + "." + parent.weekday[(index%7)]
+      dayname: (Math.floor(index / 7) + 1)  + "." + parent.weekday[(index%7)]
       even: index % 2 ? true : false
      ThermostatWeekKnob {value:1440;to:1440;from:0}
      ThermostatWeekKnob {value:550;to:1440;from:0}
