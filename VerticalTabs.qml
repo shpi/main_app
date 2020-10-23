@@ -200,7 +200,7 @@ Item {
 
             font.pointSize: 60
             font.family: localFont.name
-            palette.buttonText:  "blue"
+            palette.buttonText:  "black"
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.topMargin: 20
