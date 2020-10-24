@@ -39,7 +39,7 @@ Item {
         }
         TabButton {
             height: parent.height / 3
-            text: Icons.clock
+            text: Icons.schedule
             font.family: localFont.name
             font.pointSize: 30
             anchors.top: secondButton.bottom
@@ -167,9 +167,10 @@ Item {
 
 
             RoundButton {
+            height: width
             id: cooling
             text: Icons.freeze
-            font.pointSize: 60
+            font.pointSize: 40
             font.family: localFont.name
             palette.buttonText:  "blue"
             anchors.bottom: parent.bottom
@@ -183,8 +184,8 @@ Item {
             RoundButton {
             id: heating
             text: Icons.fire
-
-            font.pointSize: 60
+            height: width
+            font.pointSize: 40
             font.family: localFont.name
             palette.buttonText:  "orange"
             anchors.bottom: parent.bottom
@@ -197,8 +198,8 @@ Item {
             RoundButton {
             id: fan
             text: Icons.fan
-
-            font.pointSize: 60
+            height: width
+            font.pointSize: 40
             font.family: localFont.name
             palette.buttonText:  "black"
             anchors.top: parent.top

@@ -36,40 +36,39 @@ ApplicationWindow {
                 opacity: 0.7
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width - 20
-                height: parent.height - 110
+                height: row.height + 20
                 anchors.top: parent.top
                 radius: 20
                 anchors.topMargin: 5
 
 
-                Rectangle {
-                    height: parent.height
-                    anchors.top: parent.top
-                    width: 200
-                    anchors.left:parent.left
-                    anchors.leftMargin: 10
-                    color: "transparent"
+
+
                     Text {
-                        anchors.top: parent.top
+                        anchors.verticalCenter: parent.top
+                        anchors.verticalCenterOffset: 20
+                        anchors.left: parent.left
+                        anchors.leftMargin: 10
                         font.family: localFont.name
-                        font.pointSize: 35
+                        font.pointSize: 50
                         text: Icons.logo
                         color: "white"
-                    } }
+                    }
 
 
         Row {
+            id: row
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
             anchors.rightMargin: 10
 
-            spacing: 5
+            spacing: 10
 
         RoundButton {
             font.family: localFont.name
             font.pointSize: 30
             text: Icons.sun
-            width: height
+            height: width
 
         }
 
@@ -77,7 +76,7 @@ ApplicationWindow {
             font.family: localFont.name
             font.pointSize: 30
             text: Icons.wifi
-            width: height
+            height: width
 
         }
 
@@ -85,7 +84,7 @@ ApplicationWindow {
             font.family: localFont.name
             font.pointSize: 30
             text: Icons.motion
-            width: height
+            height: width
 
         }
 
@@ -93,7 +92,7 @@ ApplicationWindow {
             font.family: localFont.name
             font.pointSize: 30
             text: Icons.reset
-            width: height
+            height: width
 
         }
 
@@ -101,7 +100,7 @@ ApplicationWindow {
             font.family: localFont.name
             font.pointSize: 30
             text: Icons.alarmclock
-            width: height
+            height: width
 
         }
 
@@ -110,7 +109,7 @@ ApplicationWindow {
 
         Rectangle {
             width: parent.width - 10
-            height: 100
+            //height: 100
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             color: "black"
@@ -122,7 +121,7 @@ ApplicationWindow {
             id: backlightslider
             from: 1
             anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width - 100
+            width: parent.width - 120
             height: 50
             anchors.bottom: parent.bottom
             to: 100

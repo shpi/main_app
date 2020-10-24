@@ -65,6 +65,7 @@ QtObject {
     readonly property string wind : "\uE040"
     readonly property string sunset : "\uE041"
     readonly property string sunrise : "\uE042"
+    readonly property string schedule : "\uE043"
 
 
 }

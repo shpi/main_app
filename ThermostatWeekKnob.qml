@@ -29,11 +29,14 @@ Rectangle {
     }
 
     Label {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: parent.bottom
+        id: timeindicator
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.horizontalCenter:  parent.horizontalCenter
+        anchors.horizontalCenterOffset: (parent.value > (parent.to / 2)) ? -100 : 100
+
         text: parent.time
-        font.pointSize:  10
-        visible: parent.parent.active
+        font.pointSize:  14
+        visible: false
     }
 
 
@@ -47,11 +50,20 @@ Rectangle {
         drag.axis: Drag.XAxis
         drag.minimumX: 0
         drag.maximumX: parent.width2 - parent.width
+        onReleased:
+                timeindicator.visible = false
+        onClicked: {
+            timeindicator.visible = true;
+        timeindicator.z = parent.z + 2;
+        parent.z = parent.z + 2; }
         onPositionChanged: {
             parent.value = (parent.x )/ (parent.width2 - parent.width) * parent.to
             parent.minutes = parent.value % 60
             parent.time = (parent.value - minutes) / 60 + ":"
                     + (parent.minutes < 10 ? "0" : "") + parent.minutes
+            timeindicator.visible = true
+
+
         }
 
 
