@@ -2,6 +2,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 
 Rectangle {
+
     property int value: 0
     property string time: (value - minutes) / 60 + ":" + (minutes < 10 ? "0" : "") + minutes
     property int minutes: value % 60
@@ -12,13 +13,15 @@ Rectangle {
     property int cold: 15
     property int warm: 32
     property real colortemp: ((temperature - cold) / (warm - cold))
-    color: Qt.rgba(colortemp, 0, 1-colortemp, 1)
+    color: parent.active ? "transparent" : Qt.rgba(colortemp+0.3, (1 - 2 * Math.abs(colortemp - 0.5)), 1.3-colortemp, 1)
+
+
+
     anchors.verticalCenter: parent.verticalCenter
     width: 80
     height: 80
-
-    border.color: "black"
-    border.width: 1
+    border.color: parent.active ? "transparent" : "black"
+    border.width: parent.active ? 0 : 1
     radius: height / 2
     x: value * ((width2 - width) / to)
 
@@ -26,6 +29,7 @@ Rectangle {
         anchors.centerIn: parent
         text: parent.temperature
         font.pointSize: parent.parent.active ? 22 : 17
+        visible: parent.parent.active ? false : true
     }
 
     Label {
@@ -65,21 +69,25 @@ Rectangle {
 
 
         }
+        function activateKnobSlider() {
 
+            for (var i = 0; i < weekdays.children.length; i++)
+                if (typeof weekdays.children[i].active !== "undefined") {weekdays.children[i].active = false;
 
-        onPressAndHold:  {
-                         for (var i = 0; i < weekdays.children.length; i++)
-                             if (typeof weekdays.children[i].active !== "undefined") weekdays.children[i].active = false
+                }
 
-                          parent.parent.active = true;
-                          loader.value = parent.temperature;
-                          loader.visible = true;
-                          loader.z = parent.z + 1;
-                          loader.parent = parent;
-                          loader.anchors.centerIn = parent.center
-                          flickable.contentY = parent.parent.y - (150)
+             parent.parent.active = true;
+             loader.value = parent.temperature;
+             loader.visible = true;
+             loader.z = parent.z + 1;
+             loader.parent = parent;
+             loader.anchors.centerIn = parent.center
+             flickable.contentY = parent.parent.y - (150)
+             parent.parent.parent.parent.opacity = 1
 
-                        }
+        }
 
+        onPressAndHold:  Qt.callLater(activateKnobSlider)
+        onDoubleClicked:  Qt.callLater(activateKnobSlider)
     }
 }

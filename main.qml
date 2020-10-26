@@ -13,7 +13,7 @@ ApplicationWindow {
     visible: true
 
 
-    FontLoader { id: localFont; source: "./fonts/opensans.ttf"}
+    FontLoader { id: localFont; source: "./fonts/orkney-custom.ttf"}
 
 
     Drawer {
@@ -68,7 +68,7 @@ ApplicationWindow {
             font.family: localFont.name
             font.pointSize: 30
             text: Icons.sun
-            height: width
+            width: height
 
         }
 
@@ -76,15 +76,15 @@ ApplicationWindow {
             font.family: localFont.name
             font.pointSize: 30
             text: Icons.wifi
-            height: width
+            width: height
 
         }
 
         RoundButton {
             font.family: localFont.name
             font.pointSize: 30
-            text: Icons.motion
-            height: width
+            text: Icons.speaker
+            width: height
 
         }
 
@@ -92,7 +92,7 @@ ApplicationWindow {
             font.family: localFont.name
             font.pointSize: 30
             text: Icons.reset
-            height: width
+            width: height
 
         }
 
@@ -100,7 +100,7 @@ ApplicationWindow {
             font.family: localFont.name
             font.pointSize: 30
             text: Icons.alarmclock
-            height: width
+            width: height
 
         }
 
@@ -113,7 +113,9 @@ ApplicationWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             color: "black"
-            opacity: 0.5
+            opacity: 0.4
+            height: 50
+            visible: false
             radius: 20
 
 
@@ -121,8 +123,8 @@ ApplicationWindow {
             id: backlightslider
             from: 1
             anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width - 120
-            height: 50
+            width: parent.width - 130
+            anchors.verticalCenter: parent.verticalCenter
             anchors.bottom: parent.bottom
             to: 100
             anchors.bottomMargin: 20
@@ -175,7 +177,7 @@ ApplicationWindow {
 
             Loader {
                 id: verticalTabs
-                source: "VerticalTabs.qml"
+                source: "Thermostat.qml"
              }
     }
 

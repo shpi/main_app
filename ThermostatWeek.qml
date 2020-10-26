@@ -12,6 +12,7 @@ Column {
      anchors.verticalCenter: parent.verticalCenter
      anchors.fill: parent
      spacing: 1
+     clip: true
 
      Repeater{
 
@@ -78,7 +79,7 @@ Loader {
        width: parent.width
        height: 280
        anchors.centerIn:parent
-       source: "KnobSlider.qml"
+       source: "ThermostatKnobSlider.qml"
        visible: false
    }
 

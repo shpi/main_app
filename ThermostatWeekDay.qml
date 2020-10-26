@@ -8,12 +8,12 @@ Rectangle {
     property bool even: false
 
 
-    opacity: 0.7
+    opacity: 1
     width: parent.width
     height: active ? 300 : 100
     border.color: "grey"
     border.width: 1
-    color: even ? "#fff" : "#aaa"
+    color: even ? "#fff" : "#ccc"
     Behavior on height { NumberAnimation {} }
     Label {
 
@@ -21,9 +21,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.leftMargin: 10
         text: parent.dayname
-
-        color: even ? "#aaa" : "#FFF"
-
+        color: even ? "#ccc" : "#FFF"
         font.pointSize: parent.active ? 40 : 20
     }
 

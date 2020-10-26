@@ -1,5 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
+import QtGraphicalEffects 1.12
 
 
 
@@ -8,7 +9,7 @@ import QtQuick.Controls 2.12
         orientation: Qt.Vertical
         from: 15
         value: parent.value
-        to: 35
+        to: 32
         onPressedChanged: {
 
            if (!pressed) {
@@ -22,22 +23,38 @@ import QtQuick.Controls 2.12
 
         }
         onMoved: {parent.parent.temperature = value}
-        background: Rectangle {
 
-        radius: 25
+        background: Rectangle {
+        id: sliderbg
+        radius: 40
         height: parent.height
         width: parent.width
-        color: parent.parent.parent.parent.even ? "#aaa" : "#fff"
+        color: "transparent"
+        border.width: 1
+        border.color: parent.parent.parent.parent.even ? "#aaa" : "#fff"
+
 
         }
+
+        DropShadow {
+              anchors.fill: sliderbg
+              horizontalOffset: 3
+              verticalOffset: 3
+              radius: 8.0
+              samples: 17
+              color: "#80000000"
+              source: sliderbg
+          }
+
         handle: Rectangle {
-            radius: 25
+            radius: 40
             width: 80
             height: 80
-            border.width: 2
+            border.width: 1
             border.color: "black"
             property real colortemp: ((parent.value - parent.from) / (parent.to - parent.from))
-            color: Qt.rgba(colortemp, 0, 1-colortemp, 1)
+            color: Qt.rgba(colortemp+0.3, (1 - 2 * Math.abs(colortemp - 0.5)), 1.3-colortemp, 1)
+
 
             y: control.topPadding + control.visualPosition * (control.availableHeight - height)
 
@@ -45,7 +62,11 @@ import QtQuick.Controls 2.12
                 anchors.centerIn: parent
                 text: parent.parent.value.toFixed(0)
                 font.pointSize:  22
+                font.bold: true
+
             }
+
+
 
         }
 
