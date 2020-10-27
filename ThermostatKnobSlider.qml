@@ -41,8 +41,8 @@ import QtGraphicalEffects 1.12
               horizontalOffset: 3
               verticalOffset: 3
               radius: 8.0
-              samples: 17
-              color: "#80000000"
+              samples: 10
+              color: "#000000"
               source: sliderbg
           }
 

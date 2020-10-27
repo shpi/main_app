@@ -164,8 +164,8 @@ ApplicationWindow {
         anchors.fill: parent
 
             Loader {
-                id: thermostat
-                source: "fingerpaint.qml"
+                id: shutter
+                source: "Shutter.qml"
              }
 
 
@@ -176,7 +176,7 @@ ApplicationWindow {
              }
 
             Loader {
-                id: verticalTabs
+                id: thermostat
                 source: "Thermostat.qml"
              }
     }

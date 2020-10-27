@@ -2,7 +2,7 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtGraphicalEffects 1.12
 import QtQuick.Shapes 1.12
-
+//import QtTest 1.15
 import "fonts/"
 
 Item {
@@ -74,6 +74,16 @@ Item {
                                       dialLocker.enabled = true
                                       view.interactive = true
                                   }
+
+                Text {
+                visible: !parent.enabled
+                anchors.centerIn:parent
+                anchors.verticalCenterOffset: 100
+
+                font.pointSize: 10
+                color: "green"
+                text: "Press and hold to unlock"
+                }
 
                 Text {
                     id: actualSetTemperature
@@ -166,6 +176,18 @@ Item {
             }
 
 
+  /*          TestCase {
+                      name: "Dial Unlock"
+                      when: dialLocker.pressed
+                      id: test1
+
+                      function test_touch() {
+                          var touch = touchEvent(area);
+                          touch.release();
+                          touch.commit();
+
+                      }}
+*/
             RoundButton {
             width: height
             id: cooling

@@ -12,7 +12,7 @@ Column {
      anchors.verticalCenter: parent.verticalCenter
      anchors.fill: parent
      spacing: 1
-     clip: true
+
 
      Repeater{
 
