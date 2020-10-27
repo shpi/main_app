@@ -63,11 +63,51 @@ Item {
                 width: parent.width * 0.8
                 height: parent.height * 0.8
                 anchors.centerIn: parent
+                property real colortemp: ((value - from) / (to - from))
+
+                background: Rectangle {
+                     x:  dialTherm.width / 2 -  width / 2
+                     y:  dialTherm.height / 2 - height / 2
+                     width: Math.max(64, Math.min( dialTherm.width,  dialTherm.height))
+                     height: width
+                     color: dialTherm.enabled ? "transparent" : "#eee"
+                     radius: width / 2
+                     border.color:  dialTherm.enabled ? "black" : "lightgrey"
+                     border.width: 2
+                     antialiasing: true
+                                      }
+
+
+                handle: Rectangle {
+
+                       id: handleItem
+                       x: dialTherm.background.x + dialTherm.background.width / 2 - width / 2
+                       y: dialTherm.background.y + dialTherm.background.height / 2 - height / 2
+                       width: 20
+                       height: 20
+                       color: Qt.rgba(parent.colortemp, (1 - 2 * Math.abs(parent.colortemp - 0.5)), 1-parent.colortemp, 1)
+
+                       border.color: dialTherm.enabled ? "black" : "lightgrey"
+
+                       radius: 10
+                       antialiasing: true
+
+                       transform: [
+                           Translate {
+                               y: -Math.min(dialTherm.background.width, dialTherm.background.height) * 0.45 + handleItem.height / 2
+                           },
+                           Rotation {
+                               angle: dialTherm.angle
+                               origin.x: handleItem.width / 2
+                               origin.y: handleItem.height / 2
+                           }
+                       ]
+                   }
 
                 enabled: false
                 from: 15.0
                 to: 32.0
-                stepSize: 0.1
+                stepSize: 0.2
                 snapMode: Dial.SnapAlways
                 onPressedChanged: if (pressed == false) {
                                       enabled = false
@@ -123,7 +163,11 @@ Item {
                                 color: "#0000ff"
                             }
                             GradientStop {
-                                position: 0
+                                position: 0.7
+                                color: "#00ff00"
+                            }
+                            GradientStop {
+                                position: 0.4
                                 color: "#ff0000"
                             }
                         }

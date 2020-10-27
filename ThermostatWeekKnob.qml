@@ -1,8 +1,10 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
+import QtGraphicalEffects 1.12
+
 
 Rectangle {
-
+    id: weekdayknob
     property int value: 0
     property string time: (value - minutes) / 60 + ":" + (minutes < 10 ? "0" : "") + minutes
     property int minutes: value % 60
@@ -13,15 +15,13 @@ Rectangle {
     property int cold: 15
     property int warm: 32
     property real colortemp: ((temperature - cold) / (warm - cold))
-    color: parent.active ? "transparent" : Qt.rgba(colortemp+0.3, (1 - 2 * Math.abs(colortemp - 0.5)), 1.3-colortemp, 1)
+    color: parent.active ? "transparent" : Qt.lighter(Qt.rgba(colortemp, (1 - 2 * Math.abs(colortemp - 0.5)), 1-colortemp, 1),1.5)
 
 
 
     anchors.verticalCenter: parent.verticalCenter
     width: 80
     height: 80
-    border.color: parent.active ? "transparent" : "black"
-    border.width: parent.active ? 0 : 1
     radius: height / 2
     x: value * ((width2 - width) / to)
 
@@ -90,4 +90,11 @@ Rectangle {
         onPressAndHold:  Qt.callLater(activateKnobSlider)
         onDoubleClicked:  Qt.callLater(activateKnobSlider)
     }
+
+
+
+
 }
+
+
+

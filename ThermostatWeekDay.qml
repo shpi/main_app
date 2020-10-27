@@ -11,8 +11,6 @@ Rectangle {
     opacity: 1
     width: parent.width
     height: active ? 300 : 100
-    border.color: "grey"
-    border.width: 1
     color: even ? "#fff" : "#ccc"
     Behavior on height { NumberAnimation {} }
     Label {

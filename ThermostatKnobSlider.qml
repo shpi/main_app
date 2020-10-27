@@ -29,31 +29,21 @@ import QtGraphicalEffects 1.12
         radius: 40
         height: parent.height
         width: parent.width
-        color: "transparent"
-        border.width: 1
-        border.color: parent.parent.parent.parent.even ? "#aaa" : "#fff"
+
+        color: parent.parent.parent.parent.even ? "#aaa" : "#fff"
 
 
         }
 
-        DropShadow {
-              anchors.fill: sliderbg
-              horizontalOffset: 3
-              verticalOffset: 3
-              radius: 8.0
-              samples: 10
-              color: "#000000"
-              source: sliderbg
-          }
+
 
         handle: Rectangle {
             radius: 40
             width: 80
             height: 80
-            border.width: 1
-            border.color: "black"
+
             property real colortemp: ((parent.value - parent.from) / (parent.to - parent.from))
-            color: Qt.rgba(colortemp+0.3, (1 - 2 * Math.abs(colortemp - 0.5)), 1.3-colortemp, 1)
+            color: Qt.lighter(Qt.rgba(colortemp, (1 - 2 * Math.abs(colortemp - 0.5)), 1-colortemp, 1), 1.5)
 
 
             y: control.topPadding + control.visualPosition * (control.availableHeight - height)
