@@ -4,7 +4,7 @@
     "fonts/Icons.qml","fingerpaint.qml","backgrounds/",
     "fonts/qmldir","main.py","Backlight.py",
     "ThermostatWeekKnob.qml","Shutter.qml",
-    "ThermostatKnobSlider.qml","ThermostatSettings.qml","main.qml",
+    "ThermostatKnobSlider.qml","ThermostatSettings.qml","Main.qml",
     "WeatherSettings.qml","Weather.qml","WeatherDay.qml","Weather.py"
     ,"WeatherGraph.qml","WeatherDays.qml","city.list.json"]
 }

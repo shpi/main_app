@@ -25,7 +25,7 @@ def main():
     engine.rootContext().setContextProperty("weather", weather)
     engine.rootContext().setContextProperty("backlight", backlight)
 
-    filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "main.qml")
+    filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "Main.qml")
 
     engine.load(QUrl.fromLocalFile(filename))
 

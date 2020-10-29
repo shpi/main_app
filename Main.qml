@@ -183,10 +183,13 @@ ApplicationWindow {
                 source: "Thermostat.qml"
              }
 
-            Loader {
-                id: weather
+
+                Loader {
+                id: weatherslide
                 source: "Weather.qml"
              }
+
+
     }
 
     PageIndicator {
