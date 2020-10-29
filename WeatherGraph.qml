@@ -1,6 +1,6 @@
-import QtQuick 2.0
-import QtCharts 2.15
-import QtQuick.Controls 2.15
+import QtQuick 2.12
+import QtCharts 2.00
+import QtQuick.Controls 2.12
 
 
 Rectangle {

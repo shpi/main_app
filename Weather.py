@@ -1,4 +1,4 @@
-from functools import cached_property
+#from functools import cached_property
 import json
 import datetime
 from PySide2.QtCore  import Qt, QModelIndex,QAbstractListModel,Property, Signal, Slot, QObject, QUrl, QUrlQuery
@@ -130,7 +130,7 @@ class WeatherWrapper(QObject):
         self._sunrise = ""
         self._sunset =  ""
 
-    @cached_property
+    @property
     def manager(self) -> QNetworkAccessManager:
         return QNetworkAccessManager(self)
 
