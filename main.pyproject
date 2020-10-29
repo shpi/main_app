@@ -1,3 +1,10 @@
 {
-    "files": ["ThermostatSettings.qml","Screensaver.qml","fonts/Icons.qml","Thermostat.qml","fingerpaint.qml","ThermostatWeek.qml","Alarm.qml","backgrounds/","fonts/opensans.ttf","main.py","main.qml","ThermostatWeekKnob.qml","ThermostatKnobSlider.qml","ThermostatWeekDay.qml","Shutter.qml","fonts/qmldir","backlight.py"]
+    "files": ["Screensaver.qml","ThermostatWeekDay.qml",
+    "Thermostat.qml","ThermostatWeek.qml","Alarm.qml",
+    "fonts/Icons.qml","fingerpaint.qml","backgrounds/",
+    "fonts/qmldir","main.py","Backlight.py",
+    "ThermostatWeekKnob.qml","Shutter.qml",
+    "ThermostatKnobSlider.qml","ThermostatSettings.qml","main.qml",
+    "WeatherSettings.qml","Weather.qml","WeatherDay.qml","Weather.py"
+    ,"WeatherGraph.qml","WeatherDays.qml","city.list.json"]
 }

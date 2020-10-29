@@ -1,8 +1,8 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
-import QtQuick.Controls.Material 2.12
-
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import "fonts/"
+
+
 
 
 ApplicationWindow {
@@ -115,13 +115,15 @@ ApplicationWindow {
             color: "black"
             opacity: 0.4
             height: 50
-            visible: false
+            visible: true
             radius: 20
 
 
         RangeSlider {
             id: backlightslider
             from: 1
+            height: 100
+
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width - 130
             anchors.verticalCenter: parent.verticalCenter
@@ -129,7 +131,8 @@ ApplicationWindow {
             to: 100
             anchors.bottomMargin: 20
             stepSize: 1
-            second.onMoved: backlight.set_max_brightness(second.value)
+            second.value : backlight.brightness
+            second.onMoved: backlight.brightness = second.value
             first.onMoved: backlight.set_min_brightness(first.value)
 
             Label {
@@ -151,7 +154,7 @@ ApplicationWindow {
 
 
 
-     onOpened: {backlightslider.second.value = backlight.get_brightness()
+     onOpened: {
                backlightslider.first.value = backlight.get_min_brightness()
                }
 
@@ -178,6 +181,11 @@ ApplicationWindow {
             Loader {
                 id: thermostat
                 source: "Thermostat.qml"
+             }
+
+            Loader {
+                id: weather
+                source: "Weather.qml"
              }
     }
 
