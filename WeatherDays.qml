@@ -29,6 +29,8 @@ Item {
 
 
         function onDataChanged() {
+           console.log("onDataChanged called in WeatherDays, error: " + weather.hasError())
+
             if (!weather.hasError()) {
 
 

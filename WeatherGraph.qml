@@ -111,6 +111,8 @@ Rectangle {
         target: weather
 
         function onDataChanged() {
+
+            console.log("onDataChanged called, error: " + weather.hasError())
             if (!weather.hasError()) {
 
                 for (var i = 0; i < weather.data['daily'].length; i++) {
@@ -126,7 +128,7 @@ Rectangle {
 
                     if (i === 0)
                         chart.mindate = new Date(weather.data['daily'][i]['dt'] * 1000)
-
+                    console.log(new Date(weather.data['daily'][i]['dt'] * 1000))
                     chart.maxdate = new Date(weather.data['daily'][i]['dt'] * 1000)
                     daytemps.append(
                                 new Date(weather.data['daily'][i]['dt'] * 1000),
