@@ -111,7 +111,7 @@ class CityListModel(QAbstractListModel):
 
 
 class WeatherWrapper(QObject):
-    BASE_URL = "https://api.openweathermap.org/data/2.5/onecall?"
+    BASE_URL = "http://api.openweathermap.org/data/2.5/onecall?"
 
 
     def __init__(self, api_key: str ="", parent: QObject = None):
@@ -223,7 +223,7 @@ class WeatherWrapper(QObject):
     def update_cities(self, city: str) -> None:
         i = 0
         self._cities = MyModel()
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "city.list.json"), "r") as rf:
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "city.list.json"), "r",  encoding="utf8") as rf:
             city_data = json.load(rf)
 
         for s in range(len(city_data)):
@@ -273,7 +273,7 @@ class WeatherWrapper(QObject):
             has_error = False
             self._data = d
 
-            self._current_date = datetime.datetime.fromtimestamp(int(d["current"]["dt"])).strftime('Week: %W  Day: %A  %d:%-m:%Y')
+            self._current_date = datetime.datetime.fromtimestamp(int(d["current"]["dt"])).strftime('%m-%d-%Y %H:%M:%S')
             self._sunrise =  datetime.datetime.fromtimestamp(int(d["current"]["sunrise"])).strftime('%H:%M:%S')
             self._sunset = datetime.datetime.fromtimestamp(int(d["current"]["sunset"])).strftime('%H:%M:%S')
             logging.debug(f"added forecast from: {self.current_date}")
