@@ -47,11 +47,7 @@ Column {
             id: cityview
             width: parent.width
             model: weather.cities
-            highlight: Rectangle {
-                width: parent.width
-                color: "lightsteelblue"
-                radius: 5
-            }
+            
             delegate: contactDelegate
             focus: true
 

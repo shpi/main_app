@@ -113,8 +113,6 @@ class CityListModel(QAbstractListModel):
 class WeatherWrapper(QObject):
     BASE_URL = "https://api.openweathermap.org/data/2.5/onecall?"
 
-    dataChanged = Signal()
-
 
     def __init__(self, api_key: str ="", parent: QObject = None):
         super(WeatherWrapper, self).__init__(parent)
@@ -197,6 +195,9 @@ class WeatherWrapper(QObject):
     def read_city(self):
             return self._city
 
+    @Signal
+    def dataChanged(self):
+        pass
 
 
     @Signal
@@ -220,18 +221,23 @@ class WeatherWrapper(QObject):
 
     @Slot(str)
     def update_cities(self, city: str) -> None:
+        i = 0
         self._cities = MyModel()
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "city.list.json"), "r") as rf:
             city_data = json.load(rf)
 
         for s in range(len(city_data)):
             if city_data[s]["name"].lower().startswith(city.lower()):
-                print("FOUND {} {} ".format(city_data[s]["name"], city_data[s]["state"]))
+                i += 1
+                #print("FOUND {} {} ".format(city_data[s]["name"], city_data[s]["state"]))
                 self._cities.appendRow(dict(name = city_data[s]["name"],
                                         lat = city_data[s]["coord"]['lat'],
                                         lon = city_data[s]["coord"]['lon'],
                                         stat = city_data[s]["state"],
                                         country = city_data[s]["country"]))
+                if (i > 100):
+                   break
+
         self.citiesChanged.emit()
 
 
@@ -261,7 +267,7 @@ class WeatherWrapper(QObject):
         reply: QNetworkReply = self.sender()
         if reply.error() == QNetworkReply.NoError:
             data = reply.readAll().data()
-            logging.debug(f"data: {data}")
+            #logging.debug(f"data: {data}")
             d = json.loads(data)
             self._data = dict()
             has_error = False
