@@ -2,8 +2,7 @@
 import sys
 import os
 
-from PySide2.QtCore  import Qt, QModelIndex,QAbstractListModel,Property, Signal, Slot, QObject, QUrl, QUrlQuery
-from PySide2.QtGui import QGuiApplication
+from PySide2.QtCore  import QObject, QUrl, QUrlQuery
 from PySide2.QtWidgets import QApplication
 from PySide2.QtQml import QQmlApplicationEngine
 
@@ -12,7 +11,6 @@ from Weather import WeatherWrapper
 
 
 def main():
-
 
     app = QApplication(sys.argv)
     API_KEY = "20f7aab0a600927a8486b220200ee694"

@@ -1,7 +1,7 @@
 #from functools import cached_property
 import json
 import datetime
-from PySide2.QtCore  import Qt, QModelIndex,QAbstractListModel,Property, Signal, Slot, QObject, QUrl, QUrlQuery
+from PySide2.QtCore  import QByteArray, Qt, QModelIndex,QAbstractListModel, Property, Signal, Slot, QObject, QUrl, QUrlQuery
 from PySide2.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PySide2.QtWidgets import QApplication
 from PySide2.QtQml import QQmlApplicationEngine, qmlRegisterType, QQmlExtensionPlugin
@@ -20,12 +20,13 @@ class MyModel(QAbstractListModel):
     LonRole = Qt.UserRole + 1003
     CountryRole = Qt.UserRole + 1004
 
-    def __init__(self, entries = [], parent=None):
+    def __init__(self, entries=[], parent=None):
         super(MyModel, self).__init__(parent)
         self._entries = []
 
     def rowCount(self, parent=QModelIndex()):
-        if parent.isValid(): return 0
+        if parent.isValid():
+            return 0
         return len(self._entries)
 
     def data(self, index, role=Qt.DisplayRole):
@@ -42,8 +43,6 @@ class MyModel(QAbstractListModel):
             elif role == MyModel.CountryRole:
                 return item["country"]
 
-
-
     def roleNames(self):
         roles = dict()
         roles[MyModel.NameRole] = b"name"
@@ -51,8 +50,6 @@ class MyModel(QAbstractListModel):
         roles[MyModel.LatRole] = b"lat"
         roles[MyModel.LonRole] = b"lon"
         roles[MyModel.CountryRole] = b"country"
-
-
         return roles
 
     def appendRow(self, n):
@@ -61,56 +58,9 @@ class MyModel(QAbstractListModel):
         self.endInsertRows()
 
 
-class CityListModel(QAbstractListModel):
-
-     class Roles(Enum):
-           name = Qt.UserRole+0
-           stat = Qt.UserRole+1
-           lat = Qt.UserRole+2
-           lon = Qt.UserRole+3
-           country = Qt.UserRole+4
-
-     def __init__(self, parent=None):
-         super(CityListModel, self).__init__(parent)
-         self._entries = []
-
-     def rowCount(self, parent:QModelIndex=...) -> int:
-                 return len(self._entries)
-
-     def data(self, index:QModelIndex, role:int=...) -> typing.Any:
-         if 0 <= index.row() < self.rowCount() and index.isValid():
-
-             if role == QtCore.Qt.DisplayRole:
-                         return self._entries[index.row()]["name"]
-             if role == self.Roles.name.value:
-                         return self._entries[index.row()]["name"]
-             if role == self.Roles.stat.value:
-                         return self._entries[index.row()]["stat"]
-             if role == self.Roles.lat.value:
-                         return self._entries[index.row()]["lat"]
-             if role == self.Roles.lon.value:
-                         return self._entries[index.row()]["lon"]
-             if role == self.Roles.country.value:
-                         return self._entries[index.row()]["country"]
-
-     def roleNames(self) -> typing.Dict:
-         roles = super().roleNames()
-         roles[self.Roles.name.value] = QByteArray(b'name')
-         roles[self.Roles.stat.value] = QByteArray(b'stat')
-         roles[self.Roles.lat.value] = QByteArray(b'lat')
-         roles[self.Roles.lon.value] = QByteArray(b'lon')
-         roles[self.Roles.country.value] = QByteArray(b'country')
-
-         return roles
-
-
-     def appendRow(self, n):
-         self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
-         self._entries.append(n)
-         self.endInsertRows()
-
 
 class WeatherWrapper(QObject):
+
     BASE_URL = "http://api.openweathermap.org/data/2.5/onecall?"
 
 
@@ -177,7 +127,6 @@ class WeatherWrapper(QObject):
     def set_lat(self, lat: str) -> None:
         self._lat = lat
 
-
     @lon.setter
     def lon(self, lon):
          self._lon = lon
@@ -186,14 +135,12 @@ class WeatherWrapper(QObject):
     def set_lon(self, lon: str) -> None:
         self._lon = lon
 
-
-
     def set_city(self, city: str) -> None:
          self._city = city
          self.cityChanged.emit()
 
     def read_city(self):
-            return self._city
+        return self._city
 
     @Signal
     def dataChanged(self):
@@ -206,10 +153,9 @@ class WeatherWrapper(QObject):
 
     @Signal
     def cityChanged(self):
-            pass
+        pass
 
     city = Property(str, read_city, set_city, notify=cityChanged)
-
 
     @Property("QVariantMap", notify=dataChanged)
     def data(self) -> dict:
@@ -217,7 +163,7 @@ class WeatherWrapper(QObject):
 
     @Property(QObject, notify=citiesChanged, constant=False)
     def cities(self):
-           return self._cities
+        return self._cities
 
     @Slot(str)
     def update_cities(self, city: str) -> None:
@@ -267,7 +213,7 @@ class WeatherWrapper(QObject):
         reply: QNetworkReply = self.sender()
         if reply.error() == QNetworkReply.NoError:
             data = reply.readAll().data()
-            #logging.debug(f"data: {data}")
+            # logging.debug(f"data: {data}")
             d = json.loads(data)
             self._data = dict()
             has_error = False
