@@ -100,7 +100,7 @@ Column {
 
     Connections {
         target: weather
-        function onCitiesChanged() {
+        onCitiesChanged: {
             cityview.update()
         }
     }

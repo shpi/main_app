@@ -110,7 +110,7 @@ Rectangle {
     Connections {
         target: weather
 
-        function onDataChanged() {
+        onDataChanged: {
 
             console.log("onDataChanged called, error: " + weather.hasError())
             if (!weather.hasError()) {
