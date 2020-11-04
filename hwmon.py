@@ -28,7 +28,7 @@ class HWMon:
                             channel['description'] = (rf.read().rstrip())
 
                     channel['path'] = filename
-                    channel['rights'] = oct(os.stat(filename).st_mode & 0o777)
+                    channel['rights'] = (os.stat(filename).st_mode & 0o777)
                     filename = filename.split('/')
                     channel['channel'] = filename[-1]
                     self._hwmon[channel['name'] + '/' + filename[-1]] = channel
@@ -44,7 +44,7 @@ class HWMon:
                             channel['description'] = (rf.read().rstrip())
 
                     channel['path'] = filename
-                    channel['rights'] = oct(os.stat(filename).st_mode & 0o777)
+                    channel['rights'] = (os.stat(filename).st_mode & 0o777)
                     filename = filename.split('/')
                     channel['channel'] = filename[-1]
                     self._hwmon[channel['name'] + '/' + filename[-1]] = channel
@@ -57,7 +57,7 @@ class HWMon:
     def register_inputs(self, globaldict):
 
         for key, value in self._hwmon.items():
-            if (value['rights'] == '0o444'):
+            if (value['rights'] & 0o444 == 0o444):
                 globaldict['hwmon/' + value['name'] + '/' + value['channel']] = partial(self.read_hwmon, value['id'], value['channel'])
 
 
@@ -76,7 +76,7 @@ class HWMon:
     def register_outputs(self, globaldict):
 
         for key, value in self._hwmon.items():
-            if (value['rights'] == '0o644'):
+            if (value['rights'] == 0o644):
                 globaldict['hwmon/' + value['name'] + '/' + value['channel']] =  partial(self.write_hwmon, value['id'], value['channel'])
 
 
@@ -84,7 +84,6 @@ class HWMon:
 
     def write_hwmon(self, id, channel, value):
            value = str(value)
-           print(id,channel,value)
            if os.path.isfile('/sys/class/hwmon/' + id + '/' + channel):
                 with open('/sys/class/hwmon/' + id + '/' + channel, 'r+') as rf:
                     rf.write(value)
@@ -100,9 +99,10 @@ class HWMon:
 hwmon = HWMon()
 
 outputs = dict()
-
+inputs = dict()
 
 hwmon.register_outputs(outputs)
+hwmon.register_inputs(inputs)
 
 
 
