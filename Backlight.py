@@ -55,14 +55,6 @@ class Backlight(QObject):
         return int(self._brightness)
 
 
-    def set_city(self, city: str) -> None:
-         self._city = city
-         self.cityChanged.emit()
-
-    def read_city(self):
-            return self._city
-
-
     @Signal
     def brightnessChanged(self):
             pass
