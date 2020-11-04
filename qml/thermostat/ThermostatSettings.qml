@@ -1,15 +1,13 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 
-import "fonts/"
+import "../../fonts/"
 
 Item {
    anchors.fill: parent
 
 
 
-    // Mode / Cooling / Heating / Coolheating
-    // Ventilschutz
     // Temperaturreduzierung bei Abwesenheit 1′ pro 24h ? Urlaubsmodus
 
 Column {

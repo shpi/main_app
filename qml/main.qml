@@ -3,7 +3,7 @@ import QtQuick.Controls 2.12
 import QtQuick.VirtualKeyboard 2.1
 
 
-import "fonts/"
+import "../fonts/"
 
 
 
@@ -16,7 +16,7 @@ ApplicationWindow {
     visible: true
 
 
-    FontLoader { id: localFont; source: "./fonts/orkney-custom.ttf"}
+    FontLoader { id: localFont; source: "../fonts/orkney-custom.ttf"}
 
 
     Drawer {
@@ -173,25 +173,25 @@ ApplicationWindow {
 
             Loader {
                 id: shutter
-                source: "Shutter.qml"
+                source: "shutter/Shutter.qml"
              }
 
 
             Loader {
                 id: screensaver
                 property bool _isCurrentItem: SwipeView.isCurrentItem
-                source: "Screensaver.qml"
+                source: "screensaver/Screensaver.qml"
              }
 
             Loader {
                 id: thermostat
-                source: "Thermostat.qml"
+                source: "thermostat/Thermostat.qml"
              }
 
 
                 Loader {
                 id: weatherslide
-                source: "Weather.qml"
+                source: "weather/Weather.qml"
              }
 
 

@@ -3,7 +3,8 @@ import QtQuick.Controls 2.12
 import QtGraphicalEffects 1.12
 import QtQuick.Shapes 1.12
 //import QtTest 1.15
-import "fonts/"
+
+import "../../fonts/"
 
 Item {
     anchors.fill: parent

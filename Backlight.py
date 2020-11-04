@@ -15,8 +15,7 @@ class Backlight(QObject):
         self.min_brightness = 1
         self.max_brightness = 100
         if os.path.isdir(backlightpath):
-            dirs = os.listdir(backlightpath)
-            for file in dirs:
+            for file in os.listdir(backlightpath):
                 if os.path.exists(backlightpath + file + "/brightness"):
                     self.BACKLIGHT = backlightpath + file
                     print("FOUND BACKLIGHT:" + self.BACKLIGHT)
@@ -53,14 +52,6 @@ class Backlight(QObject):
 
     def get_brightness(self):
         return int(self._brightness)
-
-
-    def set_city(self, city: str) -> None:
-         self._city = city
-         self.cityChanged.emit()
-
-    def read_city(self):
-            return self._city
 
 
     @Signal

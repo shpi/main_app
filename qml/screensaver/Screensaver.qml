@@ -12,7 +12,7 @@ property int i: 0
 FolderListModel {
           caseSensitive: false
           id: folderModel
-          folder: "backgrounds/"
+          folder: "../../backgrounds/"
           nameFilters: [ "*.png", "*.jpg" ]
           onCountChanged: {
                         if (folderModel.count > 0)

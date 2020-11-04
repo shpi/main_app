@@ -10,20 +10,30 @@ from Backlight import Backlight
 from Weather import WeatherWrapper
 
 
+os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
+os.environ["QT_QPA_PLATFORM"] = "eglfs"
+os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
+os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
+os.environ["GST_DEBUG"] = "omx:4"
+
+
+
 def main():
 
     app = QApplication(sys.argv)
     API_KEY = "20f7aab0a600927a8486b220200ee694"
+
     weather = WeatherWrapper()
     weather.api_key = API_KEY
-
     backlight = Backlight()
+
+
 
     engine = QQmlApplicationEngine()
     engine.rootContext().setContextProperty("weather", weather)
     engine.rootContext().setContextProperty("backlight", backlight)
 
-    filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "Main.qml")
+    filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "qml/main.qml")
 
     engine.load(QUrl.fromLocalFile(filename))
 
