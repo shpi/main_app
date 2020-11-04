@@ -1,41 +1,32 @@
 import glob, os
-
-
+from functools import partial
 
 class HWMon:
 
     def __init__(self,  parent=None):
 
         super(HWMon, self).__init__()
-
         self._hwmon = dict()
-        self._outputs = dict()
 
         for sensors in glob.iglob('/sys/class/hwmon/hwmon*',recursive = False):
             sensor = dict()
 
             if os.path.isfile(sensors + '/name'):
-
                 with open(sensors + '/name','r') as rf:
                     sensor['name'] = (rf.read().rstrip())
-
-                rf.close()
 
             sensors = sensors.split('/')
             sensor['id'] = sensors[-1]
 
             for type in ('input','alarm','enable'):
-
-                for filename in glob.iglob('/sys/class/hwmon/' + sensors[-1] + '/*_' + type):
+                for filename in glob.iglob('/sys/class/hwmon/' + sensor['id'] + '/*_' + type):
 
                     channel = sensor.copy()
 
                     if (os.path.isfile(filename[0:-len(type)] + "label")):
-
                         with open(filename[0:-len(type)] + "label", 'r') as rf:
                             channel['description'] = (rf.read().rstrip())
 
-                        rf.close()
                     channel['path'] = filename
                     channel['rights'] = oct(os.stat(filename).st_mode & 0o777)
                     filename = filename.split('/')
@@ -51,7 +42,7 @@ class HWMon:
 
                         with open(filename + "_label", 'r') as rf:
                             channel['description'] = (rf.read().rstrip())
-                        rf.close()
+
                     channel['path'] = filename
                     channel['rights'] = oct(os.stat(filename).st_mode & 0o777)
                     filename = filename.split('/')
@@ -59,25 +50,19 @@ class HWMon:
                     self._hwmon[channel['name'] + '/' + filename[-1]] = channel
 
         #print(self._hwmon)
-        for key, value in self._hwmon.items():
-            if (value['rights'] == '0o644'):
-                self._outputs['hwmon/' + value['name'] + '/' + value['channel']] = lambda x: (self.write(value['id'], value['channel'], x))
 
 
 
 
-    def get_inputs(self):
-
-        inputs = dict()
+    def register_inputs(self, globaldict):
 
         for key, value in self._hwmon.items():
             if (value['rights'] == '0o444'):
-                inputs['hwmon/' + value['name'] + '/' + value['channel']] = lambda: self.read(value['id'], value['channel'])
-
-        return inputs
+                globaldict['hwmon/' + value['name'] + '/' + value['channel']] = partial(self.read_hwmon, value['id'], value['channel'])
 
 
-    def read(self, id, channel):
+
+    def read_hwmon(self, id, channel):
 
            if os.path.isfile('/sys/class/hwmon/' + id + '/' + channel):
                 with open('/sys/class/hwmon/' + id + '/' + channel, 'r') as rf:
@@ -88,20 +73,24 @@ class HWMon:
                return False
 
 
-    def get_outputs(self):
+    def register_outputs(self, globaldict):
 
-        return self._outputs
+        for key, value in self._hwmon.items():
+            if (value['rights'] == '0o644'):
+                globaldict['hwmon/' + value['name'] + '/' + value['channel']] =  partial(self.write_hwmon, value['id'], value['channel'])
 
 
-    def write(self, id, channel, value):
+
+
+    def write_hwmon(self, id, channel, value):
+           value = str(value)
            print(id,channel,value)
            if os.path.isfile('/sys/class/hwmon/' + id + '/' + channel):
                 with open('/sys/class/hwmon/' + id + '/' + channel, 'r+') as rf:
-                    rf.write(str(value))
+                    rf.write(value)
                     rf.seek(0)
-                    if value == rf.read().rstrip(): return True
+                    if (value == rf.read().rstrip()): return True
                     else: return False
-                rf.close()
 
            else:
                return False
@@ -110,11 +99,14 @@ class HWMon:
 
 hwmon = HWMon()
 
-outputs = hwmon.get_outputs()
+outputs = dict()
+
+
+hwmon.register_outputs(outputs)
+
 
 
 print(outputs['hwmon/shpi/relay2'](1))
-
 
 
 
