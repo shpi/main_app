@@ -296,6 +296,7 @@ Item {
 
         Item {
             Flickable {
+                clip: true
                 id: flickable
                 anchors.fill: parent
                 contentHeight: parent.height * 1.7

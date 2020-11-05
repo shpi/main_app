@@ -6,5 +6,5 @@
     "ThermostatWeekKnob.qml","Shutter.qml",
     "ThermostatKnobSlider.qml","ThermostatSettings.qml","Main.qml",
     "WeatherSettings.qml","Weather.qml","WeatherDay.qml","Weather.py"
-    ,"WeatherGraph.qml","WeatherDays.qml","city.list.json"]
+    ,"WeatherGraph.qml","WeatherDays.qml","citylist.csv"]
 }

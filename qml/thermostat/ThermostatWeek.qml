@@ -5,6 +5,7 @@ Item {
     anchors.fill: parent
 
 
+
 Column {
      property var weekday: ["Sunday", "Monday", "Tuesday","Wednesday","Thursday","Friday","Saturday"]
      id: weekdays

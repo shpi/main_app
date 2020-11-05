@@ -11,6 +11,14 @@ Rectangle {
         property date maxdate
         anchors.fill: parent
         id: chart
+        margins.bottom: 0
+        margins.top: 0
+        margins.left: 0
+        margins.right: 0
+        legend.borderColor: "transparent"
+        legend.font.pointSize: 8
+        legend.markerShape: Legend.MarkerShapeCircle
+
 
         DateTimeAxis {
             id: dateAxis
@@ -26,22 +34,25 @@ Rectangle {
             id: degreeAxis
             min: -20
             max: 40
+            labelsFont.pointSize: 8
         }
 
         ValueAxis {
             id: pressureAxis
             min: 0
             max: 1400
+            labelsFont.pointSize: 8
         }
 
         ValueAxis {
             id: humidityAxis
             min: 0
             max: 100
+            labelsFont.pointSize: 8
         }
 
         AreaSeries {
-
+            name: "Humidity"
             color: "blue"
             opacity: 0.3
             axisY: humidityAxis
@@ -54,6 +65,7 @@ Rectangle {
         }
 
         LineSeries {
+            name: "Avg. Temp"
             id: daytemps
             width: 25
             opacity: 0.5
@@ -64,6 +76,7 @@ Rectangle {
         }
 
         LineSeries {
+            name: "Feel Temp"
             id: feeltemps
             width: 2
             opacity: 0.5
@@ -74,6 +87,7 @@ Rectangle {
         }
 
         LineSeries {
+            name: "Min. Temp"
             id: mintemps
             width: 5
             color: "blue"
@@ -83,6 +97,7 @@ Rectangle {
         }
 
         LineSeries {
+            name: "Max. Temp"
             id: maxtemps
             width: 5
             color: "red"
@@ -92,12 +107,14 @@ Rectangle {
         }
 
         AreaSeries {
+            name: "Rain"
             color: "blue"
             opacity: 0.5
             useOpenGL: true
             axisYRight: ValueAxis {
                 min: 0
                 max: 5
+                labelsFont.pointSize: 8
             }
             axisX: dateAxis
             upperSeries: LineSeries {

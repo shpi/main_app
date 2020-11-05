@@ -11,12 +11,6 @@ import logging
 import os
 
 
-os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
-os.environ["QT_QPA_PLATFORM"] = "eglfs"
-os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
-os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
-os.environ["GST_DEBUG"] = "omx:4"
-
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -202,7 +196,7 @@ class WeatherWrapper(QObject):
 
 
         self._cities = MyModel()
-        with open("citylist.csv", "r") as rf:
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "citylist.csv"), "r") as rf:
             i = 0
             city = city.lower()
             rf.seek(positions[city[0]],0)

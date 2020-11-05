@@ -47,16 +47,6 @@ ApplicationWindow {
 
 
 
-                    Text {
-                        anchors.verticalCenter: parent.top
-                        anchors.verticalCenterOffset: 20
-                        anchors.left: parent.left
-                        anchors.leftMargin: 10
-                        font.family: localFont.name
-                        font.pointSize: 50
-                        text: Icons.logo
-                        color: "white"
-                    }
 
 
         Row {
@@ -112,7 +102,7 @@ ApplicationWindow {
 
         Rectangle {
             width: parent.width - 10
-            //height: 100
+
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             color: "black"
@@ -214,6 +204,18 @@ InputPanel {
         anchors.right: parent.right
     }
 
+
+Text {
+
+    anchors.bottom: view.bottom
+    anchors.right: view.right
+    anchors.rightMargin: 30
+    font.family: localFont.name
+    font.pointSize: 50
+    text: Icons.logo
+    color: "white"
+    visible: drawer.visible
+}
 
 
 
