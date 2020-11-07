@@ -22,16 +22,34 @@ class HWMon:
                 for filename in glob.iglob('/sys/class/hwmon/' + sensor['id'] + '/*_' + type):
 
                     channel = sensor.copy()
-
+                    channel['description'] = ''
                     if (os.path.isfile(filename[0:-len(type)] + "label")):
                         with open(filename[0:-len(type)] + "label", 'r') as rf:
                             channel['description'] = (rf.read().rstrip())
-
+                    channel['type'] = ''
                     channel['path'] = filename
                     channel['rights'] = (os.stat(filename).st_mode & 0o777)
                     filename = filename.split('/')
                     channel['channel'] = filename[-1]
                     self._hwmon[channel['name'] + '/' + filename[-1]] = channel
+
+                    if type == 'input':
+                     if channel['channel'].startswith('temp'):
+                        channel['type'] = 'temperature'
+                     elif channel['channel'].startswith('curr'):
+                        channel['type'] = 'current'
+                     elif channel['channel'].startswith('in'):
+                            channel['type'] = 'voltage'
+                     elif channel['channel'].startswith('power'):
+                            channel['type'] = 'power'
+                     elif channel['channel'].startswith('humidity'):
+                            channel['type'] = 'humidity'
+
+                    if type == 'enable':
+                            channel['type'] = 'bool'
+                    if type == 'alarm':
+                            channel['type'] = 'bool'
+
 
 
 
@@ -42,7 +60,7 @@ class HWMon:
 
                         with open(filename + "_label", 'r') as rf:
                             channel['description'] = (rf.read().rstrip())
-
+                    channel['type'] = 'byte' if (type == 'pwm')  else 'bool'
                     channel['path'] = filename
                     channel['rights'] = (os.stat(filename).st_mode & 0o777)
                     filename = filename.split('/')
@@ -54,12 +72,12 @@ class HWMon:
 
 
 
-    def register_inputs(self, globaldict):
-
+    def get_inputs(self) -> dict:
+        hwmoninputs = dict()
         for key, value in self._hwmon.items():
             if (value['rights'] & 0o444 == 0o444):
-                globaldict['hwmon/' + value['name'] + '/' + value['channel']] = partial(self.read_hwmon, value['id'], value['channel'])
-
+                hwmoninputs['hwmon/' + value['name'] + '/' + value['channel']] = dict({"description" : value['description'],"rights" : value['rights'],"type" : value['type'],"call" : partial(self.read_hwmon, value['id'], value['channel'])})
+        return hwmoninputs
 
 
     def read_hwmon(self, id, channel):
@@ -96,17 +114,6 @@ class HWMon:
 
 
 
-hwmon = HWMon()
-
-outputs = dict()
-inputs = dict()
-
-hwmon.register_outputs(outputs)
-hwmon.register_inputs(inputs)
-
-
-
-print(outputs['hwmon/shpi/relay2'](1))
 
 
 

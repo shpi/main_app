@@ -161,6 +161,13 @@ ApplicationWindow {
         anchors.bottom: inputPanel.top
 
 
+        Loader {
+            id: inputSlide
+            source: "Inputs.qml"
+         }
+
+
+
             Loader {
                 id: shutter
                 source: "shutter/Shutter.qml"

@@ -1,5 +1,5 @@
 #from functools import cached_property
-import json
+#import json
 import datetime
 from PySide2.QtCore  import QByteArray, Qt, QModelIndex,QAbstractListModel, Property, Signal, Slot, QObject, QUrl, QUrlQuery
 from PySide2.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
@@ -16,7 +16,7 @@ import os
 logging.basicConfig(level=logging.DEBUG)
 
 
-class MyModel(QAbstractListModel):
+class CityModel(QAbstractListModel):
     NameRole = Qt.UserRole + 1000
     StateRole = Qt.UserRole + 1001
     LatRole = Qt.UserRole + 1002
@@ -24,7 +24,7 @@ class MyModel(QAbstractListModel):
     CountryRole = Qt.UserRole + 1004
 
     def __init__(self, entries=[], parent=None):
-        super(MyModel, self).__init__(parent)
+        super(CityModel, self).__init__(parent)
         self._entries = []
 
     def rowCount(self, parent=QModelIndex()):
@@ -35,24 +35,24 @@ class MyModel(QAbstractListModel):
     def data(self, index, role=Qt.DisplayRole):
         if 0 <= index.row() < self.rowCount() and index.isValid():
             item = self._entries[index.row()]
-            if role == MyModel.NameRole:
+            if role == CityModel.NameRole:
                 return item["name"]
-            elif role == MyModel.StateRole:
+            elif role == CityModel.StateRole:
                 return item["stat"]
-            elif role == MyModel.LonRole:
+            elif role == CityModel.LonRole:
                 return item["lon"]
-            elif role == MyModel.LatRole:
+            elif role == CityModel.LatRole:
                 return item["lat"]
-            elif role == MyModel.CountryRole:
+            elif role == CityModel.CountryRole:
                 return item["country"]
 
     def roleNames(self):
         roles = dict()
-        roles[MyModel.NameRole] = b"name"
-        roles[MyModel.StateRole] = b"stat"
-        roles[MyModel.LatRole] = b"lat"
-        roles[MyModel.LonRole] = b"lon"
-        roles[MyModel.CountryRole] = b"country"
+        roles[CityModel.NameRole] = b"name"
+        roles[CityModel.StateRole] = b"stat"
+        roles[CityModel.LatRole] = b"lat"
+        roles[CityModel.LonRole] = b"lon"
+        roles[CityModel.CountryRole] = b"country"
         return roles
 
     def appendRow(self, n):
@@ -71,7 +71,7 @@ class WeatherWrapper(QObject):
         super(WeatherWrapper, self).__init__(parent)
 
         self._data = dict()
-        self._cities = MyModel()
+        self._cities = CityModel()
         self._city = " test "
         self._lat = ""
         self._lon = ""
@@ -164,7 +164,7 @@ class WeatherWrapper(QObject):
     def data(self) -> dict:
         return self._data
 
-    @Property(QObject, notify=citiesChanged, constant=False)
+    @Property(QObject, notify=citiesChanged)
     def cities(self):
         return self._cities
 
@@ -195,7 +195,7 @@ class WeatherWrapper(QObject):
                      '御': 7145006,'松': 7145040,'芦': 7145071}
 
 
-        self._cities = MyModel()
+        self._cities = CityModel()
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "citylist.csv"), "r") as rf:
             i = 0
             city = city.lower()
@@ -218,7 +218,7 @@ class WeatherWrapper(QObject):
 
     """
         i = 0
-        self._cities = MyModel()
+        self._cities = CityModel()
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "city.list.json"), "r",  encoding="utf8") as rf:
             city_data = json.load(rf)
 

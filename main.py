@@ -2,13 +2,14 @@
 import sys
 import os
 
-from PySide2.QtCore  import QObject, QUrl, QUrlQuery
+from PySide2.QtCore  import QObject, QUrl, QUrlQuery, Signal, Property
 from PySide2.QtWidgets import QApplication
 from PySide2.QtQml import QQmlApplicationEngine
 
 from Backlight import Backlight
 from Weather import WeatherWrapper
-
+from HWMon import HWMon
+from Inputs import InputsDict
 
 os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
 # os.environ["QT_QPA_PLATFORM"] = "eglfs"
@@ -26,10 +27,13 @@ def main():
     weather = WeatherWrapper()
     weather.api_key = API_KEY
     backlight = Backlight()
-
+    hwmon = HWMon()
+    inputs = InputsDict()
+    inputs.add(hwmon.get_inputs())
 
 
     engine = QQmlApplicationEngine()
+    engine.rootContext().setContextProperty("inputs", inputs)
     engine.rootContext().setContextProperty("weather", weather)
     engine.rootContext().setContextProperty("backlight", backlight)
 
