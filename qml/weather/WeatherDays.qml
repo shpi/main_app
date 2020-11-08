@@ -9,7 +9,7 @@ Item {
         id: weatherdate
         anchors.right: parent.right
         anchors.rightMargin: 10
-        text: weather.city
+        text: weather[0].city
 
 }
 
@@ -25,13 +25,13 @@ Item {
     }
 
     Connections {
-        target: weather
+        id: weatherdaysconn
+        target: weather[0]
 
 
         onDataChanged: {
-           console.log("onDataChanged called in WeatherDays, error: " + weather.hasError())
 
-            if (!weather.hasError()) {
+            if (!weatherdaysconn.target.hasError()) {
 
 
                 var component = Qt.createComponent("WeatherDay.qml")
@@ -42,14 +42,14 @@ Item {
                     // or maybe throw
                 }
 
-                for (var i = 0; i < weather.data['daily'].length; i++) {
+                for (var i = 0; i < weatherdaysconn.target.data['daily'].length; i++) {
 
 
 
                     var weather_icons_arr = []
 
-                    for (var a = 0; a < weather.data['daily'][i]['weather'].length; a++) {
-                        weather_icons_arr[a] = weather.data['daily'][i]['weather'][a]['icon']
+                    for (var a = 0; a < weatherdaysconn.target.data['daily'][i]['weather'].length; a++) {
+                        weather_icons_arr[a] = weatherdaysconn.target.data['daily'][i]['weather'][a]['icon']
                     }
 
                     if (days[i] !== undefined)
@@ -58,8 +58,8 @@ Item {
                     days[i] = component.createObject(precast, {
                                                          "index": i,
                                                          "weather_icons": weather_icons_arr,
-                                                         "average_temp": weather.data['daily'][i]['temp']['day'],
-                                                         "day": new Date(weather.data['daily'][i]['dt'] * 1000)
+                                                         "average_temp": weatherdaysconn.target.data['daily'][i]['temp']['day'],
+                                                         "day": new Date(weatherdaysconn.target.data['daily'][i]['dt'] * 1000)
                                                      })
 
 

@@ -1,8 +1,7 @@
 # This Python file uses the following encoding: utf-8
-import sys
-import os
+import os, signal, sys
 
-from PySide2.QtCore  import QObject, QUrl, QUrlQuery, Signal, Property
+from PySide2.QtCore  import QTimer,QObject, QUrl, QUrlQuery, Signal, Property, QSettings
 from PySide2.QtWidgets import QApplication
 from PySide2.QtQml import QQmlApplicationEngine
 
@@ -17,25 +16,69 @@ os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
 # os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
 # os.environ["GST_DEBUG"] = "omx:4"
 
+def setup_interrupt_handling():
+    """Setup handling of KeyboardInterrupt (Ctrl-C) for PyQt."""
+    signal.signal(signal.SIGINT, _interrupt_handler)
+    """Timer"""
+    safe_timer(1000, check_loop)
+
+# Define this as a global function to make sure it is not garbage
+# collected when going out of scope:
+def _interrupt_handler(signum, frame):
+    """Handle KeyboardInterrupt: quit application."""
+    app.quit()
+
+def safe_timer(timeout, func, *args, **kwargs):
+    """
+    Create a timer that is safe against garbage collection and overlapping
+    calls.
+    """
+    def timer_event():
+        try:
+            func(*args, **kwargs)
+        finally:
+            QTimer.singleShot(timeout, timer_event)
+    QTimer.singleShot(timeout, timer_event)
+
+
+""" Loop for checking logic regularly """
+
+def check_loop():
+    inputs.update()
+    weather[0].update()
+
+settings = QSettings()
+
+weather = []
+weather.append(WeatherWrapper('weather', settings))
+
+
+backlight = Backlight()
+hwmon = HWMon()
+inputs = InputsDict()
+inputs.add(hwmon.get_inputs())
+
+for subweather in weather:
+    inputs.add(subweather.get_inputs())
+
+#print(inputs.data['weather/sunset']['call']())
+
 
 
 def main():
 
     app = QApplication(sys.argv)
-    API_KEY = "20f7aab0a600927a8486b220200ee694"
-
-    weather = WeatherWrapper()
-    weather.api_key = API_KEY
-    backlight = Backlight()
-    hwmon = HWMon()
-    inputs = InputsDict()
-    inputs.add(hwmon.get_inputs())
-
+    app.setApplicationName("Main")
+    app.setOrganizationName("SHPI GmbH")
+    app.setOrganizationDomain("shpi.de")
 
     engine = QQmlApplicationEngine()
+
     engine.rootContext().setContextProperty("inputs", inputs)
-    engine.rootContext().setContextProperty("weather", weather)
+    engine.rootContext().setContextProperty('weather', weather)
+
     engine.rootContext().setContextProperty("backlight", backlight)
+    setup_interrupt_handling()
 
     filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "qml/main.qml")
 

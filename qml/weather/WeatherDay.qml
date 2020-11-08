@@ -67,25 +67,3 @@ Rectangle {
 
 
 }
-
-/*
-
-
-
-{"dt":1603879200,
-"sunrise":1603864531,
-"sunset":1603899856,
-"temp":{"day":10.08,"min":8.84,"max":13.42,"night":10.58,"eve":12.94,"morn":9.32},
-"feels_like":{"day":5.87,"night":6.49,"eve":8.73,"morn":3.94},
-"pressure":1010,
-"humidity":81,
-"dew_point":6.97,
-"wind_speed":5,
-"wind_deg":206,
-"weather":[{"id":500,"main":"Rain","description":"light rain","icon":"10d"}],
-
-"clouds":94,"pop":0.83,"rain":1.63,"uvi":1.25},
-
-
-
-  */

@@ -125,14 +125,13 @@ Rectangle {
     }
 
     Connections {
-        target: weather
+        id: weatherconn
+        target: weather[0]
 
         onDataChanged: {
+            if (!weatherconn.target.hasError()) {
 
-            console.log("onDataChanged called, error: " + weather.hasError())
-            if (!weather.hasError()) {
-
-                for (var i = 0; i < weather.data['daily'].length; i++) {
+                for (var i = 0; i < weatherconn.target.data['daily'].length; i++) {
 
                     if (daytemps.count > 7) {
                         daytemps.remove(0)
@@ -144,32 +143,32 @@ Rectangle {
                     }
 
                     if (i === 0)
-                        chart.mindate = new Date(weather.data['daily'][i]['dt'] * 1000)
-                    console.log(new Date(weather.data['daily'][i]['dt'] * 1000))
-                    chart.maxdate = new Date(weather.data['daily'][i]['dt'] * 1000)
-                    daytemps.append(
-                                new Date(weather.data['daily'][i]['dt'] * 1000),
-                                weather.data['daily'][i]['temp']['day'])
-                    mintemps.append(
-                                new Date(weather.data['daily'][i]['dt'] * 1000),
-                                weather.data['daily'][i]['temp']['min'])
-                    maxtemps.append(
-                                new Date(weather.data['daily'][i]['dt'] * 1000),
-                                weather.data['daily'][i]['temp']['max'])
-                    feeltemps.append(
-                                new Date(weather.data['daily'][i]['dt'] * 1000),
-                                weather.data['daily'][i]['feels_like']['day'])
-                    humiditySeries.append(
-                                new Date(weather.data['daily'][i]['dt'] * 1000),
-                                weather.data['daily'][i]['humidity'])
+                        chart.mindate = new Date(weatherconn.target.data['daily'][i]['dt'] * 1000)
 
-                    if (weather.data['daily'][i]['rain'] !== undefined)
+                    chart.maxdate = new Date(weatherconn.target.data['daily'][i]['dt'] * 1000)
+                    daytemps.append(
+                                new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
+                                weatherconn.target.data['daily'][i]['temp']['day'])
+                    mintemps.append(
+                                new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
+                                weatherconn.target.data['daily'][i]['temp']['min'])
+                    maxtemps.append(
+                                new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
+                                weatherconn.target.data['daily'][i]['temp']['max'])
+                    feeltemps.append(
+                                new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
+                                weatherconn.target.data['daily'][i]['feels_like']['day'])
+                    humiditySeries.append(
+                                new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
+                               weatherconn.target.data['daily'][i]['humidity'])
+
+                    if (weatherconn.target.data['daily'][i]['rain'] !== undefined)
                         dailyrain.append(
-                                    new Date(weather.data['daily'][i]['dt'] * 1000),
-                                    weather.data['daily'][i]['rain'])
+                                    new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
+                                    weatherconn.target.data['daily'][i]['rain'])
                     else
                         dailyrain.append(
-                                    new Date(weather.data['daily'][i]['dt'] * 1000),
+                                    new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
                                     0)
 
                     //Wind direction increases clockwise such that a northerly wind is 0°, an easterly wind is 90°, a southerly wind is 180°, and a westerly wind is 270°.

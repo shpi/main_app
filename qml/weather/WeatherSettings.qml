@@ -1,11 +1,52 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 
+
 Item {
     anchors.fill: parent
 Column {
     anchors.fill: parent
 
+    Row {
+        spacing: 5
+     Text {
+     anchors.verticalCenter: parent.verticalCenter
+
+     text: "Update Interval in seconds"
+      }
+
+        TextField {
+
+        font.pointSize: 14
+        text: weather[0].interval
+        onEditingFinished: weather[0].interval = parseInt(text)
+
+
+
+        }
+
+    }
+
+Row {
+    spacing: 5
+ Text {
+ anchors.verticalCenter: parent.verticalCenter
+
+ text: "OpenWeather API Key"
+  }
+
+    TextField {
+
+    font.pointSize: 14
+    text: weather[0].api_key
+
+    onEditingFinished: weather[0].api_key = text
+
+
+
+    }
+
+}
     Row {
         spacing: 20
 
@@ -19,7 +60,7 @@ Column {
             text: "Search"
 
             onClicked: {
-                weather.update_cities(city_tf.text)
+                weather[0].update_cities(city_tf.text)
             }
         }
 
@@ -27,7 +68,7 @@ Column {
             text: "Update"
 
             onClicked: {
-                weather.update()
+                weather[0].update()
             }
         }
     }
@@ -46,7 +87,7 @@ Column {
             boundsBehavior: Flickable.StopAtBounds
             id: cityview
             width: parent.width
-            model: weather.cities
+            model: weather[0].cities
             
             delegate: contactDelegate
             focus: true
@@ -72,10 +113,10 @@ Column {
 
                             onClicked: {
 
-                                weather.set_lon(lon)
-                                weather.set_lat(lat)
-                                weather.city = name
-                                weather.update()
+                                weather[0].lon = lon
+                                weather[0].lat = lat
+                                weather[0].city = name
+                                weather[0].update()
                             }
                         }
                         Text {
@@ -99,7 +140,7 @@ Column {
     }
 
     Connections {
-        target: weather
+        target: weather[0]
         onCitiesChanged: {
             cityview.update()
         }

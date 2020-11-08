@@ -1,7 +1,7 @@
 #from functools import cached_property
 #import json
 import datetime
-from PySide2.QtCore  import QByteArray, Qt, QModelIndex,QAbstractListModel, Property, Signal, Slot, QObject, QUrl, QUrlQuery
+from PySide2.QtCore  import QSettings,QByteArray, Qt, QModelIndex,QAbstractListModel, Property, Signal, Slot, QObject, QUrl, QUrlQuery
 from PySide2.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PySide2.QtWidgets import QApplication
 from PySide2.QtQml import QQmlApplicationEngine, qmlRegisterType, QQmlExtensionPlugin
@@ -9,9 +9,9 @@ from enum import Enum
 import typing
 import logging
 import os
-
-
-
+from varname import nameof
+import json
+import time
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -26,6 +26,7 @@ class CityModel(QAbstractListModel):
     def __init__(self, entries=[], parent=None):
         super(CityModel, self).__init__(parent)
         self._entries = []
+
 
     def rowCount(self, parent=QModelIndex()):
         if parent.isValid():
@@ -67,31 +68,52 @@ class WeatherWrapper(QObject):
     BASE_URL = "http://api.openweathermap.org/data/2.5/onecall?"
 
 
-    def __init__(self, api_key: str ="", parent: QObject = None):
+    def __init__(self, path: str ="weather", settings: QSettings = None, parent: QObject = None):
         super(WeatherWrapper, self).__init__(parent)
-
+        self.settings = settings
+        self.path = path
         self._data = dict()
         self._cities = CityModel()
-        self._city = " test "
-        self._lat = ""
-        self._lon = ""
+        self._city = settings.value(self.path + "/city", "")
+        self._lat = settings.value(self.path + "/lat", 0)
+        self._lon = settings.value(self.path + "/lon", 0)
         self._has_error = False
-        self._api_key = api_key
+        self._api_key = settings.value(self.path + "/api_key", "")
         self._current_date = ""
-        self._sunrise = ""
-        self._sunset =  ""
+        self._lastupdate = 0
+        self._interval = int(settings.value(self.path + "/interval", 60*60*6))
+        self._sunrise = settings.value(self.path + "/sunrise", "6:00")
+        self._sunset =  settings.value(self.path + "/sunset", "22:00")
+
+
+
+    def get_inputs(self) -> dict:
+        weatherinputs = dict()
+        weatherinputs[self.path + '/sunrise'] = dict(
+        {"description" : "sunrise time",
+         "rights" : 0o444,
+         "type" : "time",
+         "interval" : 0,
+         "call" : lambda : self.sunrise})
+        weatherinputs[self.path + '/sunset'] = dict(
+         {"description" : "sunset time",
+          "rights" : 0o444,
+          "type" : "time",
+          "interval" : 0,
+          "call" : lambda : self.sunset})
+        weatherinputs[self.path + '/lastupdate'] = dict(
+          {"description" : "lastUpdate time",
+           "rights" : 0o444,
+           "type" : "time",
+           "interval" : 0,
+           "call" : lambda: self.current_date})
+        return weatherinputs
+
 
     @property
     def manager(self) -> QNetworkAccessManager:
         return QNetworkAccessManager(self)
 
-    @property
-    def api_key(self):
-        return self._api_key
-
-    @Property(str)
-    def lon(self):
-        return self._lon
 
     @Property(str)
     def sunrise(self):
@@ -101,68 +123,76 @@ class WeatherWrapper(QObject):
     def sunset(self):
         return self._sunset
 
-
     @Property(str)
     def current_date(self):
         return self._current_date
 
+    @Signal
+    def api_keyChanged(self):
+        pass
+
+    @Property(str, notify=api_keyChanged)
+    def api_key(self):
+        return self._api_key
+
+    @api_key.setter
+    def set_api_key(self, key):
+        self._api_key = key
+        self.settings.setValue(self.path + "/api_key", key)
 
 
     @Property(str)
     def lat(self):
         return self._lat
 
-
-    @api_key.setter
-    def api_key(self, key):
-        self._api_key = key
-
-
-    @Slot(str)
-    def set_api_key(self, key: str) -> None:
-         self._api_key = key
-
     @lat.setter
-    def lat(self, lat):
-            self._lat = lat
-
-    @Slot(str)
-    def set_lat(self, lat: str) -> None:
+    def set_lat(self, lat):
         self._lat = lat
+        self.settings.setValue(self.path + "/lat", lat)
+
+    @Property(int)
+    def interval(self):
+         return self._interval
+
+    @interval.setter
+    def set_interval(self, interval):
+         self._interval = int(interval)
+         self.settings.setValue(self.path + "/interval", interval)
+
+    @Property(str)
+    def lon(self):
+        return self._lon
 
     @lon.setter
-    def lon(self, lon):
+    def set_lon(self, lon):
          self._lon = lon
-
-    @Slot(str)
-    def set_lon(self, lon: str) -> None:
-        self._lon = lon
-
-    def set_city(self, city: str) -> None:
-         self._city = city
-         self.cityChanged.emit()
-
-    def read_city(self):
-        return self._city
-
-    @Signal
-    def dataChanged(self):
-        pass
-
-
-    @Signal
-    def citiesChanged(self):
-        pass
+         self.settings.setValue(self.path + "/lon", lon)
 
     @Signal
     def cityChanged(self):
         pass
 
-    city = Property(str, read_city, set_city, notify=cityChanged)
+    @Property(str, notify=cityChanged)
+    def city(self):
+        return self._city
+
+    @city.setter
+    def set_city(self, city: str) -> None:
+         self._city = city
+         self.settings.setValue(self.path + "/city", city)
+         self.cityChanged.emit()
+
+    @Signal
+    def dataChanged(self):
+        pass
 
     @Property("QVariantMap", notify=dataChanged)
     def data(self) -> dict:
         return self._data
+
+    @Signal
+    def citiesChanged(self):
+        pass
 
     @Property(QObject, notify=citiesChanged)
     def cities(self):
@@ -243,6 +273,7 @@ class WeatherWrapper(QObject):
     @Slot()
     def update(self) -> None:
 
+       if (self._lastupdate + self._interval) < time.time():
         url = QUrl(WeatherWrapper.BASE_URL)
         query = QUrlQuery()
         query.addQueryItem("lat", self._lat)
@@ -250,14 +281,14 @@ class WeatherWrapper(QObject):
         query.addQueryItem("appid", self._api_key)
         query.addQueryItem("exclude", "minutely,hourly")
         query.addQueryItem("units", "metric")
-
         url.setQuery(query)
-
         request = QNetworkRequest(url)
         reply: QNetworkReply = self.manager.get(request)
         reply.finished.connect(self._handle_reply)
 
+
     def _handle_reply(self) -> None:
+
         has_error = False
         reply: QNetworkReply = self.sender()
         if reply.error() == QNetworkReply.NoError:
@@ -267,11 +298,16 @@ class WeatherWrapper(QObject):
             self._data = dict()
             has_error = False
             self._data = d
-
+            self._lastupdate = int(d["current"]["dt"])
             self._current_date = datetime.datetime.fromtimestamp(int(d["current"]["dt"])).strftime('%m-%d-%Y %H:%M:%S')
             self._sunrise =  datetime.datetime.fromtimestamp(int(d["current"]["sunrise"])).strftime('%H:%M:%S')
             self._sunset = datetime.datetime.fromtimestamp(int(d["current"]["sunset"])).strftime('%H:%M:%S')
+
+            self.settings.setValue(self.path + "/sunset", self._sunset)
+            self.settings.setValue(self.path + "/sunrise", self._sunrise)
+
             logging.debug(f"added forecast from: {self.current_date}")
+
 
 
         else:
@@ -281,4 +317,5 @@ class WeatherWrapper(QObject):
         self._has_error = has_error
         self.dataChanged.emit()
         reply.deleteLater()
+
 

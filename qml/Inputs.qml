@@ -4,16 +4,23 @@ import QtQuick.Controls 2.12
 Item {
     anchors.fill: parent
 
+Column{
+    anchors.fill:parent
+    Text {
+        font.pointSize: 40
+        text: (inputs.data['hwmon/BAT0/in0_input']['value'] / 1000).toFixed(1)
+    }
 
        ListView {
-           anchors.fill:parent
+
+            height: 400
+            width:parent.width
             clip: true
             orientation: Qt.Vertical
             id: inputsview
-            width: parent.width
+
             model: inputs.inputList
             delegate: inputDelegate
-            focus: true
 
             Component {
                 id: inputDelegate
@@ -30,7 +37,7 @@ Item {
 
                          Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: '<b>' + path + ' ' + description + '</b>, ' + type
+                            text: '<b>' + path + '</b> ' + description + ', ' + type + ': ' + value
                             font.pointSize: 12
 
                         }
@@ -40,11 +47,6 @@ Item {
             }
         }
 
-    Connections {
-        target: inputs
-        onInputsChanged: {
-            inputsView.update()
-        }
-    }
 
+}
 }
