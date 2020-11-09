@@ -1,7 +1,7 @@
-#from functools import cached_property
-#import json
+# from functools import cached_property
+# import json
 import datetime
-from PySide2.QtCore  import QSettings,QByteArray, Qt, QModelIndex,QAbstractListModel, Property, Signal, Slot, QObject, QUrl, QUrlQuery
+from PySide2.QtCore import QSettings,QByteArray, Qt, QModelIndex,QAbstractListModel, Property, Signal, Slot, QObject, QUrl, QUrlQuery
 from PySide2.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PySide2.QtWidgets import QApplication
 from PySide2.QtQml import QQmlApplicationEngine, qmlRegisterType, QQmlExtensionPlugin
@@ -9,7 +9,6 @@ from enum import Enum
 import typing
 import logging
 import os
-from varname import nameof
 import json
 import time
 
@@ -62,11 +61,9 @@ class CityModel(QAbstractListModel):
         self.endInsertRows()
 
 
-
 class WeatherWrapper(QObject):
 
     BASE_URL = "http://api.openweathermap.org/data/2.5/onecall?"
-
 
     def __init__(self, path: str ="weather", settings: QSettings = None, parent: QObject = None):
         super(WeatherWrapper, self).__init__(parent)
@@ -75,38 +72,35 @@ class WeatherWrapper(QObject):
         self._data = dict()
         self._cities = CityModel()
         self._city = settings.value(self.path + "/city", "")
-        self._lat = settings.value(self.path + "/lat", 0)
-        self._lon = settings.value(self.path + "/lon", 0)
+        self._lat = settings.value(self.path + "/lat", "")
+        self._lon = settings.value(self.path + "/lon", "")
         self._has_error = False
-        self._api_key = settings.value(self.path + "/api_key", "")
+        self._api_key = settings.value(self.path + "/api_key", "20f7aab0a600927a8486b220200ee694")
         self._current_date = ""
         self._lastupdate = 0
         self._interval = int(settings.value(self.path + "/interval", 60*60*6))
         self._sunrise = settings.value(self.path + "/sunrise", "6:00")
-        self._sunset =  settings.value(self.path + "/sunset", "22:00")
+        self._sunset = settings.value(self.path + "/sunset", "22:00")
 
 
 
     def get_inputs(self) -> dict:
         weatherinputs = dict()
-        weatherinputs[self.path + '/sunrise'] = dict(
-        {"description" : "sunrise time",
-         "rights" : 0o444,
-         "type" : "time",
-         "interval" : 0,
-         "call" : lambda : self.sunrise})
-        weatherinputs[self.path + '/sunset'] = dict(
-         {"description" : "sunset time",
-          "rights" : 0o444,
-          "type" : "time",
-          "interval" : 0,
-          "call" : lambda : self.sunset})
-        weatherinputs[self.path + '/lastupdate'] = dict(
-          {"description" : "lastUpdate time",
-           "rights" : 0o444,
-           "type" : "time",
-           "interval" : 0,
-           "call" : lambda: self.current_date})
+        weatherinputs[self.path + '/sunrise'] = dict({"description" : "sunrise time","rights" : 0o444,"type" : "time","interval" : 0,"call" : lambda : self.sunrise})
+        weatherinputs[self.path + '/sunset'] = dict({"description" : "sunset time","rights" : 0o444,"type" : "time","interval" : 0,"call" : lambda : self.sunset})
+        weatherinputs[self.path + '/lastupdate'] = dict({"description" : "lastUpdate time","rights" : 0o444,"type" : "time","interval" : 0,"call" : lambda: self.current_date})
+        weatherinputs[self.path + '/current_pressure'] = dict({"description" : "pressure in Pa","rights" : 0o444,"type" : "float","interval" : 0,"call" : lambda: self.data["current"]["pressure"] if 'current' in self._data and 'pressure' in self._data['current'] else 0})
+        weatherinputs[self.path + '/current_humidity'] = dict({"description" : "humidity in %","rights" : 0o444,"type" : "percent","interval" : 0,"call" : lambda: self.data["current"]["humidity"] if 'current' in self._data and 'humidity' in self._data['current'] else 0})
+        weatherinputs[self.path + '/current_wind_speed'] = dict({"description" : "windspeed in kpH","rights" : 0o444,"type" : "float","interval" : 0,"call" : lambda: self.data["current"]["wind_speed"] if 'current' in self._data and 'wind_speed' in self._data['current'] else 0})
+        weatherinputs[self.path + '/current_wind_deg'] = dict({"description" : "Wind direction in Degrees","rights" : 0o444,"type" : "int","interval" : 0,"call" : lambda: self.data["current"]["wind_deg"] if 'current' in self._data and 'wind_deg' in self._data['current'] else 0})
+        weatherinputs[self.path + '/current_clouds'] = dict({"description" : "Cloudiness in %","rights" : 0o444,"type" : "percent","interval" : 0,"call" : lambda: self.data["current"]["clouds"] if 'current' in self._data and 'clouds' in self._data['current'] else 0})
+        weatherinputs[self.path + '/current_pop'] = dict({"description" : "Possibility of precipation in %","rights" : 0o444,"type" : "percent","interval" : 0,"call" : lambda: self.data["current"]["pop"] if 'current' in self._data and 'pop' in self._data['current'] else 0})
+        weatherinputs[self.path + '/current_uvi'] = dict({"description" : "UV Index","rights" : 0o444,"type" : "float","interval" : 0,"call" : lambda: self.data["current"]["uvi"] if 'current' in self._data and 'uvi' in self._data['current'] else 0})
+        weatherinputs[self.path + '/current_rain'] = dict({"description" : "Rain per sqm in mm","rights" : 0o444,"type" : "float","interval" : 0,"call" : lambda: self.data["current"]["rain"] if 'current' in self._data and 'rain' in self._data['current'] else 0})
+        weatherinputs[self.path + '/current_temp'] = dict({"description" : "Temperature in °C","rights" : 0o444,"type" : "temperature","interval" : 0,"call" : lambda: self._data.get("current", {}).get("temp")})
+        weatherinputs[self.path + '/current_weather_icon'] = dict({"description" : "Weather icon","rights" : 0o444,"type" : "string","interval" : 0,"call" : lambda: self._data.get("current", {}).get("weather", [{}])[0].get('icon')})
+        weatherinputs[self.path + '/current_weather_desc'] = dict({"description" : "Weather description","rights" : 0o444,"type" : "string","interval" : 0,"call" : lambda: self._data.get("current", {}).get("weather", [{}])[0].get('description')})
+        weatherinputs[self.path + '/current_dew_point'] = dict({"description" : "dew point in °C","rights" : 0o444,"type" : "temperature","interval" : 0,"call" : lambda: self.data["current"]["dew_point"] if 'current' in self._data and 'dew_point' in self._data['current'] else 0})
         return weatherinputs
 
 
@@ -273,11 +267,11 @@ class WeatherWrapper(QObject):
     @Slot()
     def update(self) -> None:
 
-       if (self._lastupdate + self._interval) < time.time():
+       if (self._lon != '') and (self._lat != '') and (self._lastupdate + self._interval) < time.time():
         url = QUrl(WeatherWrapper.BASE_URL)
         query = QUrlQuery()
-        query.addQueryItem("lat", self._lat)
-        query.addQueryItem("lon", self._lon)
+        query.addQueryItem("lat", str(self._lat))
+        query.addQueryItem("lon", str(self._lon))
         query.addQueryItem("appid", self._api_key)
         query.addQueryItem("exclude", "minutely,hourly")
         query.addQueryItem("units", "metric")
@@ -298,6 +292,22 @@ class WeatherWrapper(QObject):
             self._data = dict()
             has_error = False
             self._data = d
+
+            """
+            self._current_pressure = int(d["current"]["pressure"])
+            self._current_humidity = int(d["current"]["humidity"])
+            self._current_dew_point = int(d["current"]["dew_point"])
+            self._current_wind_speed = int(d["current"]["wind_speed"])
+            self._current_wind_deg = int(d["current"]["wind_deg"])
+            self._current_clouds = int(d["current"]["clouds"])
+            self._current_pop = int(d["current"]["pop"])
+            self._current_uvi = int(d["current"]["uvi"])
+            self._current_rain = int(d["current"]["rain"])
+            self._current_weather_icon = int(d["current"]["weather"]['icon'])
+            self._current_weather_desc = int(d["current"]["weather"]['description'])
+            """
+            #"feels_like":{"day":5.87,"night":6.49,"eve":8.73,"morn":3.94},
+
             self._lastupdate = int(d["current"]["dt"])
             self._current_date = datetime.datetime.fromtimestamp(int(d["current"]["dt"])).strftime('%m-%d-%Y %H:%M:%S')
             self._sunrise =  datetime.datetime.fromtimestamp(int(d["current"]["sunrise"])).strftime('%H:%M:%S')

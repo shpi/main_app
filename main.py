@@ -9,6 +9,8 @@ from Backlight import Backlight
 from Weather import WeatherWrapper
 from HWMon import HWMon
 from Inputs import InputsDict
+from Dev import InputDevs
+
 
 os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
 # os.environ["QT_QPA_PLATFORM"] = "eglfs"
@@ -54,9 +56,13 @@ weather.append(WeatherWrapper('weather', settings))
 
 
 backlight = Backlight()
+
 hwmon = HWMon()
 inputs = InputsDict()
 inputs.add(hwmon.get_inputs())
+inputs.add(backlight.get_inputs())
+inputdevs = InputDevs()
+inputs.add(inputdevs.inputs)
 
 for subweather in weather:
     inputs.add(subweather.get_inputs())

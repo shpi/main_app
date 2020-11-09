@@ -99,12 +99,13 @@ class InputsDict(QObject):
 
         def update(self):
             for key,value in self._data.entries.items():
-                if value['lastupdate'] + value['interval'] < time.time():
+                if 'call' in self._data.entries[key] and (value['lastupdate'] + value['interval'] < time.time()):
                     temp  = self._data.entries[key]['call']()
                     if (temp != self._data.entries[key]['value']):
                         self._data.entries[key]['value'] = temp
                         self._data.updateListView(key)
                     self._data.entries[key]['lastupdate'] = time.time()
-
+                elif value['lastupdate'] == int(time.time()):
+                    self._data.updateListView(key)
             self.dataChanged.emit()
 

@@ -12,8 +12,6 @@ class Backlight(QObject):
         self.MAX_BACKLIGHT = 0
         self.BL_POWER = 0
         self._brightness = 1
-        self.min_brightness = 1
-        self.max_brightness = 100
         if os.path.isdir(backlightpath):
             for file in os.listdir(backlightpath):
                 if os.path.exists(backlightpath + file + "/brightness"):
@@ -29,6 +27,15 @@ class Backlight(QObject):
         #self.set_brightness(0)
         #self.set_brightness(100)
 
+    def get_inputs(self) -> dict:
+        blinputs = dict()
+        blinputs['backlight/brightness'] = dict({"description" : 'Backlight brightness in %',
+        "rights" : 0o644,
+        "type" : 'percent',
+        "interval" : 0,
+        "call" : self.get_brightness})
+
+        return blinputs
 
     def set_brightness(self, brightness):
 
@@ -51,7 +58,10 @@ class Backlight(QObject):
 
 
     def get_brightness(self):
-        return int(self._brightness)
+        if ((len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0)):
+            with open(self.BACKLIGHT + "/brightness","r") as bright:
+                self._brightness = int((100 / self.MAX_BACKLIGHT) * int(bright.readline().rstrip()))
+        return self._brightness
 
 
     @Signal
@@ -61,21 +71,6 @@ class Backlight(QObject):
     brightness = Property(int, get_brightness, set_brightness, notify=brightnessChanged)
 
 
-    @Slot(result=int)
-    def get_min_brightness(self):
-        return int(self.min_brightness)
 
-    @Slot(result=int)
-    def get_max_brightness(self):
-        return int(self.max_brightness)
-
-    @Slot(int)
-    def set_max_brightness(self, brightness):
-        self.max_brightness = brightness
-        self.set_brightness(brightness)
-
-    @Slot(int)
-    def set_min_brightness(self, brightness):
-            self.min_brightness = brightness
 
 
