@@ -35,7 +35,7 @@ class InputDevs(QObject):
                     events = list(line[len('H: Handlers='):].rstrip().split(' '))
                     device['event'] = list(filter(lambda x: x.startswith('event'), events))
 
-                    p = subprocess.Popen(["./keymap",''.join(filter(str.isdigit,str(device['event'])))], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    p = subprocess.Popen(["keymap/keymap",''.join(filter(str.isdigit,str(device['event'])))], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     keys, stderr = p.communicate()
                     keys = set(keys.decode().strip().split('\n'))
 

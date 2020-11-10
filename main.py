@@ -1,5 +1,5 @@
 # This Python file uses the following encoding: utf-8
-import os, signal, sys
+import os, signal, sys, logging
 
 from PySide2.QtCore  import QTimer,QObject, QUrl, QUrlQuery, Signal, Property, QSettings
 from PySide2.QtWidgets import QApplication
@@ -9,14 +9,25 @@ from Backlight import Backlight
 from Weather import WeatherWrapper
 from HWMon import HWMon
 from Inputs import InputsDict
-from Dev import InputDevs
+from InputDevs import InputDevs
 
+
+logging.basicConfig(
+    #filename='debug.log',
+    level=logging.DEBUG,
+    format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
 
 os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
-# os.environ["QT_QPA_PLATFORM"] = "eglfs"
-# os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
-# os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
-# os.environ["GST_DEBUG"] = "omx:4"
+os.environ["QT_QPA_PLATFORM"] = "eglfs"
+os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
+os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
+os.environ["GST_DEBUG"] = "omx:4"
+os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
+os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
+
+
 
 def setup_interrupt_handling():
     """Setup handling of KeyboardInterrupt (Ctrl-C) for PyQt."""
@@ -27,8 +38,13 @@ def setup_interrupt_handling():
 # Define this as a global function to make sure it is not garbage
 # collected when going out of scope:
 def _interrupt_handler(signum, frame):
+
     """Handle KeyboardInterrupt: quit application."""
+
     app.quit()
+    app.exit()
+    sys.exit()
+
 
 def safe_timer(timeout, func, *args, **kwargs):
     """
@@ -49,14 +65,12 @@ def check_loop():
     inputs.update()
     weather[0].update()
 
-settings = QSettings()
 
+
+settings = QSettings()
 weather = []
 weather.append(WeatherWrapper('weather', settings))
-
-
 backlight = Backlight()
-
 hwmon = HWMon()
 inputs = InputsDict()
 inputs.add(hwmon.get_inputs())
@@ -67,11 +81,9 @@ inputs.add(inputdevs.inputs)
 for subweather in weather:
     inputs.add(subweather.get_inputs())
 
-#print(inputs.data['weather/sunset']['call']())
 
+if __name__ == "__main__":
 
-
-def main():
 
     app = QApplication(sys.argv)
     app.setApplicationName("Main")
@@ -95,9 +107,6 @@ def main():
 
     sys.exit(app.exec_())
 
-
-if __name__ == "__main__":
-    main()
 
 
 

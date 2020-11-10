@@ -90,7 +90,7 @@ class InputsDict(QObject):
                 newinputs[key]['lastupdate'] = 0
                 newinputs[key]['value'] = 0
                 if not 'interval' in value:
-                    newinputs[key]['interval'] = 1
+                    newinputs[key]['interval'] = 5
 
             self._data.entries.update(newinputs)
             self._data.updateKeys()

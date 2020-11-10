@@ -17,7 +17,6 @@ FolderListModel {
           onCountChanged: {
                         if (folderModel.count > 0)
                            bg.source =  folderModel.get (i, "fileURL")
-                        console.log("Found images for screensaver: " + folderModel.count)
                       }
 
       }

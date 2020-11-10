@@ -32,7 +32,7 @@ class Backlight(QObject):
         blinputs['backlight/brightness'] = dict({"description" : 'Backlight brightness in %',
         "rights" : 0o644,
         "type" : 'percent',
-        "interval" : 0,
+        "interval" : 3,
         "call" : self.get_brightness})
 
         return blinputs

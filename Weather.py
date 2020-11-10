@@ -1,18 +1,10 @@
-# from functools import cached_property
-# import json
-import datetime
 from PySide2.QtCore import QSettings,QByteArray, Qt, QModelIndex,QAbstractListModel, Property, Signal, Slot, QObject, QUrl, QUrlQuery
 from PySide2.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PySide2.QtWidgets import QApplication
 from PySide2.QtQml import QQmlApplicationEngine, qmlRegisterType, QQmlExtensionPlugin
 from enum import Enum
-import typing
-import logging
-import os
-import json
-import time
+import typing, logging, os, json, time, datetime
 
-logging.basicConfig(level=logging.DEBUG)
 
 
 class CityModel(QAbstractListModel):
@@ -144,7 +136,11 @@ class WeatherWrapper(QObject):
         self._lat = lat
         self.settings.setValue(self.path + "/lat", lat)
 
-    @Property(int)
+    @Signal
+    def intervalChanged(self):
+        pass
+
+    @Property(int, notify=intervalChanged)
     def interval(self):
          return self._interval
 
@@ -316,7 +312,7 @@ class WeatherWrapper(QObject):
             self.settings.setValue(self.path + "/sunset", self._sunset)
             self.settings.setValue(self.path + "/sunrise", self._sunrise)
 
-            logging.debug(f"added forecast from: {self.current_date}")
+            logging.debug(f"{self.current_date}: Weather: added forecast")
 
 
 

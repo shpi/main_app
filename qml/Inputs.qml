@@ -6,10 +6,6 @@ Item {
 
 Column{
     anchors.fill:parent
-    Text {
-        font.pointSize: 40
-        text: (inputs.data['hwmon/BAT0/in0_input']['value'] / 1000).toFixed(1)
-    }
 
        ListView {
 
