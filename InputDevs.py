@@ -1,8 +1,6 @@
 import subprocess
 import threading
-from PySide2.QtCore  import QByteArray, Qt, QModelIndex,QAbstractListModel, Property, Signal, Slot, QObject
-import typing
-import logging
+from PySide2.QtCore import QObject
 import struct
 
 
@@ -35,7 +33,8 @@ class InputDevs(QObject):
                     events = list(line[len('H: Handlers='):].rstrip().split(' '))
                     device['event'] = list(filter(lambda x: x.startswith('event'), events))
 
-                    p = subprocess.Popen(["keymap/keymap",''.join(filter(str.isdigit,str(device['event'])))], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    p = subprocess.Popen(["keymap/keymap", ''.join(filter(str.isdigit,str(device['event'])))],
+                                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     keys, stderr = p.communicate()
                     keys = set(keys.decode().strip().split('\n'))
 
@@ -50,11 +49,11 @@ class InputDevs(QObject):
                             keydict['type'] = 'bool'
                             keydict['value'] = None
                             keydict['description'] = key[1]
-                            #device['keys'][int(key[0])] = keydict
+                            # device['keys'][int(key[0])] = keydict
                             self.inputs['dev/' + str(id) + '/keys/' + str(key[0])] = keydict
 
-                        except:
-                             pass
+                        except IndexError:
+                            pass
 
                 if line.startswith('B: EV='):
                     device['EV'] = line[len('B: EV='):].strip('"\n')
@@ -63,17 +62,15 @@ class InputDevs(QObject):
 
         f.close()
 
-        for id,subdevice in self.devs.items():
+        for id, subdevice in self.devs.items():
             self.devs[id]['thread'] = threading.Thread(target=self.devloop,args = ('/dev/input/' + subdevice['event'][0],id) )
             self.devs[id]['running'] = True
             self.devs[id]['thread'].start()
 
-
     def get_inputs(self) -> dict:
         return self.inputs
 
-
-    def devloop(self,devpath,id):
+    def devloop(self, devpath, id):
         systembits = (struct.calcsize("P") * 8)
 
         with open(devpath, 'rb') as devfile:
@@ -87,21 +84,18 @@ class InputDevs(QObject):
                     try:
                         self.inputs['dev/' + str(id) + '/keys/' + str(keycode)]['value'] = value
                         self.inputs['dev/' + str(id) + '/keys/' + str(keycode)]['lastupdate'] = timestamp
-                        #print('dev/' + str(id) + '/keys/' + str(keycode) + ':' + str(value))
-                        #inputs._data.updateListView('dev/' + str(id) + '/keys/' + str(keycode))
-                        #devs[id]['keys'][keycode]['value'] = value
-                        #devs[id]['keys'][keycode]['lastupdate'] = timestamp
-                        #print(devpath + ' ' + str(timestamp) + '  Key:'  + str(keycode) + ' value: '  +  str(value))
-                        #print(devs[id]['keys'][str(keycode)]['desc'])
+                        # print('dev/' + str(id) + '/keys/' + str(keycode) + ':' + str(value))
+                        # inputs._data.updateListView('dev/' + str(id) + '/keys/' + str(keycode))
+                        # devs[id]['keys'][keycode]['value'] = value
+                        # devs[id]['keys'][keycode]['lastupdate'] = timestamp
+                        # print(devpath + ' ' + str(timestamp) + '  Key:'  + str(keycode) + ' value: '  +  str(value))
+                        # print(devs[id]['keys'][str(keycode)]['desc'])
 
                     except KeyError:
-                        #devs[id]['keys'][keycode] = dict()
+                        # devs[id]['keys'][keycode] = dict()
                         self.inputs['dev/' + str(id) + '/keys/' + str(keycode)] = dict()
                         self.inputs['dev/' + str(id) + '/keys/' + str(keycode)]['value'] = value
-                        #print('dev/' + str(id) + '/keys/' + str(keycode) + ':' + str(value))
+                        # print('dev/' + str(id) + '/keys/' + str(keycode) + ':' + str(value))
                         self.inputs['dev/' + str(id) + '/keys/' + str(keycode)]['lastupdate'] = timestamp
-                        #devs[id]['keys'][keycode]['value'] = value
-                        #devs[id]['keys'][keycode]['lastupdate'] = timestamp
-
-
-
+                        # devs[id]['keys'][keycode]['value'] = value
+                        # devs[id]['keys'][keycode]['lastupdate'] = timestamp

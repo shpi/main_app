@@ -1,10 +1,7 @@
 # This Python file uses the following encoding: utf-8
-
-from PySide2.QtCore  import QByteArray, Qt, QModelIndex,QAbstractListModel, Property, Signal, Slot, QObject
-import typing
-import logging
-import os
 import time
+from PySide2.QtCore import Qt, QModelIndex
+from PySide2.QtCore import QAbstractListModel, Property, Signal, QObject
 
 
 class InputListModel(QAbstractListModel):
@@ -14,7 +11,6 @@ class InputListModel(QAbstractListModel):
     TypeRole = Qt.UserRole + 1003
     IntervalRole = Qt.UserRole + 1004
     ExposedRole = Qt.UserRole + 1005
-
 
     def __init__(self, parent=None):
         super(InputListModel, self).__init__(parent)
@@ -30,9 +26,8 @@ class InputListModel(QAbstractListModel):
         return len(self.entries)
 
     def updateListView(self, key):
-        #print('update:'+key)
         keyindex = self.index(self._keys.index(key))
-        self.dataChanged.emit(keyindex,keyindex, [self.ValueRole])
+        self.dataChanged.emit(keyindex, keyindex, [self.ValueRole])
 
     def data(self, index, role=Qt.DisplayRole):
         if 0 <= index.row() < self.rowCount() and index.isValid():
@@ -45,6 +40,7 @@ class InputListModel(QAbstractListModel):
                     return item['call']()
                 else:
                     return item["value"]
+
             elif role == InputListModel.TypeRole:
                 return item["type"]
             elif role == InputListModel.DescriptionRole:
@@ -53,7 +49,6 @@ class InputListModel(QAbstractListModel):
                 return item["interval"]
             elif role == InputListModel.ExposedRole:
                 return item["exposed"]
-
 
     def roleNames(self):
         roles = dict()
@@ -68,44 +63,44 @@ class InputListModel(QAbstractListModel):
 
 class InputsDict(QObject):
 
-        def __init__(self, api_key: str ="", parent: QObject = None):
-            super(InputsDict, self).__init__(parent)
+    def __init__(self, api_key: str = "", parent: QObject = None):
+        super(InputsDict, self).__init__(parent)
+        self._data = InputListModel()
 
-            self._data = InputListModel()
+    @Signal
+    def dataChanged(self):
+        pass
 
-        @Signal
-        def dataChanged(self):
-            pass
+    @Property(QObject, notify=dataChanged, constant=False)
+    def inputList(self):
+        return self._data
 
-        @Property(QObject, notify=dataChanged, constant=False)
-        def inputList(self):
-            return self._data
+    @Property("QVariantMap", notify=dataChanged)
+    def data(self) -> dict:
+        return self._data.entries
 
-        @Property("QVariantMap", notify=dataChanged)
-        def data(self) -> dict:
-            return self._data.entries
+    def add(self, newinputs=dict()):
+        for key, value in newinputs.items():
+            newinputs[key]['lastupdate'] = 0
+            newinputs[key]['value'] = 0
+            if 'interval' not in value:
+                newinputs[key]['interval'] = 5
 
-        def add(self, newinputs=dict()):
-            for key, value in newinputs.items():
-                newinputs[key]['lastupdate'] = 0
-                newinputs[key]['value'] = 0
-                if not 'interval' in value:
-                    newinputs[key]['interval'] = 5
+        self._data.entries.update(newinputs)
+        self._data.updateKeys()
+        self.update()
+        self.dataChanged.emit()
 
-            self._data.entries.update(newinputs)
-            self._data.updateKeys()
-            self.update()
-            self.dataChanged.emit()
+    def update(self):
+        for key, value in self._data.entries.items():
+            if ('call' in self._data.entries[key] and
+               (value['lastupdate'] + value['interval'] < time.time())):
 
-        def update(self):
-            for key,value in self._data.entries.items():
-                if 'call' in self._data.entries[key] and (value['lastupdate'] + value['interval'] < time.time()):
-                    temp  = self._data.entries[key]['call']()
-                    if (temp != self._data.entries[key]['value']):
-                        self._data.entries[key]['value'] = temp
-                        self._data.updateListView(key)
-                    self._data.entries[key]['lastupdate'] = time.time()
-                elif value['lastupdate'] == int(time.time()):
+                temp = self._data.entries[key]['call']()
+                if (temp != self._data.entries[key]['value']):
+                    self._data.entries[key]['value'] = temp
                     self._data.updateListView(key)
-            self.dataChanged.emit()
-
+                    self._data.entries[key]['lastupdate'] = time.time()
+                elif value['lastupdate'] > (time.time() - 2):
+                    self._data.updateListView(key)
+        self.dataChanged.emit()

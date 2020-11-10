@@ -1,7 +1,11 @@
 # This Python file uses the following encoding: utf-8
-import os, signal, sys, logging
+import os
+import signal
+import sys
+import logging
 
-from PySide2.QtCore  import QTimer,QObject, QUrl, QUrlQuery, Signal, Property, QSettings
+from PySide2.QtCore import QTimer, QUrl
+from PySide2.QtCore import QSettings
 from PySide2.QtWidgets import QApplication
 from PySide2.QtQml import QQmlApplicationEngine
 
@@ -13,34 +17,33 @@ from InputDevs import InputDevs
 
 
 logging.basicConfig(
-    #filename='debug.log',
+    # filename='debug.log',
     level=logging.DEBUG,
     format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
 )
 
 os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
-os.environ["QT_QPA_PLATFORM"] = "eglfs"
-os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
-os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
-os.environ["GST_DEBUG"] = "omx:4"
-os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
-os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
-
+# os.environ["QT_QPA_PLATFORM"] = "eglfs"
+# os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
+# os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
+# os.environ["GST_DEBUG"] = "omx:4"
+# os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
+# os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
 
 
 def setup_interrupt_handling():
     """Setup handling of KeyboardInterrupt (Ctrl-C) for PyQt."""
     signal.signal(signal.SIGINT, _interrupt_handler)
     """Timer"""
-    safe_timer(1000, check_loop)
+    safe_timer(500, check_loop)
 
 # Define this as a global function to make sure it is not garbage
 # collected when going out of scope:
+
+
 def _interrupt_handler(signum, frame):
-
     """Handle KeyboardInterrupt: quit application."""
-
     app.quit()
     app.exit()
     sys.exit()
@@ -61,10 +64,10 @@ def safe_timer(timeout, func, *args, **kwargs):
 
 """ Loop for checking logic regularly """
 
+
 def check_loop():
     inputs.update()
     weather[0].update()
-
 
 
 settings = QSettings()
@@ -84,7 +87,6 @@ for subweather in weather:
 
 if __name__ == "__main__":
 
-
     app = QApplication(sys.argv)
     app.setApplicationName("Main")
     app.setOrganizationName("SHPI GmbH")
@@ -98,7 +100,8 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("backlight", backlight)
     setup_interrupt_handling()
 
-    filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "qml/main.qml")
+    filename = os.path.join(os.path.dirname(
+                            os.path.realpath(__file__)), "qml/main.qml")
 
     engine.load(QUrl.fromLocalFile(filename))
 
@@ -106,9 +109,3 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     sys.exit(app.exec_())
-
-
-
-
-
-

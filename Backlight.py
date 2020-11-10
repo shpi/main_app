@@ -1,5 +1,5 @@
 import os
-from PySide2.QtCore import QObject, Property,Signal, Slot
+from PySide2.QtCore import QObject, Property, Signal
 
 
 class Backlight(QObject):
@@ -24,16 +24,16 @@ class Backlight(QObject):
                              self.MAX_BACKLIGHT = (int)(max_backlight.readline())
                     if os.path.exists(backlightpath + file + "/bl_power"):
                         self.BL_POWER = 1
-        #self.set_brightness(0)
-        #self.set_brightness(100)
+        # self.set_brightness(0)
+        # self.set_brightness(100)
 
     def get_inputs(self) -> dict:
         blinputs = dict()
-        blinputs['backlight/brightness'] = dict({"description" : 'Backlight brightness in %',
-        "rights" : 0o644,
-        "type" : 'percent',
-        "interval" : 3,
-        "call" : self.get_brightness})
+        blinputs['backlight/brightness'] = dict({"description" : 'BL brightness in %',
+                                                 "rights" : 0o644,
+                                                 "type" : 'percent',
+                                                 "interval" : 3,
+                                                 "call" : self.get_brightness})
 
         return blinputs
 
@@ -42,13 +42,13 @@ class Backlight(QObject):
         if ((len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0)):
             setbrightness = ((self.MAX_BACKLIGHT / 100) * brightness)
 
-            with open(self.BACKLIGHT + "/brightness","w") as bright:
+            with open(self.BACKLIGHT + "/brightness", "w") as bright:
                 bright.write(str(int(setbrightness)))
                 self._brightness = brightness
                 bright.close()
 
             if (self.BL_POWER > 0):
-                with open(self.BACKLIGHT + "/bl_power","w") as bright:
+                with open(self.BACKLIGHT + "/bl_power", "w") as bright:
                     if (brightness < 1):
                         bright.write("4")
                     else:
@@ -56,21 +56,15 @@ class Backlight(QObject):
             bright.close()
             print(brightness)
 
-
     def get_brightness(self):
         if ((len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0)):
-            with open(self.BACKLIGHT + "/brightness","r") as bright:
-                self._brightness = int((100 / self.MAX_BACKLIGHT) * int(bright.readline().rstrip()))
+            with open(self.BACKLIGHT + "/brightness", "r") as bright:
+                self._brightness = int((100 / self.MAX_BACKLIGHT)
+                                       * int(bright.readline().rstrip()))
         return self._brightness
-
 
     @Signal
     def brightnessChanged(self):
             pass
 
     brightness = Property(int, get_brightness, set_brightness, notify=brightnessChanged)
-
-
-
-
-
