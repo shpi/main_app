@@ -14,7 +14,7 @@ from Weather import WeatherWrapper
 from HWMon import HWMon
 from Inputs import InputsDict
 from InputDevs import InputDevs
-
+from System import SystemInfo
 
 logging.basicConfig(
     # filename='debug.log',
@@ -80,6 +80,10 @@ inputs.add(hwmon.get_inputs())
 inputs.add(backlight.get_inputs())
 inputdevs = InputDevs()
 inputs.add(inputdevs.inputs)
+inputs.add(SystemInfo.get_inputs())
+
+
+
 
 for subweather in weather:
     inputs.add(subweather.get_inputs())

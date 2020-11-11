@@ -77,7 +77,7 @@ class HWMon:
         hwmoninputs = dict()
         for key, value in self._hwmon.items():
             if (value['rights'] & 0o444 == 0o444):
-                hwmoninputs['hwmon/' + value['name'] + '/' + value['channel']] = dict({"description" : value['description'],"rights" : value['rights'],"type" : value['type'],"call" : partial(self.read_hwmon, value['id'], value['channel'])})
+                hwmoninputs['hwmon/' + value['name'] + '/' + value['channel']] = dict({"interval" : 10, "description" : value['description'],"rights" : value['rights'],"type" : value['type'],"call" : partial(self.read_hwmon, value['id'], value['channel'])})
         return hwmoninputs
 
 

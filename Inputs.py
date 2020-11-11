@@ -4,6 +4,8 @@ from PySide2.QtCore import Qt, QModelIndex
 from PySide2.QtCore import QAbstractListModel, Property, Signal, QObject
 
 
+
+
 class InputListModel(QAbstractListModel):
     PathRole = Qt.UserRole + 1000
     ValueRole = Qt.UserRole + 1001
@@ -81,8 +83,10 @@ class InputsDict(QObject):
 
     def add(self, newinputs=dict()):
         for key, value in newinputs.items():
-            newinputs[key]['lastupdate'] = 0
-            newinputs[key]['value'] = 0
+            if 'lastupdate' not in newinputs[key]:
+                newinputs[key]['lastupdate'] = 0
+            if 'value' not in newinputs[key]:
+                newinputs[key]['value'] = 0
             if 'interval' not in value:
                 newinputs[key]['interval'] = 5
 
@@ -91,16 +95,19 @@ class InputsDict(QObject):
         self.update()
         self.dataChanged.emit()
 
+# interval -1 =  onetime permanent!
+# interval  0 =  dict copy / or reference
+# interval > 0 =  call function
+
     def update(self):
         for key, value in self._data.entries.items():
-            if ('call' in self._data.entries[key] and
-               (value['lastupdate'] + value['interval'] < time.time())):
-
+            if (('call' in self._data.entries[key]) and (int(value['interval']) > 0) and (value['lastupdate'] + value['interval'] < time.time())):
+                print(key)
                 temp = self._data.entries[key]['call']()
                 if (temp != self._data.entries[key]['value']):
                     self._data.entries[key]['value'] = temp
                     self._data.updateListView(key)
-                    self._data.entries[key]['lastupdate'] = time.time()
-                elif value['lastupdate'] > (time.time() - 2):
+                self._data.entries[key]['lastupdate'] = time.time()
+            elif (value['interval'] == 0) and (value['lastupdate'] > (time.time() - 2)):
                     self._data.updateListView(key)
         self.dataChanged.emit()

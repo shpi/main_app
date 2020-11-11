@@ -7,9 +7,16 @@ Item {
 Column{
     anchors.fill:parent
 
+    Text {
+    id: inputtitle
+    width: parent.width
+    text: 'Available Inputs'
+    font.pointSize: 12
+    }
+
        ListView {
 
-            height: 400
+            height: parent.height - inputtitle.height
             width:parent.width
             clip: true
             orientation: Qt.Vertical
@@ -34,7 +41,7 @@ Column{
                          Text {
                             anchors.verticalCenter: parent.verticalCenter
                             text: '<b>' + path + '</b> ' + description + ', ' + type + ': ' + value
-                            font.pointSize: 12
+                            font.pointSize: 8
 
                         }
 

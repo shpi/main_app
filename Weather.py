@@ -261,9 +261,9 @@ class WeatherWrapper(QObject):
 
     @Slot()
     def update(self) -> None:
-
         if ((self._lon != '') and (self._lat != '') and
            (self._lastupdate + self._interval) < time.time()):
+ 
             url = QUrl(WeatherWrapper.BASE_URL)
             query = QUrlQuery()
             query.addQueryItem("lat", str(self._lat))
