@@ -3,6 +3,7 @@ import os
 import signal
 import sys
 import logging
+import time
 
 from PySide2.QtCore import QTimer, QUrl
 from PySide2.QtCore import QSettings
@@ -36,7 +37,7 @@ def setup_interrupt_handling():
     """Setup handling of KeyboardInterrupt (Ctrl-C) for PyQt."""
     signal.signal(signal.SIGINT, _interrupt_handler)
     """Timer"""
-    safe_timer(500, check_loop)
+    safe_timer(1000, check_loop)
 
 # Define this as a global function to make sure it is not garbage
 # collected when going out of scope:
@@ -64,11 +65,13 @@ def safe_timer(timeout, func, *args, **kwargs):
 
 """ Loop for checking logic regularly """
 
+lastupdate = time.time()
 
 def check_loop():
-    inputs.update()
+    global lastupdate
     weather[0].update()
-
+    SystemInfo.update()
+    inputs.update(lastupdate)
 
 settings = QSettings()
 weather = []

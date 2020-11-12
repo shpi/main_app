@@ -38,9 +38,6 @@ class InputListModel(QAbstractListModel):
                 return self._keys[index.row()]
             elif role == InputListModel.ValueRole:
 
-                if item["interval"] == 0:
-                    return item['call']()
-                else:
                     return item["value"]
 
             elif role == InputListModel.TypeRole:
@@ -87,27 +84,29 @@ class InputsDict(QObject):
                 newinputs[key]['lastupdate'] = 0
             if 'value' not in newinputs[key]:
                 newinputs[key]['value'] = 0
-            if 'interval' not in value:
+            if 'interval' not in value and 'call' in value:
                 newinputs[key]['interval'] = 5
 
         self._data.entries.update(newinputs)
         self._data.updateKeys()
-        self.update()
+        self.update(0)
         self.dataChanged.emit()
 
-# interval -1 =  onetime permanent!
-# interval  0 =  dict copy / or reference
+# interval -1 =  update through class
+# interval  0 =  one time
 # interval > 0 =  call function
 
-    def update(self):
+    def update(self, lastupdate):
+        acttime = time.time()
         for key, value in self._data.entries.items():
-            if (('call' in self._data.entries[key]) and (int(value['interval']) > 0) and (value['lastupdate'] + value['interval'] < time.time())):
-                print(key)
+            if (value['interval'] > 0) and (value['lastupdate'] + value['interval'] < acttime):
                 temp = self._data.entries[key]['call']()
                 if (temp != self._data.entries[key]['value']):
                     self._data.entries[key]['value'] = temp
                     self._data.updateListView(key)
-                self._data.entries[key]['lastupdate'] = time.time()
-            elif (value['interval'] == 0) and (value['lastupdate'] > (time.time() - 2)):
+                self._data.entries[key]['lastupdate'] = acttime
+            elif (value['interval'] < 0) and (value['lastupdate'] > lastupdate):
                     self._data.updateListView(key)
+
         self.dataChanged.emit()
+

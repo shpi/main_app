@@ -7,6 +7,7 @@ import struct
 import shutil
 import re
 import glob
+import time
 
 #cat /proc/net/wireless
 #iwconfig wlan0
@@ -15,13 +16,89 @@ import glob
 
 class SystemInfo():
 
+    diskstats = dict()
+    last_diskstat = 0
+
+
+    @classmethod
+    def update_diskstats(self,stat_path = '/proc/diskstats'):
+        if os.path.isfile(stat_path):
+         acttime = (time.time())
+         quotient = acttime - SystemInfo.last_diskstat
+         SystemInfo.last_diskstat = acttime
+
+         with open(stat_path) as stat_file:
+           while True:
+            line = stat_file.readline().split()
+            if line:
+                if not line[2].startswith('loop'): # only physical devices
+                 try:
+                    SystemInfo.diskstats['system/disk_' + line[2] + '/read_bps']['value'] = (int(line[3]) -
+                          SystemInfo.diskstats['system/disk_' + line[2] + '/read_abs']['value']) // quotient
+
+
+                    SystemInfo.diskstats['system/disk_' + line[2] + '/write_bps']['value'] = (int(line[7]) -
+                           SystemInfo.diskstats['system/disk_' + line[2] + '/write_abs']['value']) // quotient
+
+                 except: #KeyError or Divsion Zero possible
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/read_bps'] =  dict()
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/write_bps'] = dict()
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/read_abs'] =  dict() 
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/write_abs'] = dict()
+
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/read_bps']['value'] =  0
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/write_bps']['value'] = 0
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/read_abs']['value'] =  0
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/write_abs']['value'] = 0
+
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/read_bps']['interval'] =  -1
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/write_bps']['interval'] = -1
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/read_abs']['interval'] =  -1
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/write_abs']['interval'] = -1
+
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/read_bps']['type'] =  'int'
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/write_bps']['type'] = 'int'
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/read_abs']['type'] =  'int'
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/write_abs']['type'] = 'int'
+
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/read_bps']['description'] =  'read bytes per second'
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/write_bps']['description'] = 'write bytes per second'
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/read_abs']['description'] =  'absolute read bytes'
+                     SystemInfo.diskstats['system/disk_' + line[2] + '/write_abs']['description'] = 'absolute written bytes'
+
+                 SystemInfo.diskstats['system/disk_' + line[2] + '/read_abs']['value'] = int(line[3])
+                 SystemInfo.diskstats['system/disk_' + line[2] + '/write_abs']['value'] = int(line[7])
+                 SystemInfo.diskstats['system/disk_' + line[2] + '/write_abs']['lastupdate'] = acttime
+                 SystemInfo.diskstats['system/disk_' + line[2] + '/read_abs']['lastupdate'] = acttime
+                 SystemInfo.diskstats['system/disk_' + line[2] + '/write_bps']['lastupdate'] = acttime
+                 SystemInfo.diskstats['system/disk_' + line[2] + '/read_bps']['lastupdate'] = acttime
+
+            else:
+                break
+
+
+    @staticmethod
+    def update():
+        if SystemInfo.last_diskstat + 10 < time.time():
+            SystemInfo.update_diskstats()
+
+
+    @staticmethod
+    def get_discstats():
+        return SystemInfo.diskstats
+
+
     @staticmethod
     def get_inputs() -> dict:
-        systeminputs = dict()
+
+        SystemInfo.update_diskstats() #init disk dict
+
+        systeminputs  = SystemInfo.diskstats
+
         systeminputs['system/is64bit'] = dict({"description" : "64bit system?",
                                                 #"rights" : 0o444,
                                                 "type" : "bool",
-                                                "interval" : -1,
+                                                "interval" : 0,
                                                 "value" : SystemInfo.is64bit(),
                                                 "call" : SystemInfo.is64bit})
 
@@ -68,7 +145,7 @@ class SystemInfo():
         systeminputs['system/netdevs'] = dict({"description" : "available network devices",
                                                 #"rights" : 0o444,
                                                 "type" : "list_string",
-                                                "interval" : -1,
+                                                "interval" : 0,
                                                 "value" : SystemInfo.get_net_devs(),
                                                 "call" : SystemInfo.get_net_devs})
 
@@ -120,18 +197,21 @@ class SystemInfo():
 
     @staticmethod
     def get_cpu_seconds(stat_path='/proc/stat'):
-        with open(stat_path) as stat_file:
+        if os.path.isfile(stat_path):
+         with open(stat_path) as stat_file:
             return next(stat_file).split()[1:]
 
     @staticmethod
     def get_uptime(stat_path='/proc/uptime'):
-        with open(stat_path) as stat_file:
+        if os.path.isfile(stat_path):
+         with open(stat_path) as stat_file:
             return int(float(next(stat_file).split()[0]))
 
     @staticmethod
-    def get_net_devs():
-        with open('/proc/net/dev') as net_file:
-            netdevs = []
+    def get_net_devs(stat_path='/proc/net/dev'):
+        netdevs = []
+        if os.path.isfile(stat_path):
+         with open(stat_path) as net_file:
             net_file.readline()
             net_file.readline()
             # ['face', 'received bytes', 'packets', 'errs', 'drop', 'fifo', 'frame', 'compressed', 'multicast',
@@ -145,5 +225,6 @@ class SystemInfo():
              else:
                  break
         return netdevs
+
 
 

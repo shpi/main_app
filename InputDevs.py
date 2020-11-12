@@ -2,7 +2,7 @@ import subprocess
 import threading
 from PySide2.QtCore import QObject
 import struct
-
+import time
 
 class InputDevs(QObject):
 
@@ -49,6 +49,7 @@ class InputDevs(QObject):
                             keydict['type'] = 'bool'
                             keydict['value'] = None
                             keydict['description'] = key[1]
+                            keydict['interval'] = -1
                             # device['keys'][int(key[0])] = keydict
                             self.inputs['dev/' + str(id) + '/keys/' + str(key[0])] = keydict
 
@@ -83,7 +84,7 @@ class InputDevs(QObject):
 
                     try:
                         self.inputs['dev/' + str(id) + '/keys/' + str(keycode)]['value'] = value
-                        self.inputs['dev/' + str(id) + '/keys/' + str(keycode)]['lastupdate'] = timestamp
+                        self.inputs['dev/' + str(id) + '/keys/' + str(keycode)]['lastupdate'] = time.time()
                         # print('dev/' + str(id) + '/keys/' + str(keycode) + ':' + str(value))
                         # inputs._data.updateListView('dev/' + str(id) + '/keys/' + str(keycode))
                         # devs[id]['keys'][keycode]['value'] = value
