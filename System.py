@@ -64,10 +64,9 @@ class _SystemInfo:
 
                             self.diskstats[f'system/disk_{line[2]}/read_abs']['value'] = int(line[3])
                             self.diskstats[f'system/disk_{line[2]}/write_abs']['value'] = int(line[7])
-                            self.diskstats[f'system/disk_{line[2]}/write_abs']['lastupdate'] = acttime
-                            self.diskstats[f'system/disk_{line[2]}/read_abs']['lastupdate'] = acttime
-                            self.diskstats[f'system/disk_{line[2]}/write_bps']['lastupdate'] = acttime
-                            self.diskstats[f'system/disk_{line[2]}/read_bps']['lastupdate'] = acttime
+
+                            for key in self._keys:
+                                self.diskstats[f'system/disk_{line[2]}/{key}']['lastupdate'] = acttime
 
                     else:
                         break
@@ -81,59 +80,59 @@ class _SystemInfo:
 
     def get_inputs(self) -> dict:
 
-        systeminputs = self.diskstats
+        inputs = self.diskstats
 
-        systeminputs['system/is64bit'] = {"description": "64bit system?",
-                                          # "rights":0o444,
-                                          "type": "bool",
-                                          "interval": 0,
-                                          "value": self.is64bit(),
-                                          "call": self.is64bit}
+        inputs['system/is64bit'] = {"description": "64bit system?",
+                                    # "rights":0o444,
+                                    "type": "bool",
+                                    "interval": 0,
+                                    "value": self.is64bit(),
+                                    "call": self.is64bit}
 
-        systeminputs['system/cpu_freq'] = {"description": "actual CPU clock",
-                                           # "rights": 0o444,
-                                           "type": "list_int",
-                                           "interval": 10,
-                                           "call": self.get_cpu_freq}
+        inputs['system/cpu_freq'] = {"description": "actual CPU clock",
+                                     # "rights": 0o444,
+                                     "type": "list_int",
+                                     "interval": 10,
+                                     "call": self.get_cpu_freq}
 
-        systeminputs['system/cpu_usage'] = {"description": "CPU usage %",
-                                            # "rights": 0o444,
-                                            "type": "percent",
-                                            "interval": 10,
-                                            "call": self.cpu_usage}
+        inputs['system/cpu_usage'] = {"description": "CPU usage %",
+                                      # "rights": 0o444,
+                                      "type": "percent",
+                                      "interval": 10,
+                                      "call": self.cpu_usage}
 
-        systeminputs['system/ram_usage'] = {"description": "RAM usage",
-                                            # "rights": 0o444,
-                                            "type": "list_int",
-                                            "interval": 10,
-                                            "call": self.ram_usage}
+        inputs['system/ram_usage'] = {"description": "RAM usage",
+                                      # "rights": 0o444,
+                                      "type": "list_int",
+                                      "interval": 10,
+                                      "call": self.ram_usage}
 
-        systeminputs['system/disk_usage'] = {"description": "disk usage",
-                                             # "rights": 0o444,
-                                             "type": "list_int",
-                                             "interval": 600,
-                                             "call": self.disk_usage}
+        inputs['system/disk_usage'] = {"description": "disk usage",
+                                       # "rights": 0o444,
+                                       "type": "list_int",
+                                       "interval": 600,
+                                       "call": self.disk_usage}
 
-        systeminputs['system/cpu_seconds'] = {"description": "cpu spend time in seconds",
-                                              # "rights": 0o444,
-                                              "type": "list_int",
-                                              "interval": 60,
-                                              "call": self.get_cpu_seconds}
+        inputs['system/cpu_seconds'] = {"description": "spend time in scnds",
+                                        # "rights": 0o444,
+                                        "type": "list_int",
+                                        "interval": 60,
+                                        "call": self.get_cpu_seconds}
 
-        systeminputs['system/uptime'] = {"description": "uptime in seconds",
-                                         # "rights": 0o444,
-                                         "type": "int",
-                                         "interval": 60,
-                                         "call": self.get_uptime}
+        inputs['system/uptime'] = {"description": "uptime in seconds",
+                                   # "rights": 0o444,
+                                   "type": "int",
+                                   "interval": 60,
+                                   "call": self.get_uptime}
 
-        systeminputs['system/netdevs'] = {"description": "available network devices",
-                                          # "rights": 0o444,
-                                          "type": "list_string",
-                                          "interval": 0,
-                                          "value": self.get_net_devs(),
-                                          "call": self.get_net_devs}
+        inputs['system/netdevs'] = {"description": "available network devices",
+                                    # "rights": 0o444,
+                                    "type": "list_string",
+                                    "interval": 0,
+                                    "value": self.get_net_devs(),
+                                    "call": self.get_net_devs}
 
-        return systeminputs
+        return inputs
 
     @staticmethod
     def is64bit():
@@ -154,7 +153,7 @@ class _SystemInfo:
     def get_cpu_freq():
         cpus = []
         if os.path.isdir('/sys/devices/system/cpu/'):
-            for cpu in glob.iglob('/sys/devices/system/cpu/cpu*',recursive = False):
+            for cpu in glob.iglob('/sys/devices/system/cpu/cpu*'):
                 if os.path.isfile(cpu + '/cpufreq/scaling_cur_freq'):
                     with open(cpu + '/cpufreq/scaling_cur_freq') as cpu_file:
                         cpus.append(int(next(cpu_file).rstrip()))
@@ -196,13 +195,14 @@ class _SystemInfo:
             with open(stat_path) as net_file:
                 net_file.readline()
                 net_file.readline()
-                # ['face', 'received bytes', 'packets', 'errs', 'drop', 'fifo', 'frame', 'compressed', 'multicast',
-                #          'transmit bytes', 'packets', 'errs', 'drop', 'fifo', 'colls', 'carrier', 'compressed']
+                # ['name',
+                # 'received', 'packets', 'errs', 'drop', 'fifo', 'frame', 'compressed', 'multicast',
+                # 'transmit, 'packets', 'errs', 'drop', 'fifo', 'colls', 'carrier', 'compressed']
                 # print(re.split('\s+\||\s+|\|',net_file.readline().strip()))
                 while True:
                     line = net_file.readline()
                     if line:
-                        netdevs.append(re.split('\s+|:\s+', line.strip())[0])
+                        netdevs.append(re.split(r'\s+|:\s+', line.strip())[0])
                         # print(netdevs[-1])
                     else:
                         break
