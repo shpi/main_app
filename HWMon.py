@@ -55,7 +55,7 @@ class HWMon:
                         channel['type'] = 'bool'
 
             for type in ('pwm', 'buzzer', 'relay'):
-                for filename in glob.iglob(f"/sys/class/hwmon/{sensors['id']}/{type}[0-9]"):
+                for filename in glob.iglob(f"/sys/class/hwmon/{sensor['id']}/{type}[0-9]"):
                     channel = sensor.copy()
                     channel['description'] = ''
                     if (os.path.isfile(filename + "_label")):
