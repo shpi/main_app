@@ -4,8 +4,6 @@ from PySide2.QtCore import Qt, QModelIndex
 from PySide2.QtCore import QAbstractListModel, Property, Signal, QObject
 
 
-
-
 class InputListModel(QAbstractListModel):
     PathRole = Qt.UserRole + 1000
     ValueRole = Qt.UserRole + 1001
@@ -37,9 +35,7 @@ class InputListModel(QAbstractListModel):
             if role == InputListModel.PathRole:
                 return self._keys[index.row()]
             elif role == InputListModel.ValueRole:
-
-                    return item["value"]
-
+                return item["value"]
             elif role == InputListModel.TypeRole:
                 return item["type"]
             elif role == InputListModel.DescriptionRole:
@@ -99,12 +95,17 @@ class InputsDict(QObject):
     def update(self, lastupdate):
         acttime = time.time()
         for key, value in self._data.entries.items():
-            if (value['interval'] > 0) and (value['lastupdate'] + value['interval'] < acttime):
+
+            if ((value['interval'] > 0) and (value['lastupdate'] +
+                                             value['interval'] < acttime)):
+
                 temp = self._data.entries[key]['call']()
+
                 if (temp != self._data.entries[key]['value']):
                     self._data.entries[key]['value'] = temp
                     self._data.updateListView(key)
                 self._data.entries[key]['lastupdate'] = acttime
+
             elif (value['interval'] < 0) and (value['lastupdate'] > lastupdate):
                     self._data.updateListView(key)
 

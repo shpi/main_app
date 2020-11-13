@@ -19,9 +19,10 @@ class _SystemInfo:
     def __init__(self,  parent=None):
         super(_SystemInfo, self).__init__()
         self.diskstats = dict()
+        self._keys = 'read_bps', 'write_bps', 'read_abs', 'write_abs'
         self.last_diskstat = 0
         self.update_diskstats(init=True)
-        self._keys = 'read_bps', 'write_bps', 'read_abs', 'write_abs'
+
 
     def update_diskstats(self, stat_path='/proc/diskstats', init=False):
         if os.path.isfile(stat_path):

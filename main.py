@@ -67,11 +67,13 @@ def safe_timer(timeout, func, *args, **kwargs):
 
 lastupdate = time.time()
 
+
 def check_loop():
     global lastupdate
     weather[0].update()
     SystemInfo.update()
     inputs.update(lastupdate)
+
 
 settings = QSettings()
 weather = []
@@ -84,9 +86,6 @@ inputs.add(backlight.get_inputs())
 inputdevs = InputDevs()
 inputs.add(inputdevs.inputs)
 inputs.add(SystemInfo.get_inputs())
-
-
-
 
 for subweather in weather:
     inputs.add(subweather.get_inputs())

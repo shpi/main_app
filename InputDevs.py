@@ -2,7 +2,7 @@ import subprocess
 import threading
 from PySide2.QtCore import QObject
 import struct
-import time
+
 
 class InputDevs(QObject):
 
@@ -51,7 +51,7 @@ class InputDevs(QObject):
                             keydict['description'] = key[1]
                             keydict['interval'] = -1
                             # device['keys'][int(key[0])] = keydict
-                            self.inputs['dev/' + str(id) + '/keys/' + str(key[0])] = keydict
+                            self.inputs[f'dev/{str(id)}/keys/{str(key[0])}'] = keydict
 
                         except IndexError:
                             pass
@@ -64,7 +64,7 @@ class InputDevs(QObject):
         f.close()
 
         for id, subdevice in self.devs.items():
-            self.devs[id]['thread'] = threading.Thread(target=self.devloop,args = ('/dev/input/' + subdevice['event'][0],id) )
+            self.devs[id]['thread'] = threading.Thread(target=self.devloop,args = (f"/dev/input/{subdevice['event'][0]}",id) )
             self.devs[id]['running'] = True
             self.devs[id]['thread'].start()
 
@@ -83,20 +83,11 @@ class InputDevs(QObject):
                 if (type == 1):
 
                     try:
-                        self.inputs['dev/' + str(id) + '/keys/' + str(keycode)]['value'] = value
-                        self.inputs['dev/' + str(id) + '/keys/' + str(keycode)]['lastupdate'] = time.time()
-                        # print('dev/' + str(id) + '/keys/' + str(keycode) + ':' + str(value))
-                        # inputs._data.updateListView('dev/' + str(id) + '/keys/' + str(keycode))
-                        # devs[id]['keys'][keycode]['value'] = value
-                        # devs[id]['keys'][keycode]['lastupdate'] = timestamp
-                        # print(devpath + ' ' + str(timestamp) + '  Key:'  + str(keycode) + ' value: '  +  str(value))
-                        # print(devs[id]['keys'][str(keycode)]['desc'])
+                        self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['value'] = value
+                        self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = timestamp
 
                     except KeyError:
-                        # devs[id]['keys'][keycode] = dict()
-                        self.inputs['dev/' + str(id) + '/keys/' + str(keycode)] = dict()
-                        self.inputs['dev/' + str(id) + '/keys/' + str(keycode)]['value'] = value
-                        # print('dev/' + str(id) + '/keys/' + str(keycode) + ':' + str(value))
-                        self.inputs['dev/' + str(id) + '/keys/' + str(keycode)]['lastupdate'] = timestamp
-                        # devs[id]['keys'][keycode]['value'] = value
-                        # devs[id]['keys'][keycode]['lastupdate'] = timestamp
+                        self.inputs[f'dev/{str(id)}/keys/{str(keycode)}'] = dict()
+                        self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['value'] = value
+                        self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = timestamp
+

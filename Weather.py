@@ -92,7 +92,6 @@ class WeatherWrapper(QObject):
         self._interval = int(settings.value(self.path + "/interval", 60*60*6))
 
 
-
     def get_inputs(self) -> dict:
         return self.weatherinputs
 
@@ -230,11 +229,11 @@ class WeatherWrapper(QObject):
                         break
                     i += 1
                     line = line.split(";", 5)
-                    self._cities.appendRow(dict(name = line[0],
-                                                lat = line[3],
-                                                lon = line[4].rstrip(),
-                                                stat = line[1],
-                                                country = line[2]))
+                    self._cities.appendRow(dict(name=line[0],
+                                                lat=line[3],
+                                                lon=line[4].rstrip(),
+                                                stat=line[1],
+                                                country=line[2]))
         self.citiesChanged.emit()
         rf.close()
 
@@ -309,8 +308,8 @@ class WeatherWrapper(QObject):
             self.weatherinputs[self.path + '/current_dew_point']['value'] = float(d["current"]["dew_point"])
 
 
-            self.settings.setValue(self.path + "/sunset", self.weatherinputs[self.path + '/sunset']['value'])
-            self.settings.setValue(self.path + "/sunrise", self.weatherinputs[self.path + '/sunrise']['value'])
+            self.settings.setValue(f"{self.path}/sunset", self.weatherinputs[self.path + '/sunset']['value'])
+            self.settings.setValue(f"{self.path}/sunrise", self.weatherinputs[self.path + '/sunrise']['value'])
 
             logging.debug(f"{self.current_date}: Weather: added forecast")
 
