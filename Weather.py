@@ -303,6 +303,8 @@ class WeatherWrapper(QObject):
             self.weatherinputs[self.path + '/current_uvi']['value'] = float(d["current"]["uvi"])
             self.weatherinputs[self.path + '/current_rain']['value'] = float(d["current"]["rain"]) if 'rain' in d["current"] else 0
             self.weatherinputs[self.path + '/current_temp']['value'] = float(d["current"]["temp"])
+            self.weatherinputs[self.path + '/current_temp']['lastupdate'] = float(d["current"]["dt"])
+
             self.weatherinputs[self.path + '/current_weather_icon']['value'] = d.get("current", {}).get("weather", [{}])[0].get('icon')
             self.weatherinputs[self.path + '/current_weather_desc']['value'] = d.get("current", {}).get("weather", [{}])[0].get('description')
             self.weatherinputs[self.path + '/current_dew_point']['value'] = float(d["current"]["dew_point"])

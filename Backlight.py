@@ -26,26 +26,31 @@ class Backlight(QObject):
                     if os.path.exists(backlightpath + file + "/bl_power"):
                         self.BL_POWER = 1
 
-        self.blinputs['backlight/brightness'] = dict({"description" : 'BL brightness in %',
+        self.blinputs['backlight/brightness'] = {"description" : 'BL brightness in %',
                                                  "type" : 'percent',
                                                  "interval" : 10, 
                                                  "lastupdate": 0,
-                                                 "call" : self.get_brightness})
-
+                                                 "call" : self.get_brightness,
+                                                 "set" : self.set_brightness}
+        # example interrupt function
+        # self.blinputs['dev/110001000141/keys/2'] = {"interrupts" : self.interrupt}
         # self.set_brightness(0)
         # self.set_brightness(100)
 
     def get_inputs(self) -> dict:
-
         return self.blinputs
+
+    def interrupt(self, key, value):
+        if value == 1:
+            self.set_brightness(100)
 
     def set_brightness(self, brightness):
 
         if ((len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0)):
-            setbrightness = ((self.MAX_BACKLIGHT / 100) * brightness)
+            setbrightness = int((self.MAX_BACKLIGHT / 100) * brightness)
 
             with open(self.BACKLIGHT + "/brightness", "w") as bright:
-                bright.write(str(int(setbrightness)))
+                bright.write(str(setbrightness))
                 self._brightness = brightness
                 self.blinputs['backlight/brightness']['value'] = brightness
                 self.blinputs['backlight/brightness']['lastupdate'] = time.time()

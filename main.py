@@ -16,6 +16,7 @@ from HWMon import HWMon
 from Inputs import InputsDict
 from InputDevs import InputDevs
 from System import SystemInfo
+from Leds import Led
 
 logging.basicConfig(
     # filename='debug.log',
@@ -81,11 +82,14 @@ weather.append(WeatherWrapper('weather', settings))
 backlight = Backlight()
 hwmon = HWMon()
 inputs = InputsDict()
+leds = Led()
+inputs.add(leds.get_inputs())
 inputs.add(hwmon.get_inputs())
-inputs.add(backlight.get_inputs())
 inputdevs = InputDevs()
 inputs.add(inputdevs.inputs)
+inputs.add(backlight.get_inputs())
 inputs.add(SystemInfo.get_inputs())
+
 
 for subweather in weather:
     inputs.add(subweather.get_inputs())

@@ -40,10 +40,21 @@ Column{
 
                          Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: '<b>' + path + '</b> ' + description + ', ' + type + ': ' + value
+                            text: '<b>' + path + '</b> ' + description + ', ' + type + ': ' + (output == '1' ? '' : value)
                             font.pointSize: 8
 
                         }
+
+                         TextField {
+                         anchors.verticalCenter: parent.verticalCenter
+
+                         visible: output == '1' ? 1 : 0
+                         font.pointSize: 8
+                         placeholderText: (output == '1' ? value.toString() : '')
+                         onEditingFinished: inputs.set(path,this.text)
+
+
+                         }
 
                     }
                 }

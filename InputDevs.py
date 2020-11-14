@@ -1,18 +1,20 @@
 import subprocess
 import threading
-from PySide2.QtCore import QObject
 import struct
+import time
+from Inputs import InputsDict
 
-
-class InputDevs(QObject):
+class InputDevs:
 
     FILENAME = '/proc/bus/input/devices'
 
-    def __init__(self, parent: QObject = None):
-        super(InputDevs, self).__init__(parent)
+    def __init__(self,  parent=None):
+
+        super(InputDevs, self).__init__()
 
         self.devs = dict()
         self.inputs = dict()
+
 
         with open(self.FILENAME, 'r') as f:
 
@@ -50,6 +52,7 @@ class InputDevs(QObject):
                             keydict['value'] = None
                             keydict['description'] = key[1]
                             keydict['interval'] = -1
+                            keydict['interrupts'] = []
                             # device['keys'][int(key[0])] = keydict
                             self.inputs[f'dev/{str(id)}/keys/{str(key[0])}'] = keydict
 
@@ -64,19 +67,24 @@ class InputDevs(QObject):
         f.close()
 
         for id, subdevice in self.devs.items():
-            self.devs[id]['thread'] = threading.Thread(target=self.devloop,args = (f"/dev/input/{subdevice['event'][0]}",id) )
-            self.devs[id]['running'] = True
-            self.devs[id]['thread'].start()
+            self.inputs[f'dev/{str(id)}'] = dict()
+            self.inputs[f'dev/{str(id)}']['description'] = subdevice['name']
+            self.inputs[f'dev/{str(id)}']['value'] = 1
+            self.inputs[f'dev/{str(id)}']['interval'] = -1
+            self.inputs[f'dev/{str(id)}']['lastupdate'] = 0
+            self.inputs[f'dev/{str(id)}']['interrupts'] = []
+            self.inputs[f'dev/{str(id)}']['thread'] = threading.Thread(target=self.devloop,args = (f"/dev/input/{subdevice['event'][0]}",id) )
+            self.inputs[f'dev/{str(id)}']['type'] = 'bool'
+            self.inputs[f'dev/{str(id)}']['thread'].start()
 
     def get_inputs(self) -> dict:
         return self.inputs
 
     def devloop(self, devpath, id):
-        systembits = (struct.calcsize("P") * 8)
-
+       systembits = (struct.calcsize("P") * 8)
+       try:
         with open(devpath, 'rb') as devfile:
-
-            while self.devs[id]['running']:
+            while self.inputs[f'dev/{str(id)}']['value']:
                 event = devfile.read(16 if systembits == 32 else 24)  #16 byte for 32bit,  24 for 64bit
                 (timestamp, _id, type, keycode, value) = struct.unpack('llHHI', event)
 
@@ -85,9 +93,23 @@ class InputDevs(QObject):
                     try:
                         self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['value'] = value
                         self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = timestamp
+                        self.inputs[f'dev/{str(id)}']['lastupdate'] = timestamp
+
+                        if 'interrupts' in self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']:
+                             for function in self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['interrupts']:
+                                function(f'dev/{str(id)}/keys/{str(keycode)}',value)
+
+                        if 'interrupts' in self.inputs[f'dev/{str(id)}']:
+                             for function in self.inputs[f'dev/{str(id)}']['interrupts']:
+                                 function(f'dev/{str(id)}',value)
+
 
                     except KeyError:
                         self.inputs[f'dev/{str(id)}/keys/{str(keycode)}'] = dict()
                         self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['value'] = value
                         self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = timestamp
 
+       except:
+           self.inputs[f'dev/{str(id)}']['value'] = 0
+           self.inputs[f'dev/{str(id)}']['lastupdate'] = time.time()
+           self.inputs[f'dev/{str(id)}']['description'] += ' [access error]'

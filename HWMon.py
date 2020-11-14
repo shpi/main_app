@@ -73,7 +73,7 @@ class HWMon:
         hwmoninputs = dict()
         for key, value in self._hwmon.items():
             if (value['rights'] & 0o444 == 0o444):
-                hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"] = dict({"description" : value['description'],"rights" : value['rights'],"type" : value['type'],"call" : partial(self.read_hwmon, value['id'], value['channel'])})
+                hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"] = {"description" : value['description'],"rights" : value['rights'],"type" : value['type'],"call" : partial(self.read_hwmon, value['id'], value['channel'])}
         return hwmoninputs
 
     def read_hwmon(self, id, channel):
@@ -85,11 +85,12 @@ class HWMon:
         else:
             return False
 
-    def register_outputs(self, globaldict):
-
+    def get_outputs(self) -> dict:
+        hwmonoutputs = dict()
         for key, value in self._hwmon.items():
             if (value['rights'] == 0o644):
-                globaldict[f"hwmon/{value['name']}/{value['channel']}"] = partial(self.write_hwmon, value['id'], value['channel'])
+                hwmonoutputs[f"hwmon/{value['name']}/{value['channel']}"] = {"type": value['type'],"set" : partial(self.write_hwmon, value['id'], value['channel'])}
+        return hwmonoutputs
 
     def write_hwmon(self, id, channel, value):
         value = str(value)
