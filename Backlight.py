@@ -17,7 +17,6 @@ class Backlight(QObject):
             for file in os.listdir(backlightpath):
                 if os.path.exists(backlightpath + file + "/brightness"):
                     self.BACKLIGHT = backlightpath + file
-                    print("FOUND BACKLIGHT:" + self.BACKLIGHT)
                     if os.path.exists(backlightpath + file
                                       + "/max_brightness"):
                         with open(backlightpath + file +
