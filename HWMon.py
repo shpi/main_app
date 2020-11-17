@@ -46,6 +46,8 @@ class HWMon:
                             channel['type'] = 'power'
                         elif channel['channel'].startswith('humidity'):
                             channel['type'] = 'humidity'
+                        elif channel['channel'].startswith('fan'):
+                            channel['type'] = 'integer'
                         else:
                             channel['type'] = 'unknown'
 
@@ -77,7 +79,6 @@ class HWMon:
         return hwmoninputs
 
     def read_hwmon(self, id, channel):
-
         if os.path.isfile(f'/sys/class/hwmon/{id}/{channel}'):
             with open(f'/sys/class/hwmon/{id}/{channel}', 'r') as rf:
                 return (rf.read().rstrip())
