@@ -2,7 +2,7 @@
     "files": ["qml/screensaver/Screensaver.qml","qml/thermostat/ThermostatWeekDay.qml",
     "qml/thermostat/Thermostat.qml","qml/thermostat/ThermostatWeek.qml","qml/alram/Alarm.qml",
     "fonts/Icons.qml","qml/fingerpaint.qml","backgrounds/",
-    "fonts/qmldir","main.py","Backlight.py","InputDevs.py",
+    "fonts/qmldir","main.py","System.py","Leds.py","Outputs.py","Backlight.py","InputDevs.py",
     "qml/thermostat/ThermostatWeekKnob.qml","qml/shutter/Shutter.qml",
     "qml/thermostat/ThermostatKnobSlider.qml","qml/thermostat/ThermostatSettings.qml","qml/main.qml","HWMon.py",
     "qml/weather/WeatherSettings.qml","qml/weather/Weather.qml","qml/weather/WeatherDay.qml","Weather.py","Inputs.py"
