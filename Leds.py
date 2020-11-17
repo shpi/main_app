@@ -16,25 +16,26 @@ class Led:
         if os.path.isdir(self.ledpath):
             for file in os.listdir(self.ledpath):
                 if os.path.exists(self.ledpath + file + "/brightness"):
-                    self.leds[file] = dict()
-                    self.inputs['leds/' + file] = dict()
-                    self.inputs['leds/' + file]['description'] = 'brightness of led in %'
-                    self.inputs['leds/' + file]['type'] = 'percent'
+
 
                     with open(self.ledpath + file + "/brightness") as led_brightness:
-                         self.leds[file]['rawvalue'] = (int)(led_brightness.readline())
+                        self.leds[file] = dict()
+                        self.leds[file]['rawvalue'] = (int)(led_brightness.readline())
 
                     if os.path.exists(self.ledpath + file
                                       + "/max_brightness"):
                         with open(self.ledpath + file +
                              "/max_brightness") as max_led:
                              self.leds[file]['max'] = (int)(max_led.readline())
-                             self.inputs['leds/' + file]['steps'] = self.leds[file]['max']
-                             self.inputs['leds/' + file]['value'] = 100 / self.leds[file]['max'] * self.leds[file]['rawvalue']
-                             self.inputs['leds/' + file]['lastupdate'] = time.time()
-                             self.inputs['leds/' + file]['interval'] = -1
-                             self.inputs['leds/' + file]['call'] = partial(self.get_brightness, file)
-                             self.inputs['leds/' + file]['set'] = partial(self.set_brightness, file)
+                             self.inputs['leds/' + file] = {
+                             'description' : 'brightness of led in %',
+                             'type' : 'percent',
+                             'steps' : self.leds[file]['max'],
+                             'value' : 100 / self.leds[file]['max'] * self.leds[file]['rawvalue'],
+                             'lastupdate' : time.time(),
+                             'interval' : 8,
+                             'call' : partial(self.get_brightness, file),
+                             'set' : partial(self.set_brightness, file)}
 
 
     def get_inputs(self) -> dict:
@@ -55,10 +56,13 @@ class Led:
 
 
     def get_brightness(self,file):
-        with open(self.ledpath + file + "/brightness", "w") as bright:
+        with open(self.ledpath + file + "/brightness") as bright:
                 self.leds[file]['rawvalue'] = int(bright.readline().rstrip())
-                self.inputs['leds/' + file]['value'] = int((100 / self.leds[file]['max'])
-                                       * self.leds[file]['rawvalue'] )
+                pbrightness = int((100 / self.leds[file]['max'])
+                * self.leds[file]['rawvalue'] )
+                if self.inputs['leds/' + file]['interval'] < 0:
+                    self.inputs['leds/' + file]['value'] = pbrightness
+                    self.inputs['leds/' + file]['lastupdate'] = time.time()
 
-        return self.inputs['leds/' + file]['value']
+        return pbrightness
 

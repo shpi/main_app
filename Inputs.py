@@ -156,7 +156,11 @@ class InputsDict(QObject):
         acttime = time.time()
         for key, value in self.entries.items():
 
-            if ((value['interval'] > 0) and (value['lastupdate'] +
+            if (value['lastupdate'] > lastupdate):
+                    self.completelist.updateListView(key)
+
+
+            elif ((value['interval'] > 0) and (value['lastupdate'] +
                                              value['interval'] < acttime)):
 
                 temp = self.entries[key]['call']()
@@ -166,15 +170,33 @@ class InputsDict(QObject):
                     self.completelist.updateListView(key)
                 self.entries[key]['lastupdate'] = acttime
 
-            elif (value['interval'] < 0) and (value['lastupdate'] > lastupdate):
-                    self.completelist.updateListView(key)
+
 
         self.dataChanged.emit()
 
     @Slot(str,str)
     def set(self, key, value):
-
+            print('set:' + key + ':' + value)
             if key in self.entries and 'set' in self.entries[key]:
              if self.entries[key]['type'] == 'percent':
                  self.entries[key]['set'](float(value))
+             if self.entries[key]['type'] == 'int':
+                 self.entries[key]['set'](int(value))
+             if self.entries[key]['type'] == 'int_list':
+                     self.entries[key]['set'](value)
+             if self.entries[key]['type'] == 'bool_list':
+                 if isinstance(value, list):
+                     self.entries[key]['set'](value)
+                 elif ',' in value:
+                     values = []
+                     for subvalue in value.split(','):
+                         try:
+                             value = [True if (value == 'true' or value == '1') else False]
+                             values.append(value)
+                         except:
+                             pass
+                         self.entries[key]['set'](values)
+                 else:
+                     value = [True if (value == 'true' or value == '1') else False]
+                     self.entries[key]['set'](value)
 

@@ -17,6 +17,7 @@ from Inputs import InputsDict
 from InputDevs import InputDevs
 from System import SystemInfo
 from Leds import Led
+from Alsa import AlsaMixer
 
 logging.basicConfig(
     # filename='debug.log',
@@ -74,6 +75,7 @@ def check_loop():
     weather[0].update()
     SystemInfo.update()
     inputs.update(lastupdate)
+    lastupdate = time.time()
 
 
 settings = QSettings()
@@ -83,6 +85,8 @@ backlight = Backlight()
 hwmon = HWMon()
 inputs = InputsDict()
 leds = Led()
+alsamixer = AlsaMixer()
+inputs.add(alsamixer.get_inputs())
 inputs.add(leds.get_inputs())
 inputs.add(hwmon.get_inputs())
 inputdevs = InputDevs()
