@@ -4,17 +4,29 @@ import os
 import errno
 from subprocess import call, Popen, PIPE
 from functools import partial
-
+from AlsaRecord import AlsaRecord
 
 class AlsaMixer:
 
-    def __init__(self,  parent=None):
+    def __init__(self, parent=None):
 
         super(AlsaMixer, self).__init__()
+        self.recorder = dict()
         self.cards = self.get_cards()
+
+    def update(self):
+
+        for key, value in self.recorder.items():
+            value.update()
 
     def get_inputs(self) -> dict:
         return self.cards
+
+    def play(self, file='/usr/share/sounds/alsa/Front_Center.wav'):
+        for key in self.cards.keys():
+            if key.startswith('alsa/') and key.find('/',5) == -1:
+                if self.cards[key]['value'] == True:
+                    call(["aplay", "-D", "plughw:" + self.cards[key]['name'], file])
 
     @staticmethod
     def get_channel_name(desc, name, i):
@@ -56,7 +68,7 @@ class AlsaMixer:
                 cards['alsa/'+ card_name] = {'id': card_number,
                                     'description': card_desc + ' on/off',
                                     'name': card_name,
-                                    'value': False,
+                                    'value': True,
                                     'interval': -1,
                                     'type': 'bool'}
                 cards.update(self.get_recording(card_name))
@@ -64,8 +76,8 @@ class AlsaMixer:
              #card_detail = Popen(["amixer", "-D", "hw:" + card_name, "info"], stdout=PIPE).communicate()[0]
         return cards
 
-    @staticmethod
-    def get_recording(card_name):
+
+    def get_recording(self, card_name):
         record_details = Popen(["arecord", "-D", "hw:" + card_name,'-c','99', "--dump-hw-params"], stderr=PIPE).communicate()[1]
         record_details = record_details.split(b'\n')
         card_rates = card_formats = card_rchannel = 0
@@ -88,14 +100,10 @@ class AlsaMixer:
                     card_rates = [card_rates]
                 break
         if card_rchannel > 0:
-            return {f'alsa/{card_name}/recording':{'lastupdate':0,
-                    'type': 'percent',
-                    'interval' : -1,
-                    'description': 'recording volume',
-                    'value':0, 'running': False,
-                    'rates':card_rates,
-                    'channel': card_rchannel,
-                    'format':card_formats}}
+
+            self.recorder[card_name] = AlsaRecord(card_name)
+
+            return {f'alsa/{card_name}/recording': self.recorder[card_name].get_inputs()}
 
         else: return {}
 

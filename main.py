@@ -1,5 +1,15 @@
 # This Python file uses the following encoding: utf-8
 import os
+
+os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
+# os.environ["QT_QPA_PLATFORM"] = "eglfs"
+# os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
+# os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
+# os.environ["GST_DEBUG"] = "omx:4"
+os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
+os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
+
+
 import signal
 import sys
 import logging
@@ -25,14 +35,6 @@ logging.basicConfig(
     format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
 )
-
-os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
-# os.environ["QT_QPA_PLATFORM"] = "eglfs"
-# os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
-# os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
-# os.environ["GST_DEBUG"] = "omx:4"
-# os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
-# os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
 
 
 def setup_interrupt_handling():
@@ -74,6 +76,7 @@ def check_loop():
     global lastupdate
     weather[0].update()
     SystemInfo.update()
+    alsamixer.update()
     inputs.update(lastupdate)
     lastupdate = time.time()
 
@@ -94,6 +97,7 @@ inputs.add(inputdevs.inputs)
 inputs.add(backlight.get_inputs())
 inputs.add(SystemInfo.get_inputs())
 
+alsamixer.play()
 
 for subweather in weather:
     inputs.add(subweather.get_inputs())
