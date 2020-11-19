@@ -266,7 +266,8 @@ class WeatherWrapper(QObject):
     def update(self) -> None:
         if ((self.weatherinputs[self.path + '/lon']['value'] != '') and (self.weatherinputs[self.path + '/lat']['value'] != '') and
            (self.weatherinputs[self.path + '/lastupdate']['value'] + self._interval) < time.time()):
- 
+
+            self.weatherinputs[self.path + '/lastupdate']['value'] = time.time() 
             url = QUrl(WeatherWrapper.BASE_URL)
             query = QUrlQuery()
             query.addQueryItem("lat", str(self.weatherinputs[self.path + '/lat']['value']))

@@ -32,8 +32,8 @@ class InputListModel(QAbstractListModel):
 
     def data(self, index, role=Qt.DisplayRole):
         if 0 <= index.row() < self.rowCount() and index.isValid():
-            item = self.entries[self._keys[index.row()]]
-
+           item = self.entries[self._keys[index.row()]]
+           try:
             if role == InputListModel.PathRole:
                 return self._keys[index.row()]
             elif role == InputListModel.ValueRole:
@@ -50,6 +50,9 @@ class InputListModel(QAbstractListModel):
                 return item["exposed"]
             else:
                 return 'unknown role'
+           except Exception as e:
+                print(e)
+                print(item)
 
     def roleNames(self):
         roles = dict()

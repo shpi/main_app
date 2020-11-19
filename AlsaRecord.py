@@ -16,7 +16,7 @@ class AlsaRecord:
         self.bufferpos = 0
         self.buffersize = 10
         self.buffer = [b'' for x in range(self.buffersize)]
-        self.rate = 16000
+        self.rate = 44100
         self.input['interval'] = -1
         self.input['type'] = 'percent'
         self.input['lastupdate'] = 0

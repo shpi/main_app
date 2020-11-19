@@ -30,6 +30,16 @@ class IIO:
                 return (rf.read().rstrip())
                 rf.close()
 
+    def read_processed(id, channel, scale=1, offset=0):
+        if os.path.isfile(f'/sys/bus/iio/devices/{id}/{channel}'):
+            with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
+                value = scale * (int(rf.read().rstrip()) + offset)
+                #print(channel + ' ' + str(value))
+                return value
+                rf.close()
+
+
+
     @staticmethod
     def write_iio(id, channel,value):
         #in_temp_object_calibemissivity	
@@ -45,12 +55,22 @@ class IIO:
         #print("\t\t%u channels found: " % len(dev.channels))
         for channel in dev.channels:
             
+
+            if channel.type == iio.ChannelType.IIO_TEMP:
+               print('temperature')
+            else: print(channel.type)
             #print("\t\t\t%s: %s (%s)" % (channel.id, channel.name or "", "output" if channel.output else "input"))
             if len(channel.attrs) > 0:
                 self.inputs[f'{self.path}/{dev.name}/{channel.id}'] = dict()
+                self.inputs[f'{self.path}/{dev.name}/{channel.id}']['description'] = dev.name + ' ' + channel.id 
+                self.inputs[f'{self.path}/{dev.name}/{channel.id}']['lastupdate'] = 0
+                self.inputs[f'{self.path}/{dev.name}/{channel.id}']['interval'] = -1
+                self.inputs[f'{self.path}/{dev.name}/{channel.id}']['type'] = 'float'
+
                 #print("\t\t\t%u channel-specific attributes found: " % len(channel.attrs))
                 for channel_attr in channel.attrs:
                     path = channel.attrs[channel_attr].filename
+                    
                     #print(path)
                     #print("\t\t\t\t" + channel_attr + ", value: " + channel.attrs[channel_attr].value)
 
@@ -62,7 +82,7 @@ class IIO:
 
                     elif channel_attr == 'input':
                          self.inputs[f'{self.path}/{dev.name}/{channel.id}']['value'] = channel.attrs[channel_attr].value
-                         self.inputs[f'{self.path}/{dev.name}/{channel.id}']['call'] = lambda: IIO.read_iio(dev.id, path)
+                         self.inputs[f'{self.path}/{dev.name}/{channel.id}']['call'] = partial(IIO.read_iio, dev.id, path)
                          self.inputs[f'{self.path}/{dev.name}/{channel.id}']['type'] = "float"
                          self.inputs[f'{self.path}/{dev.name}/{channel.id}']['interval'] = 10
 
@@ -79,10 +99,11 @@ class IIO:
                     else:
                         if f'{self.path}/{dev.name}/{channel.id}/{channel_attr}' not in self.inputs:
                             self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}'] = {}
-                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['value'] = channel.attrs[channel_attr].value
-
-                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['call'] = lambda: IIO.read_iio(dev.id, path)
-                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['interval'] = 100
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['value'] = channel.attrs[channel_attr].value.rstrip()
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['call'] = partial(IIO.read_iio, dev.id, path)
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['interval'] = 10
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['type'] = 'float'
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['description'] = channel.id + ' ' + channel_attr
                         #print(f'/sys/bus/iio/devices/{dev.id}/{path}')
 
                         try:
@@ -102,7 +123,10 @@ class IIO:
 
                     #channel.attrs['raw'].filename
                     self.inputs[f'{self.path}/{dev.name}/{channel.id}']['value'] = float((float(channel.attrs['raw'].value) + offset) * scale)
-                    self.inputs[f'{self.path}/{dev.name}/{channel.id}']['call'] = lambda: scale * (int(IIO.read_iio(dev.id, channel.attrs['raw'].filename)) + offset) 
+                    self.inputs[f'{self.path}/{dev.name}/{channel.id}']['call'] = partial(IIO.read_processed, str(dev.id), str(channel.attrs['raw'].filename), scale, offset)
+                    #print(self.inputs[f'{self.path}/{dev.name}/{channel.id}']['call'])
+                    self.inputs[f'{self.path}/{dev.name}/{channel.id}']['interval'] = 10
+
 
         if len(dev.attrs) > 0:
             #print("\t\t%u device-specific attributes found: " % len(dev.attrs))
@@ -126,13 +150,15 @@ class IIO:
                 else:
                         if f'{self.path}/{dev.name}/{channel.id}/{device_attr}' not in self.inputs:
                             self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}'] = {}
-                        
-                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['value'] = dev.attrs[device_attr].value
+                 
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['type'] = 'unknown'
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['description'] = channel.id + ' ' + device_attr
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['value'] = dev.attrs[device_attr].value.rstrip()
 
                         path = dev.attrs[device_attr].filename
 
-                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['call'] = lambda: IIO.read_iio(dev.id, path)
-                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['interval'] = 10
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['call'] = partial(IIO.read_iio, dev.id, path)
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['interval'] = 300
                         #print(f'/sys/bus/iio/devices/{dev.id}/{path}')
 
                         try:
