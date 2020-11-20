@@ -2,6 +2,7 @@
 
 import os
 import time
+import threading
 from subprocess import check_output,call, Popen, PIPE, DEVNULL
 from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject, QUrl, QUrlQuery
 
@@ -68,7 +69,9 @@ class Wifi(QObject):
         self._networks = WifiNetworkModel()
         self.found_devices = []
         self.read_signal()
-        self.scan_wifi('wlan1')
+
+        if len(self.found_devices) > 0:
+            self.scan_wifi()
 
     def update(self):
         self.read_signal()
@@ -84,30 +87,38 @@ class Wifi(QObject):
     def networks(self):
            return self._networks
 
-    @Slot(str)
-    def scan_wifi(self, device=''):
-        networks = []
-        retry = 5
-        while retry > 0:
+    @Slot(None)
+    def scan_wifi(self):
+
+        scanthread = threading.Thread(target=self._scan_wifi)
+        scanthread.start()
+
+    def _scan_wifi(self):
+       networks = []
+
+       for device in self.found_devices:
+         retry = 20
+         while retry > 0:
             try:
              if b'OK' in check_output(["wpa_cli","-i", device, "scan"], stderr=DEVNULL):
                 retry = 0
-                print('ok in wpa_cli scan')
+
                 record_details = Popen(["wpa_cli","-i", device, "scan_results"], stdout=PIPE).communicate()[0].decode()
                 record_details = record_details.strip().split('\n')
                 record_details.pop(0)
 
                 for record in record_details:
                     record = record.split('\t')
-                    networks.append( {'bssid':record[0], 'frequency':record[1], 'signal': record[2].rstrip('.'), 'flags': record[3], 'ssid': record[4]})
+                    networks.append( {'device':device,'bssid':record[0], 'frequency':record[1], 'signal': record[2].rstrip('.'), 'flags': record[3], 'ssid': record[4]})
 
-                self._networks = WifiNetworkModel(networks)
-
-                self.networksChanged.emit()
-             else: time.sleep(1)
+             else:
+                 time.sleep(0.3)
+                 retry -= 1
             except:
                 retry -=1
-                print('missing rights for wpa_cli')
+                print('wpa_cli error')
+       self._networks = WifiNetworkModel(networks)
+       self.networksChanged.emit()
 
     @Slot(str,str,str,str,str)
     def write_settings(self,device='',flags='',bssid='',ssid='',passwd=''):

@@ -8,8 +8,23 @@ import "../fonts/"
 Item {
     anchors.fill: parent
 
+
+
+
 Column{
     anchors.fill:parent
+
+    Button {
+
+    text: 'SCAN'
+    font.pointSize: 20
+    onClicked: { busy.running = true
+                 wifi.scan_wifi()
+
+               }
+    }
+
+
 
     Text {
     id: inputtitle
@@ -25,8 +40,10 @@ Column{
             clip: true
             orientation: Qt.Vertical
             id: inputsview
+            onModelChanged: {busy.running = false}
 
             model: wifi.networks
+
             delegate: inputDelegate
 
             Component {
@@ -42,6 +59,7 @@ Column{
                     Row {
 
                         spacing: 10
+                        leftPadding: 10
                         height: parent.height
 
 
@@ -55,13 +73,13 @@ Column{
                             padding: 2
 
                             background: Rectangle {
-                                implicitWidth: 200
+                                implicitWidth: 100
                                 implicitHeight: 20
                                 color: "#e6e6e6"
                                 radius: 3
                             }
                             contentItem: Item {
-                                    implicitWidth: 200
+                                    implicitWidth: 100
                                     implicitHeight: 16
 
                                     Rectangle {
@@ -107,5 +125,13 @@ Column{
         }
 
 
+}
+BusyIndicator {
+    width: parent.width/3
+    height: width
+
+    anchors.centerIn: parent
+    id: busy
+    running: true
 }
 }
