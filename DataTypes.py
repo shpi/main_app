@@ -1,6 +1,10 @@
+from iio import ChannelType
+
+
 class DataType(Enum):
     """
-    Define property values with a data type allows them to get announced and accessed easier.
+    Define property values with a data type allows them to
+    get announced and accessed easier.
     Also checks and conversions may rely on that.
     """
 
@@ -18,7 +22,7 @@ class DataType(Enum):
     TIME = 6  # time object (without date)
     DATETIME = 7  # datetime object
     TIMERANGE = 8  # Range between two times (timedelta)
-    TIMESTAMP = 9 # seconds since poch
+    TIMESTAMP = 9  # Seconds since poch
 
     # Fix range types
     PERCENT_FLOAT = 10  # float, 0.-100.
@@ -34,17 +38,17 @@ class DataType(Enum):
     HUMIDITY = 23  # float, 0-100
     PRESENCE = 24  # bool
     ONOFF = 25  # bool
-    COUNT = 26 # integer
-    FAN = 27 # rpm
-    ACCELERATION = 28 # m seconds squared
-    VELOCITY = 29 # meter per second
-    MAGNETOMETER = 30 # milli gauss
-    ROTATION = 31 # degrees
-    PROXIMITY = 32 # meters
-    PHINDEX = 33 # -1.0  ... 15.0
-    CONCENTRATION = 34 # parts per million
-    UVINDEX = 35 #
-    GRAVITY = 36 #
+    COUNT = 26  # integer
+    FAN = 27  # rpm
+    ACCELERATION = 28  # m seconds squared
+    VELOCITY = 29  # meter per second
+    MAGNETOMETER = 30  # milli gauss
+    ROTATION = 31  # degrees
+    PROXIMITY = 32  # meters
+    PHINDEX = 33  # -1.0  ... 15.0
+    CONCENTRATION = 34  # parts per million
+    UVINDEX = 35  #
+    GRAVITY = 36  #
 
     # Electricity (from sensors)
     CURRENT = 40  # float, Ampere
@@ -54,8 +58,8 @@ class DataType(Enum):
     INDUCTANCE = 44  # float, Henry
     POWER = 45  # float, mW (Watts)
     WORK = 46  # float, Wh (Watt-Hours)
-    ENERGY = 47 # microjoule
-    CONDUCTIVITY = 48 #
+    ENERGY = 47  # microjoule
+    CONDUCTIVITY = 48  #
 
     # Filesystem sizes
     BYTES = 50
@@ -68,38 +72,35 @@ class DataType(Enum):
     # Too special
     WEBREQUEST = 60
 
-
-from iio import ChannelType
-
 class Convert:
 
     _mapping_iio_shpi = {
+    ChannelType.IIO_VOLTAGE : DataType.VOLTAGE,
+    ChannelType.IIO_CURRENT : DataType.CURRENT,
+    ChannelType.IIO_POWER : DataType.POWER,
+    ChannelType.IIO_ACCEL : DataType.ACCELERATION,
+    ChannelType.IIO_MAGN : DataType.MAGNETOMETER,
+    ChannelType.IIO_LIGHT : DataType.ILLUMINATION,
+    ChannelType.IIO_INTENSITY : DataType.ILLUMINATION,
+    ChannelType.IIO_PROXIMITY : DataType.PROXIMITY,
+    ChannelType.IIO_TEMP : DataType.TEMPERATURE,
+    ChannelType.IIO_ROT : DataType.ROTATION,
+    ChannelType.IIO_ANGL : DataType.ANGLE,
+    ChannelType.IIO_TIMESTAMP : DataType.TIMESTAMP,
+    ChannelType.IIO_CAPACITANCE : DataType.CAPACITANCE,
+    ChannelType.IIO_PRESSURE : DataType.PRESSURE,
+    ChannelType.IIO_HUMIDITYRELATIVE : DataType.HUMIDITY,
+    ChannelType.IIO_STEPS : DataType.COUNT,
+    ChannelType.IIO_ENERGY : DataType.ENERGY,
+    ChannelType.IIO_DISTANCE : DataType.PROXIMITY,  #  ??
+    ChannelType.IIO_VELOCITY : DataType.VELOCITY,
+    ChannelType.IIO_CONCENTRATION : DataType.CONCENTRATION,
+    ChannelType.IIO_RESISTANCE : DataType.RESISTANCE,
+    ChannelType.IIO_PH : DataType.PHINDEX,
+    ChannelType.IIO_UVINDEX : DataType.UVINDEX,
+    ChannelType.IIO_ELECTRICALCONDUCTIVITY : DataType.CONDUCTIVITY,
+    ChannelType.IIO_COUNT : DataType.COUNT,
+    ChannelType.IIO_GRAVITY : DataType.GRAVITY
+    }
 
-
-ChannelType.IIO_VOLTAGE : DataType.VOLTAGE,
-ChannelType.IIO_CURRENT = 1
-ChannelType.IIO_POWER = 2
-ChannelType.IIO_ACCEL = 3
-ChannelType.IIO_MAGN = 5
-ChannelType.IIO_LIGHT = 6     ??
-ChannelType.IIO_INTENSITY = 7 ??
-ChannelType.IIO_PROXIMITY = 8
-    IIO_TEMP = 9
-    IIO_ROT = 11
-    IIO_ANGL = 12
-    IIO_TIMESTAMP = 13
-    IIO_CAPACITANCE = 14
-    IIO_PRESSURE = 17
-    IIO_HUMIDITYRELATIVE = 18
-    IIO_STEPS = 20
-    IIO_ENERGY = 21
-    IIO_DISTANCE = 22
-    IIO_VELOCITY = 23
-    IIO_CONCENTRATION = 24
-    IIO_RESISTANCE = 25
-    IIO_PH = 26
-    IIO_UVINDEX = 27
-    IIO_ELECTRICALCONDUCTIVITY = 28
-    IIO_COUNT = 29
-    IIO_GRAVITY = 31
-
+ 

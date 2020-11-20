@@ -1,0 +1,66 @@
+import QtQuick 2.12
+import QtQuick.Controls 2.12
+
+Item {
+    anchors.fill: parent
+
+Column{
+    anchors.fill:parent
+
+    Text {
+    id: inputtitle
+    width: parent.width
+    text: 'Available WifiNetworks'
+    font.pointSize: 12
+    }
+
+       ListView {
+
+            height: parent.height - inputtitle.height
+            width:parent.width
+            clip: true
+            orientation: Qt.Vertical
+            id: inputsview
+
+            model: wifi.networks
+            delegate: inputDelegate
+
+            Component {
+                id: inputDelegate
+
+                Rectangle {
+                    property int delindex: index
+                    id: wrapper
+                    height: 60
+                    width: inputsview.width
+                    color: index % 2 === 0 ? "lightgrey" : "white"
+                    Row {
+
+                        spacing: 10
+                        height: parent.height
+
+                         Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: '<b>' + SSID + '</b> ' + Flags + ', ' + Signal + ': ' + Frequency
+                            font.pointSize: 8
+
+                        }
+
+                         TextField {
+                         anchors.verticalCenter: parent.verticalCenter
+
+                         font.pointSize: 8
+                         placeholderText: (output == '1' ? value.toString() : '')
+                         onEditingFinished: inputs.set(path,this.text)
+
+
+                         }
+
+                    }
+                }
+            }
+        }
+
+
+}
+}
