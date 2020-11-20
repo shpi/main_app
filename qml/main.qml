@@ -137,6 +137,11 @@ ApplicationWindow {
         anchors.bottom: inputPanel.top
 
         Loader {
+            id: wifiSlide
+            source: "Wifi.qml"
+        }
+
+        Loader {
             id: inputSlide
             source: "Inputs.qml"
         }
@@ -176,12 +181,31 @@ ApplicationWindow {
         y: Qt.inputMethod.visible ? parent.height - inputPanel.height : parent.height
         anchors.left: parent.left
         anchors.right: parent.right
+
+        Rectangle {
+        visible: Qt.inputMethod.visible
+        anchors.bottom: parent.top
+        width: parent.width
+        height: 50
+        color: 'black'
+        Text {
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.top: parent.top
+        padding: 2
+        anchors.left: parent.left
+        anchors.leftMargin: this.width > parent.width ? parent.width - this.width : 5
+        color: 'white'
+        text:   InputContext.surroundingText
+        font.pointSize: 15
+        }
+        }
     }
 
     Text {
 
         anchors.bottom: view.bottom
         anchors.right: view.right
+
         anchors.rightMargin: 30
         font.family: localFont.name
         font.pointSize: 50

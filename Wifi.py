@@ -32,9 +32,16 @@ class WifiNetworkModel(QAbstractListModel):
             elif role == WifiNetworkModel.SignalRole:
                 return Wifi.dbmtoperc[int(item["signal"])]
             elif role == WifiNetworkModel.FlagsRole:
-                return item["flags"]
+                if 'WPA' in item['flags'] or 'WEP' in item['flags']:
+                    return 1
+                else:
+                    return 0
+
             elif role == WifiNetworkModel.FrequencyRole:
-                return item["frequency"]
+                if int(item["frequency"]) in Wifi.freqtochn:
+                    return Wifi.freqtochn[int(item["frequency"])]
+                else:
+                    return item["frequency"]
 
     def roleNames(self):
 
@@ -184,6 +191,47 @@ class Wifi(QObject):
                          -23: 99,  -48: 81, -73: 44, -98: 1,
                          -24: 98,  -49: 80, -74: 42, -99: 1,
                          -25: 98,  -50: 79, -75: 40, -100: 1}
+
+    freqtochn = {2412:'2.4GHz 1',2417:'2.4GHz 2',
+                 2422:'2.4GHz 3', 2427:'2.4GHz 4',
+                 2432:'2.4GHz 5', 2437:'2.4GHz 6',
+                 2442:'2.4GHz 7',2447:'2.4GHz 8',
+                 2452:'2.4GHz 9',2457:'2.4GHz 10',
+                 2462:'2.4GHz 11',2467:'2.4GHz 12',
+                 2472:'2.4GHz 13',2484:'2.4GHz 14',
+                 5035: '5GHz 7',5040: '5GHz 8',
+                 5045: '5GHz 9',5055: '5GHz 11',
+                 5060: '5GHz 12',5080: '5GHz 16',
+                 5160: '5GHz 32',5170: '5GHz 34',
+                 5180: '5GHz 36',5190: '5GHz 38',
+                 5200: '5GHz 40',5210: '5GHz 42',
+                 5220: '5GHz 44',5230: '5GHz 46',
+                 5240: '5GHz 48',5250: '5GHz 50',
+                 5260: '5GHz 52',5270: '5GHz 54',
+                 5280: '5GHz 56',5290: '5GHz 58',
+                 5300: '5GHz 60',5310: '5GHz 62',
+                 5320: '5GHz 64',5340: '5GHz 68',
+                 5480: '5GHz 96',5500: '5GHz 100',
+                 5510: '5GHz 102',5520: '5GHz 104',
+                 5530: '5GHz 106',5540: '5GHz 108',
+                 5550: '5GHz 110',5560: '5GHz 112',
+                 5570: '5GHz 114',5580: '5GHz 116',
+                 5590: '5GHz 118',5600: '5GHz 120',
+                 5610: '5GHz 122',5620: '5GHz 124',
+                 5630: '5GHz 126',5640: '5GHz 128',
+                 5660: '5GHz 132',5670: '5GHz 134',
+                 5680: '5GHz 136',5690: '5GHz 138',
+                 5700: '5GHz 140',5710: '5GHz 142',
+                 5720: '5GHz 144',5745: '5GHz 149',
+                 5755: '5GHz 151',5765: '5GHz 153',
+                 5775: '5GHz 155',5785: '5GHz 157',
+                 5795: '5GHz 159',5805: '5GHz 161',
+                 5825: '5GHz 165',5845: '5GHz 169',
+                 5865: '5GHz 173',4915: '5GHz 183',
+                 4920: '5GHz 184',4925: '5GHz 185',
+                 4935: '5GHz 187',4940: '5GHz 188',
+                 4945: '5GHz 189',4960: '5GHz 192',
+                 4980: '5GHz 196'}
 
 
 def main():

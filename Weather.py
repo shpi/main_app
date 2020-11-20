@@ -303,8 +303,12 @@ class WeatherWrapper(QObject):
             self.weatherinputs[self.path + '/current_pop']['value'] = float(d["current"]["pop"]) if 'pop' in d["current"] else 0
             self.weatherinputs[self.path + '/current_uvi']['value'] = float(d["current"]["uvi"])
 
-            self.weatherinputs[self.path + '/current_rain']['value'] = float(str(d["current"]["rain"])) if 'rain' in d["current"] else 0
-
+            if 'rain' in d["current"]:
+                if isinstance(d["current"]["rain"], dict) and '1h' in d["current"]["rain"]:
+                    self.weatherinputs[self.path + '/current_rain']['value'] = float(str(d["current"]["rain"]['1h']))
+                elif isintance(d["current"]["rain"], float):
+                    self.weatherinputs[self.path + '/current_rain']['value'] = float(str(d["current"]["rain"]))
+                
 
             self.weatherinputs[self.path + '/current_temp']['value'] = float(d["current"]["temp"])
             self.weatherinputs[self.path + '/current_temp']['lastupdate'] = float(d["current"]["dt"])

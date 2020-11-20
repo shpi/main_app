@@ -92,7 +92,7 @@ class InputDevs:
 
                     try:
                         self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['value'] = value
-                        self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = timestamp
+                        self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = time.time()
                         self.inputs[f'dev/{str(id)}']['lastupdate'] = timestamp
 
                         if 'interrupts' in self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']:

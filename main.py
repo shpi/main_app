@@ -2,12 +2,12 @@
 import os
 
 os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
-os.environ["QT_QPA_PLATFORM"] = "eglfs"
-os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
-os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
-os.environ["GST_DEBUG"] = "omx:4"
-os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
-os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
+#os.environ["QT_QPA_PLATFORM"] = "eglfs"
+#os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
+#os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
+#os.environ["GST_DEBUG"] = "omx:4"
+#os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
+#os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
 
 
 import signal
@@ -28,7 +28,9 @@ from InputDevs import InputDevs
 from System import SystemInfo
 from Leds import Led
 from Alsa import AlsaMixer
-from IIO import IIO
+from Wifi import Wifi
+
+# from IIO import IIO
 
 logging.basicConfig(
     # filename='debug.log',
@@ -88,10 +90,12 @@ weather.append(WeatherWrapper('weather', settings))
 backlight = Backlight()
 hwmon = HWMon()
 inputs = InputsDict()
-iio = IIO()
+#iio = IIO()
 leds = Led()
 alsamixer = AlsaMixer()
-inputs.add(iio.get_inputs())
+wifi = Wifi()
+
+#inputs.add(iio.get_inputs())
 inputs.add(alsamixer.get_inputs())
 inputs.add(leds.get_inputs())
 inputs.add(hwmon.get_inputs())
@@ -117,6 +121,7 @@ if __name__ == "__main__":
 
     engine.rootContext().setContextProperty("inputs", inputs)
     engine.rootContext().setContextProperty('weather', weather)
+    engine.rootContext().setContextProperty('wifi', wifi)
 
     engine.rootContext().setContextProperty("backlight", backlight)
     setup_interrupt_handling()

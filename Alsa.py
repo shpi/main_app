@@ -13,6 +13,7 @@ class AlsaMixer:
         super(AlsaMixer, self).__init__()
         self.recorder = dict()
         self.cards = self.get_cards()
+        
 
     def update(self):
 
@@ -48,8 +49,10 @@ class AlsaMixer:
     def get_cards(self):
         system_cards = []
         try:
-            with open("/proc/asound/cards", 'rt') as f:
-                for line in f.readlines():
+            with open("/proc/asound/cards", 'r') as f:
+                line = True
+                while line:
+                    line = f.readline()
                     if ']:' in line:
                         system_cards.append(line.strip())
         except IOError as e:
@@ -73,6 +76,7 @@ class AlsaMixer:
                                     'type': 'bool'}
                 cards.update(self.get_recording(card_name))
                 cards.update(self.get_controls(card_name))
+                
              #card_detail = Popen(["amixer", "-D", "hw:" + card_name, "info"], stdout=PIPE).communicate()[0]
         return cards
 
