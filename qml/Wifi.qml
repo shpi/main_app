@@ -41,16 +41,44 @@ Column{
 
                          Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: '<b>' + SSID + '</b> ' + Flags + ', ' + Signal + ': ' + Frequency
+                            text: '<b>' + ssid + '</b> ' + flags + ',  ' + frequency
                             font.pointSize: 8
 
                         }
 
+                         ProgressBar {
+                             id: wifiStrength
+                             anchors.verticalCenter: parent.verticalCenter
+                             from: 0
+                             to: 100
+                             value: signal
+
+                             padding: 2
+
+                             background: Rectangle {
+                                 implicitWidth: 200
+                                 implicitHeight: 20
+                                 color: "#e6e6e6"
+                                 radius: 3
+                             }
+                             contentItem: Item {
+                                     implicitWidth: 200
+                                     implicitHeight: 16
+
+                                     Rectangle {
+                                         width: wifiStrength.visualPosition * parent.width
+                                         height: parent.height
+                                         radius: 2
+                                         color: "#17a81a"
+                                     }
+                                 }
+                         }
+
                          TextField {
                          anchors.verticalCenter: parent.verticalCenter
-
+                         visible: false
                          font.pointSize: 8
-                         placeholderText: (output == '1' ? value.toString() : '')
+                         placeholderText: 'password please'
                          onEditingFinished: inputs.set(path,this.text)
 
 

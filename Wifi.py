@@ -15,7 +15,7 @@ class WifiNetworkModel(QAbstractListModel):
 
     def __init__(self, entries=[], active='', parent=None):
         super(WifiNetworkModel, self).__init__(parent)
-        self._entries = []
+        self._entries = entries
 
     def rowCount(self, parent=QModelIndex()):
         if parent.isValid():
@@ -30,7 +30,7 @@ class WifiNetworkModel(QAbstractListModel):
             elif role == WifiNetworkModel.SSIDRole:
                 return item["ssid"]
             elif role == WifiNetworkModel.SignalRole:
-                return Wifi.dbmtoperc[item["signal"]]
+                return Wifi.dbmtoperc[int(item["signal"])]
             elif role == WifiNetworkModel.FlagsRole:
                 return item["flags"]
             elif role == WifiNetworkModel.FrequencyRole:
@@ -38,11 +38,11 @@ class WifiNetworkModel(QAbstractListModel):
 
     def roleNames(self):
 
-        roles = {WifiNetworkModel.BSSIDRole: b"BSSID",
-                 WifiNetworkModel.SSIDRole: b"SSID",
-                 WifiNetworkModel.FlagsRole: b"Flags",
-                 WifiNetworkModel.SignalRole: b"Signal",
-                 WifiNetworkModel.FrequencyRole: b"Frequency"}
+        roles = {WifiNetworkModel.BSSIDRole: b"bssid",
+                 WifiNetworkModel.SSIDRole: b"ssid",
+                 WifiNetworkModel.FlagsRole: b"flags",
+                 WifiNetworkModel.SignalRole: b"signal",
+                 WifiNetworkModel.FrequencyRole: b"frequency"}
 
         return roles
 
@@ -83,11 +83,11 @@ class Wifi(QObject):
         retry = 5
         while retry > 0:
             try:
-             if b'OK' in check_output(["sudo","wpa_cli","-i", device, "scan"], stderr=DEVNULL):
+             if b'OK' in check_output(["wpa_cli","-i", device, "scan"], stderr=DEVNULL):
                 retry = 0
-                record_details = Popen(["sudo","wpa_cli","-i", device, "scan_results"], stdout=PIPE).communicate()[0].decode()
+                print('ok in wpa_cli scan')
+                record_details = Popen(["wpa_cli","-i", device, "scan_results"], stdout=PIPE).communicate()[0].decode()
                 record_details = record_details.strip().split('\n')
-                record_details.pop(0)
                 record_details.pop(0)
 
                 for record in record_details:
@@ -95,7 +95,9 @@ class Wifi(QObject):
                     networks.append( {'bssid':record[0], 'frequency':record[1], 'signal': record[2].rstrip('.'), 'flags': record[3], 'ssid': record[4]})
 
                 self._networks = WifiNetworkModel(networks)
+
                 self.networksChanged.emit()
+             else: time.sleep(1)
             except:
                 retry -=1
                 print('missing rights for wpa_cli')
