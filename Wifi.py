@@ -13,10 +13,12 @@ class WifiNetworkModel(QAbstractListModel):
     SignalRole = Qt.UserRole + 1002
     FlagsRole = Qt.UserRole + 1003
     FrequencyRole = Qt.UserRole + 1004
+    PasswordRole = Qt.UserRole + 1005
 
-    def __init__(self, entries=[], active='', parent=None):
+    def __init__(self, entries=[],settings: QSettings = None, active='', parent=None):
         super(WifiNetworkModel, self).__init__(parent)
         self._entries = entries
+        self.settings = settings
 
     def rowCount(self, parent=QModelIndex()):
         if parent.isValid():
@@ -33,10 +35,16 @@ class WifiNetworkModel(QAbstractListModel):
             elif role == WifiNetworkModel.SignalRole:
                 return Wifi.dbmtoperc[int(item["signal"])]
             elif role == WifiNetworkModel.FlagsRole:
-                if 'WPA' in item['flags'] or 'WEP' in item['flags']:
-                    return 1
+                if 'WPA2' in item['flags']:
+                    return 'WPA2'
+                elif 'WPA' in item['flags']:
+                    return 'WPA'
+                elif 'WEP' in item['flags']:
+                    return 'WEP'
                 else:
-                    return 0
+                    return 'OPEN'
+            elif role == WifiNetworkModel.PasswordRole:
+                    return self.settings.value("wifi/password/" + item["bssid"], "")
 
             elif role == WifiNetworkModel.FrequencyRole:
                 if int(item["frequency"]) in Wifi.freqtochn:
@@ -50,6 +58,7 @@ class WifiNetworkModel(QAbstractListModel):
                  WifiNetworkModel.SSIDRole: b"ssid",
                  WifiNetworkModel.FlagsRole: b"flags",
                  WifiNetworkModel.SignalRole: b"signal",
+                 WifiNetworkModel.PasswordRole: b"password",
                  WifiNetworkModel.FrequencyRole: b"frequency"}
 
         return roles
@@ -62,22 +71,33 @@ class WifiNetworkModel(QAbstractListModel):
 
 class Wifi(QObject):
 
-    def __init__(self, parent: QObject = None):
+    def __init__(self, settings: QSettings = None, parent: QObject = None):
 
         super(Wifi, self).__init__(parent)
+        self.settings = settings
         self.inputs = dict()
-        self._networks = WifiNetworkModel()
+
+        self._networks = WifiNetworkModel([],self.settings)
         self.found_devices = []
         self.read_signal()
 
-        if len(self.found_devices) > 0:
-            self.scan_wifi()
+        for device in self.found_devices:
+            self.scan_wifi(device)
 
     def update(self):
         self.read_signal()
 
     def get_inputs(self) -> dict:
         return self.inputs
+
+    @Signal
+    def devicesChanged(self):
+           pass
+
+    @Property('QVariantList', notify=devicesChanged)
+    def devices(self):
+           return self.found_devices
+
 
     @Signal
     def networksChanged(self):
@@ -87,16 +107,15 @@ class Wifi(QObject):
     def networks(self):
            return self._networks
 
-    @Slot(None)
-    def scan_wifi(self):
+    @Slot(str)
+    def scan_wifi(self,device):
 
-        scanthread = threading.Thread(target=self._scan_wifi)
+        scanthread = threading.Thread(target=self._scan_wifi,args=(device,))
         scanthread.start()
 
-    def _scan_wifi(self):
-       networks = []
-
-       for device in self.found_devices:
+    def _scan_wifi(self,device):
+         networks = []
+         #for device in self.found_devices:
          retry = 20
          while retry > 0:
             try:
@@ -117,19 +136,33 @@ class Wifi(QObject):
             except:
                 retry -=1
                 print('wpa_cli error')
-       self._networks = WifiNetworkModel(networks)
-       self.networksChanged.emit()
+         self._networks = WifiNetworkModel(networks,self.settings)
+         self.networksChanged.emit()
 
-    @Slot(str,str,str,str,str)
-    def write_settings(self,device='',flags='',bssid='',ssid='',passwd=''):
+    @Slot(str,result=str)
+    def wpa_status(self,device):
+        #wpa_state=DISCONNECTED
+        #ip_address=
+        #bssid=44:4e:6d:2e:00:53
+        output = check_output(['wpa_cli','-i',device,'status']).split(b'\n')
+        for line in output:
+            if line.startswith(b'wpa_state='):
+                return line[10:].rstrip().decode()
+        return 'UNKNOWN'
 
+
+
+    @Slot(str,str,str,str,str,bool)
+    def write_settings(self,device='wlan0',flags='',bssid='',ssid='',passwd='',fixbssid=False):
+
+        self.settings.setValue("wifi/password/" + bssid, passwd)
         with open('/etc/wpa_supplicant/wpa_supplicant.conf', 'w') as f:
             f.write('country=US\n')
             f.write('ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\n')
             f.write('update_config=1\n')
             f.write('network={\n')
             f.write('ssid="' + ssid + '"\n')
-            if bssid != '':    f.write('bssid="' + bssid + '"\n')
+            if fixbssid:    f.write('bssid="' + bssid + '"\n')
             if 'ssid' == '':  f.write('scan_ssid=1\n')
 
             if   'WPA2' in flags:    f.write('psk="' + passwd + '"\n')
@@ -144,8 +177,9 @@ class Wifi(QObject):
             else:                  f.write('key_mgmt=NONE\n')
 
             f.write('}')
-            call(['wpa_cli','-i', device, 'reconfigure'])
-            call(['dhclient', device])
+            for device in self.found_devices:
+                call(['wpa_cli','-i', device, 'reconfigure'])
+                call(['dhclient', device])
             # systemctl restart dhcpcd
 
 
@@ -175,6 +209,7 @@ class Wifi(QObject):
                         self.inputs[f'wifi/{device}/link']['lastupdate'] = time.time()
 
             rf.close()
+            self.devicesChanged.emit()
 
 
     dbmtoperc =         {-1: 100,  -26: 98, -51: 78, -76: 38,

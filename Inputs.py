@@ -183,10 +183,25 @@ class InputsDict(QObject):
             if key in self.entries and 'set' in self.entries[key]:
              if self.entries[key]['type'] == 'percent':
                  self.entries[key]['set'](float(value))
-             if self.entries[key]['type'] == 'int':
+             if self.entries[key]['type'] == 'integer':
                  self.entries[key]['set'](int(value))
-             if self.entries[key]['type'] == 'int_list':
+             if self.entries[key]['type'] == 'integer_list':
+                  if isinstance(value, list):
                      self.entries[key]['set'](value)
+                  elif ',' in value:
+                      values = []
+                      for subvalue in value.split(','):
+                          try:
+                              subvalue = int(subvalue)
+                              values.append(subvalue)
+                          except:
+                              pass
+                          self.entries[key]['set'](values)
+                  else:
+                      value = [int(value)]
+                      self.entries[key]['set'](value)
+
+
              if self.entries[key]['type'] == 'bool_list':
                  if isinstance(value, list):
                      self.entries[key]['set'](value)
@@ -194,8 +209,8 @@ class InputsDict(QObject):
                      values = []
                      for subvalue in value.split(','):
                          try:
-                             value = [True if (value == 'true' or value == '1') else False]
-                             values.append(value)
+                             subvalue = True if (subvalue == 'true' or subvalue == '1') else False
+                             values.append(subvalue)
                          except:
                              pass
                          self.entries[key]['set'](values)

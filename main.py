@@ -30,7 +30,7 @@ from Leds import Led
 from Alsa import AlsaMixer
 from Wifi import Wifi
 
-# from IIO import IIO
+from IIO import IIO
 
 logging.basicConfig(
     # filename='debug.log',
@@ -90,12 +90,12 @@ weather.append(WeatherWrapper('weather', settings))
 backlight = Backlight()
 hwmon = HWMon()
 inputs = InputsDict()
-#iio = IIO()
+iio = IIO()
 leds = Led()
 alsamixer = AlsaMixer()
-wifi = Wifi()
+wifi = Wifi(settings)
 
-#inputs.add(iio.get_inputs())
+inputs.add(iio.get_inputs())
 inputs.add(alsamixer.get_inputs())
 inputs.add(leds.get_inputs())
 inputs.add(hwmon.get_inputs())

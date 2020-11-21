@@ -11,14 +11,16 @@ class IIO:
     """Class for retrieving the requested information."""
 
     def __init__(self):
-
-        self.context = iio.Context('local:')
         self.inputs = dict()
-        self.path = 'iio'
-        #print("IIO context has %u devices:" % len(self.context.devices))
+        try:
+         self.context = iio.Context('local:')
+         self.path = 'iio'
+         #print("IIO context has %u devices:" % len(self.context.devices))
 
-        for dev in self.context.devices:
-            self._device_info(dev)
+         for dev in self.context.devices:
+             self._device_info(dev)
+        except:
+            pass
 
     def get_inputs(self) -> dict:
         return self.inputs

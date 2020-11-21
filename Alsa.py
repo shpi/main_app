@@ -193,12 +193,17 @@ class AlsaMixer:
 
     @staticmethod
     def change_control(card_name, num_id, type, settings):
+        print(settings)
+
         if type == 'integer_list':
+            print('integer_list')
             command = ['amixer','-D', 'hw:' + str(card_name), "cset", "numid=%s" % num_id, "--", ','.join(str(x) for x in settings)]
         elif type == 'bool_list':
+            print('bool_list')
             command = ['amixer','-D', 'hw:' + str(card_name), "cset", "numid=%s" % num_id, "--", ','.join(('on' if x == True else 'off') for x in settings)]
         elif type == 'enum':
             command = ['amixer','-D', 'hw:' + str(card_name), "cset", "numid=%s" % num_id, "--", str(settings)]
+        print(command)
         call(command)
         if os.geteuid() == 0:
            call(["alsactl", "store"])

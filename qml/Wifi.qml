@@ -10,16 +10,38 @@ Item {
 
 
 
+    ComboBox {
+
+        id: actualDevice
+        anchors.top: parent.top
+        anchors.right: parent.right
+        width: 200
+        model: wifi.devices
+        visible: (wifi.devices.length) > 1 ? true : false
+    }
+
+
+    Text {
+
+        anchors.horizontalCenter: parent.horizontalCenter
+
+    text: actualDevice.currentText != '' ? wifi.wpa_status(wifi.devices[actualDevice.currentIndex]) : ''
+
+    }
+
 
 Column{
+    padding: 5
     anchors.fill:parent
 
-    Button {
+    RoundButton {
 
+    padding: 5
+    radius: 10
     text: 'SCAN'
     font.pointSize: 20
     onClicked: { busy.running = true
-                 wifi.scan_wifi()
+                 wifi.scan_wifi(actualDevice.currentText)
 
                }
     }
@@ -29,18 +51,19 @@ Column{
     Text {
     id: inputtitle
     width: parent.width
-    text: 'Available WifiNetworks'
+    text: 'Available Wifi Networks:'
     font.pointSize: 12
     }
 
        ListView {
-
+            property int selectednetwork: -1
             height: parent.height - inputtitle.height
             width:parent.width
             clip: true
             orientation: Qt.Vertical
             id: inputsview
-            onModelChanged: {busy.running = false}
+            onModelChanged: {busy.running = false
+                             inputsview.selectednetwork = -1}
 
             model: wifi.networks
 
@@ -52,7 +75,8 @@ Column{
                 Rectangle {
                     property int delindex: index
                     id: wrapper
-                    height: 60
+
+                    height: inputsview.selectednetwork == index ? 160 : 60
                     width: inputsview.width
                     color: index % 2 === 0 ? "lightgrey" : "white"
 
@@ -60,7 +84,7 @@ Column{
 
                         spacing: 10
                         leftPadding: 10
-                        height: parent.height
+                        height: 60
 
 
                         ProgressBar {
@@ -95,7 +119,7 @@ Column{
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             text: '<b>' + ssid + '</b> ,  ' + frequency
-                            font.pointSize: 8
+                            font.pointSize: 9
 
                         }
 
@@ -105,22 +129,62 @@ Column{
                         text: flags ? Icons.locked : Icons.unlocked
                         font.pointSize: 10
                         font.family: localFont.name
-                        palette.buttonText: flags ?  "green" : "red"
+                        palette.buttonText: flags != 'OPEN'  ?  "green" : "red"
 
                         }
+}
+                        Row {
+                            width: parent.width
+                            height: 100
+                            padding: 10
+                            spacing: 10
+                            anchors.bottom: parent.bottom
+                            visible: inputsview.selectednetwork == index ? true : false
+                            id: wifiform
+
+                            Column {
+
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                height: parent.height
 
                          TextField {
-                         anchors.verticalCenter: parent.verticalCenter
-                         visible: false
-                         font.pointSize: 8
+                         id: wifipasswd
+                         width: 300
+                         font.pointSize: 10
                          placeholderText: 'password please'
-                         onEditingFinished: inputs.set(path,this.text)
+                         text: password != '' ? password : ''
 
 
                          }
 
-                    }
+                         CheckBox {
+
+                                id: bssidcheck
+                                checked: false
+                                text: qsTr("only this MAC")
+                            }
+                        }
+
+                         RoundButton {
+                             anchors.verticalCenter: parent.verticalCenter
+                             text: "Connect"
+                             font.pointSize: 15
+                             radius: 10
+                             onClicked: wifi.write_settings(actualDevice.currentText,flags,bssid,ssid,wifipasswd.text,bssidcheck.checked)
+                         }
+}
+
+
+                    MouseArea {         enabled: inputsview.selectednetwork != index ? true : false
+                                        anchors.fill: parent
+                                        onClicked: {inputsview.currentIndex = index
+                                                    inputsview.selectednetwork = index
+                                        }}
+
                 }
+
+
             }
         }
 
