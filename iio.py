@@ -759,7 +759,7 @@ class DeviceAttr(_Attr):
         self._device = device
 
     def _read(self):
-        buf = create_string_buffer(1024)
+        buf = create_string_buffer(2048)
         _d_read_attr(self._device, self._name_ascii, buf, len(buf))
         return buf.value.decode("ascii")
 

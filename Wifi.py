@@ -133,9 +133,10 @@ class Wifi(QObject):
              else:
                  time.sleep(0.3)
                  retry -= 1
-            except:
+            except Exception as e:
                 retry -=1
-                print('wpa_cli error')
+                print(["wpa_cli","-i", device, "scan"])
+                print(e)
          self._networks = WifiNetworkModel(networks,self.settings)
          self.networksChanged.emit()
 

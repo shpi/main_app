@@ -5,39 +5,40 @@ import os
 import iio
 import time
 from functools import partial
-
+from DataTypes import Convert, DataType
 
 class IIO:
     """Class for retrieving the requested information."""
 
     def __init__(self):
         self.inputs = dict()
-        try:
-         self.context = iio.Context('local:')
-         self.path = 'iio'
-         #print("IIO context has %u devices:" % len(self.context.devices))
+        self.context = iio.Context('local:')
+        self.path = 'iio'
+        #print("IIO context has %u devices:" % len(self.context.devices))
 
-         for dev in self.context.devices:
-             self._device_info(dev)
-        except:
-            pass
+        for dev in self.context.devices:
+            self._device_info(dev)
+        
+        
 
     def get_inputs(self) -> dict:
         return self.inputs
 
     @staticmethod
     def read_iio(id, channel):
-        if os.path.isfile(f'/sys/bus/iio/devices/{id}/{channel}'):
+        try:
+         if os.path.isfile(f'/sys/bus/iio/devices/{id}/{channel}'):
             with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
                 return (rf.read().rstrip())
                 rf.close()
+        except:
+           return read_iio(id,channel)
 
     def read_processed(id, channel, scale=1, offset=0):
         if os.path.isfile(f'/sys/bus/iio/devices/{id}/{channel}'):
             with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
                 value = scale * (int(rf.read().rstrip()) + offset)
-                #print(channel + ' ' + str(value))
-                return value
+                return (value)
                 rf.close()
 
 
@@ -56,23 +57,20 @@ class IIO:
 
         #print("\t\t%u channels found: " % len(dev.channels))
         for channel in dev.channels:
-            
 
-            if channel.type == iio.ChannelType.IIO_TEMP:
-               print('temperature')
-            else: print(channel.type)
+
             #print("\t\t\t%s: %s (%s)" % (channel.id, channel.name or "", "output" if channel.output else "input"))
             if len(channel.attrs) > 0:
                 self.inputs[f'{self.path}/{dev.name}/{channel.id}'] = dict()
                 self.inputs[f'{self.path}/{dev.name}/{channel.id}']['description'] = dev.name + ' ' + channel.id 
                 self.inputs[f'{self.path}/{dev.name}/{channel.id}']['lastupdate'] = 0
                 self.inputs[f'{self.path}/{dev.name}/{channel.id}']['interval'] = -1
-                self.inputs[f'{self.path}/{dev.name}/{channel.id}']['type'] = 'float'
+                self.inputs[f'{self.path}/{dev.name}/{channel.id}']['type'] = Convert.iio_to_shpi(channel.type)
 
                 #print("\t\t\t%u channel-specific attributes found: " % len(channel.attrs))
                 for channel_attr in channel.attrs:
                     path = channel.attrs[channel_attr].filename
-                    
+ 
                     #print(path)
                     #print("\t\t\t\t" + channel_attr + ", value: " + channel.attrs[channel_attr].value)
 
@@ -85,7 +83,6 @@ class IIO:
                     elif channel_attr == 'input':
                          self.inputs[f'{self.path}/{dev.name}/{channel.id}']['value'] = channel.attrs[channel_attr].value
                          self.inputs[f'{self.path}/{dev.name}/{channel.id}']['call'] = partial(IIO.read_iio, dev.id, path)
-                         self.inputs[f'{self.path}/{dev.name}/{channel.id}']['type'] = "float"
                          self.inputs[f'{self.path}/{dev.name}/{channel.id}']['interval'] = 10
 
                     elif channel_attr == 'raw':
@@ -104,7 +101,7 @@ class IIO:
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['value'] = channel.attrs[channel_attr].value.rstrip()
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['call'] = partial(IIO.read_iio, dev.id, path)
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['interval'] = 10
-                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['type'] = 'float'
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['type'] = DataType.FLOAT
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['description'] = channel.id + ' ' + channel_attr
                         #print(f'/sys/bus/iio/devices/{dev.id}/{path}')
 
@@ -145,15 +142,17 @@ class IIO:
 
                 elif device_attr.endswith('_available'):
 
-                        if f'{self.path}/{dev.name}/{device_attr[:-10]}' not in self.inputs:
-                            self.inputs[f'{self.path}/{dev.name}/{device_attr[:-10]}'] = {}
-                        self.inputs[f'{self.path}/{dev.name}/{device_attr[:-10]}']['available'] = dev.attrs[device_attr].value.split()
+                        if f'{self.path}/{dev.name}/{channel.id}/{device_attr[:-10]}' not in self.inputs:
+                            self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr[:-10]}'] = {}
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr[:-10]}']['available'] = dev.attrs[device_attr].value.split()
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr[:-10]}']['interval'] = 0
+
 
                 else:
                         if f'{self.path}/{dev.name}/{channel.id}/{device_attr}' not in self.inputs:
                             self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}'] = {}
-                 
-                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['type'] = 'unknown'
+ 
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['type'] = DataType.UNDEFINED
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['description'] = channel.id + ' ' + device_attr
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['value'] = dev.attrs[device_attr].value.rstrip()
 

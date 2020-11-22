@@ -2,6 +2,8 @@ from subprocess import Popen, PIPE
 from threading import Thread
 import socket
 import time
+from DataTypes import DataType
+
 
 class AlsaRecord:
 
@@ -18,7 +20,7 @@ class AlsaRecord:
         self.buffer = [b'' for x in range(self.buffersize)]
         self.rate = 44100
         self.input['interval'] = -1
-        self.input['type'] = 'percent'
+        self.input['type'] = DataType.PERCENT_INT
         self.input['lastupdate'] = 0
         self.input['description'] = card + ' mic volume'
         self.input['value'] = 0

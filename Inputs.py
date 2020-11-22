@@ -2,7 +2,7 @@
 import time
 from PySide2.QtCore import Qt, QModelIndex,QSortFilterProxyModel
 from PySide2.QtCore import QAbstractListModel, Property, Signal, Slot, QObject
-
+from DataTypes import Convert
 
 class InputListModel(QAbstractListModel):
     PathRole = Qt.UserRole + 1000
@@ -41,7 +41,7 @@ class InputListModel(QAbstractListModel):
             elif role == InputListModel.OutputRole:
                 return '1' if ('set' in item) else '0'
             elif role == InputListModel.TypeRole:
-                return item["type"]
+                return Convert.type_to_str(item["type"])
             elif role == InputListModel.DescriptionRole:
                 return item["description"]
             elif role == InputListModel.IntervalRole:

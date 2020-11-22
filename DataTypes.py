@@ -1,5 +1,5 @@
 from iio import ChannelType
-
+from enum import Enum
 
 class DataType(Enum):
     """
@@ -30,6 +30,7 @@ class DataType(Enum):
     FRAC = 12  # float 0.-1.
     BYTE = 13  # int, 0-255
     WORD = 14  # int, 0-65535
+    ENUM = 15
 
     # Special types (from sensors)
     TEMPERATURE = 20  # float, Celsius
@@ -49,6 +50,8 @@ class DataType(Enum):
     CONCENTRATION = 34  # parts per million
     UVINDEX = 35  #
     GRAVITY = 36  #
+    DIRECTION = 37 # degrees 0-360′
+    HEIGHT = 38 # mm 
 
     # Electricity (from sensors)
     CURRENT = 40  # float, Ampere
@@ -72,7 +75,73 @@ class DataType(Enum):
     # Too special
     WEBREQUEST = 60
 
+
+
 class Convert:
+
+    def iio_to_shpi(iio : ChannelType):
+
+        if iio in Convert._mapping_iio_shpi:
+            return Convert._mapping_iio_shpi[iio]
+        else:
+            return DataType.UNDEFINED
+
+    def type_to_str(datatype : DataType):
+
+        if datatype in Convert._mapping_type_str:
+           return Convert._mapping_type_str[datatype]
+        else:
+           return 'unknown'
+
+
+    _mapping_type_str = {DataType.UNDEFINED : 'undefined',
+                         DataType.FLOAT : 'float',
+                         DataType.INT : 'integer',
+                         DataType.BOOL : 'boolean',
+                         DataType.STRING : 'string',
+                         DataType.DATE : 'date',
+DataType.TIME : 'time',
+DataType.DATETIME : 'datetime',
+DataType.TIMERANGE : 'timerange',
+DataType.TIMESTAMP : 'timestamp',
+DataType.PERCENT_FLOAT : 'percent_float',
+DataType.PERCENT_INT : 'percent_int',
+DataType.FRAC : 'fracment',
+DataType.BYTE : 'byte',
+DataType.WORD : 'word',
+DataType.TEMPERATURE : 'temperature',
+DataType.ILLUMINATION : 'illumination',
+DataType.PRESSURE : 'pressure',
+DataType.HUMIDITY : 'humidity',
+DataType.PRESENCE : 'presence',
+DataType.ONOFF : 'on/off',
+DataType.COUNT : 'count',
+DataType.FAN : 'fan',
+DataType.ACCELERATION : 'acceleration',
+DataType.VELOCITY : 'velocity', 
+DataType.MAGNETOMETER : 'magnetometer',
+DataType.ROTATION : 'rotation',
+DataType.PROXIMITY : 'proximity',
+DataType.PHINDEX : 'phindex',
+DataType.CONCENTRATION : 'concentration',
+DataType.UVINDEX : 'uvindex',
+DataType.GRAVITY : 'gravity',
+DataType.CURRENT : 'current',
+DataType.VOLTAGE : 'voltage',
+DataType.RESISTANCE : 'resistance',
+DataType.CAPACITANCE : 'capacitance',
+DataType.INDUCTANCE : 'inductance',
+DataType.POWER : 'power',
+DataType.WORK : 'work',
+DataType.ENERGY : 'energy',
+DataType.CONDUCTIVITY : 'conductivity',
+DataType.BYTES : 'bytes',
+DataType.GPS_COORDS : 'gps coordinates',
+DataType.LATITUDE : 'latitude',
+DataType.LONGITUDE : 'longitude',
+DataType.WEBREQUEST : 'webrequest'}
+
+
 
     _mapping_iio_shpi = {
     ChannelType.IIO_VOLTAGE : DataType.VOLTAGE,
@@ -85,7 +154,7 @@ class Convert:
     ChannelType.IIO_PROXIMITY : DataType.PROXIMITY,
     ChannelType.IIO_TEMP : DataType.TEMPERATURE,
     ChannelType.IIO_ROT : DataType.ROTATION,
-    ChannelType.IIO_ANGL : DataType.ANGLE,
+    ChannelType.IIO_ANGL : DataType.ROTATION,
     ChannelType.IIO_TIMESTAMP : DataType.TIMESTAMP,
     ChannelType.IIO_CAPACITANCE : DataType.CAPACITANCE,
     ChannelType.IIO_PRESSURE : DataType.PRESSURE,
@@ -103,4 +172,4 @@ class Convert:
     ChannelType.IIO_GRAVITY : DataType.GRAVITY
     }
 
- 
+

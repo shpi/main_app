@@ -2,12 +2,12 @@
 import os
 
 os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
-#os.environ["QT_QPA_PLATFORM"] = "eglfs"
-#os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
-#os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
-#os.environ["GST_DEBUG"] = "omx:4"
-#os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
-#os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
+os.environ["QT_QPA_PLATFORM"] = "eglfs"
+os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
+os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
+os.environ["GST_DEBUG"] = "omx:4"
+os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
+os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
 
 
 import signal

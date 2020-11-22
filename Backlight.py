@@ -1,6 +1,7 @@
 import os
 from PySide2.QtCore import QObject, Property, Signal
 import time
+from DataTypes import DataType
 
 class Backlight(QObject):
 
@@ -26,7 +27,7 @@ class Backlight(QObject):
                         self.BL_POWER = 1
 
         self.blinputs['backlight/brightness'] = {"description" : 'BL brightness in %',
-                                                 "type" : 'percent',
+                                                 "type" : DataType.PERCENT_INT,
                                                  "interval" : 10, 
                                                  "lastupdate": 0,
                                                  "call" : self.get_brightness,

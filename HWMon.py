@@ -1,7 +1,7 @@
 import glob
 import os
 from functools import partial
-
+from DataTypes import DataType
 
 class HWMon:
 
@@ -28,7 +28,7 @@ class HWMon:
                     if (os.path.isfile(filename[0:-len(type)] + "label")):
                         with open(filename[0:-len(type)] + "label", 'r') as rf:
                             channel['description'] = (rf.read().rstrip())
-                    channel['type'] = ''
+                    channel['type'] = DataType.UNDEFINED
                     channel['path'] = filename
                     channel['rights'] = (os.stat(filename).st_mode & 0o777)
                     filename = filename.split('/')
@@ -37,24 +37,23 @@ class HWMon:
 
                     if type == 'input':
                         if channel['channel'].startswith('temp'):
-                            channel['type'] = 'temperature'
+                            channel['type'] = DataType.TEMPERATURE
                         elif channel['channel'].startswith('curr'):
-                            channel['type'] = 'current'
+                            channel['type'] = DataType.CURRENT
                         elif channel['channel'].startswith('in'):
-                            channel['type'] = 'voltage'
+                            channel['type'] = DataType.VOLTAGE
                         elif channel['channel'].startswith('power'):
-                            channel['type'] = 'power'
+                            channel['type'] = DataType.POWER
                         elif channel['channel'].startswith('humidity'):
-                            channel['type'] = 'humidity'
+                            channel['type'] = DataType.HUMIDITY
                         elif channel['channel'].startswith('fan'):
-                            channel['type'] = 'integer'
-                        else:
-                            channel['type'] = 'unknown'
+                            channel['type'] = DataType.FAN
+                        
 
                     if type == 'enable':
-                        channel['type'] = 'bool'
+                        channel['type'] = DataType.BOOL
                     if type == 'alarm':
-                        channel['type'] = 'bool'
+                        channel['type'] = DataType.BOOL
 
             for type in ('pwm', 'buzzer', 'relay'):
                 for filename in glob.iglob(f"/sys/class/hwmon/{sensor['id']}/{type}[0-9]"):
@@ -64,7 +63,7 @@ class HWMon:
 
                         with open(filename + "_label", 'r') as rf:
                             channel['description'] = (rf.read().rstrip())
-                    channel['type'] = 'byte' if (type == 'pwm') else 'bool'
+                    channel['type'] = DataType.BYTE  if (type == 'pwm') else DataType.BOOL
                     channel['path'] = filename
                     channel['rights'] = (os.stat(filename).st_mode & 0o777)
                     filename = filename.split('/')
@@ -74,8 +73,13 @@ class HWMon:
     def get_inputs(self) -> dict:
         hwmoninputs = dict()
         for key, value in self._hwmon.items():
+
             if (value['rights'] & 0o444 == 0o444):
                 hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"] = {"description" : value['description'],"rights" : value['rights'],"type" : value['type'],"call" : partial(self.read_hwmon, value['id'], value['channel'])}
+
+            if (value['rights'] == 0o644):
+                hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"]["set"] = partial(self.write_hwmon, value['id'], value['channel'])
+
         return hwmoninputs
 
     def read_hwmon(self, id, channel):
@@ -86,12 +90,6 @@ class HWMon:
         else:
             return False
 
-    def get_outputs(self) -> dict:
-        hwmonoutputs = dict()
-        for key, value in self._hwmon.items():
-            if (value['rights'] == 0o644):
-                hwmonoutputs[f"hwmon/{value['name']}/{value['channel']}"] = {"type": value['type'],"set" : partial(self.write_hwmon, value['id'], value['channel'])}
-        return hwmonoutputs
 
     def write_hwmon(self, id, channel, value):
         value = str(value)

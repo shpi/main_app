@@ -1,6 +1,7 @@
 import os
 import time
 from functools import partial
+from DataTypes import DataType
 
 class Led:
 
@@ -29,7 +30,7 @@ class Led:
                              self.leds[file]['max'] = (int)(max_led.readline())
                              self.inputs['leds/' + file] = {
                              'description' : 'brightness of led in %',
-                             'type' : 'percent',
+                             'type' : DataType.PERCENT_FLOAT,
                              'steps' : self.leds[file]['max'],
                              'value' : 100 / self.leds[file]['max'] * self.leds[file]['rawvalue'],
                              'lastupdate' : time.time(),

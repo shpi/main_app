@@ -5,6 +5,8 @@ import errno
 from subprocess import call, Popen, PIPE
 from functools import partial
 from AlsaRecord import AlsaRecord
+from DataTypes import DataType
+
 
 class AlsaMixer:
 
@@ -73,7 +75,7 @@ class AlsaMixer:
                                     'name': card_name,
                                     'value': True,
                                     'interval': -1,
-                                    'type': 'bool'}
+                                    'type': DataType.BOOL}
                 cards.update(self.get_recording(card_name))
                 cards.update(self.get_controls(card_name))
                 
@@ -137,7 +139,7 @@ class AlsaMixer:
             }
 
             if interface["type"] == b"ENUMERATED":
-                interface["type"] = "enum"
+                interface["type"] = DataType.ENUM
                 items = {}
                 for line in lines[2:-2]:
                     pcs = line.split(b" '")
@@ -145,18 +147,18 @@ class AlsaMixer:
                     name = pcs[1][:-1]
                     items[id] = name.decode()
                 interface["items"] = items
-                interface["value"] = []
+                interface["available"] = []
                 for value in lines[-2].replace(b"  : values=", b"").split(b","):
                     interface["value"].append(int(value))
 
             elif interface["type"] == b"BOOLEAN":
-                interface['type'] = 'bool_list'
+                interface['type'] = DataType.BOOL
                 interface["value"] = []
                 for value in lines[-2].replace(b"  : values=", b"").split(b","):
                     interface["value"].append(True if value == b"on" else False)
 
             elif interface["type"] == b"INTEGER":
-                interface['type'] = 'integer_list'
+                interface['type'] = DataType.INT
                 interface["min"] = int(lines[1].split(b",")[3].replace(b"min=", b""))
                 interface["max"] = int(lines[1].split(b",")[4].replace(b"max=", b""))
                 interface["step"] = int(lines[1].split(b",")[5].replace(b"step=", b""))

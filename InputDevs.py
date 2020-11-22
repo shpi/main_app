@@ -3,6 +3,7 @@ import threading
 import struct
 import time
 from Inputs import InputsDict
+from DataTypes import DataType
 
 class InputDevs:
 
@@ -48,7 +49,7 @@ class InputDevs:
                             keydict = dict()
                             key = key.split(':')
                             keydict['lastupdate'] = 0
-                            keydict['type'] = 'bool'
+                            keydict['type'] = DataType.INT
                             keydict['value'] = None
                             keydict['description'] = key[1]
                             keydict['interval'] = -1
@@ -74,7 +75,7 @@ class InputDevs:
             self.inputs[f'dev/{str(id)}']['lastupdate'] = 0
             self.inputs[f'dev/{str(id)}']['interrupts'] = []
             self.inputs[f'dev/{str(id)}']['thread'] = threading.Thread(target=self.devloop,args = (f"/dev/input/{subdevice['event'][0]}",id) )
-            self.inputs[f'dev/{str(id)}']['type'] = 'bool'
+            self.inputs[f'dev/{str(id)}']['type'] = DataType.INT
             self.inputs[f'dev/{str(id)}']['thread'].start()
 
     def get_inputs(self) -> dict:

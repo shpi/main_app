@@ -7,9 +7,8 @@ import shutil
 import re
 import glob
 import time
+from DataTypes import DataType
 
-# cat /proc/net/wireless
-# iwconfig wlan0
 # iw dev wlan0 link
 # iw dev wlan0 station dump -v
 
@@ -41,20 +40,20 @@ class _SystemInfo:
                             if init:
                                 self.diskstats[f'system/disk_{line[2]}/read_bps'] =  {'value' : 0,
                                                                                            'interval': -1,
-                                                                                           'type' : 'int',
+                                                                                           'type' : DataType.INT,
                                                                                            'description' : 'read bytes per second'}
 
                                 self.diskstats[f'system/disk_{line[2]}/write_bps'] = {'value' : 0,
                                                                                            'interval': -1,
-                                                                                           'type' : 'int',
+                                                                                           'type' : DataType.INT,
                                                                                            'description' : 'write bytes per second'}
                                 self.diskstats[f'system/disk_{line[2]}/read_abs'] =  {'value' : 0,
                                                                                            'interval': -1,
-                                                                                           'type' : 'int',
+                                                                                           'type' : DataType.INT,
                                                                                            'description' : 'read bytes absolute'}
                                 self.diskstats[f'system/disk_{line[2]}/write_abs'] = {'value' : 0,
                                                                                            'interval': -1,
-                                                                                           'type' : 'int',
+                                                                                           'type' : DataType.INT,
                                                                                            'description' : 'write bytes absolute'}
 
                             self.diskstats[f'system/disk_{line[2]}/read_bps']['value'] = (int(line[3]) -
@@ -85,38 +84,38 @@ class _SystemInfo:
 
         inputs['system/is64bit'] = {"description": "64bit system?",
                                     # "rights":0o444,
-                                    "type": "bool",
+                                    "type": DataType.BOOL,
                                     "interval": 0,
                                     "value": self.is64bit(),
                                     "call": self.is64bit}
 
         inputs['system/cpu_freq'] = {"description": "actual CPU clock",
                                      # "rights": 0o444,
-                                     "type": "list_int",
+                                     "type": DataType.INT,
                                      "interval": 10,
                                      "call": self.get_cpu_freq}
 
         inputs['system/cpu_usage'] = {"description": "CPU usage %",
                                       # "rights": 0o444,
-                                      "type": "percent",
+                                      "type": DataType.PERCENT_FLOAT,
                                       "interval": 10,
                                       "call": self.cpu_usage}
 
         inputs['system/ram_usage'] = {"description": "RAM usage",
                                       # "rights": 0o444,
-                                      "type": "list_int",
+                                      "type": DataType.INT,
                                       "interval": 10,
                                       "call": self.ram_usage}
 
         inputs['system/disk_usage'] = {"description": "disk usage",
                                        # "rights": 0o444,
-                                       "type": "list_int",
+                                       "type": DataType.INT,
                                        "interval": 600,
                                        "call": self.disk_usage}
 
         inputs['system/cpu_seconds'] = {"description": "spend time in scnds",
                                         # "rights": 0o444,
-                                        "type": "list_int",
+                                        "type": DataType.INT,
                                         "interval": 60,
                                         "call": self.get_cpu_seconds}
 
@@ -128,7 +127,7 @@ class _SystemInfo:
 
         inputs['system/netdevs'] = {"description": "available network devices",
                                     # "rights": 0o444,
-                                    "type": "list_string",
+                                    "type": DataType.STRING,
                                     "interval": 0,
                                     "value": self.get_net_devs(),
                                     "call": self.get_net_devs}
