@@ -128,7 +128,11 @@ class Wifi(QObject):
 
                 for record in record_details:
                     record = record.split('\t')
-                    networks.append( {'device':device,'bssid':record[0], 'frequency':record[1], 'signal': record[2].rstrip('.'), 'flags': record[3], 'ssid': record[4]})
+                    if len(record) < 5:
+                       record.append('')
+                    networks.append( {'device':device,'bssid':record[0],
+                                      'frequency':record[1], 'signal': record[2].rstrip('.'),
+                                      'flags': record[3], 'ssid': record[4]})
 
              else:
                  time.sleep(0.3)
@@ -142,9 +146,6 @@ class Wifi(QObject):
 
     @Slot(str,result=str)
     def wpa_status(self,device):
-        #wpa_state=DISCONNECTED
-        #ip_address=
-        #bssid=44:4e:6d:2e:00:53
         output = check_output(['wpa_cli','-i',device,'status']).split(b'\n')
         for line in output:
             if line.startswith(b'wpa_state='):
@@ -178,9 +179,8 @@ class Wifi(QObject):
             else:                  f.write('key_mgmt=NONE\n')
 
             f.write('}')
-            for device in self.found_devices:
-                call(['wpa_cli','-i', device, 'reconfigure'])
-                call(['dhclient', device])
+            call(['wpa_cli','-i', device, 'reconfigure'])
+            call(['dhclient', device])
             # systemctl restart dhcpcd
 
 
@@ -281,12 +281,3 @@ class Wifi(QObject):
                  4980: '5GHz 196'}
 
 
-def main():
-    """Module's main method."""
-
-    wifi = Wifi()
-    print(wifi.scan_wifi('wlan1'))
-
-
-if __name__ == "__main__":
-    main()

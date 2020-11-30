@@ -6,9 +6,6 @@ Item {
 
 property int i: 0
 
-
-
-
 FolderListModel {
           caseSensitive: false
           id: folderModel
@@ -22,7 +19,6 @@ FolderListModel {
       }
 
 
-
 Image {
         anchors.fill: parent
         id: bg
@@ -30,13 +26,11 @@ Image {
         fillMode: Image.Stretch
 }
 
-
-
 Timer {
             property bool direction: true
             property int speed: 3
             id: resetTimer
-            interval: 5000
+            interval: 10000
             repeat: true
             running: parent.parent._isCurrentItem
             onTriggered: {
@@ -45,7 +39,10 @@ Timer {
             moving_text.x = 10 + Math.random() * Math.floor(parent.width - moving_text.width - 20)
             moving_text.y = 10 + Math.random() * Math.floor(parent.height - moving_text.height - 20)
             showSlow.start()
+
+            if (Math.random() > 0.9) {
             bg.source =  folderModel.get (Math.random() * Math.floor(folderModel.count), "fileURL")
+            }
 
              /*
              if (direction)    moving_text.x = moving_text.x - speed
@@ -74,7 +71,7 @@ Timer {
             text:"Uhrzeit"
             color: "white"
             font.pointSize: 40
-            NumberAnimation {id:showSlow; target: moving_text; property: "opacity"; from: 0.00; to:1.00; duration: 1000 }
+            NumberAnimation {id:showSlow; target: moving_text; property: "opacity"; from: 0.00; to:1.00; duration: 300 }
         }
 
 

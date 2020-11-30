@@ -44,7 +44,6 @@ class Appearance(QObject):
 
     @Property(int,constant=True)
     def dim_timer(self):
-        print(self._dim_timer)
         return int(self._dim_timer)
 
     @dim_timer.setter
@@ -54,7 +53,6 @@ class Appearance(QObject):
 
     @Property(int,constant=True)
     def jump_timer(self):
-        print(self._jump_timer)
         return int(self._jump_timer)
 
     @jump_timer.setter
@@ -66,7 +64,6 @@ class Appearance(QObject):
 
     @Property(int,constant=True)
     def off_timer(self):
-        print(self._off_timer)
         return int(self._off_timer)
 
     @off_timer.setter
@@ -127,8 +124,8 @@ class Appearance(QObject):
         pass
 
     def set_backlight(self, value):
-
-        self.backlightlevel = value
+        value = int(value)
+        self.backlightlevel = (value)
 
         if value  < 1:
             self.inputs['backlight/brightness']['set'](0)

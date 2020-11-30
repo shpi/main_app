@@ -43,6 +43,9 @@ class Backlight(QObject):
         if ((len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0)):
             setbrightness = int((self.MAX_BACKLIGHT / 100) * brightness)
 
+            if setbrightness == 0 and brightness > 0:
+                 setbrightness = 1
+
             with open(self.BACKLIGHT + "/brightness", "w") as bright:
                 bright.write(str(setbrightness))
                 self._brightness = brightness
