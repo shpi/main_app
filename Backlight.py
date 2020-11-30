@@ -32,17 +32,11 @@ class Backlight(QObject):
                                                  "lastupdate": 0,
                                                  "call" : self.get_brightness,
                                                  "set" : self.set_brightness}
-        # example interrupt function
-        # self.blinputs['dev/110001000141/keys/2'] = {"interrupts" : self.interrupt}
-        # self.set_brightness(0)
-        # self.set_brightness(100)
 
     def get_inputs(self) -> dict:
         return self.blinputs
 
-    def interrupt(self, key, value):
-        if value == 1:
-            self.set_brightness(100)
+
 
     def set_brightness(self, brightness):
 

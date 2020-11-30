@@ -19,11 +19,11 @@ ApplicationWindow {
     Drawer {
         id: drawer
         width: window.width
-        height: window.height / 2
+        height: parent.height
         edge: Qt.TopEdge
-        interactive: true
         position: 0
         visible: true
+        interactive: settingsloader.source == "" ? true : false
 
         background: Rectangle {
 
@@ -31,6 +31,7 @@ ApplicationWindow {
         }
 
         Rectangle {
+            id: drawerheader
             color: "#000000"
             opacity: 0.7
             anchors.horizontalCenter: parent.horizontalCenter
@@ -40,6 +41,23 @@ ApplicationWindow {
             radius: 20
             anchors.topMargin: 5
 
+            RoundButton {
+                anchors.verticalCenter: parent.verticalCenter
+                font.family: localFont.name
+            text: Icons.close
+            width: height
+            palette {
+                    button: "darkred"
+                    buttonText: "white"
+                }
+            anchors.left: drawerheader.left
+            anchors.leftMargin: 10
+            font.pointSize: settingsloader.source != "" ? 20 : 30
+            onClicked: settingsloader.source = ""
+            visible: settingsloader.source != "" ? true : false
+
+            }
+
             Row {
                 id: row
                 anchors.verticalCenter: parent.verticalCenter
@@ -48,98 +66,86 @@ ApplicationWindow {
 
                 spacing: 10
 
+
+
                 RoundButton {
                     font.family: localFont.name
-                    font.pointSize: 30
+                    font.pointSize:  settingsloader.source != "" ? 20 : 30
                     text: Icons.sun
                     width: height
+                    onClicked: settingsloader.source = 'Backlight.qml'
+
+                    palette.button: settingsloader.source.toString().endsWith('Backlight.qml') ? "green" : 'white'
+
+
+
                 }
 
                 RoundButton {
                     font.family: localFont.name
-                    font.pointSize: 30
+                    font.pointSize: settingsloader.source != "" ? 20 : 30
                     text: Icons.wifi
                     width: height
+                    onClicked: settingsloader.setSource("Wifi.qml")
                 }
 
                 RoundButton {
                     font.family: localFont.name
-                    font.pointSize: 30
+                    font.pointSize: settingsloader.source != "" ? 20 : 30
                     text: Icons.speaker
                     width: height
                 }
 
                 RoundButton {
                     font.family: localFont.name
-                    font.pointSize: 30
+                    font.pointSize: settingsloader.source != "" ? 20 : 30
                     text: Icons.reset
                     width: height
                 }
 
                 RoundButton {
                     font.family: localFont.name
-                    font.pointSize: 30
+                    font.pointSize: settingsloader.source != "" ? 20 : 30
                     text: Icons.alarmclock
                     width: height
                 }
             }
         }
 
-        Rectangle {
-            width: parent.width - 10
 
+
+
+            Rectangle {
+            color: "#000000"
+            opacity: 0.7
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            color: "black"
-            opacity: 0.4
-            height: 50
-            visible: true
-            radius: 20
+            width: parent.width - 20
+            height: settingsloader.source != "" ? (window.height - drawerheader.height - 20) : 0
+            clip: true
+                Loader {
+                    id: settingsloader
+                    anchors.fill: parent
 
-            RangeSlider {
-                id: backlightslider
-                from: 1
-                height: 100
 
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: parent.width - 130
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.bottom: parent.bottom
-                to: 100
-                anchors.bottomMargin: 20
-                stepSize: 1
-                second.value: backlight.brightness
-                second.onMoved: backlight.brightness = second.value
-                first.onMoved: backlight.set_min_brightness(first.value)
 
-                Label {
-                    text: "MIN"
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: parent.left
-                    color: "white"
-                }
-
-                Label {
-                    text: "MAX"
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.right
-                    color: "white"
-                }
             }
+
+            anchors.top: drawerheader.bottom
+            radius: 20
+            anchors.topMargin: 5
+
         }
+
+
     }
 
     SwipeView {
         id: view
 
-        currentIndex: 1
+        currentIndex: 2
         anchors.fill: parent
         anchors.bottom: inputPanel.top
 
-        Loader {
-            id: wifiSlide
-            source: "Wifi.qml"
-        }
 
         Loader {
             id: inputSlide
@@ -189,7 +195,7 @@ ApplicationWindow {
         height: 50
         color: 'black'
         Text {
-        anchors.verticalCenter: parent.verticalCenter
+                   anchors.verticalCenter: parent.verticalCenter
         anchors.top: parent.top
         padding: 2
         anchors.left: parent.left
@@ -213,4 +219,25 @@ ApplicationWindow {
         color: "white"
         visible: drawer.visible
     }
+
+
+    Rectangle {
+       id: backlighthelper
+       anchors.fill:parent
+       color:"black"
+       opacity: appearance.blackfilter
+
+    }
+
+
+Connections {
+target: appearance
+
+onJumpHome: view.currentIndex = 2
+
+
+}
+
+
+
 }

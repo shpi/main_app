@@ -2,10 +2,10 @@
 import os
 
 os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
-os.environ["QT_QPA_PLATFORM"] = "eglfs"
-os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
-os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
-os.environ["GST_DEBUG"] = "omx:4"
+#os.environ["QT_QPA_PLATFORM"] = "eglfs"
+#os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
+#os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
+#os.environ["GST_DEBUG"] = "omx:4"
 os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
 os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
 
@@ -21,6 +21,7 @@ from PySide2.QtWidgets import QApplication
 from PySide2.QtQml import QQmlApplicationEngine
 
 from Backlight import Backlight
+from Appearance import Appearance
 from Weather import WeatherWrapper
 from HWMon import HWMon
 from Inputs import InputsDict
@@ -80,6 +81,7 @@ def check_loop():
     weather[0].update()
     SystemInfo.update()
     alsamixer.update()
+    appearance.update()
     inputs.update(lastupdate)
     lastupdate = time.time()
 
@@ -90,21 +92,33 @@ weather.append(WeatherWrapper('weather', settings))
 backlight = Backlight()
 hwmon = HWMon()
 inputs = InputsDict()
-iio = IIO()
+try:
+    iio = IIO()
+except:
+    pass
+
 leds = Led()
 alsamixer = AlsaMixer()
 wifi = Wifi(settings)
 
-inputs.add(iio.get_inputs())
+try:
+    inputs.add(iio.get_inputs())
+except:
+     pass
+
 inputs.add(alsamixer.get_inputs())
 inputs.add(leds.get_inputs())
 inputs.add(hwmon.get_inputs())
 inputdevs = InputDevs()
 inputs.add(inputdevs.inputs)
+
+
+
 inputs.add(backlight.get_inputs())
 inputs.add(SystemInfo.get_inputs())
 
-alsamixer.play()
+appearance = Appearance(inputs,settings)
+
 
 for subweather in weather:
     inputs.add(subweather.get_inputs())
@@ -122,8 +136,9 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("inputs", inputs)
     engine.rootContext().setContextProperty('weather', weather)
     engine.rootContext().setContextProperty('wifi', wifi)
-
     engine.rootContext().setContextProperty("backlight", backlight)
+    engine.rootContext().setContextProperty("appearance", appearance)
+
     setup_interrupt_handling()
 
     filename = os.path.join(os.path.dirname(

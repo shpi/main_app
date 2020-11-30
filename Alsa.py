@@ -149,7 +149,7 @@ class AlsaMixer:
                 interface["items"] = items
                 interface["available"] = []
                 for value in lines[-2].replace(b"  : values=", b"").split(b","):
-                    interface["value"].append(int(value))
+                    interface["available"].append(int(value))
 
             elif interface["type"] == b"BOOLEAN":
                 interface['type'] = DataType.BOOL

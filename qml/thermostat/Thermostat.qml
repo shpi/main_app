@@ -25,7 +25,7 @@ Item {
             id: firstButton
             text: Icons.fire
             font.family: localFont.name
-            font.pointSize: 30
+            font.pointSize: 25
             anchors.right: parent.right
         }
         TabButton {
@@ -34,7 +34,7 @@ Item {
 
             text: Icons.settings
             font.family: localFont.name
-            font.pointSize: 30
+            font.pointSize: 25
             anchors.top: firstButton.bottom
             anchors.right: parent.right
         }
@@ -42,7 +42,7 @@ Item {
             height: parent.height / 3
             text: Icons.schedule
             font.family: localFont.name
-            font.pointSize: 30
+            font.pointSize: 25
             anchors.top: secondButton.bottom
             anchors.right: parent.right
         }
@@ -121,7 +121,7 @@ Item {
                 anchors.centerIn:parent
                 anchors.verticalCenterOffset: 100
 
-                font.pointSize: 10
+                font.pointSize: 9
                 color: "green"
                 text: "Press and hold to unlock"
                 }
@@ -237,7 +237,7 @@ Item {
             width: height
             id: cooling
             text: Icons.freeze
-            font.pointSize: 40
+            font.pointSize: 35
             font.family: localFont.name
             palette.buttonText:  "blue"
             anchors.bottom: parent.bottom
@@ -252,7 +252,7 @@ Item {
             id: heating
             text: Icons.fire
             width: height
-            font.pointSize: 40
+            font.pointSize: 35
             font.family: localFont.name
             palette.buttonText:  "orange"
             anchors.bottom: parent.bottom
@@ -266,7 +266,7 @@ Item {
             id: fan
             text: Icons.fan
             width: height
-            font.pointSize: 40
+            font.pointSize: 35
             font.family: localFont.name
             palette.buttonText:  "black"
             anchors.top: parent.top
