@@ -181,8 +181,8 @@ class Wifi(QObject):
             else:                  f.write('key_mgmt=NONE\n')
 
             f.write('}')
-            call(['wpa_cli','-i', device, 'reconfigure'])
-            call(['dhclient', device])
+            call(['sudo','wpa_cli','-i', device, 'reconfigure'])
+            call(['sudo','dhclient', device])
             # systemctl restart dhcpcd
 
 

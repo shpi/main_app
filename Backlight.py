@@ -1,12 +1,13 @@
 import os
-from PySide2.QtCore import QObject, Property, Signal
 import time
 from DataTypes import DataType
 
-class Backlight(QObject):
+class Backlight:
 
-    def __init__(self):
-        QObject.__init__(self)
+
+    def __init__(self, parent=None):
+
+        super(Backlight, self).__init__()
 
         backlightpath = "/sys/class/backlight/"
         self.BACKLIGHT = ""
@@ -72,8 +73,3 @@ class Backlight(QObject):
                     #self.blinputs['backlight/brightness']['lastupdate'] = time.time()
         return self._brightness
 
-    @Signal
-    def brightnessChanged(self):
-            pass
-
-    brightness = Property(int, get_brightness, set_brightness, notify=brightnessChanged)

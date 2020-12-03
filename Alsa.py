@@ -233,7 +233,6 @@ class AlsaMixer:
            settings = (channel * ',') + str(settings) + ((channelcount - channel - 1) * ',')
 
         command = ['amixer','-D', 'hw:' + str(card_name), "cset", "numid=%s" % num_id, "--", str(settings)]
-        print(command)
         call(command)
         if os.geteuid() == 0:
            call(["alsactl", "store"])

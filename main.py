@@ -114,12 +114,8 @@ except:
 inputs.add(alsamixer.get_inputs())
 inputs.add(leds.get_inputs())
 inputs.add(hwmon.get_inputs())
-
 inputdevs = InputDevs()
 inputs.add(inputdevs.inputs)
-
-
-
 inputs.add(backlight.get_inputs())
 inputs.add(SystemInfo.get_inputs())
 
@@ -143,7 +139,6 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("inputs", inputs)
     engine.rootContext().setContextProperty('weather', weather)
     engine.rootContext().setContextProperty('wifi', wifi)
-    engine.rootContext().setContextProperty("backlight", backlight)
     engine.rootContext().setContextProperty("appearance", appearance)
 
     setup_interrupt_handling()

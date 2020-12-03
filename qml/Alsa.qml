@@ -92,7 +92,7 @@ Column{
                                      anchors.left: parent.left
                                      anchors.leftMargin: 1
                                      width: ((parent.width - 2) / 100) * sensorvalue
-                                     color: "blue"
+                                     color: Qt.rgba(1,0.5,0,0.7)
                                      }
 
 

@@ -27,14 +27,13 @@ ApplicationWindow {
         interactive: settingsloader.source == "" ? true : false
 
         background: Rectangle {
-
             color: "transparent"
         }
 
         Rectangle {
             id: drawerheader
-            color: "#000000"
-            opacity: 0.7
+            color: Qt.rgba(0,0,0,0.5)
+            opacity: 1
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width - 20
             height: row.height + 20
@@ -110,6 +109,12 @@ ApplicationWindow {
                     width: height
                 }
 
+                RoundButton {
+                    font.family: localFont.name
+                    font.pointSize: settingsloader.source != "" ? 20 : 30
+                    text: Icons.settings
+                    width: height
+                }
 
             }
         }
@@ -118,8 +123,7 @@ ApplicationWindow {
 
 
             Rectangle {
-            color: "#000000"
-            opacity: 0.7
+            color: Qt.rgba(0,0,0,0.5)
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width - 20
             height: settingsloader.source != "" ? (window.height - drawerheader.height - 20) : 0
