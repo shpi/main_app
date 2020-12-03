@@ -33,8 +33,8 @@ ApplicationWindow {
 
         Rectangle {
             id: drawerheader
-            color: Qt.rgba(0,0,0,0.5)
-            opacity: 1
+            color: Qt.rgba(0,0,0)
+
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width - 20
             height: row.height + 20
@@ -239,8 +239,8 @@ ApplicationWindow {
     Rectangle {
        id: backlighthelper
        anchors.fill:parent
-       color:"black"
-       opacity: appearance.blackfilter
+       color: Qt.rgba(0,0,0,appearance.blackfilter)
+
 
     }
 

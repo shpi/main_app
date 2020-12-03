@@ -8,7 +8,7 @@ Rectangle {
     property bool even: false
 
 
-    opacity: 0.7
+    //opacity: 0.7
     width: parent.width
     height: active ? 300 : 100
     border.color: "grey"

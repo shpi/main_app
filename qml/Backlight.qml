@@ -4,7 +4,7 @@ import QtQuick.Controls 2.12
 Item {
 
     function formatText(count, modelData) {
-        var data = count === 24 ? modelData  : modelData;
+        var data = modelData
         return data.toString().length < 2 ? "0" + data : data;
     }
 
@@ -20,9 +20,7 @@ Item {
     }
 
 
-
     function getIndex(path, mmodel) {
-
            for(var i = 0; i < mmodel.rowCount(); i++) {
                var idx = mmodel.index(i,0);
                var value = mmodel.data(idx, Qt.UserRole + 1000);
@@ -191,10 +189,9 @@ Column {
 
            Label {
                text: formatText(Tumbler.tumbler.count, modelData)
-               opacity: appearance.night_mode === 0 ? 1.0 - Math.abs(Tumbler.displacement) / (Tumbler.tumbler.visibleItemCount / 2) : 1.0 - Math.abs(Tumbler.displacement)
                horizontalAlignment: Text.AlignHCenter
                verticalAlignment: Text.AlignVCenter
-               color: "white"
+               color: Tumbler.displacement != 0 ? "grey" : "white"
 
 
 

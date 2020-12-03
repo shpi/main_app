@@ -47,7 +47,7 @@ Repeater{
 
     Rectangle {
     color: "black"
-    opacity: 0.3
+    //opacity: 0.3
     width:1
     height: parent.height
     anchors.top: parent.top
