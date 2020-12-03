@@ -270,10 +270,11 @@ Row {
                 delegate: delegateTime
                 visibleItemCount: 3
                 height: appearance.night_mode === 0 ? 100 : 50
-                onCurrentItemChanged:
+                onCurrentItemChanged: {
+                    console.log('onCurrentItemChanged called')
                     if (appearance.night_mode === 0)
                     appearance.night_mode_start = hoursTumbler.currentIndex.toString() + ':' + minutesTumbler.currentIndex.toString()
-
+                }
             }
            Text {
                anchors.verticalCenter: parent.verticalCenter
@@ -393,8 +394,10 @@ Row {
                      anchors.leftMargin: 10
                      color: "white"
                      text: inputs.data[modelData]['description'] }
-                     onCheckStateChanged: appearance.setDeviceTrack(modelData, this.checked)
-
+                     onCheckStateChanged:
+                     {    console.log('onCheckStateChanged called')
+                         appearance.setDeviceTrack(modelData, this.checked)
+                        }
           }
       }
 
@@ -403,12 +406,12 @@ Row {
 }
 
     Component.onCompleted: {
-
+           console.log('onCompleted called')
            inputs.set_typeList('time')
 
            if (appearance.night_mode === 1) {
 
-               combo_night_mode_end.currentIndex = getIndex(appearance.night_mode_end, inputs.typeList)
+               combo_night_mode_end.currentIndex = inputs.getIndex(appearance.night_mode_end)
                combo_night_mode_start.currentIndex = getIndex(appearance.night_mode_start, inputs.typeList)
 
 

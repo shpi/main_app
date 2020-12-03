@@ -1,7 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.VirtualKeyboard 2.1
-import QtQuick.Window 2.15
+
 
 import "../fonts/"
 

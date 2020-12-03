@@ -79,7 +79,9 @@ class Wifi(QObject):
 
         self._networks = WifiNetworkModel([],self.settings)
         self.found_devices = []
+        self.signals = dict()
         self.read_signal()
+        print(self.signals)
 
         for device in self.found_devices:
             self.scan_wifi(device)
@@ -155,6 +157,10 @@ class Wifi(QObject):
         return 'UNKNOWN'
 
 
+    @Slot(str,result=str)
+    def signal_status(self,device):
+        return str(self.signals[device])
+
 
     @Slot(str,str,str,str,str,bool)
     def write_settings(self,device='wlan0',flags='',bssid='',ssid='',passwd='',fixbssid=False):
@@ -200,6 +206,7 @@ class Wifi(QObject):
                         if f'wifi/{device}/link' not in self.inputs:
                             self.inputs[f'wifi/{device}/link'] = {'description': f'link quality of device {line[0].rstrip(":")}', 
                                                                                'interval': -1, 'lastupdate':0}
+                        self.signals[device] = self.dbmtoperc[int(line[3].rstrip('.'))]
                         self.inputs[f'wifi/{device}/link']['value'] = self.dbmtoperc[int(line[3].rstrip('.'))]
                         self.inputs[f'wifi/{device}/link']['status'] = line[1]
                         self.inputs[f'wifi/{device}/link']['quality'] = line[2]

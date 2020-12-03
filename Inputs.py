@@ -2,6 +2,7 @@
 import time
 from PySide2.QtCore import Qt, QModelIndex,QSortFilterProxyModel
 from PySide2.QtCore import QAbstractListModel, Property, Signal, Slot, QObject
+from PySide2.QtQml import QQmlPropertyMap
 from DataTypes import Convert
 from DataTypes import DataType
 
@@ -67,6 +68,7 @@ class InputListModel(QAbstractListModel):
         return roles
 
 
+
 class InputsDict(QObject):
 
     def __init__(self, parent: QObject = None):
@@ -120,11 +122,16 @@ class InputsDict(QObject):
     def set_typeList(self, type):
         self.proxy.setFilterFixedString(type)
 
+    @Slot(str, result=int)
+    def getIndex(self, path):
+        return self.completeList._keys.index(key)
+
+
     @Slot(str)
     def set_searchList(self, type):
         self.search.setFilterFixedString(type)
 
-    @Property("QVariantMap", notify=dataChanged)
+    @Property('QVariantMap', constant=True) #, notify=dataChanged)
     def data(self) -> dict:
         return self.entries
 
@@ -186,9 +193,7 @@ class InputsDict(QObject):
                     self.completelist.updateListView(key)
                 self.entries[key]['lastupdate'] = acttime
 
-
-
-        self.dataChanged.emit()
+        #self.dataChanged.emit()
 
     @Slot(str,str)
     def set(self, key, value):

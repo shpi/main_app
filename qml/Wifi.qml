@@ -25,7 +25,7 @@ Item {
 
         anchors.horizontalCenter: parent.horizontalCenter
         color: "white"
-        text: 'status: ' + (actualDevice.currentText != '' ? wifi.wpa_status(wifi.devices[actualDevice.currentIndex]) + ' ' + inputs.data['wifi/' + wifi.devices[actualDevice.currentIndex] + '/link']['value'] + '%': '')
+        text: 'status: ' + (actualDevice.currentText != '' ? wifi.wpa_status(wifi.devices[actualDevice.currentIndex]) + ' ' + wifi.signal_status(wifi.devices[actualDevice.currentIndex]) + '%': '')
 
     }
 
