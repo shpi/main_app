@@ -3,6 +3,38 @@ import QtQuick.Controls 2.12
 
 Item {
 
+    function formatText(count, modelData) {
+        var data = count === 24 ? modelData  : modelData;
+        return data.toString().length < 2 ? "0" + data : data;
+    }
+
+
+    function getMinutes(timestring) {
+        var minutes = timestring.split(':')[1]
+        return parseInt(minutes);
+    }
+
+    function getHours(timestring) {
+        var hours = timestring.split(':')[0]
+        return parseInt(hours);
+    }
+
+
+
+    function getIndex(path, mmodel) {
+
+           for(var i = 0; i < mmodel.rowCount(); i++) {
+               var idx = mmodel.index(i,0);
+               var value = mmodel.data(idx, Qt.UserRole + 1000);
+               if(path === value) {
+                   return i;
+               }
+           }
+           return 0;
+}
+
+
+
 Flickable {
 
     anchors.fill:parent
@@ -142,6 +174,210 @@ Column {
     }
 
 
+    Text {
+
+        text: "Nightmode"
+        color: "white"
+        font.bold: true
+        anchors.topMargin: 20
+
+    }
+
+
+
+
+    Component {
+           id: delegateTime
+
+           Label {
+               text: formatText(Tumbler.tumbler.count, modelData)
+               opacity: appearance.night_mode === 0 ? 1.0 - Math.abs(Tumbler.displacement) / (Tumbler.tumbler.visibleItemCount / 2) : 1.0 - Math.abs(Tumbler.displacement)
+               horizontalAlignment: Text.AlignHCenter
+               verticalAlignment: Text.AlignVCenter
+               color: "white"
+
+
+
+
+           }
+       }
+
+    ButtonGroup { id: nightGroup }
+
+Row {
+    anchors.horizontalCenter: parent.horizontalCenter
+    RadioButton {
+           checked: appearance.night_mode === -1 ? true : false
+           onReleased: {
+               if (this.checked)  appearance.night_mode = -1
+                }
+
+           text: qsTr("off")
+           ButtonGroup.group: nightGroup
+           contentItem: Text {
+                   text: parent.text
+                   color: "white"
+                   leftPadding: parent.indicator.width + parent.spacing
+                   verticalAlignment: Text.AlignVCenter
+               }
+    }
+
+    RadioButton {
+           checked: appearance.night_mode === 0 ? true : false
+           onReleased: {
+               if (this.checked)  appearance.night_mode = 0
+                }
+
+           text: qsTr("manual")
+           ButtonGroup.group: nightGroup
+           contentItem: Text {
+                   text: parent.text
+                   color: "white"
+                   leftPadding: parent.indicator.width + parent.spacing
+                   verticalAlignment: Text.AlignVCenter
+               }
+    }
+
+
+    RadioButton {
+           checked: appearance.night_mode === 1 ? true : false
+           onReleased: {
+                        if (this.checked)  appearance.night_mode = 1
+                         }
+
+           text: qsTr("auto")
+           contentItem: Text {
+                   text: parent.text
+                   color: "white"
+                   leftPadding: parent.indicator.width + parent.spacing
+                   verticalAlignment: Text.AlignVCenter
+               }
+           ButtonGroup.group: nightGroup
+       }
+}
+
+    Frame {
+
+        padding: 0
+        anchors.horizontalCenter: parent.horizontalCenter
+        visible: appearance.night_mode === 0 ? true : false
+        Row {
+
+
+
+
+           Tumbler {
+                id: hoursTumbler
+                model: 24
+
+                delegate: delegateTime
+                visibleItemCount: 3
+                height: appearance.night_mode === 0 ? 100 : 50
+                onCurrentItemChanged:
+                    if (appearance.night_mode === 0)
+                    appearance.night_mode_start = hoursTumbler.currentIndex.toString() + ':' + minutesTumbler.currentIndex.toString()
+
+            }
+           Text {
+               anchors.verticalCenter: parent.verticalCenter
+               text: ":"
+               color: "white"
+               font.bold: true
+
+
+           }
+            Tumbler {
+                id: minutesTumbler
+                model: 60
+
+                delegate: delegateTime
+                visibleItemCount: 3
+                height: appearance.night_mode === 0 ? 100 : 50
+                onCurrentItemChanged:  if (appearance.night_mode === 0)  appearance.night_mode_start = hoursTumbler.currentIndex.toString() + ':' + minutesTumbler.currentIndex.toString()
+
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.leftMargin: 20
+                anchors.rightMargin: 20
+                text: "til"
+                color: "white"
+                font.bold: true
+
+
+            }
+
+            Tumbler {
+                 id: hoursTumbler2
+                 model: 24
+
+                 delegate: delegateTime
+                 visibleItemCount: 3
+                 height: appearance.night_mode === 0 ? 100 : 50
+                 onCurrentItemChanged:  if (appearance.night_mode === 0)  appearance.night_mode_end = hoursTumbler2.currentIndex.toString() + ':' + minutesTumbler2.currentIndex.toString()
+
+             }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: ":"
+                color: "white"
+                font.bold: true
+
+
+            }
+            Tumbler {
+                id: minutesTumbler2
+                model: 60
+                delegate: delegateTime
+                visibleItemCount: 3
+                height: appearance.night_mode === 0 ? 100 : 50
+                onCurrentItemChanged: if (appearance.night_mode === 0)  appearance.night_mode_end = hoursTumbler2.currentIndex.toString() + ':' + minutesTumbler2.currentIndex.toString()
+
+            }
+
+        }
+    }
+
+
+
+
+
+    ComboBox {
+        id: combo_night_mode_start
+        visible: appearance.night_mode === 1 ? true : false
+        Label {
+        anchors.right: parent.left
+        anchors.rightMargin: 10
+        text: "start"
+        color: "white"
+        }
+
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: 600
+        model: inputs.typeList
+        textRole: 'path'
+        onFocusChanged:  appearance.night_mode_start = this.currentText
+
+    }
+
+
+    ComboBox {
+        id: combo_night_mode_end
+        visible: appearance.night_mode === 1 ? true : false
+        Label {
+        anchors.right: parent.left
+        anchors.rightMargin: 10
+        text: "end"
+        color: "white"
+        }
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: 600
+        model: inputs.typeList
+        textRole: 'path'
+        onFocusChanged:  appearance.night_mode_end = this.currentText
+    }
 
     Text {
 
@@ -167,8 +403,31 @@ Column {
 
 }
 
-
-
-
 }
-}
+
+    Component.onCompleted: {
+
+           inputs.set_typeList('time')
+
+           if (appearance.night_mode === 1) {
+
+               combo_night_mode_end.currentIndex = getIndex(appearance.night_mode_end, inputs.typeList)
+               combo_night_mode_start.currentIndex = getIndex(appearance.night_mode_start, inputs.typeList)
+
+
+               }
+           else {
+
+               minutesTumbler.currentIndex = getMinutes(appearance.night_mode_start)
+               hoursTumbler.currentIndex = getHours(appearance.night_mode_start)
+
+               minutesTumbler2.currentIndex = getMinutes(appearance.night_mode_end)
+               hoursTumbler2.currentIndex = getHours(appearance.night_mode_end)
+
+
+           }
+
+
+           }
+
+    }

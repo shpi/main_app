@@ -100,6 +100,7 @@ class Convert:
                          DataType.BOOL : 'boolean',
                          DataType.STRING : 'string',
                          DataType.DATE : 'date',
+                         DataType.ENUM : 'enum',
 DataType.TIME : 'time',
 DataType.DATETIME : 'datetime',
 DataType.TIMERANGE : 'timerange',

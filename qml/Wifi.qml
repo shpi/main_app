@@ -24,10 +24,12 @@ Item {
     Text {
 
         anchors.horizontalCenter: parent.horizontalCenter
-
-    text: actualDevice.currentText != '' ? wifi.wpa_status(wifi.devices[actualDevice.currentIndex]) : ''
+        color: "white"
+        text: 'status: ' + (actualDevice.currentText != '' ? wifi.wpa_status(wifi.devices[actualDevice.currentIndex]) + ' ' + inputs.data['wifi/' + wifi.devices[actualDevice.currentIndex] + '/link']['value'] + '%': '')
 
     }
+
+
 
 
 Column{
@@ -39,6 +41,7 @@ Column{
     padding: 5
     radius: 10
     text: 'SCAN'
+
     font.pointSize: 20
     onClicked: { busy.running = true
                  wifi.scan_wifi(actualDevice.currentText)
@@ -48,16 +51,11 @@ Column{
 
 
 
-    Text {
-    id: inputtitle
-    width: parent.width
-    text: 'Available Wifi Networks:'
-    font.pointSize: 12
-    }
+
 
        ListView {
             property int selectednetwork: -1
-            height: parent.height - inputtitle.height
+            height: parent.height - 30
             width:parent.width
             clip: true
             orientation: Qt.Vertical
@@ -78,7 +76,7 @@ Column{
 
                     height: inputsview.selectednetwork == index ? 160 : 60
                     width: inputsview.width
-                    color: index % 2 === 0 ? "lightgrey" : "white"
+                    color: index % 2 === 0 ? "transparent" : Qt.rgba(1,1,1,0.5)
 
                     Row {
 
@@ -120,7 +118,7 @@ Column{
                             anchors.verticalCenter: parent.verticalCenter
                             text: '<b>' + ssid + '</b> ,  ' + frequency
                             font.pointSize: 9
-
+                            color: "white"
                         }
 
                         RoundButton {

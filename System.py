@@ -121,7 +121,7 @@ class _SystemInfo:
 
         inputs['system/uptime'] = {"description": "uptime in seconds",
                                    # "rights": 0o444,
-                                   "type": "int",
+                                   "type": DataType.INT,
                                    "interval": 60,
                                    "call": self.get_uptime}
 

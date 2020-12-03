@@ -1,21 +1,25 @@
 # This Python file uses the following encoding: utf-8
 import os
 
+os.environ["QT_WAYLAND_FORCE_DPI"] = "128"
 os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
-os.environ["QT_QPA_PLATFORM"] = "eglfs"
-os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
-os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
-os.environ["GST_DEBUG"] = "omx:4"
-os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
-os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
-os.environ["XDG_RUNTIME_DIR"] = "/home/pi/qmlui"
+os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "0"
+#os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
+os.environ["QT_SCALE_FACTOR"] = "1"
+#os.environ["QT_QPA_PLATFORM"] = "eglfs"
+#os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
+#os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
+#os.environ["GST_DEBUG"] = "omx:4"
+#os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
+#os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
+#os.environ["XDG_RUNTIME_DIR"] = "/home/pi/qmlui"
 
 import signal
 import sys
 import logging
 import time
 
-from PySide2.QtCore import QTimer, QUrl
+from PySide2.QtCore import Qt, QTimer, QUrl
 from PySide2.QtCore import QSettings
 from PySide2.QtWidgets import QApplication
 from PySide2.QtQml import QQmlApplicationEngine
@@ -82,6 +86,7 @@ def check_loop():
     SystemInfo.update()
     alsamixer.update()
     appearance.update()
+    wifi.update()
     inputs.update(lastupdate)
     lastupdate = time.time()
 
@@ -92,13 +97,15 @@ weather.append(WeatherWrapper('weather', settings))
 backlight = Backlight()
 hwmon = HWMon()
 inputs = InputsDict()
-iio = IIO()
-
+try:
+    iio = IIO()
+except:
+    pass
 
 leds = Led()
-alsamixer = AlsaMixer()
+alsamixer = AlsaMixer(settings)
 wifi = Wifi(settings)
-
+inputs.add(wifi.get_inputs())
 try:
     inputs.add(iio.get_inputs())
 except:
@@ -107,6 +114,7 @@ except:
 inputs.add(alsamixer.get_inputs())
 inputs.add(leds.get_inputs())
 inputs.add(hwmon.get_inputs())
+
 inputdevs = InputDevs()
 inputs.add(inputdevs.inputs)
 
@@ -125,6 +133,7 @@ for subweather in weather:
 if __name__ == "__main__":
 
     app = QApplication(sys.argv)
+    #app.setAttribute(Qt.AA_EnableHighDpiScaling)
     app.setApplicationName("Main")
     app.setOrganizationName("SHPI GmbH")
     app.setOrganizationDomain("shpi.de")

@@ -5,7 +5,7 @@ import time
 import threading
 from subprocess import check_output,call, Popen, PIPE, DEVNULL
 from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject, QUrl, QUrlQuery
-
+from DataTypes import DataType
 
 class WifiNetworkModel(QAbstractListModel):
     BSSIDRole = Qt.UserRole + 1000
@@ -149,7 +149,9 @@ class Wifi(QObject):
         output = check_output(['wpa_cli','-i',device,'status']).split(b'\n')
         for line in output:
             if line.startswith(b'wpa_state='):
+                print(line[10:].rstrip().decode())
                 return line[10:].rstrip().decode()
+
         return 'UNKNOWN'
 
 
@@ -185,11 +187,6 @@ class Wifi(QObject):
 
 
     def read_signal(self):
-        for device in self.found_devices:  # reset values before checking
-            self.inputs[f'wifi/{device}/link']['value'] = 0
-            self.inputs[f'wifi/{device}/link']['status'] = 0
-            self.inputs[f'wifi/{device}/link']['level'] = 0
-            self.inputs[f'wifi/{device}/link']['noise'] = 0
 
         if os.path.isfile('/proc/net/wireless'):
             with open('/proc/net/wireless', 'r') as rf:
@@ -207,9 +204,18 @@ class Wifi(QObject):
                         self.inputs[f'wifi/{device}/link']['status'] = line[1]
                         self.inputs[f'wifi/{device}/link']['quality'] = line[2]
                         self.inputs[f'wifi/{device}/link']['noise'] = line[4]
+                        self.inputs[f'wifi/{device}/link']['type'] = DataType.PERCENT_INT
                         self.inputs[f'wifi/{device}/link']['lastupdate'] = time.time()
 
             rf.close()
+            for device in self.found_devices:  # reset values before checking
+                if self.inputs[f'wifi/{device}/link']['lastupdate'] < time.time() - 1:
+                    self.inputs[f'wifi/{device}/link']['value'] = 0
+                    self.inputs[f'wifi/{device}/link']['status'] = 0
+                    self.inputs[f'wifi/{device}/link']['level'] = 0
+                    self.inputs[f'wifi/{device}/link']['noise'] = 0
+                    self.inputs[f'wifi/{device}/link']['lastupdate'] = time.time()
+
             self.devicesChanged.emit()
 
 

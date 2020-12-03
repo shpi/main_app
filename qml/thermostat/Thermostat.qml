@@ -120,8 +120,9 @@ Item {
                 visible: !parent.enabled
                 anchors.centerIn:parent
                 anchors.verticalCenterOffset: 100
-
+                minimumPointSize: 6
                 font.pointSize: 9
+
                 color: "green"
                 text: "Press and hold to unlock"
                 }

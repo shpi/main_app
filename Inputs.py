@@ -3,6 +3,7 @@ import time
 from PySide2.QtCore import Qt, QModelIndex,QSortFilterProxyModel
 from PySide2.QtCore import QAbstractListModel, Property, Signal, Slot, QObject
 from DataTypes import Convert
+from DataTypes import DataType
 
 class InputListModel(QAbstractListModel):
     PathRole = Qt.UserRole + 1000
@@ -81,12 +82,13 @@ class InputsDict(QObject):
         self.proxy = QSortFilterProxyModel()
         self.proxy.setSourceModel(self.completelist)
         self.proxy.setFilterRole(self.completelist.TypeRole)
-        self.proxy.setFilterFixedString('temperature')
-        # proxy.setFilterCaseSensitivity(Qt.CaseInsensitive)
-        # self.proxy2 = QSortFilterProxyModel()
-        # self.proxy2.setSourceModel(self.proxy)
-        # self.proxy2.setFilterRole(self.completelist.PathRole)
-        # self.proxy2.setFilterFixedString('hwmon')
+        self.proxy.setFilterFixedString('')
+
+
+        self.search = QSortFilterProxyModel()
+        self.search.setSourceModel(self.completelist)
+        self.search.setFilterRole(self.completelist.PathRole)
+        self.search.setFilterFixedString('')
         # proxy.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
 
@@ -108,8 +110,19 @@ class InputsDict(QObject):
 
     @Property(QObject, notify=dataChanged, constant=False)
     def typeList(self):
-        self.proxy.setFilterFixedString('temperature')
         return self.proxy
+
+    @Property(QObject, notify=dataChanged, constant=False)
+    def searchList(self):
+        return self.search
+
+    @Slot(str)
+    def set_typeList(self, type):
+        self.proxy.setFilterFixedString(type)
+
+    @Slot(str)
+    def set_searchList(self, type):
+        self.search.setFilterFixedString(type)
 
     @Property("QVariantMap", notify=dataChanged)
     def data(self) -> dict:
@@ -181,40 +194,14 @@ class InputsDict(QObject):
     def set(self, key, value):
             print('set:' + key + ':' + value)
             if key in self.entries and 'set' in self.entries[key]:
-             if self.entries[key]['type'] == 'percent':
+             if self.entries[key]['type'] == DataType.PERCENT_INT:
                  self.entries[key]['set'](float(value))
-             if self.entries[key]['type'] == 'integer':
+             elif self.entries[key]['type'] == DataType.INT:
                  self.entries[key]['set'](int(value))
-             if self.entries[key]['type'] == 'integer_list':
-                  if isinstance(value, list):
-                     self.entries[key]['set'](value)
-                  elif ',' in value:
-                      values = []
-                      for subvalue in value.split(','):
-                          try:
-                              subvalue = int(subvalue)
-                              values.append(subvalue)
-                          except:
-                              pass
-                          self.entries[key]['set'](values)
-                  else:
-                      value = [int(value)]
-                      self.entries[key]['set'](value)
+             elif self.entries[key]['type'] == DataType.BOOL:
+                 self.entries[key]['set'](int(value))
+             elif self.entries[key]['type'] == DataType.ENUM:
+                     self.entries[key]['set'](int(value))
 
 
-             if self.entries[key]['type'] == 'bool_list':
-                 if isinstance(value, list):
-                     self.entries[key]['set'](value)
-                 elif ',' in value:
-                     values = []
-                     for subvalue in value.split(','):
-                         try:
-                             subvalue = True if (subvalue == 'true' or subvalue == '1') else False
-                             values.append(subvalue)
-                         except:
-                             pass
-                         self.entries[key]['set'](values)
-                 else:
-                     value = [True if (value == 'true' or value == '1') else False]
-                     self.entries[key]['set'](value)
 

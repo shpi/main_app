@@ -75,7 +75,6 @@ ApplicationWindow {
                     text: Icons.sun
                     width: height
                     onClicked: settingsloader.source = 'Backlight.qml'
-
                     palette.button: settingsloader.source.toString().endsWith('Backlight.qml') ? "green" : 'white'
 
 
@@ -88,12 +87,19 @@ ApplicationWindow {
                     text: Icons.wifi
                     width: height
                     onClicked: settingsloader.setSource("Wifi.qml")
+                    palette.button: settingsloader.source.toString().endsWith('Wifi.qml') ? "green" : 'white'
+
                 }
 
                 RoundButton {
                     font.family: localFont.name
                     font.pointSize: settingsloader.source != "" ? 20 : 30
                     text: Icons.speaker
+                    onClicked: {
+                        inputs.set_searchList('alsa')
+                        settingsloader.setSource("Alsa.qml")}
+                    palette.button: settingsloader.source.toString().endsWith('Alsa.qml') ? "green" : 'white'
+
                     width: height
                 }
 
@@ -104,12 +110,7 @@ ApplicationWindow {
                     width: height
                 }
 
-                RoundButton {
-                    font.family: localFont.name
-                    font.pointSize: settingsloader.source != "" ? 20 : 30
-                    text: Icons.alarmclock
-                    width: height
-                }
+
             }
         }
 
@@ -123,6 +124,7 @@ ApplicationWindow {
             width: parent.width - 20
             height: settingsloader.source != "" ? (window.height - drawerheader.height - 20) : 0
             clip: true
+
                 Loader {
                     id: settingsloader
                     anchors.fill: parent
@@ -239,6 +241,21 @@ onJumpHome: view.currentIndex = 2
 
 }
 
-Component.onCompleted: console.log(Screen.pixelDensity)
+Component.onCompleted: {
+
+  /*  for (let [key, value] of Object.entries(inputs.data)) {
+      if (key.toString().startsWith('alsa'))   { console.log(`${key}: ${value}`);
+
+       for (let [subkey, subvalue] of Object.entries(value)) {
+            console.log(`${subkey}: ${subvalue}`);
+
+       } }
+
+      }
+    }
+
+*/}
 
 }
+
+

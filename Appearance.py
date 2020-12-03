@@ -2,6 +2,7 @@ import os
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 import time
 from enum import Enum
+import threading
 
 
 class Appearance(QObject):
@@ -18,8 +19,11 @@ class Appearance(QObject):
         self.settings = settings
         self._min_backlight = int(settings.value("appearance/min" , 20))
         self._max_backlight = int(settings.value("appearance/max", 100))
-        self.nightmode_start = 0
-        self.nightmode_end = 0
+        self._min_backlight_night = int(settings.value("appearance/min_night" , 20))
+        self._max_backlight_night = int(settings.value("appearance/max_night", 100))
+        self._night_mode = int(settings.value("appearance/night_mode" , 0))
+        self._night_mode_start = settings.value("appearance/night_mode_start" , '00:00')
+        self._night_mode_end =  settings.value("appearance/night_mode_end" , '00:00')
         self._jump_timer = int(settings.value("appearance/jump_timer", 20))
         self.jump_state = 0
         self._dim_timer = int(settings.value("appearance/dim_timer", 100))
@@ -51,6 +55,30 @@ class Appearance(QObject):
         self._dim_timer = int(seconds)
         self.settings.setValue("appearance/dim_timer", seconds)
 
+
+    @Property(str,constant=True)
+    def night_mode_start(self):
+        return (self._night_mode_start)
+
+    @night_mode_start.setter
+    def set_night_mode_start(self, time):
+        self._night_mode_start = time
+        self.settings.setValue("appearance/night_mode_start", time)
+        print(self._night_mode_start)
+
+
+    @Property(str,constant=True)
+    def night_mode_end(self):
+        return (self._night_mode_end)
+
+    @night_mode_end.setter
+    def set_night_mode_end(self, time):
+        self._night_mode_end = time
+        self.settings.setValue("appearance/night_mode_end", time)
+
+
+
+
     @Property(int,constant=True)
     def jump_timer(self):
         return int(self._jump_timer)
@@ -59,6 +87,21 @@ class Appearance(QObject):
     def set_jump_timer(self, seconds):
         self._jump_timer = int(seconds)
         self.settings.setValue("appearance/jump_timer", seconds)
+
+    @Signal
+    def nightmodeChanged(self):
+        pass
+
+
+    @Property(int,notify=nightmodeChanged)
+    def night_mode(self):
+            return int(self._night_mode)
+
+    @night_mode.setter
+    def set_night_mode(self, value):
+            self._night_mode = int(value)
+            self.settings.setValue("appearance/night_mode", value)
+            self.nightmodeChanged.emit()
 
 
 
@@ -123,10 +166,17 @@ class Appearance(QObject):
     def jumpHome(self):
         pass
 
-    def set_backlight(self, value):
-        value = int(value)
-        self.backlightlevel = (value)
 
+
+    def set_backlight(self,value):
+
+        setthread = threading.Thread(target=self._set_backlight,args=(value,))
+        setthread.start()
+
+
+    def _set_backlight(self, value):
+       value = int(value)
+       if value != self.backlightlevel:
         if value  < 1:
             self.inputs['backlight/brightness']['set'](0)
 
@@ -140,6 +190,7 @@ class Appearance(QObject):
                 self._blackfilter = 0
                 self.blackChanged.emit()
 
+        self.backlightlevel = (value)
 
 
     def mapFromTo(self,x,a,b,c,d):
