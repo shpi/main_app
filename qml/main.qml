@@ -18,6 +18,7 @@ ApplicationWindow {
     }
 
     Drawer {
+        property string actual_setting
         id: drawer
         width: window.width
         height: parent.height
@@ -53,7 +54,9 @@ ApplicationWindow {
             anchors.left: drawerheader.left
             anchors.leftMargin: 10
             font.pointSize: settingsloader.source != "" ? 20 : 30
-            onClicked: settingsloader.source = ""
+            onClicked: {
+                drawer.actual_setting = ''
+                settingsloader.source = ""}
             visible: settingsloader.source != "" ? true : false
 
             }
@@ -73,8 +76,10 @@ ApplicationWindow {
                     font.pointSize:  settingsloader.source != "" ? 20 : 30
                     text: Icons.sun
                     width: height
-                    onClicked: settingsloader.source = 'Backlight.qml'
-                    palette.button: settingsloader.source.toString().endsWith('Backlight.qml') ? "green" : 'white'
+                    onClicked: {
+                        drawer.actual_setting = 'Backlight.qml'
+                        settingsloader.source = 'Backlight.qml'}
+                    palette.button: drawer.actual_setting === 'Backlight.qml' ? "green" : 'white'
 
 
 
@@ -85,8 +90,10 @@ ApplicationWindow {
                     font.pointSize: settingsloader.source != "" ? 20 : 30
                     text: Icons.wifi
                     width: height
-                    onClicked: settingsloader.setSource("Wifi.qml")
-                    palette.button: settingsloader.source.toString().endsWith('Wifi.qml') ? "green" : 'white'
+                    onClicked: {
+                        drawer.actual_setting = 'Wifi.qml'
+                        settingsloader.setSource("Wifi.qml") }
+                    palette.button: drawer.actual_setting == 'Wifi.qml' ? "green" : 'white'
 
                 }
 
@@ -95,9 +102,10 @@ ApplicationWindow {
                     font.pointSize: settingsloader.source != "" ? 20 : 30
                     text: Icons.speaker
                     onClicked: {
+                        drawer.actual_setting = 'Alsa.qml'
                         inputs.set_searchList('alsa')
                         settingsloader.setSource("Alsa.qml")}
-                    palette.button: settingsloader.source.toString().endsWith('Alsa.qml') ? "green" : 'white'
+                    palette.button: drawer.actual_setting == 'Alsa.qml' ? "green" : 'white'
 
                     width: height
                 }
