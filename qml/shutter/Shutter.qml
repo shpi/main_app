@@ -12,7 +12,7 @@ Item {
         anchors.bottomMargin: 10
         anchors.left: parent.left
         anchors.leftMargin: 10
-        text: Icons.sunrise
+        text: Icons.sunset
         font.family: localFont.name
         font.pointSize: 30
     }
@@ -24,7 +24,7 @@ Item {
         anchors.rightMargin: 10
         font.pointSize: 30
         font.family: localFont.name
-        text: Icons.sunset
+        text: Icons.sunrise
     }
 
     Slider {
@@ -38,7 +38,8 @@ Item {
         width: 300
         anchors.centerIn: parent
         stepSize: 5
-        onMoved: shutter2.set_position(this.value)
+        onPressedChanged: this.pressed === false ? shutter2.set_position(this.value) : undefined
+
 
         Text {
             text: shutter2.desired_position + "%"

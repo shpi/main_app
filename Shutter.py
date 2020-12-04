@@ -12,12 +12,14 @@ class  Shutter(QObject):
         super(Shutter, self).__init__()
         self.settings = settings
         self.inputs = inputs.entries
-        self.up_time = int(settings.value("shutter/up_time", 30))
-        self.down_time = int(settings.value("shutter/down_time", 30))
+        self.up_time = int(settings.value("shutter/up_time", 3))
+        self.down_time = int(settings.value("shutter/down_time", 3))
         self.time_start = 0
         self._residue_time = 0
-        self.precision = 1
+
         self.mode = 'boolean' # 'percent_int'
+
+        self.userinput = 0
 
         # bool needs two boolean outputs
 
@@ -98,6 +100,7 @@ class  Shutter(QObject):
 
     @Slot(int)
     def set_position(self, value):
+        self.userinput = 1
         self._desired_position = int(value)
         self._residue_time = 0
         self.positionChanged.emit()
@@ -107,31 +110,35 @@ class  Shutter(QObject):
 
         was_in_loop = False
 
-        while (self._actual_position < (self._desired_position - self.precision)) or (
-              self._actual_position > (self._desired_position + self.precision)):
+        while (self._actual_position < self._desired_position) or (
+              self._actual_position > self._desired_position):
 
             was_in_loop = True
 
             if self._actual_position < self._desired_position:
 
                 # need to move down, to close
-                if self._state != 'UP':
+                if self.userinput == 1 and self._state != 'UP':
                     self.set_state('UP')
+                    self.userinput = 0
                     self.time_start = time.time()
                     self.start_position = self._actual_position
                 time.sleep(0.1)
                 self._actual_position = self.start_position + ( (100 / self.down_time) * (time.time() - self.time_start) )
                 self._residue_time = (self._desired_position - self._actual_position) * (self.down_time / 100)
-                if self._residue_time < 0:
+                if self._residue_time < 0: #detected overshoot, so stopping
                     self._residue_time = 0
+                    if self.userinput == 0: #ignore overshoots and allow direction change only on new input
+                        self._actual_position = self._desired_position
 
                 self.positionChanged.emit()
 
             elif self._actual_position > self._desired_position:
 
                     # need to move up, to open
-                    if self._state != 'DOWN':
+                    if self.userinput == 1 and self._state != 'DOWN':
                         self.set_state('DOWN')
+                        self.userinput = 0
                         self.time_start = time.time()
                         self.start_position = self._actual_position
                     time.sleep(0.1)
@@ -139,9 +146,13 @@ class  Shutter(QObject):
                     self._residue_time = (self._actual_position - self._desired_position) * (self.up_time / 100)
                     if self._residue_time < 0:
                         self._residue_time = 0
+                        if self.userinput == 0:
+                            self._actual_position = self._desired_position
+
                     self.positionChanged.emit()
         self._residue_time = 0
         self.positionChanged.emit()
+
         if was_in_loop and self._desired_position == 100 or self._desired_position == 0:
             self._actual_position = self._desired_position
             self.set_state('STOPSLEEP')
