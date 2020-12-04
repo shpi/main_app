@@ -411,7 +411,7 @@ Row {
 
            if (appearance.night_mode === 1) {
 
-               combo_night_mode_end.currentIndex = inputs.getIndex(appearance.night_mode_end)
+               combo_night_mode_end.currentIndex =  getIndex(appearance.night_mode_end, inputs.typeList)
                combo_night_mode_start.currentIndex = getIndex(appearance.night_mode_start, inputs.typeList)
 
 

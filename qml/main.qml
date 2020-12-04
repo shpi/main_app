@@ -140,6 +140,7 @@ ApplicationWindow {
                 Loader {
                     id: settingsloader
                     anchors.fill: parent
+                    asynchronous: true
 
 
 

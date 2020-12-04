@@ -81,7 +81,7 @@ class Wifi(QObject):
         self.found_devices = []
         self.signals = dict()
         self.read_signal()
-        print(self.signals)
+
 
         for device in self.found_devices:
             self.scan_wifi(device)

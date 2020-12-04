@@ -1,4 +1,3 @@
-import os
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 import time
 from enum import Enum

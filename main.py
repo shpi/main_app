@@ -34,6 +34,7 @@ from System import SystemInfo
 from Leds import Led
 from Alsa import AlsaMixer
 from Wifi import Wifi
+from Shutter import Shutter
 
 from IIO import IIO
 
@@ -120,7 +121,7 @@ inputs.add(backlight.get_inputs())
 inputs.add(SystemInfo.get_inputs())
 
 appearance = Appearance(inputs,settings)
-
+shutter = Shutter(inputs, settings)
 
 for subweather in weather:
     inputs.add(subweather.get_inputs())
@@ -139,6 +140,7 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("inputs", inputs)
     engine.rootContext().setContextProperty('weather', weather)
     engine.rootContext().setContextProperty('wifi', wifi)
+    engine.rootContext().setContextProperty('shutter2', shutter)
     engine.rootContext().setContextProperty("appearance", appearance)
 
     setup_interrupt_handling()

@@ -1,10 +1,11 @@
-import QtQuick 2.0
+import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtGraphicalEffects 1.12
 import "../../fonts/"
 
 Item {
     anchors.fill: parent
+
 
     Text {
         anchors.bottom: parent.bottom
@@ -28,16 +29,19 @@ Item {
 
     Slider {
         id: control
+        enabled: shutter2.state !== 'STOPSLEEP'  ? true : false
         from: 0
         to: 100
-        value: 50
+        value: pressed == false ? shutter2.actual_position : shutter2.desired_position
         orientation: Qt.Vertical
-        height: parent.height * 0.8
+        height: parent.height * 0.75
         width: 300
         anchors.centerIn: parent
         stepSize: 5
+        onMoved: shutter2.set_position(this.value)
+
         Text {
-            text: parent.value + "%"
+            text: shutter2.desired_position + "%"
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.left
             font.pointSize: 30
@@ -106,6 +110,22 @@ Item {
             }
         }
 
+
+        Rectangle {
+        z: parent.handle.z - 0.01
+        visible: shutter2.state !== 'STOP' && parent.pressed == false ? true : false
+        width: parent.width * 1.1
+        height: parent.height * 0.15
+        radius: 13
+        opacity: 0.5
+        color: "black"
+        y: control.topPadding + (1 - (shutter2.desired_position / 100)) * (control.availableHeight - height)
+        anchors.horizontalCenter: parent.horizontalCenter
+       }
+
+
+
+
         handle: Rectangle {
 
             y: control.topPadding + control.visualPosition * (control.availableHeight - height)
@@ -116,13 +136,35 @@ Item {
             color: control.pressed ? "#f0f0f0" : "#f6f6f6"
             border.color: "#bdbebf"
             Text {
+                id: handleIcon
                 font.family: localFont.name
-                text: Icons.shutter
+                text: {shutter2.state === 'STOP' ? Icons.shutter :
+                       shutter2.state === 'STOPSLEEP' ?  Icons.timer : Icons.arrow
+                }
+                rotation: shutter2.state === 'UP' ? 180 : 0
                 anchors.centerIn: parent
-                font.pointSize: 35
+                font.pointSize: 20
+                opacity: shutter2.state === 'STOP' ? 1 : 1
+
+              /*  NumberAnimation {
+                     target: handleIcon
+                     from: 0.05
+                     to: 1
+                     properties: "opacity"
+                     duration: 1000
+                     running: shutter2.state === 'STOP' ? false : true
+                     loops: Animation.Infinite
+                 } */
             }
+
+
+
         }
+
+
     }
+
+
 
     Text {
         anchors.verticalCenter: parent.verticalCenter
@@ -130,7 +172,45 @@ Item {
         anchors.right: parent.right
         anchors.rightMargin: 10
         font.pointSize: 30
-        text: Icons.timer
+        text: shutter2.residue_time === 0 ? '' : shutter2.residue_time.toFixed(1)  + Icons.timer
         font.family: localFont.name
     }
+
+
+    Text {
+               id: time
+               font.pixelSize: 30
+               text: time.startTime != 0 ? new Date().getTime() - time.startTime + " ms" : 0
+               anchors.horizontalCenter: parent.horizontalCenter
+               property double startTime: 0
+           }
+
+           Button {
+
+               background: Rectangle {
+                           color: parent.down ?  "#f0f0f0" : "#f6f6f6"
+                           border.color: "#bdbebf"
+                           border.width: 1
+                           radius: 13
+                       }
+
+
+              text: "Timer!"
+              anchors.horizontalCenter: parent.horizontalCenter
+              anchors.horizontalCenterOffset: 100
+               onClicked: {
+                   if(time.startTime == 0){
+                       time.startTime = new Date().getTime()
+                       timer.running = true
+                   } else {
+                       timer.running = false
+                       time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
+                       time.startTime = 0
+                   }}}
+
+           Timer {
+                   id: timer
+                   interval: 200; running: false; repeat: true
+                   onTriggered: time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
+               }
 }
