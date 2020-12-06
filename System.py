@@ -9,8 +9,6 @@ import glob
 import time
 from DataTypes import DataType
 
-# iw dev wlan0 link
-# iw dev wlan0 station dump -v
 
 
 class _SystemInfo:
@@ -20,6 +18,7 @@ class _SystemInfo:
         self.diskstats = dict()
         self._keys = 'read_bps', 'write_bps', 'read_abs', 'write_abs'
         self.last_diskstat = 0
+        self.interval = 10
         self.update_diskstats(init=True)
 
 
@@ -72,7 +71,7 @@ class _SystemInfo:
                         break
 
     def update(self):
-        if self.last_diskstat + 10 < time.time():
+        if self.last_diskstat + self.interval < time.time():
             self.update_diskstats()
 
     def get_discstats(self):

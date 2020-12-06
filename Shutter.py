@@ -19,9 +19,16 @@ class  Shutter(QObject):
 
         self.mode = 'boolean' # 'percent_int'
 
+        #boolean mode with two binary outputs
+        self._relay_up = settings.value("shutter/relay_up", '')
+        self._relay_down = settings.value("shutter/relay_down", '')
+
+        #percent_int mode
+        self._percent_output = settings.value("shutter/percent_output", '')
+
+
         self.userinput = 0
 
-        # bool needs two boolean outputs
 
         self._actual_position = int(settings.value("shutter/actual_position" , 100))
 
@@ -29,8 +36,6 @@ class  Shutter(QObject):
         self.movethread = threading.Thread(target=self.move)
         self._state = 'STOP' # 'UP', 'DOWN'
 
-
-        # 100% closed 0% open
 
     def set_state(self,value):
 

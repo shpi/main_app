@@ -148,11 +148,12 @@ class Wifi(QObject):
 
     @Slot(str,result=str)
     def wpa_status(self,device):
-        output = check_output(['wpa_cli','-i',device,'status']).split(b'\n')
+        output = check_output(['sudo','wpa_cli','-i',device,'status']).split(b'\n')
         for line in output:
             if line.startswith(b'wpa_state='):
-                print(line[10:].rstrip().decode())
                 return line[10:].rstrip().decode()
+            if line.startswith(b'bssid='):
+                self.connected_bssid = line[6:].rstrip().decode()
 
         return 'UNKNOWN'
 

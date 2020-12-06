@@ -2,7 +2,8 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 
 Item {
-    anchors.fill: parent
+
+    Component.onCompleted: inputs.set_searchList('alsa')
 
 Column{
     anchors.fill:parent
@@ -36,10 +37,10 @@ Column{
                     property int delindex: index
                     property int sensorvalue: value
                     id: wrapper
-                    height: 60
+                    height: 70
 
                     width: inputsview.width
-                    color: index % 2 === 0 ? "darkgrey" : "transparent"
+                    color: index % 2 === 0 ? "#11ffffff" : "transparent"
                     Row {
                         spacing: 10
                         height: parent.height
@@ -141,6 +142,35 @@ Column{
                          Component {
                          id: boolswitch
                          Switch {
+
+                             id: switchcontrol
+                             anchors.horizontalCenter: parent.horizontalCenter
+
+                             indicator: Rectangle {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+
+                                    anchors.verticalCenter: switchcontrol.verticalCenter
+                                    implicitWidth: 96
+                                    implicitHeight: 26
+                                    x: parent.leftPadding
+                                    y: parent.height / 2 - height / 2
+                                    radius: 26
+                                    color: parent.checked ? "#17a81a" : "#cccccc"
+                                    border.color: parent.checked ? "#17a81a" : "#cccccc"
+
+                                    Rectangle {
+
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        x: switchcontrol.checked ? parent.width - width : 0
+                                        width: 35
+                                        height: 35
+                                        radius: 17
+                                        color: switchcontrol.down ? "#cccccc" : "#ffffff"
+                                        border.color: switchcontrol.checked ? (switchcontrol.down ? "#17a81a" : "#21be2b") : "#999999"
+                                    }
+                                }
+
+
                          checked: sensorvalue === 1 ? true : false
                          anchors.verticalCenter: parent.verticalCenter
                          //visible: output == '1' ? 1 : 0

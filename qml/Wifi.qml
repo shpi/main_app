@@ -6,8 +6,6 @@ import "../fonts/"
 
 
 Item {
-    anchors.fill: parent
-
 
 
     ComboBox {
@@ -19,6 +17,7 @@ Item {
         model: wifi.devices
         visible: (wifi.devices.length) > 1 ? true : false
     }
+
 
 
     Text {
@@ -36,26 +35,10 @@ Column{
     padding: 5
     anchors.fill:parent
 
-    RoundButton {
-
-    padding: 5
-    radius: 10
-    text: 'SCAN'
-
-    font.pointSize: 20
-    onClicked: { busy.running = true
-                 wifi.scan_wifi(actualDevice.currentText)
-
-               }
-    }
-
-
-
-
 
        ListView {
             property int selectednetwork: -1
-            height: parent.height - 30
+            height: parent.height - 80
             width:parent.width
             clip: true
             orientation: Qt.Vertical
@@ -76,7 +59,7 @@ Column{
 
                     height: inputsview.selectednetwork == index ? 160 : 60
                     width: inputsview.width
-                    color: index % 2 === 0 ? "transparent" : Qt.rgba(1,1,1,0.5)
+                    color: index % 2 === 0 ? "transparent" : "#11ffffff"
 
                     Row {
 
@@ -185,6 +168,21 @@ Column{
 
             }
         }
+
+
+       RoundButton {
+
+       padding: 5
+       radius: 20
+       text: 'SCAN'
+       anchors.horizontalCenter: parent.horizontalCenter
+       font.pointSize: 20
+       onClicked: { busy.running = true
+                    wifi.scan_wifi(actualDevice.currentText)
+
+                  }
+       }
+
 
 
 }

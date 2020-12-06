@@ -60,7 +60,6 @@ Column {
         anchors.horizontalCenter: parent.horizontalCenter
         width: parent.width - 130
 
-
         to: 100
 
         stepSize: 1
@@ -68,6 +67,27 @@ Column {
         second.value: appearance.maxbacklight
         second.onMoved: appearance.maxbacklight = second.value
         first.onMoved: appearance.minbacklight = first.value
+
+
+        background: Rectangle {
+                x: backlightslider.leftPadding
+                y: backlightslider.topPadding + backlightslider.availableHeight / 2 - height / 2
+                implicitWidth: 200
+                implicitHeight: 8
+                width: backlightslider.availableWidth
+                height: implicitHeight
+                radius: 2
+                color: "#bdbebf"
+
+                Rectangle {
+                    x: backlightslider.first.visualPosition * parent.width
+                    width: backlightslider.second.visualPosition * parent.width - x
+                    height: parent.height
+                    color: "#21be2b"
+                    radius: 2
+                }
+            }
+
 
         Label {
             anchors.horizontalCenter: parent.first.handle.horizontalCenter

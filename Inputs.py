@@ -14,6 +14,7 @@ class InputListModel(QAbstractListModel):
     IntervalRole = Qt.UserRole + 1004
     ExposedRole = Qt.UserRole + 1005
     OutputRole = Qt.UserRole + 1006
+    LoggingRole = Qt.UserRole + 1007
 
     def __init__(self, dictionary, parent=None):
         super(InputListModel, self).__init__(parent)
@@ -50,6 +51,11 @@ class InputListModel(QAbstractListModel):
                 return item["interval"]
             elif role == InputListModel.ExposedRole:
                 return item["exposed"]
+            elif role == InputListModel.LoggingRole:
+                if 'logging' in item:
+                    return item["logging"]
+                else:
+                    return 0
             else:
                 return 'unknown role'
            except Exception as e:
@@ -62,9 +68,10 @@ class InputListModel(QAbstractListModel):
         roles[InputListModel.ValueRole] = b"value"
         roles[InputListModel.DescriptionRole] = b"description"
         roles[InputListModel.TypeRole] = b"type"
-        roles[InputListModel.IntervalRole] = b"invertval"
+        roles[InputListModel.IntervalRole] = b"interval"
         roles[InputListModel.ExposedRole] = b"exposed"
         roles[InputListModel.OutputRole] = b"output"
+        roles[InputListModel.LoggingRole] = b"logging"
         return roles
 
 

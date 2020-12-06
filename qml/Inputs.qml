@@ -2,21 +2,31 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 
 Item {
-    anchors.fill: parent
 
-Column{
-    anchors.fill:parent
-
-    Text {
-    id: inputtitle
-    width: parent.width
-    text: 'Available Inputs'
-    font.pointSize: 12
-    }
 
        ListView {
 
-            height: parent.height - inputtitle.height
+
+           header: Rectangle {
+
+                 width: parent.width
+                 height:50
+                 color: "transparent"
+
+
+                 Text {
+                 padding: 10
+                 id: inputtitle
+                 width: parent.width
+                 text: '<b>Available Variables</b>'
+                 font.pointSize: 12
+                 color: "white"
+                 }
+               }
+
+
+
+            height: parent.height
             width:parent.width
             clip: true
             orientation: Qt.Vertical
@@ -31,36 +41,132 @@ Column{
                 Rectangle {
                     property int delindex: index
                     id: wrapper
-                    height: 60
+                    height: inputsview.currentIndex == index ? 150 : 80
                     width: inputsview.width
-                    color: index % 2 === 0 ? "lightgrey" : "white"
-                    Row {
+                    color: index % 2 === 0 ? "#11ffffff" : "transparent"
+
+                    Text {
+                       padding: 5
+                       anchors.verticalCenter: parent.verticalCenter
+                       anchors.right: parent.right
+                       text: value
+                       font.pointSize: 11
+                       color: "white"
+                   }
+
+                    Column {
+                        padding: 5
                         spacing: 10
                         height: parent.height
 
                          Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: '<b>' + path + '</b> ' + description + ', ' + type + ': ' + (output == '1' ? '' : value)
-                            font.pointSize: 8
+
+                            text: '<b>' + path + '</b> ' // + description + ', ' + type + ': ' + (output == '1' ? '' : value)
+                            font.pointSize: 10
+                            color: inputsview.currentIndex == index ? "green" :  "white"
 
                         }
 
-                         TextField {
-                         anchors.verticalCenter: parent.verticalCenter
 
+
+                         Text {
+
+                            text: description + ' (' + type + ')'
+                            font.pointSize: 9
+                            color: "white"
+
+                        }
+
+
+                         Row {
+
+                             visible: inputsview.currentIndex == index ? true : false
+                             spacing: 150
+                             CheckBox {
+                                     checked: true
+
+                                      Text {text: "logging"
+                                           color: "white"
+                                           anchors.left: parent.right
+                                           anchors.leftMargin: 15
+
+                                           }
+
+                                 }
+
+                             CheckBox {
+                                     checked: true
+
+                                      Text {text: "exposed"
+                                           color: "white"
+                                           anchors.left: parent.right
+                                           anchors.leftMargin: 15
+                                           }
+                                 }
+
+                             SpinBox {
+                                 id:spinbox
+                                 visible: interval > 0 ? true : false
+                                 value: interval
+                                 stepSize: 5
+                                  Text {text: "Interval"
+                                     color: "white"
+                                     anchors.left: parent.right
+                                     anchors.leftMargin: 15
+                                     }
+                                 //onValueChanged: weather[0].interval =  this.value
+                                 from: 1
+                                 to: 600
+                                 font.pointSize: 9
+
+
+                                 contentItem: TextInput {
+                                       z: 2
+                                       text: spinbox.textFromValue(spinbox.value, spinbox.locale) + 's'
+                                       color: "#000"
+                                       selectionColor: "#000"
+                                       selectedTextColor: "#ffffff"
+                                       horizontalAlignment: Qt.AlignHCenter
+                                       verticalAlignment: Qt.AlignVCenter
+                                       readOnly: !spinbox.editable
+                                       validator: spinbox.validator
+                                       inputMethodHints: Qt.ImhFormattedNumbersOnly
+                                   }
+
+
+
+                                 }
+
+                         }
+
+
+
+
+
+                         /* TextField {
+                         anchors.verticalCenter: parent.verticalCenter
                          visible: output == '1' ? 1 : 0
                          font.pointSize: 8
                          placeholderText: (output == '1' ? value.toString() : '')
                          onEditingFinished: inputs.set(path,this.text)
-
-
                          }
+                         */
+                    }
+
+                    MouseArea {
+
+                        anchors.fill: parent
+                        onClicked: inputsview.currentIndex = index
+                        enabled: inputsview.currentIndex != index ? true : false
 
                     }
+
+
+
                 }
             }
         }
 
 
 }
-}
+

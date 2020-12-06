@@ -2,7 +2,6 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.VirtualKeyboard 2.1
 
-
 import "../fonts/"
 
 ApplicationWindow {
@@ -23,136 +22,127 @@ ApplicationWindow {
         width: window.width
         height: parent.height
         edge: Qt.TopEdge
-        position: 0
         visible: true
-        interactive: settingsloader.source == "" ? true : false
-
+        interactive: settingsstackView.depth > 0 ? false : true
+        Behavior on position {
+            PropertyAnimation {}
+        }
         background: Rectangle {
             color: "transparent"
         }
 
         Rectangle {
-            id: drawerheader
-            color: Qt.rgba(0,0,0)
 
+            id: drawerheader
+            color: Qt.rgba(0, 0, 0, 0.7)
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width - 20
-            height: row.height + 20
+            height: mainsettingsView.height
             anchors.top: parent.top
             radius: 20
             anchors.topMargin: 5
 
-            RoundButton {
-                anchors.verticalCenter: parent.verticalCenter
-                font.family: localFont.name
-            text: Icons.close
-            width: height
-            palette {
-                    button: "darkred"
-                    buttonText: "white"
-                }
-            anchors.left: drawerheader.left
-            anchors.leftMargin: 10
-            font.pointSize: settingsloader.source != "" ? 20 : 30
-            onClicked: {
-                drawer.actual_setting = ''
-                settingsloader.source = ""}
-            visible: settingsloader.source != "" ? true : false
-
+            ListView {
+                spacing: settingsstackView.depth > 0 ? 10 : 25
+                height: settingsstackView.depth > 0 ? 85 : 130
+                id: mainsettingsView
+                orientation: ListView.Horizontal
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width - 15
+                model: mainsettingsModel
+                delegate: mainsettingsDelegate
+                layoutDirection: ListView.RightToLeft
             }
 
-            Row {
-                id: row
+            RoundButton {
+                anchors.left: parent.left
+                anchors.leftMargin: 5
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                anchors.rightMargin: 10
+                font.family: localFont.name
+                //settingsstackView.depth > 0 ? true : false
+                text: settingsstackView.depth > 1 ? Icons.arrow : settingsstackView.depth
+                                                    > 0 ? Icons.close : Icons.arrow
+                rotation: settingsstackView.depth == 0 ? 180 : 90
+                width: height
+                palette.button: settingsstackView.depth > 0 ? "darkred" : "#11000000"
+                palette.buttonText: "white"
+                font.pointSize: settingsstackView.depth > 0 ? 20 : 30
+                onClicked: {
+                    if (settingsstackView.depth === 0)
+                        drawer.position = 0
 
-                spacing: 10
+                    if (settingsstackView.depth == 1)
+                        settingsstackView.clear()
+                    else
+                        settingsstackView.pop()
 
+                    if (settingsstackView.depth === 0)
+                        drawer.actual_setting = ''
+                }
+            }
 
+            ListModel {
+                id: mainsettingsModel
+                ListElement {
+                    title: "\uE00C" // Icons.sun
+                    page: "Backlight.qml"
+                }
+                ListElement {
+                    title: "\uE016" // Icons.wifi
+                    page: "Wifi.qml"
+                }
+                ListElement {
+                    title: "\uE046" // Icons.speaker
+                    page: "Alsa.qml"
+                }
 
+                ListElement {
+                    title: "\uE045" // Icons.reset
+                    page: "Reset.qml"
+                }
+
+                ListElement {
+                    title: "\uE010" // Icons.settings
+                    page: "Settings.qml"
+                }
+            }
+
+            Component {
+                id: mainsettingsDelegate
                 RoundButton {
+                    anchors.verticalCenter: parent.verticalCenter
                     font.family: localFont.name
-                    font.pointSize:  settingsloader.source != "" ? 20 : 30
-                    text: Icons.sun
-                    width: height
+                    font.pointSize: settingsstackView.depth > 0 ? 20 : 30
+                    text: title
                     onClicked: {
-                        drawer.actual_setting = 'Backlight.qml'
-                        settingsloader.source = 'Backlight.qml'}
-                    palette.button: drawer.actual_setting === 'Backlight.qml' ? "green" : 'white'
-
-
-
-                }
-
-                RoundButton {
-                    font.family: localFont.name
-                    font.pointSize: settingsloader.source != "" ? 20 : 30
-                    text: Icons.wifi
-                    width: height
-                    onClicked: {
-                        drawer.actual_setting = 'Wifi.qml'
-                        settingsloader.setSource("Wifi.qml") }
-                    palette.button: drawer.actual_setting == 'Wifi.qml' ? "green" : 'white'
-
-                }
-
-                RoundButton {
-                    font.family: localFont.name
-                    font.pointSize: settingsloader.source != "" ? 20 : 30
-                    text: Icons.speaker
-                    onClicked: {
-                        drawer.actual_setting = 'Alsa.qml'
-                        inputs.set_searchList('alsa')
-                        settingsloader.setSource("Alsa.qml")}
-                    palette.button: drawer.actual_setting == 'Alsa.qml' ? "green" : 'white'
-
+                        settingsstackView.clear()
+                        settingsstackView.push(Qt.resolvedUrl(page))
+                        drawer.actual_setting = page
+                    }
+                    palette.button: drawer.actual_setting == page ? "#1E90FF" : 'lightgrey'
+                    palette.buttonText: drawer.actual_setting == page ? "white" : "#555"
                     width: height
                 }
-
-                RoundButton {
-                    font.family: localFont.name
-                    font.pointSize: settingsloader.source != "" ? 20 : 30
-                    text: Icons.reset
-                    width: height
-                }
-
-                RoundButton {
-                    font.family: localFont.name
-                    font.pointSize: settingsloader.source != "" ? 20 : 30
-                    text: Icons.settings
-                    width: height
-                }
-
             }
         }
 
-
-
-
-            Rectangle {
-            color: Qt.rgba(0,0,0,0.5)
+        Rectangle {
+            color: Qt.rgba(0, 0, 0, 0.5)
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width - 20
-            height: settingsloader.source != "" ? (window.height - drawerheader.height - 20) : 0
+            height: window.height - drawerheader.height - 20
+            visible: settingsstackView.depth > 0 ? true : false
             clip: true
-
-                Loader {
-                    id: settingsloader
-                    anchors.fill: parent
-                    asynchronous: true
-
-
-
-            }
-
             anchors.top: drawerheader.bottom
             radius: 20
             anchors.topMargin: 5
 
+            StackView {
+                id: settingsstackView
+                anchors.fill: parent
+                focus: true
+            }
         }
-
-
     }
 
     SwipeView {
@@ -161,12 +151,6 @@ ApplicationWindow {
         currentIndex: 2
         anchors.fill: parent
         anchors.bottom: inputPanel.top
-
-
-        Loader {
-            id: inputSlide
-            source: "Inputs.qml"
-        }
 
         Loader {
             id: shutter
@@ -205,21 +189,21 @@ ApplicationWindow {
         anchors.right: parent.right
 
         Rectangle {
-        visible: Qt.inputMethod.visible
-        anchors.bottom: parent.top
-        width: parent.width
-        height: 50
-        color: 'black'
-        Text {
-                   anchors.verticalCenter: parent.verticalCenter
-        anchors.top: parent.top
-        padding: 2
-        anchors.left: parent.left
-        anchors.leftMargin: this.width > parent.width ? parent.width - this.width : 5
-        color: 'white'
-        text:   InputContext.surroundingText
-        font.pointSize: 15
-        }
+            visible: Qt.inputMethod.visible
+            anchors.bottom: parent.top
+            width: parent.width
+            height: 50
+            color: 'black'
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.top: parent.top
+                padding: 2
+                anchors.left: parent.left
+                anchors.leftMargin: this.width > parent.width ? parent.width - this.width : 5
+                color: 'white'
+                text: InputContext.surroundingText
+                font.pointSize: 15
+            }
         }
     }
 
@@ -236,27 +220,21 @@ ApplicationWindow {
         visible: drawer.visible
     }
 
-
     Rectangle {
-       id: backlighthelper
-       anchors.fill:parent
-       color: Qt.rgba(0,0,0,appearance.blackfilter)
-
-
+        id: backlighthelper
+        anchors.fill: parent
+        color: Qt.rgba(0, 0, 0, appearance.blackfilter)
     }
 
+    Connections {
+        target: appearance
+        onJumpHome: view.currentIndex = 1
+    }
 
-Connections {
-target: appearance
-
-onJumpHome: view.currentIndex = 2
+    Component.onCompleted: {
 
 
-}
-
-Component.onCompleted: {
-
-  /*  for (let [key, value] of Object.entries(inputs.data)) {
+        /*  for (let [key, value] of Object.entries(inputs.data)) {
       if (key.toString().startsWith('alsa'))   { console.log(`${key}: ${value}`);
 
        for (let [subkey, subvalue] of Object.entries(value)) {
@@ -267,8 +245,5 @@ Component.onCompleted: {
       }
     }
 
-*/}
-
+*/ }
 }
-
-

@@ -140,7 +140,7 @@ Item {
                 id: handleIcon
                 font.family: localFont.name
                 text: {shutter2.state === 'STOP' ? Icons.shutter :
-                       shutter2.state === 'STOPSLEEP' ?  Icons.timer : Icons.arrow
+                       shutter2.state === 'STOPSLEEP' ?  Icons.locked : Icons.arrow
                 }
                 rotation: shutter2.state === 'UP' ? 180 : 0
                 anchors.centerIn: parent
