@@ -28,6 +28,19 @@ Item {
             font.family: localFont.name
             font.pointSize: 30
             anchors.right: parent.right
+
+            contentItem: Text {
+                   text: parent.text
+                   font: parent.font
+                   color: tabBar.currentIndex == 0 ? Colors.black : Colors.white
+                   horizontalAlignment: Text.AlignHCenter
+                   verticalAlignment: Text.AlignVCenter
+                   elide: Text.ElideRight
+               }
+            background: Rectangle {
+                   color:  tabBar.currentIndex == 0 ? Colors.white :"#666"
+
+               }
         }
         TabButton {
             height: parent.height / 3
@@ -38,6 +51,19 @@ Item {
             font.pointSize: 30
             anchors.top: firstButton.bottom
             anchors.right: parent.right
+
+            contentItem: Text {
+                   text: parent.text
+                   font: parent.font
+                   color: tabBar.currentIndex == 1 ? Colors.black : Colors.white
+                   horizontalAlignment: Text.AlignHCenter
+                   verticalAlignment: Text.AlignVCenter
+                   elide: Text.ElideRight
+               }
+            background: Rectangle {
+                   color:  tabBar.currentIndex == 1 ? Colors.white :"#666"
+
+               }
         }
         TabButton {
             height: parent.height / 3
@@ -46,6 +72,19 @@ Item {
             font.pointSize: 30
             anchors.top: secondButton.bottom
             anchors.right: parent.right
+
+            contentItem: Text {
+                   text: parent.text
+                   font: parent.font
+                   color: tabBar.currentIndex == 2 ? Colors.black : Colors.white
+                   horizontalAlignment: Text.AlignHCenter
+                   verticalAlignment: Text.AlignVCenter
+                   elide: Text.ElideRight
+               }
+            background: Rectangle {
+                   color:  tabBar.currentIndex == 2 ? Colors.white :"#666"
+
+               }
         }
     }
 

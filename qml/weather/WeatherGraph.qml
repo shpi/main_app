@@ -17,6 +17,10 @@ Rectangle {
         margins.top: 0
         margins.left: 0
         margins.right: 0
+
+        //theme: appearance.night ? ChartView.ChartThemeDark : ChartView.ChartThemeLight
+
+        legend.labelColor: Colors.black
         legend.borderColor: "transparent"
         legend.font.pointSize: 8
         legend.markerShape: Legend.MarkerShapeCircle
@@ -24,7 +28,6 @@ Rectangle {
         plotAreaColor: Colors.white
         titleColor: Colors.black
         backgroundColor: Colors.white
-        theme: appearance.night ? ChartView.ChartThemeDark : ChartView.ChartThemeLight
 
 
         DateTimeAxis {
@@ -35,6 +38,8 @@ Rectangle {
             max: chart.maxdate
             labelsAngle: 270
             labelsFont.pointSize: 8
+            color: Colors.black
+            labelsColor: Colors.black
         }
 
         ValueAxis {
@@ -42,6 +47,8 @@ Rectangle {
             min: -20
             max: 40
             labelsFont.pointSize: 8
+            color: Colors.black
+            labelsColor: Colors.black
         }
 
         ValueAxis {
@@ -49,6 +56,8 @@ Rectangle {
             min: 0
             max: 1400
             labelsFont.pointSize: 8
+            color: Colors.black
+            labelsColor: Colors.black
         }
 
         ValueAxis {
@@ -56,6 +65,8 @@ Rectangle {
             min: 0
             max: 100
             labelsFont.pointSize: 8
+            color: Colors.black
+            labelsColor: Colors.black
         }
 
         AreaSeries {
@@ -122,6 +133,7 @@ Rectangle {
                 min: 0
                 max: 5
                 labelsFont.pointSize: 8
+                labelsColor: Colors.black
             }
             axisX: dateAxis
             upperSeries: LineSeries {
