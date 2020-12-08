@@ -2,8 +2,8 @@ import subprocess
 import threading
 import struct
 import time
-from Inputs import InputsDict
 from DataTypes import DataType
+
 
 class InputDevs:
 
@@ -15,7 +15,6 @@ class InputDevs:
 
         self.devs = dict()
         self.inputs = dict()
-
 
         with open(self.FILENAME, 'r') as f:
 
@@ -33,10 +32,12 @@ class InputDevs:
                     device['name'] = line[len('N: Name='):].strip('"\n')
 
                 if line.startswith('H: Handlers='):
-                    events = list(line[len('H: Handlers='):].rstrip().split(' '))
-                    device['event'] = list(filter(lambda x: x.startswith('event'), events))
+                    events = list(
+                        line[len('H: Handlers='):].rstrip().split(' '))
+                    device['event'] = list(
+                        filter(lambda x: x.startswith('event'), events))
 
-                    p = subprocess.Popen(["keymap/keymap", ''.join(filter(str.isdigit,str(device['event'])))],
+                    p = subprocess.Popen(["keymap/keymap", ''.join(filter(str.isdigit, str(device['event'])))],
                                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     keys, stderr = p.communicate()
                     keys = set(keys.decode().strip().split('\n'))
@@ -74,7 +75,8 @@ class InputDevs:
             self.inputs[f'dev/{str(id)}']['interval'] = -1
             self.inputs[f'dev/{str(id)}']['lastupdate'] = 0
             self.inputs[f'dev/{str(id)}']['interrupts'] = []
-            self.inputs[f'dev/{str(id)}']['thread'] = threading.Thread(target=self.devloop,args = (f"/dev/input/{subdevice['event'][0]}",id) )
+            self.inputs[f'dev/{str(id)}']['thread'] = threading.Thread(
+                target=self.devloop, args=(f"/dev/input/{subdevice['event'][0]}", id))
             self.inputs[f'dev/{str(id)}']['type'] = DataType.INT
             self.inputs[f'dev/{str(id)}']['thread'].start()
 
@@ -82,35 +84,38 @@ class InputDevs:
         return self.inputs
 
     def devloop(self, devpath, id):
-       systembits = (struct.calcsize("P") * 8)
-       try:
-        with open(devpath, 'rb') as devfile:
-            while self.inputs[f'dev/{str(id)}']['value']:
-                event = devfile.read(16 if systembits == 32 else 24)  #16 byte for 32bit,  24 for 64bit
-                (timestamp, _id, type, keycode, value) = struct.unpack('llHHI', event)
+        systembits = (struct.calcsize("P") * 8)
+        try:
+            with open(devpath, 'rb') as devfile:
+                while self.inputs[f'dev/{str(id)}']['value']:
+                    # 16 byte for 32bit,  24 for 64bit
+                    event = devfile.read(16 if systembits == 32 else 24)
+                    (timestamp, _id, type, keycode,
+                     value) = struct.unpack('llHHI', event)
 
-                if (type == 1):
+                    if (type == 1):
 
-                    try:
-                        self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['value'] = value
-                        self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = time.time()
-                        self.inputs[f'dev/{str(id)}']['lastupdate'] = timestamp
+                        try:
+                            self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['value'] = value
+                            self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = time.time(
+                            )
+                            self.inputs[f'dev/{str(id)}']['lastupdate'] = timestamp
 
-                        if 'interrupts' in self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']:
-                             for function in self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['interrupts']:
-                                function(f'dev/{str(id)}/keys/{str(keycode)}',value)
+                            if 'interrupts' in self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']:
+                                for function in self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['interrupts']:
+                                    function(
+                                        f'dev/{str(id)}/keys/{str(keycode)}', value)
 
-                        if 'interrupts' in self.inputs[f'dev/{str(id)}']:
-                             for function in self.inputs[f'dev/{str(id)}']['interrupts']:
-                                 function(f'dev/{str(id)}',value)
+                            if 'interrupts' in self.inputs[f'dev/{str(id)}']:
+                                for function in self.inputs[f'dev/{str(id)}']['interrupts']:
+                                    function(f'dev/{str(id)}', value)
 
+                        except KeyError:
+                            self.inputs[f'dev/{str(id)}/keys/{str(keycode)}'] = dict()
+                            self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['value'] = value
+                            self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = timestamp
 
-                    except KeyError:
-                        self.inputs[f'dev/{str(id)}/keys/{str(keycode)}'] = dict()
-                        self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['value'] = value
-                        self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = timestamp
-
-       except:
-           self.inputs[f'dev/{str(id)}']['value'] = 0
-           self.inputs[f'dev/{str(id)}']['lastupdate'] = time.time()
-           self.inputs[f'dev/{str(id)}']['description'] += ' [access error]'
+        except:
+            self.inputs[f'dev/{str(id)}']['value'] = 0
+            self.inputs[f'dev/{str(id)}']['lastupdate'] = time.time()
+            self.inputs[f'dev/{str(id)}']['description'] += ' [access error]'

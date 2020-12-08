@@ -1,42 +1,39 @@
 # This Python file uses the following encoding: utf-8
+from IIO import IIO
+from Shutter import Shutter
+from Wifi import Wifi
+from Alsa import AlsaMixer
+from Leds import Led
+from System import SystemInfo
+from InputDevs import InputDevs
+from Inputs import InputsDict
+from HWMon import HWMon
+from Weather import WeatherWrapper
+from Appearance import Appearance
+from Backlight import Backlight
+from PySide2.QtQml import QQmlApplicationEngine
+from PySide2.QtWidgets import QApplication
+from PySide2.QtCore import QSettings
+from PySide2.QtCore import QTimer, QUrl
+import time
+import logging
+import sys
+import signal
 import os
 
 os.environ["QT_WAYLAND_FORCE_DPI"] = "128"
 os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
 os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "0"
-#os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
+# os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
 os.environ["QT_SCALE_FACTOR"] = "1"
-#os.environ["QT_QPA_PLATFORM"] = "eglfs"
-#os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
-#os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
-#os.environ["GST_DEBUG"] = "omx:4"
-#os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
-#os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
-#os.environ["XDG_RUNTIME_DIR"] = "/home/pi/qmlui"
+# os.environ["QT_QPA_PLATFORM"] = "eglfs"
+# os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
+# os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
+# os.environ["GST_DEBUG"] = "omx:4"
+# os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
+# os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
+# os.environ["XDG_RUNTIME_DIR"] = "/home/pi/qmlui"
 
-import signal
-import sys
-import logging
-import time
-
-from PySide2.QtCore import Qt, QTimer, QUrl
-from PySide2.QtCore import QSettings
-from PySide2.QtWidgets import QApplication
-from PySide2.QtQml import QQmlApplicationEngine
-
-from Backlight import Backlight
-from Appearance import Appearance
-from Weather import WeatherWrapper
-from HWMon import HWMon
-from Inputs import InputsDict
-from InputDevs import InputDevs
-from System import SystemInfo
-from Leds import Led
-from Alsa import AlsaMixer
-from Wifi import Wifi
-from Shutter import Shutter
-
-from IIO import IIO
 
 logging.basicConfig(
     # filename='debug.log',
@@ -110,7 +107,7 @@ inputs.add(wifi.get_inputs())
 try:
     inputs.add(iio.get_inputs())
 except:
-     pass
+    pass
 
 inputs.add(alsamixer.get_inputs())
 inputs.add(leds.get_inputs())
@@ -120,7 +117,7 @@ inputs.add(inputdevs.inputs)
 inputs.add(backlight.get_inputs())
 inputs.add(SystemInfo.get_inputs())
 
-appearance = Appearance(inputs,settings)
+appearance = Appearance(inputs, settings)
 shutter = Shutter(inputs, settings)
 
 for subweather in weather:
@@ -130,7 +127,7 @@ for subweather in weather:
 if __name__ == "__main__":
 
     app = QApplication(sys.argv)
-    #app.setAttribute(Qt.AA_EnableHighDpiScaling)
+    # app.setAttribute(Qt.AA_EnableHighDpiScaling)
     app.setApplicationName("Main")
     app.setOrganizationName("SHPI GmbH")
     app.setOrganizationDomain("shpi.de")

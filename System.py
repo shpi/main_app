@@ -10,7 +10,6 @@ import time
 from DataTypes import DataType
 
 
-
 class _SystemInfo:
 
     def __init__(self,  parent=None):
@@ -20,7 +19,6 @@ class _SystemInfo:
         self.last_diskstat = 0
         self.interval = 10
         self.update_diskstats(init=True)
-
 
     def update_diskstats(self, stat_path='/proc/diskstats', init=False):
         if os.path.isfile(stat_path):
@@ -37,32 +35,34 @@ class _SystemInfo:
                             # only physical devices
 
                             if init:
-                                self.diskstats[f'system/disk_{line[2]}/read_bps'] =  {'value' : 0,
-                                                                                           'interval': -1,
-                                                                                           'type' : DataType.INT,
-                                                                                           'description' : 'read bytes per second'}
+                                self.diskstats[f'system/disk_{line[2]}/read_bps'] = {'value': 0,
+                                                                                     'interval': -1,
+                                                                                     'type': DataType.INT,
+                                                                                     'description': 'read bytes per second'}
 
-                                self.diskstats[f'system/disk_{line[2]}/write_bps'] = {'value' : 0,
-                                                                                           'interval': -1,
-                                                                                           'type' : DataType.INT,
-                                                                                           'description' : 'write bytes per second'}
-                                self.diskstats[f'system/disk_{line[2]}/read_abs'] =  {'value' : 0,
-                                                                                           'interval': -1,
-                                                                                           'type' : DataType.INT,
-                                                                                           'description' : 'read bytes absolute'}
-                                self.diskstats[f'system/disk_{line[2]}/write_abs'] = {'value' : 0,
-                                                                                           'interval': -1,
-                                                                                           'type' : DataType.INT,
-                                                                                           'description' : 'write bytes absolute'}
+                                self.diskstats[f'system/disk_{line[2]}/write_bps'] = {'value': 0,
+                                                                                      'interval': -1,
+                                                                                      'type': DataType.INT,
+                                                                                      'description': 'write bytes per second'}
+                                self.diskstats[f'system/disk_{line[2]}/read_abs'] = {'value': 0,
+                                                                                     'interval': -1,
+                                                                                     'type': DataType.INT,
+                                                                                     'description': 'read bytes absolute'}
+                                self.diskstats[f'system/disk_{line[2]}/write_abs'] = {'value': 0,
+                                                                                      'interval': -1,
+                                                                                      'type': DataType.INT,
+                                                                                      'description': 'write bytes absolute'}
 
                             self.diskstats[f'system/disk_{line[2]}/read_bps']['value'] = (int(line[3]) -
-                             self.diskstats[f'system/disk_{line[2]}/read_abs']['value']) // quotient
+                                                                                          self.diskstats[f'system/disk_{line[2]}/read_abs']['value']) // quotient
 
                             self.diskstats[f'system/disk_{line[2]}/write_bps']['value'] = (int(line[7]) -
-                             self.diskstats[f'system/disk_{line[2]}/write_abs']['value']) // quotient
+                                                                                           self.diskstats[f'system/disk_{line[2]}/write_abs']['value']) // quotient
 
-                            self.diskstats[f'system/disk_{line[2]}/read_abs']['value'] = int(line[3])
-                            self.diskstats[f'system/disk_{line[2]}/write_abs']['value'] = int(line[7])
+                            self.diskstats[f'system/disk_{line[2]}/read_abs']['value'] = int(
+                                line[3])
+                            self.diskstats[f'system/disk_{line[2]}/write_abs']['value'] = int(
+                                line[7])
 
                             for key in self._keys:
                                 self.diskstats[f'system/disk_{line[2]}/{key}']['lastupdate'] = acttime
@@ -142,9 +142,9 @@ class _SystemInfo:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             return socket.inet_ntoa(fcntl.ioctl(
-               s.fileno(), 0x8915,  # SIOCGIFADDR
-               struct.pack('256s', bytes(ifname[:15], 'utf-8'))
-               )[20:24])
+                s.fileno(), 0x8915,  # SIOCGIFADDR
+                struct.pack('256s', bytes(ifname[:15], 'utf-8'))
+            )[20:24])
         except OSError:
             return -1
 

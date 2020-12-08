@@ -12,14 +12,13 @@ from PySide2.QtCore import QSettings
 class AlsaMixer:
 
     def __init__(self,
-    settings: QSettings = None, parent=None):
+                 settings: QSettings = None, parent=None):
 
         super(AlsaMixer, self).__init__()
         self.settings = settings
         self.recorder = dict()
         self.system_cards = []
         self.cards = self.get_cards()
-        
 
     def update(self):
 
@@ -31,8 +30,8 @@ class AlsaMixer:
 
     def play(self, file='/usr/share/sounds/alsa/Front_Center.wav'):
         for key in self.system_cards:
-            if self.cards[key]['value'] == True:
-                    call(["aplay", "-D", "plughw:" + self.cards[key]['name'], file])
+            if self.cards[key]['value'] is True:
+                call(["aplay", "-D", "plughw:" + self.cards[key]['name'], file])
 
     @staticmethod
     def get_channel_name(desc, name, i):
@@ -73,29 +72,28 @@ class AlsaMixer:
                 card_name = i[pos0+1:pos1].strip()
                 card_number = i.split(" [")[0].strip()
                 card_desc = i[pos1+2:].strip()
-                cards['alsa/'+ card_name] = {'id': card_number,
-                                    'description': card_desc + ' on/off',
-                                    'name': card_name,
-                                    'value': self.settings.value("alsa/" + card_name , 1),
-                                    'interval': -1,
-                                    'set': partial(self.power_device, card_name),
-                                    'type': DataType.BOOL}
+                cards['alsa/' + card_name] = {'id': card_number,
+                                              'description': card_desc + ' on/off',
+                                              'name': card_name,
+                                              'value': self.settings.value("alsa/" + card_name, 1),
+                                              'interval': -1,
+                                              'set': partial(self.power_device, card_name),
+                                              'type': DataType.BOOL}
                 cards.update(self.get_recording(card_name))
                 cards.update(self.get_controls(card_name))
-                
 
         return cards
 
     def power_device(self, card_name, value):
 
-        if 'alsa/'+ card_name in self.cards:
+        if 'alsa/' + card_name in self.cards:
 
-             self.cards['alsa/'+ card_name]['value'] = int(value)
-             self.settings.setValue("alsa/" + card_name , value)
-
+            self.cards['alsa/' + card_name]['value'] = int(value)
+            self.settings.setValue("alsa/" + card_name, value)
 
     def get_recording(self, card_name):
-        record_details = Popen(["arecord", "-D", "hw:" + card_name,'-c','99', "--dump-hw-params"], stderr=PIPE).communicate()[1]
+        record_details = Popen(["arecord", "-D", "hw:" + card_name,
+                                '-c', '99', "--dump-hw-params"], stderr=PIPE).communicate()[1]
         record_details = record_details.split(b'\n')
         card_rates = card_formats = card_rchannel = 0
         for x in record_details:
@@ -122,16 +120,20 @@ class AlsaMixer:
 
             return {f'alsa/{card_name}/recording': self.recorder[card_name].get_inputs()}
 
-        else: return {}
-
+        else:
+            return {}
 
     @staticmethod
     def get_controls(card_name):
         try:
-            amixer = Popen(['amixer','-D','hw:' + str(card_name)], stdout=PIPE)
-            amixer_channels = Popen(["grep", "-e", "control", "-e", "channels"], stdin=amixer.stdout, stdout=PIPE)
-            amixer_chandesc = (amixer_channels.communicate()[0]).split(b"Simple mixer control ")[1:]
-            amixer_contents = Popen(['amixer','-D','hw:'+str(card_name), "contents"], stdout=PIPE).communicate()[0]
+            amixer = Popen(
+                ['amixer', '-D', 'hw:' + str(card_name)], stdout=PIPE)
+            amixer_channels = Popen(
+                ["grep", "-e", "control", "-e", "channels"], stdin=amixer.stdout, stdout=PIPE)
+            amixer_chandesc = (amixer_channels.communicate()[0]).split(
+                b"Simple mixer control ")[1:]
+            amixer_contents = Popen(
+                ['amixer', '-D', 'hw:'+str(card_name), "contents"], stdout=PIPE).communicate()[0]
         except OSError:
             return {}
 
@@ -154,7 +156,7 @@ class AlsaMixer:
                 items = []
                 for line in lines[2:-2]:
                     pcs = line.split(b" '")
-                    id = pcs[0].replace(b"  ; Item #", b"")
+                    # id = pcs[0].replace(b"  ; Item #", b"")
                     name = pcs[1][:-1]
                     items.append(name.decode())
                 interface["available"] = items
@@ -163,7 +165,8 @@ class AlsaMixer:
                 i = 0
                 for value in lines[-2].replace(b"  : values=", b"").split(b","):
                     values.append(int(value))
-                    channel_desc = AlsaMixer.get_channel_name(amixer_chandesc, interface["description"], i)
+                    channel_desc = AlsaMixer.get_channel_name(
+                        amixer_chandesc, interface["description"], i)
                     if channel_desc is not None:
                         channels.append(channel_desc)
                     i += 1
@@ -175,17 +178,20 @@ class AlsaMixer:
                 i = 0
                 for value in lines[-2].replace(b"  : values=", b"").split(b","):
                     values.append(1 if value == b"on" else 0)
-                    channel_desc = AlsaMixer.get_channel_name(amixer_chandesc, interface["description"], i)
+                    channel_desc = AlsaMixer.get_channel_name(
+                        amixer_chandesc, interface["description"], i)
                     if channel_desc is not None:
                         channels.append(channel_desc)
                     i += 1
 
-
             elif interface["type"] == b"INTEGER":
                 interface['type'] = DataType.INT
-                interface["min"] = int(lines[1].split(b",")[3].replace(b"min=", b""))
-                interface["max"] = int(lines[1].split(b",")[4].replace(b"max=", b""))
-                interface["step"] = float(lines[1].split(b",")[5].replace(b"step=", b""))
+                interface["min"] = int(lines[1].split(
+                    b",")[3].replace(b"min=", b""))
+                interface["max"] = int(lines[1].split(
+                    b",")[4].replace(b"max=", b""))
+                interface["step"] = float(
+                    lines[1].split(b",")[5].replace(b"step=", b""))
                 line = ""
                 for j in reversed(lines):
                     if b"  : values=" in j:
@@ -196,33 +202,35 @@ class AlsaMixer:
                 i = 0
                 for value in line.replace(b"  : values=", b"").split(b","):
                     values.append(value.decode())
-                    channel_desc = AlsaMixer.get_channel_name(amixer_chandesc, interface["description"], i)
+                    channel_desc = AlsaMixer.get_channel_name(
+                        amixer_chandesc, interface["description"], i)
                     if channel_desc is not None:
                         channels.append(channel_desc)
                     i += 1
-
-
 
             else:
                 break
 
             if b'w' in interface['access']:
-             if interface['iface'] == b'MIXER':
+                if interface['iface'] == b'MIXER':
 
-              del interface['iface']
-              del interface['access']
-              i = 0
-              description = interface['description']
-              for value in values:
-               interface['value'] = value
-               try:
-                   interface['description'] = description + ' ' + channels[i]
+                    del interface['iface']
+                    del interface['access']
+                    i = 0
+                    description = interface['description']
+                    for value in values:
+                        interface['value'] = value
+                        try:
+                            interface['description'] = description + \
+                                ' ' + channels[i]
 
-               except:
-                   interface['description'] = description
-               interface['set'] = partial(AlsaMixer.change_control, card_name, interface['id'], i, len(values))
-               interfaces[f"alsa/{card_name}/control/{interface['id']}/{i}"] = (interface.copy())
-               i += 1
+                        except:
+                            interface['description'] = description
+                        interface['set'] = partial(
+                            AlsaMixer.change_control, card_name, interface['id'], i, len(values))
+                        interfaces[f"alsa/{card_name}/control/{interface['id']}/{i}"] = (
+                            interface.copy())
+                        i += 1
 
         return interfaces
 
@@ -230,10 +238,11 @@ class AlsaMixer:
     def change_control(card_name, num_id, channel, channelcount, settings):
 
         if channelcount != 1:
-           settings = (channel * ',') + str(settings) + ((channelcount - channel - 1) * ',')
+            settings = (channel * ',') + str(settings) + \
+                ((channelcount - channel - 1) * ',')
 
-        command = ['amixer','-D', 'hw:' + str(card_name), "cset", "numid=%s" % num_id, "--", str(settings)]
+        command = ['amixer', '-D', 'hw:' +
+                   str(card_name), "cset", "numid=%s" % num_id, "--", str(settings)]
         call(command)
         if os.geteuid() == 0:
-           call(["alsactl", "store"])
-
+            call(["alsactl", "store"])

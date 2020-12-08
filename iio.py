@@ -259,7 +259,8 @@ _iio_strerror.argtypes = (c_int, c_char_p, c_uint)
 _iio_strerror.restype = None
 
 _get_context_info_list = _lib.iio_scan_context_get_info_list
-_get_context_info_list.argtypes = (_ScanContextPtr, _POINTER(_POINTER(_ContextInfoPtr)))
+_get_context_info_list.argtypes = (
+    _ScanContextPtr, _POINTER(_POINTER(_ContextInfoPtr)))
 _get_context_info_list.restype = c_ssize_t
 _get_context_info_list.errcheck = _check_negative
 
@@ -335,7 +336,8 @@ _get_attrs_count.argtypes = (_ContextPtr,)
 
 _get_attr = _lib.iio_context_get_attr
 _get_attr.restype = c_int
-_get_attr.argtypes = (_ContextPtr, c_uint, _POINTER(c_char_p), _POINTER(c_char_p))
+_get_attr.argtypes = (_ContextPtr, c_uint, _POINTER(
+    c_char_p), _POINTER(c_char_p))
 _get_attr.errcheck = _check_negative
 
 _devices_count = _lib.iio_context_get_devices_count
@@ -674,7 +676,8 @@ def iio_strerror(err, buf, length):
 
 
 version = _get_lib_version()
-backends = [_get_backend(b).decode("ascii") for b in range(0, _get_backends_count())]
+backends = [_get_backend(b).decode("ascii")
+            for b in range(0, _get_backends_count())]
 
 
 class _Attr(object):
@@ -727,7 +730,8 @@ class ChannelAttr(_Attr):
             A new instance of this class
         """
         super(ChannelAttr, self).__init__(
-            name, _c_get_filename(channel, name.encode("ascii")).decode("ascii")
+            name, _c_get_filename(
+                channel, name.encode("ascii")).decode("ascii")
         )
         self._channel = channel
 
@@ -790,7 +794,8 @@ class DeviceDebugAttr(DeviceAttr):
         return buf.value.decode("ascii")
 
     def _write(self, value):
-        _d_write_debug_attr(self._device, self._name_ascii, value.encode("ascii"))
+        _d_write_debug_attr(self._device, self._name_ascii,
+                            value.encode("ascii"))
 
 
 class DeviceBufferAttr(DeviceAttr):
@@ -816,7 +821,8 @@ class DeviceBufferAttr(DeviceAttr):
         return buf.value.decode("ascii")
 
     def _write(self, value):
-        _d_write_buffer_attr(self._device, self._name_ascii, value.encode("ascii"))
+        _d_write_buffer_attr(
+            self._device, self._name_ascii, value.encode("ascii"))
 
 
 class Channel(object):
@@ -864,7 +870,8 @@ class Channel(object):
         mytype = c_char * len(array)
         c_array = mytype.from_buffer(array)
         if raw:
-            length = _c_read_raw(self._channel, buf._buffer, c_array, len(array))
+            length = _c_read_raw(
+                self._channel, buf._buffer, c_array, len(array))
         else:
             length = _c_read(self._channel, buf._buffer, c_array, len(array))
         return array[:length]
@@ -919,7 +926,8 @@ class Channel(object):
     )
     enabled = property(
         lambda self: _c_is_enabled(self._channel),
-        lambda self, x: _c_enable(self._channel) if x else _c_disable(self._channel),
+        lambda self, x: _c_enable(
+            self._channel) if x else _c_disable(self._channel),
         None,
         "Configured state of the channel\n\ttype=bool",
     )
@@ -971,8 +979,10 @@ class Channel(object):
         :param src: type=list
             Data to be converted.
         """
-        src_ptr = cast((c_char * (len(src) * self.data_format.length))(*src), c_void_p)
-        dst_ptr = cast((c_char * (len(dst) * self.data_format.length))(*dst), c_void_p)
+        src_ptr = cast(
+            (c_char * (len(src) * self.data_format.length))(*src), c_void_p)
+        dst_ptr = cast(
+            (c_char * (len(dst) * self.data_format.length))(*dst), c_void_p)
         _channel_convert(self._channel, src_ptr, dst_ptr)
 
     def convert_inverse(self, dst, src):
@@ -984,8 +994,10 @@ class Channel(object):
         :param src: type=list
             Data to be converted.
         """
-        src_ptr = cast((c_char * (len(src) * self.data_format.length))(*src), c_void_p)
-        dst_ptr = cast((c_char * (len(dst) * self.data_format.length))(*dst), c_void_p)
+        src_ptr = cast(
+            (c_char * (len(src) * self.data_format.length))(*src), c_void_p)
+        dst_ptr = cast(
+            (c_char * (len(dst) * self.data_format.length))(*dst), c_void_p)
         _channel_convert_inverse(self._channel, src_ptr, dst_ptr)
 
 
@@ -1008,7 +1020,8 @@ class Buffer(object):
             An new instance of this class
         """
         try:
-            self._buffer = _create_buffer(device._device, samples_count, cyclic)
+            self._buffer = _create_buffer(
+                device._device, samples_count, cyclic)
         except Exception:
             self._buffer = None
             raise
@@ -1038,7 +1051,8 @@ class Buffer(object):
         :param samples_count: type=int
             The number of samples to submit, default = full buffer
         """
-        _buffer_push_partial(self._buffer, samples_count or self._samples_count)
+        _buffer_push_partial(
+            self._buffer, samples_count or self._samples_count)
 
     def read(self):
         """
@@ -1361,7 +1375,8 @@ class Context(object):
             str1 = c_char_p()
             str2 = c_char_p()
             _get_attr(self._context, index, _byref(str1), _byref(str2))
-            self._attrs[str1.value.decode("ascii")] = str2.value.decode("ascii")
+            self._attrs[str1.value.decode(
+                "ascii")] = str2.value.decode("ascii")
 
         # TODO(pcercuei): Use a dictionary for the devices.
         self._devices = [
@@ -1496,7 +1511,8 @@ class NetworkContext(Context):
         returns: type=iio.NetworkContext
             An new instance of this class
         """
-        ctx = _new_network(hostname.encode("ascii") if hostname is not None else None)
+        ctx = _new_network(hostname.encode("ascii")
+                           if hostname is not None else None)
         super(NetworkContext, self).__init__(ctx)
 
 

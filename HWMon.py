@@ -3,6 +3,7 @@ import os
 from functools import partial
 from DataTypes import DataType
 
+
 class HWMon:
 
     def __init__(self,  parent=None):
@@ -10,7 +11,7 @@ class HWMon:
         super(HWMon, self).__init__()
         self._hwmon = dict()
 
-        for sensors in glob.iglob('/sys/class/hwmon/hwmon*', recursive = False):
+        for sensors in glob.iglob('/sys/class/hwmon/hwmon*', recursive=False):
             sensor = dict()
 
             if os.path.isfile(sensors + '/name'):
@@ -48,7 +49,6 @@ class HWMon:
                             channel['type'] = DataType.HUMIDITY
                         elif channel['channel'].startswith('fan'):
                             channel['type'] = DataType.FAN
-                        
 
                     if type == 'enable':
                         channel['type'] = DataType.BOOL
@@ -63,7 +63,8 @@ class HWMon:
 
                         with open(filename + "_label", 'r') as rf:
                             channel['description'] = (rf.read().rstrip())
-                    channel['type'] = DataType.BYTE  if (type == 'pwm') else DataType.BOOL
+                    channel['type'] = DataType.BYTE if (
+                        type == 'pwm') else DataType.BOOL
                     channel['path'] = filename
                     channel['rights'] = (os.stat(filename).st_mode & 0o777)
                     filename = filename.split('/')
@@ -75,10 +76,12 @@ class HWMon:
         for key, value in self._hwmon.items():
 
             if (value['rights'] & 0o444 == 0o444):
-                hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"] = {"description" : value['description'],"rights" : value['rights'],"type" : value['type'],"call" : partial(self.read_hwmon, value['id'], value['channel'])}
+                hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"] = {"description": value['description'],
+                                                                            "rights": value['rights'], "type": value['type'], "call": partial(self.read_hwmon, value['id'], value['channel'])}
 
             if (value['rights'] == 0o644):
-                hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"]["set"] = partial(self.write_hwmon, value['id'], value['channel'])
+                hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"]["set"] = partial(
+                    self.write_hwmon, value['id'], value['channel'])
 
         return hwmoninputs
 
@@ -89,7 +92,6 @@ class HWMon:
                 rf.close()
         else:
             return False
-
 
     def write_hwmon(self, id, channel, value):
         value = str(value)

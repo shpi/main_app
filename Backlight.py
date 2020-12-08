@@ -2,8 +2,8 @@ import os
 import time
 from DataTypes import DataType
 
-class Backlight:
 
+class Backlight:
 
     def __init__(self, parent=None):
 
@@ -22,22 +22,21 @@ class Backlight:
                     if os.path.exists(backlightpath + file
                                       + "/max_brightness"):
                         with open(backlightpath + file +
-                             "/max_brightness") as max_backlight:
-                             self.MAX_BACKLIGHT = (int)(max_backlight.readline())
+                                  "/max_brightness") as max_backlight:
+                            self.MAX_BACKLIGHT = (int)(
+                                max_backlight.readline())
                     if os.path.exists(backlightpath + file + "/bl_power"):
                         self.BL_POWER = 1
 
-        self.blinputs['backlight/brightness'] = {"description" : 'BL brightness in %',
-                                                 "type" : DataType.PERCENT_INT,
-                                                 "interval" : 10, 
+        self.blinputs['backlight/brightness'] = {"description": 'BL brightness in %',
+                                                 "type": DataType.PERCENT_INT,
+                                                 "interval": 10,
                                                  "lastupdate": 0,
-                                                 "call" : self.get_brightness,
-                                                 "set" : self.set_brightness}
+                                                 "call": self.get_brightness,
+                                                 "set": self.set_brightness}
 
     def get_inputs(self) -> dict:
         return self.blinputs
-
-
 
     def set_brightness(self, brightness):
 
@@ -45,7 +44,7 @@ class Backlight:
             setbrightness = int((self.MAX_BACKLIGHT / 100) * brightness)
 
             if setbrightness == 0 and brightness > 0:
-                 setbrightness = 1
+                setbrightness = 1
 
             with open(self.BACKLIGHT + "/brightness", "w") as bright:
                 bright.write(str(setbrightness))
@@ -62,14 +61,12 @@ class Backlight:
                         bright.write("0")
             bright.close()
 
-
     def get_brightness(self):
         if ((len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0)):
             with open(self.BACKLIGHT + "/brightness", "r") as bright:
                 self._brightness = int((100 / self.MAX_BACKLIGHT)
                                        * int(bright.readline().rstrip()))
-                #if (self._brightness != self.blinputs['backlight/brightness']['value']):
-                    #self.blinputs['backlight/brightness']['value'] = self._brightness
-                    #self.blinputs['backlight/brightness']['lastupdate'] = time.time()
+                # if (self._brightness != self.blinputs['backlight/brightness']['value']):
+                #self.blinputs['backlight/brightness']['value'] = self._brightness
+                #self.blinputs['backlight/brightness']['lastupdate'] = time.time()
         return self._brightness
-
