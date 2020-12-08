@@ -296,7 +296,7 @@ Row {
                 height: appearance.night_mode === 0 ? 100 : 50
                 onCurrentIndexChanged:
                 {
-                    console.log('onCurrentItemChanged called')
+                    //console.log('onCurrentItemChanged called')
                     if (appearance.night_mode === 0)
                     appearance.night_mode_start = hoursTumbler.currentIndex.toString() + ':' + minutesTumbler.currentIndex.toString()
                 }
@@ -480,7 +480,7 @@ Row {
 
     }
 
-    CheckBox { checked: appearance.invert_at_night === 1 ? true : false
+    /* CheckBox { checked: appearance.invert_at_night === 1 ? true : false
                Text {
                anchors.left: parent.right
                anchors.leftMargin: 10
@@ -490,18 +490,21 @@ Row {
                {
                    appearance.invert_at_night =  this.checked
                   }
-    }
+    }*/
 
 
-    CheckBox { checked: appearance.backgrounds_at_night === 1 ? true : false
+    CheckBox {
                Text {
                anchors.left: parent.right
                anchors.leftMargin: 10
                color: Colors.black
-               text: 'Hide Screensaver Backgrounds in Nightmode' }
+               text: 'Show Background Pictures in Nightmode' }               
+               Component.onCompleted: checked = appearance.background_night
+
                onCheckStateChanged:
                {
-                   appearance.backgrounds_at_night =  this.checked
+                   appearance.background_night =  this.checked ? 1 : 0
+
                   }
     }
 
@@ -524,7 +527,7 @@ Row {
                      color: Colors.black
                      text: inputs.data[modelData]['description'] }
                      onCheckStateChanged:
-                     {    console.log('onCheckStateChanged called')
+                     {   // console.log('onCheckStateChanged called')
                          appearance.setDeviceTrack(modelData, this.checked)
                         }
           }

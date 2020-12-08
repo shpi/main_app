@@ -301,5 +301,19 @@ Item {
                    onTriggered: time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
                }
 }
-}
+
+    Item {
+
+
+            Loader {
+
+                anchors.fill: parent
+
+                source: "ShutterSettings.qml"
+            }
+
+
+    }
+
+    }
 }

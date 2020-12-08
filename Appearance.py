@@ -19,6 +19,7 @@ class Appearance(QObject):
         self.backlightlevel = 0
         self._blackfilter = 0
         self.settings = settings
+        self._background_night = int(settings.value("appearance/background_night" , 1))
         self._min_backlight = int(settings.value("appearance/min" , 20))
         self._max_backlight = int(settings.value("appearance/max", 100))
         self._min_backlight_night = int(settings.value("appearance/min_night" , 20))
@@ -119,6 +120,19 @@ class Appearance(QObject):
         self._off_timer = int(seconds)
         self.settings.setValue("appearance/off_timer", seconds)
 
+    @Signal
+    def background_Night_Changed(self):
+        pass
+
+    @Property(bool,notify=background_Night_Changed)
+    def background_night(self):
+        return bool(self._background_night)
+
+    @background_night.setter
+    def set_background_night(self, min):
+        self._background_night = int(min)
+        self.settings.setValue("appearance/background_night", self._background_night)
+        self.background_Night_Changed.emit()
 
 
     @Signal
@@ -241,11 +255,17 @@ class Appearance(QObject):
             self.state = 'OFF'
 
         elif self.state in ('ACTIVE') and self.lastuserinput + self._dim_timer < time.time():
-             self.set_backlight(self._min_backlight)
+             if self._night:
+                 self.set_backlight(self._min_backlight_night)
+             else:
+                 self.set_backlight(self._min_backlight)
              self.state = 'SLEEP'
 
         elif self.state in ('SLEEP','OFF') and self._dim_timer > 0 and self.lastuserinput + self._dim_timer > time.time():
-            self.set_backlight(self._max_backlight)
+            if self._night:
+                self.set_backlight(self._max_backlight_night)
+            else:
+                self.set_backlight(self._max_backlight)
             self.state = 'ACTIVE'
 
         if self.jump_state == 0 and self._jump_timer + self.lastuserinput < time.time():
@@ -303,7 +323,7 @@ class Appearance(QObject):
         pass
 
     @Slot(str,int)
-    def setDeviceTrack(self,path,value):
+    def setDeviceTrack(self, path, value):
         value = int(value)
         if value != self.possible_devs[path]:
          self.possible_devs[path] = value

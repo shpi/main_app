@@ -48,7 +48,7 @@ Timer {
             moving_text.y = 10 + Math.random() * Math.floor(parent.height - moving_text.height - 20)
             //showSlow.start()
 
-            if (appearance.night === 0) {
+            if (appearance.night === 0 || appearance.background_night > 0) {
             if (Math.random() > 0.9 || bg.source === '') bg.source =  folderModel.get (Math.random() * Math.floor(folderModel.count), "fileURL")
             } else bg.source = ''
 
