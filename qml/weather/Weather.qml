@@ -15,6 +15,10 @@ Item {
 
         currentIndex: swipeView.currentIndex
 
+        background: Rectangle {
+            color: Colors.white
+        }
+
         TabButton {
 
             anchors.top: parent.top

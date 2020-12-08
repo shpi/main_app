@@ -1,6 +1,8 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 
+import "../fonts/"
+
 Item {
 
 
@@ -20,7 +22,7 @@ Item {
                  width: parent.width
                  text: '<b>Available Variables</b>'
                  font.pointSize: 12
-                 color: "white"
+                 color: Colors.black
                  }
                }
 
@@ -42,8 +44,11 @@ Item {
                     property int delindex: index
                     id: wrapper
                     height: inputsview.currentIndex == index ? 150 : 80
+                    Behavior on height {
+                        PropertyAnimation {}
+                    }
                     width: inputsview.width
-                    color: index % 2 === 0 ? "#11ffffff" : "transparent"
+                    color: index % 2 === 0 ? Colors.white : "transparent"
 
                     Text {
                        padding: 5
@@ -51,7 +56,7 @@ Item {
                        anchors.right: parent.right
                        text: value
                        font.pointSize: 11
-                       color: "white"
+                       color: Colors.black
                    }
 
                     Column {
@@ -63,7 +68,7 @@ Item {
 
                             text: '<b>' + path + '</b> ' // + description + ', ' + type + ': ' + (output == '1' ? '' : value)
                             font.pointSize: 10
-                            color: inputsview.currentIndex == index ? "green" :  "white"
+                            color: inputsview.currentIndex == index ? "green" :  Colors.black
 
                         }
 
@@ -73,7 +78,7 @@ Item {
 
                             text: description + ' (' + type + ')'
                             font.pointSize: 9
-                            color: "white"
+                            color: Colors.black
 
                         }
 
@@ -86,7 +91,7 @@ Item {
                                      checked: true
 
                                       Text {text: "logging"
-                                           color: "white"
+                                           color: Colors.black
                                            anchors.left: parent.right
                                            anchors.leftMargin: 15
 
@@ -98,7 +103,7 @@ Item {
                                      checked: true
 
                                       Text {text: "exposed"
-                                           color: "white"
+                                           color: Colors.black
                                            anchors.left: parent.right
                                            anchors.leftMargin: 15
                                            }
@@ -110,7 +115,7 @@ Item {
                                  value: interval
                                  stepSize: 5
                                   Text {text: "Interval"
-                                     color: "white"
+                                     color: Colors.black
                                      anchors.left: parent.right
                                      anchors.leftMargin: 15
                                      }

@@ -20,6 +20,25 @@ Item {
             title: "MQTT Client"
             page: "content/ProgressBarPage.qml"
         }
+        ListElement {
+            title: "Screensaver Pictures"
+            page: "Pictures.qml"
+        }
+
+        ListElement {
+            title: "Change Device Name"
+            page: "Hostname.qml"
+        }
+
+        ListElement {
+            title: "Set Timezone"
+            page: "Timezone.qml"
+        }
+
+        ListElement {
+            title: "Set Language"
+            page: "Language.qml"
+        }
 
     }
 
@@ -33,13 +52,14 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                color: "#11ffffff"
+                color: index % 2 === 0 ? "transparent" : Colors.white
+
                 visible: mouse.pressed
             }
 
             Text {
                 id: textitem
-                color: "white"
+                color: Colors.black
                 font.pixelSize: 32
                 text: title
                 anchors.verticalCenter: parent.verticalCenter
@@ -62,7 +82,7 @@ Item {
                 text: Icons.arrow
                 rotation: 270
                 font.family: localFont.name
-                color: "white"
+                color: Colors.black
             }
 
             MouseArea {
@@ -88,7 +108,7 @@ Item {
                       padding: 10
                       width: parent.width
                       text: '<b>Settings</b>'
-                      color: "white"
+                      color: Colors.black
                       font.pointSize: 12
                       }
                     }

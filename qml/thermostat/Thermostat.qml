@@ -9,6 +9,7 @@ import "../../fonts/"
 Item {
     anchors.fill: parent
 
+
     TabBar {
         anchors.top: parent.top
         anchors.left: parent.left
@@ -17,6 +18,10 @@ Item {
         height: parent.height
 
         currentIndex: swipeView.currentIndex
+
+        background: Rectangle {
+            color: Colors.white
+        }
 
         TabButton {
 
@@ -71,10 +76,11 @@ Item {
                      y:  dialTherm.height / 2 - height / 2
                      width: Math.max(64, Math.min( dialTherm.width,  dialTherm.height))
                      height: width
-                     color: dialTherm.enabled ? "transparent" : "#eee"
+
+                     color: dialTherm.enabled ? "transparent" : "#40aaaaaa"
                      radius: width / 2
-                     border.color:  dialTherm.enabled ? "black" : "lightgrey"
-                     border.width: 2
+                     border.color:  Colors.black
+                     border.width: dialTherm.enabled ? 2 : 1
                      antialiasing: true
                                       }
 
@@ -86,8 +92,7 @@ Item {
                        y: dialTherm.background.y + dialTherm.background.height / 2 - height / 2
                        width: 20
                        height: 20
-                       color: Qt.rgba(parent.colortemp, (1 - 2 * Math.abs(parent.colortemp - 0.5)), 1-parent.colortemp, 1)
-
+                       color: dialTherm.enabled ? Qt.rgba(parent.colortemp, (1 - 2 * Math.abs(parent.colortemp - 0.5)), 1-parent.colortemp, 1) : Colors.black
                        border.color: dialTherm.enabled ? "black" : "lightgrey"
 
                        radius: 10
@@ -133,6 +138,7 @@ Item {
                     anchors.top: parent.verticalCenter
                     anchors.horizontalCenter: parent.horizontalCenter
                     font.pointSize: 30
+                    color:  Colors.black
                 }
 
                 Text {
@@ -141,6 +147,7 @@ Item {
                     anchors.bottom: parent.verticalCenter
                     anchors.horizontalCenter: parent.horizontalCenter
                     font.pointSize: 40
+                    color: Colors.black
                 }
 
                 Shape {
@@ -282,9 +289,7 @@ Item {
 
         Item {
 
-            Rectangle {
 
-                anchors.fill: parent
                 Loader {
 
                     anchors.fill: parent
@@ -292,7 +297,7 @@ Item {
                     source: "ThermostatSettings.qml"
                 }
 
-            }
+
         }
 
         Item {

@@ -1,10 +1,30 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 
+import "../../fonts/"
+
 Item {
     anchors.fill: parent
 
+Component.onCompleted: {
 
+    for (var i = 0; i < dayrepeater.count; i++)
+    {
+
+    console.log(dayrepeater.itemAt(i).dayname);
+
+        for (var a = 0; a < dayrepeater.itemAt(i).children.length; a++)
+        {
+
+            console.log(dayrepeater.itemAt(i).children[a].value + ':' + dayrepeater.itemAt(i).children[a].temperature);
+
+
+        }
+
+    }
+
+
+}
 
 Column {
      property var weekday: ["Sunday", "Monday", "Tuesday","Wednesday","Thursday","Friday","Saturday"]
@@ -16,7 +36,7 @@ Column {
 
 
      Repeater{
-
+       id: dayrepeater
 
          model: 13
 
@@ -27,7 +47,7 @@ Column {
      ThermostatWeekKnob {value:550;to:1440;from:0}
 
     }
-     }
+    }
 
 
 
@@ -46,7 +66,7 @@ Repeater{
     model: 13
 
     Rectangle {
-    color: "black"
+    color: Colors.black
     //opacity: 0.3
     width:1
     height: parent.height

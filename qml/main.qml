@@ -11,6 +11,10 @@ ApplicationWindow {
     height: 480
     visible: true
 
+    background: Rectangle {
+       color: Colors.white
+    }
+
     FontLoader {
         id: localFont
         source: "../fonts/orkney-custom.ttf"
@@ -34,7 +38,8 @@ ApplicationWindow {
         Rectangle {
 
             id: drawerheader
-            color: Qt.rgba(0, 0, 0, 0.7)
+            color: Colors.white
+            opacity: 0.9
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width - 20
             height: mainsettingsView.height
@@ -65,7 +70,7 @@ ApplicationWindow {
                 rotation: settingsstackView.depth == 0 ? 180 : 90
                 width: height
                 palette.button: settingsstackView.depth > 0 ? "darkred" : "#11000000"
-                palette.buttonText: "white"
+                palette.buttonText: settingsstackView.depth > 0 ? "white" : Colors.black
                 font.pointSize: settingsstackView.depth > 0 ? 20 : 30
                 onClicked: {
                     if (settingsstackView.depth === 0)
@@ -127,7 +132,8 @@ ApplicationWindow {
         }
 
         Rectangle {
-            color: Qt.rgba(0, 0, 0, 0.5)
+            color: Colors.white
+            opacity: 0.9
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width - 20
             height: window.height - drawerheader.height - 20
@@ -148,7 +154,7 @@ ApplicationWindow {
     SwipeView {
         id: view
 
-        currentIndex: 2
+        currentIndex: 1
         anchors.fill: parent
         anchors.bottom: inputPanel.top
 
@@ -193,14 +199,14 @@ ApplicationWindow {
             anchors.bottom: parent.top
             width: parent.width
             height: 50
-            color: 'black'
+            color: Colors.white
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.top: parent.top
                 padding: 2
                 anchors.left: parent.left
                 anchors.leftMargin: this.width > parent.width ? parent.width - this.width : 5
-                color: 'white'
+                color: Colors.black
                 text: InputContext.surroundingText
                 font.pointSize: 15
             }
@@ -211,13 +217,12 @@ ApplicationWindow {
 
         anchors.bottom: view.bottom
         anchors.right: view.right
-
         anchors.rightMargin: 30
         font.family: localFont.name
         font.pointSize: 50
         text: Icons.logo
-        color: "white"
-        visible: drawer.visible
+        color: Colors.white
+        visible: drawer.position == 0 ? false : true
     }
 
     Rectangle {
@@ -233,6 +238,8 @@ ApplicationWindow {
 
     Component.onCompleted: {
 
+
+        Colors.night = appearance.night
 
         /*  for (let [key, value] of Object.entries(inputs.data)) {
       if (key.toString().startsWith('alsa'))   { console.log(`${key}: ${value}`);

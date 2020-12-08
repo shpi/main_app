@@ -21,7 +21,7 @@
  * THE SOFTWARE.
  */
 import QtQuick 2.0
-
+import "../fonts/"
 Rectangle {
     width: 640
     height: 480

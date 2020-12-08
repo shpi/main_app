@@ -1,6 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 
+import "../../fonts/"
 
 Rectangle {
     property string dayname
@@ -13,7 +14,7 @@ Rectangle {
     height: active ? 300 : 100
     border.color: "grey"
     border.width: 1
-    color: even ? "#fff" : "#aaa"
+    color: even ? Colors.white : "#aaa"
     Behavior on height { NumberAnimation {} }
     Label {
 
@@ -22,7 +23,7 @@ Rectangle {
         anchors.leftMargin: 10
         text: parent.dayname
 
-        color: even ? "#aaa" : "#FFF"
+        color: even ? "#aaa" : Colors.white
 
         font.pointSize: parent.active ? 40 : 20
     }

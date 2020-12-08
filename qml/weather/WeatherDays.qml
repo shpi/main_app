@@ -1,4 +1,5 @@
-import QtQuick 2.0
+import QtQuick 2.12
+import "../../fonts/"
 
 Item {
 
@@ -10,6 +11,7 @@ Item {
         anchors.right: parent.right
         anchors.rightMargin: 10
         text: weather[0].city
+        color: Colors.black
 
 }
 

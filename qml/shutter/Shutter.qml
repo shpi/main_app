@@ -7,6 +7,51 @@ Item {
     anchors.fill: parent
 
 
+    TabBar {
+        anchors.top: parent.top
+        anchors.left: parent.left
+        width: parent.width * 0.266
+        id: tabBar
+        height: parent.height
+        currentIndex: swipeView.currentIndex
+        background: Rectangle {
+            color: Colors.white
+        }
+
+        TabButton {
+
+            anchors.top: parent.top
+            height: parent.height / 2
+            id: firstButton
+            text: Icons.shutter
+            font.family: localFont.name
+            font.pointSize: 25
+            anchors.right: parent.right
+        }
+        TabButton {
+            height: parent.height / 2
+            id: secondButton
+            text: Icons.settings
+            font.family: localFont.name
+            font.pointSize: 25
+            anchors.top: firstButton.bottom
+            anchors.right: parent.right
+        }
+
+    }
+
+    SwipeView {
+        id: swipeView
+        anchors.right: parent.right
+        anchors.top: parent.top
+        height: parent.height
+        width: parent.width - (tabBar.width / 2)
+        currentIndex: tabBar.currentIndex
+        orientation: Qt.Vertical
+
+    Item {
+
+
     Text {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 10
@@ -15,6 +60,7 @@ Item {
         text: Icons.sunset
         font.family: localFont.name
         font.pointSize: 30
+        color: Colors.black
     }
 
     Text {
@@ -25,8 +71,15 @@ Item {
         font.pointSize: 30
         font.family: localFont.name
         text: Icons.sunrise
+        color: Colors.black
     }
 
+    Rectangle {
+        height: parent.height * 0.75 + 8
+        width: 308
+        border.width: 4
+        border.color: "grey"
+        anchors.centerIn:parent
     Slider {
         id: control
         enabled: shutter2.state !== 'STOPSLEEP'  ? true : false
@@ -34,7 +87,7 @@ Item {
         to: 100
         value: pressed == false ? shutter2.actual_position : shutter2.desired_position
         orientation: Qt.Vertical
-        height: parent.height * 0.75
+        height: parent.height - 8
         width: 300
         anchors.centerIn: parent
         stepSize: 5
@@ -45,15 +98,13 @@ Item {
             text: shutter2.desired_position + "%"
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.left
-            font.pointSize: 30
+            font.pointSize: 15
             anchors.rightMargin: 20
-            color: "black"
+            color: Colors.black
         }
 
         background: Rectangle {
 
-            border.width: 2
-            border.color: "black"
             width: 300
             height: parent.height
 
@@ -89,9 +140,10 @@ Item {
 
             Rectangle {
 
+
                 anchors.bottom: parent.bottom
                 height: parent.height - (control.visualPosition * parent.height)
-                width: parent.width
+                width: 300
 
                 LinearGradient {
                     anchors.fill: parent
@@ -119,7 +171,7 @@ Item {
         height: parent.height * 0.15
         radius: 13
         opacity: 0.5
-        color: "black"
+        color: Colors.black
         y: control.topPadding + (1 - (shutter2.desired_position / 100)) * (control.availableHeight - height)
         anchors.horizontalCenter: parent.horizontalCenter
        }
@@ -139,6 +191,7 @@ Item {
             Text {
                 id: handleIcon
                 font.family: localFont.name
+
                 text: {shutter2.state === 'STOP' ? Icons.shutter :
                        shutter2.state === 'STOPSLEEP' ?  Icons.locked : Icons.arrow
                 }
@@ -167,12 +220,17 @@ Item {
 
 
 
+
+    }
+
+
     Text {
         anchors.verticalCenter: parent.verticalCenter
         anchors.bottomMargin: 10
         anchors.right: parent.right
         anchors.rightMargin: 10
-        font.pointSize: 30
+        font.pointSize: 15
+        color: Colors.black
         text: shutter2.residue_time === 0 ? '' : shutter2.residue_time.toFixed(1)  + Icons.timer
         font.family: localFont.name
     }
@@ -181,6 +239,7 @@ Item {
     Text {
                id: time
                font.pixelSize: 30
+               color: Colors.black
                text: time.startTime != 0 ? new Date().getTime() - time.startTime + " ms" : 0
                anchors.horizontalCenter: parent.horizontalCenter
                property double startTime: 0
@@ -214,4 +273,6 @@ Item {
                    interval: 200; running: false; repeat: true
                    onTriggered: time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
                }
+}
+}
 }

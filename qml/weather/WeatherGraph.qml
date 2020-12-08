@@ -2,9 +2,11 @@ import QtQuick 2.12
 import QtCharts 2.3
 import QtQuick.Controls 2.12
 
+import "../../fonts/"
 
 Rectangle {
     anchors.fill: parent
+    color: Colors.white
 
     ChartView {
         property date mindate
@@ -18,6 +20,11 @@ Rectangle {
         legend.borderColor: "transparent"
         legend.font.pointSize: 8
         legend.markerShape: Legend.MarkerShapeCircle
+        legend.color: Colors.black
+        plotAreaColor: Colors.white
+        titleColor: Colors.black
+        backgroundColor: Colors.white
+        theme: appearance.night ? ChartView.ChartThemeDark : ChartView.ChartThemeLight
 
 
         DateTimeAxis {

@@ -1,6 +1,8 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 
+import "../fonts/"
+
 Item {
 
     Component.onCompleted: inputs.set_searchList('alsa')
@@ -13,7 +15,7 @@ Column{
         id:audioheader
     padding: 10
     text: "Audio Settings"
-    color: "white"
+    color: Colors.black
     font.bold: true
 
     }
@@ -40,7 +42,7 @@ Column{
                     height: 70
 
                     width: inputsview.width
-                    color: index % 2 === 0 ? "#11ffffff" : "transparent"
+                    color: index % 2 === 0 ? Colors.white : "transparent"
                     Row {
                         spacing: 10
                         height: parent.height
@@ -51,7 +53,8 @@ Column{
                             anchors.verticalCenter: parent.verticalCenter
                             text: description + ' '
                             font.pointSize: 8
-                            color: "white"
+                            color: Colors.black
+
 
                         }
 
@@ -71,8 +74,7 @@ Column{
                                          anchors.verticalCenter: parent.verticalCenter
                                          text: sensorvalue
                                          font.pointSize: 8
-                                         color: "white"
-
+                                         color: Colors.black
                                      }
                             }
 
@@ -83,7 +85,7 @@ Column{
                                          width: 300
                                          height: 30
                                          color: "darkgrey"
-                                         border.color: "white"
+                                         border.color: Colors.black
 
 
 
@@ -102,7 +104,7 @@ Column{
                                         anchors.verticalCenter: parent.verticalCenter
                                         text: sensorvalue + '%'
                                         font.pointSize: 8
-                                        color: "white"
+                                        color: Colors.black
 
                                     }
 
@@ -133,7 +135,7 @@ Column{
                          //visible: output == '1' ? 1 : 0
                          font.pointSize: 8
                          width: 300
-                         color: "white"
+                         color: Colors.black
                          placeholderText: (output == '1' ? value.toString() : '')
                          onEditingFinished: inputs.set(path,this.text)
                          }

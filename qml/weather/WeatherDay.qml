@@ -2,6 +2,8 @@ import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtGraphicalEffects 1.12
 
+import "../../fonts/"
+
 Rectangle {
     id: dayrect
     property int index
@@ -29,19 +31,22 @@ Rectangle {
     height: 200
     radius: 10
     border.width: 2
-    border.color: "black"
+    border.color: Colors.black
+    color: Colors.white
 
     Text {
         text: dayname
         font.pointSize: 10
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
+        color: Colors.black
     }
 
     Text {
     text: average_temp + "°C"
     anchors.centerIn:parent
     font.pointSize: 15
+    color: Colors.black
     }
 
     Text {
@@ -50,6 +55,7 @@ Rectangle {
     anchors.bottomMargin: 10
     anchors.bottom:parent.bottom
     font.pointSize: 10
+    color: Colors.black
     }
 
     Row {

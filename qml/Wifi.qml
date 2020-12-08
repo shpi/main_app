@@ -23,7 +23,7 @@ Item {
     Text {
 
         anchors.horizontalCenter: parent.horizontalCenter
-        color: "white"
+        color: Colors.black
         text: 'status: ' + (actualDevice.currentText != '' ? wifi.wpa_status(wifi.devices[actualDevice.currentIndex]) + ' ' + wifi.signal_status(wifi.devices[actualDevice.currentIndex]) + '%': '')
 
     }
@@ -59,7 +59,7 @@ Column{
 
                     height: inputsview.selectednetwork == index ? 160 : 60
                     width: inputsview.width
-                    color: index % 2 === 0 ? "transparent" : "#11ffffff"
+                    color: index % 2 === 0 ? "transparent" : Colors.white
 
                     Row {
 

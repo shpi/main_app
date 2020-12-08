@@ -3,9 +3,9 @@ import QtQuick.Controls 2.12
 
 import "../../fonts/"
 
-Item {
+Rectangle {
    anchors.fill: parent
-
+   color: Colors.white
 
 
     // Temperaturreduzierung bei Abwesenheit 1′ pro 24h ? Urlaubsmodus
@@ -20,12 +20,14 @@ Column {
         Text {
         anchors.verticalCenter: parent.verticalCenter
         text: "Auto-Away"
+        color: Colors.black
         }
     Switch {}
 
     Text {
     anchors.verticalCenter: parent.verticalCenter
     text: "Valveprotection"
+    color: Colors.black
     }
 Switch {}
 
@@ -37,6 +39,7 @@ Row {
     Text {
     anchors.verticalCenter: parent.verticalCenter
     text: "Temperature offset"
+    color: Colors.black
     }
 
     SpinBox {
@@ -70,7 +73,7 @@ Row {
         spacing:  10
     Text {
         anchors.verticalCenter: parent.verticalCenter
-
+        color: Colors.black
     text: "Temperature hysteresis"
 
     }
@@ -109,10 +112,13 @@ Row {
         spacing: 20
 
     RoundButton {
-        height: width
+
+        width: height
         font.family: localFont.name
         text: Icons.schedule
-        font.pointSize: 50
+        palette.button: "lightgrey"
+        palette.buttonText: Colors.black
+        font.pointSize: 25
         enabled: false
         }
 
@@ -129,6 +135,7 @@ Frame {
         RadioButton {
             checked: true
             text: qsTr("No schedule")
+
         }
         RadioButton {
             text: qsTr("Daily")

@@ -1,7 +1,10 @@
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 import time
+import os
 from enum import Enum
 import threading
+from datetime import datetime
+from DataTypes import DataType
 
 
 class Appearance(QObject):
@@ -29,6 +32,7 @@ class Appearance(QObject):
         self._off_timer = int(settings.value("appearance/off_timer", 300))
         self.lastuserinput = time.time()
         self.state = 'ACTIVE' # Enum('ACTIVE','SLEEP','OFF')
+        self._night = 0
 
         self.possible_devs = dict()
         self.possible_devs['list'] = list()
@@ -42,7 +46,6 @@ class Appearance(QObject):
                  self.possible_devs[key] = 1
                 if self.possible_devs[key] == 1:
                     inputs.entries[key]['interrupts'].append((self.interrupt))
-
 
 
     @Property(int,constant=True)
@@ -75,7 +78,10 @@ class Appearance(QObject):
         self._night_mode_end = time
         self.settings.setValue("appearance/night_mode_end", time)
 
-
+    @Slot(str)
+    def delete_file(self, path):
+        if os.path.exists(path):
+          os.remove(path)
 
 
     @Property(int,constant=True)
@@ -129,6 +135,17 @@ class Appearance(QObject):
         self.settings.setValue("appearance/min", self._min_backlight)
         self.rangeChanged.emit()
 
+
+    @Property(int,notify=rangeChanged)
+    def minbacklight_night(self):
+        return int(self._min_backlight_night)
+
+    @minbacklight_night.setter
+    def set_min_backlight_night(self, min):
+        self._min_backlight_night = int(min)
+        self.settings.setValue("appearance/min_night", self._min_backlight_night)
+        self.rangeChanged.emit()
+
     @Property(int,notify=rangeChanged)
     def maxbacklight(self):
         return int(self._max_backlight)
@@ -142,7 +159,82 @@ class Appearance(QObject):
         self.rangeChanged.emit()
 
 
+    @Property(int,notify=rangeChanged)
+    def maxbacklight_night(self):
+        return int(self._max_backlight_night)
+
+    @maxbacklight_night.setter
+    def set_max_backlight_night(self, max):
+       self._max_backlight_night = int(max)
+       self.rangeChanged.emit()
+       self.settings.setValue("appearance/max_night", self._max_backlight_night)
+       self.set_backlight(self._max_backlight_night)
+       self.rangeChanged.emit()
+
+    @Signal
+    def nightChanged(self):
+           pass
+
+
+    @Property(int,notify=nightChanged)
+    def night(self):
+               return int(self._night)
+
+
+
+
     def update(self):
+
+        error = False
+        night = self._night
+
+        if self._night_mode > -1 and self._night_mode_start != self._night_mode_end:
+
+            if self._night_mode == 0:
+                start = self._night_mode_start
+                end = self._night_mode_end
+
+            elif self._night_mode == 1:
+                if self._night_mode_start in self.inputs and self.inputs[self._night_mode_start]['type'] == DataType.TIME:
+                    start = self.inputs[self._night_mode_start]['value']
+                else:
+                    error = True
+                    print('Datatype doesnt match, Nightmode disabled')
+                    self._night = 0
+
+                if self._night_mode_end in self.inputs and self.inputs[self._night_mode_end]['type'] == DataType.TIME:
+                    end = self.inputs[self._night_mode_end]['value']
+                else:
+                    error = True
+                    print('Datatype doesnt match, Nightmode disabled')
+                    self._night = 0
+
+            if error == False:
+                start = start.split(':')
+                start = int(start[0]) * 60 + int(start[1])
+                now = datetime.now().strftime("%H:%M").split(':')
+                now = int(now[0]) * 60 + int(now[1])
+                end = end.split(':')
+                end = int(end[0]) * 60 + int(end[1])
+
+                if start < end: # 18 - 23:00
+                    if now > end or now < start:
+                        self._night = 0
+                    else:
+                        self._night = 1
+
+                else:  # end < start: # 18 - 3:00
+                    if now > end and now < start:
+                        self._night = 0
+                    else:
+                        self._night = 1
+
+        else:
+            self._night = 0
+
+        if night != self._night:
+                self.nightChanged.emit()
+
 
         if self.state in ('SLEEP') and self._off_timer > 0 and (self.lastuserinput + self._off_timer < time.time()):
             self.set_backlight(0)

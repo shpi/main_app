@@ -1,6 +1,8 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 
+import "../../fonts/"
+
 Item {
     anchors.fill: parent
 
@@ -15,7 +17,7 @@ Item {
             spacing: 5
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-
+                color: Colors.black
                 text: "Update Interval in seconds"
             }
 
@@ -40,7 +42,7 @@ Item {
             spacing: 5
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-
+                color: Colors.black
                 text: "OpenWeather API Key"
             }
 
@@ -129,6 +131,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: '<b>' + name + ' ' + stat + '</b>, ' + country
                                 font.pointSize: 12
+                                color: Colors.black
                                 MouseArea {
                                     anchors.fill: parent
                                     onClicked: cityview.currentIndex = wrapper.delindex
@@ -138,6 +141,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: 'Latitude: ' + lat + ', Longitude: ' + lon
                                 font.pointSize: 8
+                                color: Colors.black
                             }
                         }
                     }
