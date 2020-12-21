@@ -164,6 +164,12 @@ ApplicationWindow {
         }
 
         Loader {
+            id: ticks
+            source: "ticks.qml"
+        }
+
+
+        Loader {
             id: screensaver
             property bool _isCurrentItem: SwipeView.isCurrentItem
             source: "screensaver/Screensaver.qml"
