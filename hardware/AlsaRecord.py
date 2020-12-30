@@ -27,9 +27,9 @@ class AlsaRecord:
         self.bits = 16  # S8, S16_LE, S32_BE ..
         self.channels = 1
         self.chunksize = int((self.rate * (self.bits/8) * self.channels) // 10)
-        self.input['running'] = True
-        self.input['sending'] = False
-        self.input['receiver'] = []
+        self.running = True
+        #self.input['sending'] = False
+        #self.input['receiver'] = [] for later use, to send audio packages for intercom
         self.arecord_process = None
         self.thread_stdout = None
         self.thread_stderr = None
@@ -40,7 +40,7 @@ class AlsaRecord:
 
     def process_arecord_stdout(self, arecord_process):  # output-consuming thread
 
-        while self.input['running']:
+        while self.running:
             for i in range(0, self.buffersize):
                 self.bufferpos = i
                 self.buffer[i] = arecord_process.stdout.read(self.chunksize)
@@ -48,7 +48,7 @@ class AlsaRecord:
     def process_arecord_stderr(self, arecord_process):
         dat = bytearray()
 
-        while self.input['running']:
+        while self.running:
             buf = arecord_process.stderr.read(1)
             if buf == b'\r':
                 if dat.endswith(b'MAX'):
@@ -62,7 +62,7 @@ class AlsaRecord:
 
     def update(self):
 
-        if self.input['running']:
+        if self.running:
             if not self.arecord_process or self.arecord_process.poll() is not None:
                 self.arecord_process = Popen(['arecord', '-D', 'plughw:' + self.card, '-c', str(self.channels), '-r', str(
                     self.rate), '-t', 'raw', '-f', self.format, '-V', 'mono'], stdout=PIPE, stderr=PIPE)  # output-producing process

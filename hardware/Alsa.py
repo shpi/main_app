@@ -72,9 +72,9 @@ class AlsaMixer:
                 card_name = i[pos0+1:pos1].strip()
                 card_number = i.split(" [")[0].strip()
                 card_desc = i[pos1+2:].strip()
-                cards['alsa/' + card_name] = {'id': card_number,
+                cards['alsa/' + card_name] = { # 'id': card_number,
                                               'description': card_desc + ' on/off',
-                                              'name': card_name,
+                                               #'name': card_name,
                                               'value': self.settings.value("alsa/" + card_name, 1),
                                               'interval': -1,
                                               'set': partial(self.power_device, card_name),
@@ -228,8 +228,10 @@ class AlsaMixer:
                             interface['description'] = description
                         interface['set'] = partial(
                             AlsaMixer.change_control, card_name, interface['id'], i, len(values))
+
                         interfaces[f"alsa/{card_name}/control/{interface['id']}/{i}"] = (
                             interface.copy())
+                        del interfaces[f"alsa/{card_name}/control/{interface['id']}/{i}"]['id']
                         i += 1
 
         return interfaces

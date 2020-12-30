@@ -32,7 +32,8 @@ class Led:
                             self.inputs['leds/' + file] = {
                                 'description': 'brightness of led in %',
                                 'type': DataType.PERCENT_FLOAT,
-                                'steps': self.leds[file]['max'],
+                                'min': 0,
+                                'max': self.leds[file]['max'],
                                 'value': 100 / self.leds[file]['max'] * self.leds[file]['rawvalue'],
                                 'lastupdate': time.time(),
                                 'interval': 8,

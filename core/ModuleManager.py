@@ -28,16 +28,18 @@ class ModuleManager(QObject):
             self._modules[category] = {
             key : [(settings.value(category + "/" + key))]
             if isinstance(settings.value(category + "/" + key, []), str)
-            else settings.value(category + "/" + key)
+            else settings.value(category + "/" + key,[])
             if isinstance(settings.value(category + "/" + key, []), list)
             else []
             for key in modules}
 
         for category, value in self._modules.items():
             self._instances[category] = dict()
+
             for classname, instancenames in value.items():
                 self._instances[category][classname] = dict()
                 tempclass = getattr(importlib.import_module(category.lower() + '.' + classname), classname)
+
                 for instancename in instancenames:
                     self._instances[category][classname][instancename] = tempclass(instancename,inputs,settings)
                     print(self._instances[category][classname][instancename])

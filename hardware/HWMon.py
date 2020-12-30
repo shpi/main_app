@@ -77,7 +77,8 @@ class HWMon:
 
             if (value['rights'] & 0o444 == 0o444):
                 hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"] = {"description": value['description'],
-                                                                            "rights": value['rights'], "type": value['type'], "call": partial(self.read_hwmon, value['id'], value['channel'])}
+                                                                            #"rights": value['rights'],
+                                                                            "type": value['type'], "call": partial(self.read_hwmon, value['id'], value['channel'])}
 
             if (value['rights'] == 0o644):
                 hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"]["set"] = partial(

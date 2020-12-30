@@ -178,9 +178,20 @@ class InputsDict(QObject):
         self.update(0)
         self.dataChanged.emit()
 
-# interval -1 =  update through class
-# interval  0 =  one time
-# interval > 0 =  call function
+
+        # 'available' -> for ENUM datatype, list of option for dropdown box
+        # 'lastupdate' -> lastupdate
+        # 'call' -> for get actual sensor value
+        # 'step', 'min', 'max'  -> for integer slides
+        # 'value' -> cached sensor value
+        # 'thread' -> thread for input devices
+        # 'type' -> datatype of sensor
+        # 'description' -> description
+        # 'set' -> outputs have set function
+        # 'interrupts' -> for input devices, could be reworked to events for multipurpose
+        # 'interval'  -> #  1 =  update through class, 0 =  one time,  > 0 = update throug  call function
+
+
 
     def update(self, lastupdate):
 

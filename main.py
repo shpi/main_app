@@ -88,7 +88,7 @@ def check_loop():
     modules.update()
 
 
-settings = QSettings()
+settings = QSettings("SHPI GmbH", "Main")
 backlight = Backlight()
 hwmon = HWMon()
 inputs = InputsDict()
@@ -138,6 +138,51 @@ if __name__ == "__main__":
     engine.rootContext().setContextProperty("appearance", appearance)
     engine.rootContext().setContextProperty("modules", modules)
 
+    # 'available' -> for ENUM datatype, list of option for dropdown box
+    # 'lastupdate' -> lastupdate
+    # 'call' -> for get actual sensor value
+    # 'step', 'min', 'max'  -> for integer slides
+    # 'value' -> cached sensor value
+    # 'thread' -> thread for input devices
+    # 'type' -> datatype of sensor
+    # 'description' -> description
+    # 'set' -> outputs have set function
+    # 'interrupts' -> for input devices, could be reworked to events for multipurpose
+    # 'interval'  -> #  1 =  update through class, 0 =  one time,  > 0 = update throug  call function
+    """
+    print('<tr>')
+    print('<td>key</td>')
+    print('<td>description</td>')
+    print('<td>lastupdate</td>')
+    print('<td>value</td>')
+    print('<td>type</td>')
+    print('<td>set</td>')
+    print('<td>call</td>')
+    print('<td>interval</td>')
+    print('<td>available</td>')
+    print('<td>min</td>')
+    print('<td>max</td>')
+    print('<td>step</td>')
+    print('</tr>')
+
+    for key, value in inputs.entries.items():
+        print('<tr>')
+        print('<td>' + key + '</td>')
+        print('<td>' + str(value.get('description', '')) + '</td>')
+        print('<td>' + str(value.get('lastupdate', '')) + '</td>')
+        print('<td>' + str(value.get('value', '')) + '</td>')
+        print('<td>' + str(value.get('type', '')) + '</td>')
+        print('<td>' + str(value.get('set', '')) + '</td>')
+        print('<td>' + str(value.get('call', '')) + '</td>')
+        print('<td>' + str(value.get('interval', '')) + '</td>')
+        print('<td>' + str(value.get('available', '')) + '</td>')
+        print('<td>' + str(value.get('min', '')) + '</td>')
+        print('<td>' + str(value.get('max', '')) + '</td>')
+        print('<td>' + str(value.get('step', '')) + '</td>')
+
+        print('</tr>')
+
+    """
     setup_interrupt_handling()
 
     filename = os.path.join(os.path.dirname(
