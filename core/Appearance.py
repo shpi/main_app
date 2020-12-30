@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 import time
 import os
@@ -7,37 +9,45 @@ from datetime import datetime
 from core.DataTypes import DataType
 
 
+class NightModes:
+    Off = 0
+    On = 1
+    FromTimer = 2  # Static configured start stop times
+    FromTimer_StartStopInput = 3  # Fallback to FromInput if not in self.inputs
+    # FromInput = 4
+    __valid_range = Off, FromTimer_StartStopInput  # lowest and highest
+
+    @classmethod
+    def is_valid(cls, number) -> bool:
+        min_, max_ = cls.__valid_range
+        return min_ <= number <= max_
+
+
 class Appearance(QObject):
-
-    def __init__(self, inputs,
-                 settings: QSettings = None):
-
-        super(Appearance, self).__init__()
+    def __init__(self, inputs, settings: QSettings):
+        super().__init__()
 
         self.inputs = inputs.entries
         self.backlightlevel = 0
         self._blackfilter = 0
         self.settings = settings
-        self._background_night = int(
-            settings.value("appearance/background_night", 1))
+        self._background_night = int(settings.value("appearance/background_night", 1))
         self._min_backlight = int(settings.value("appearance/min", 20))
         self._max_backlight = int(settings.value("appearance/max", 100))
-        self._min_backlight_night = int(
-            settings.value("appearance/min_night", 20))
-        self._max_backlight_night = int(
-            settings.value("appearance/max_night", 100))
+        self._min_backlight_night = int(settings.value("appearance/min_night", 20))
+        self._max_backlight_night = int(settings.value("appearance/max_night", 100))
+
         self._night_mode = int(settings.value("appearance/night_mode", 0))
-        self._night_mode_start = settings.value(
-            "appearance/night_mode_start", '00:00')
-        self._night_mode_end = settings.value(
-            "appearance/night_mode_end", '00:00')
+        self._night_mode_start = settings.value("appearance/night_mode_start", '00:00')
+        self._night_mode_end = settings.value("appearance/night_mode_end", '00:00')
+
         self._jump_timer = int(settings.value("appearance/jump_timer", 20))
         self.jump_state = 0
         self._dim_timer = int(settings.value("appearance/dim_timer", 100))
         self._off_timer = int(settings.value("appearance/off_timer", 300))
         self.lastuserinput = time.time()
         self.state = 'ACTIVE'  # Enum('ACTIVE','SLEEP','OFF')
-        self._night = 0
+        self._night = False
 
         self.possible_devs = dict()
         self.possible_devs['list'] = list()
@@ -51,70 +61,89 @@ class Appearance(QObject):
                 except KeyError:
                     self.possible_devs[key] = 1
                 if self.possible_devs[key] == 1:
-                    inputs.entries[key]['interrupts'].append((self.interrupt))
+                    inputs.entries[key]['interrupts'].append(self.interrupt)
 
-    @Property(int, constant=True)
+    @Signal
+    def dim_timer_changed(self):
+        pass
+
+    @Property(int, notify=dim_timer_changed)
     def dim_timer(self):
         return int(self._dim_timer)
 
     @dim_timer.setter
-    def set_dim_timer(self, seconds):
+    def dim_timer(self, seconds):
         self._dim_timer = int(seconds)
         self.settings.setValue("appearance/dim_timer", seconds)
 
-    @Property(str, constant=True)
+    @Signal
+    def night_mode_start_changed(self):
+        pass
+
+    @Property(str, notify=night_mode_start_changed)
     def night_mode_start(self):
-        return (self._night_mode_start)
+        return self._night_mode_start
 
     @night_mode_start.setter
-    def set_night_mode_start(self, time):
-        self._night_mode_start = time
-        self.settings.setValue("appearance/night_mode_start", time)
-        print(self._night_mode_start)
+    def night_mode_start(self, time_):
+        self._night_mode_start = time_
+        self.settings.setValue("appearance/night_mode_start", time_)
 
-    @Property(str, constant=True)
+    @Signal
+    def night_mode_end_changed(self):
+        pass
+
+    @Property(str, notify=night_mode_end_changed)
     def night_mode_end(self):
-        return (self._night_mode_end)
+        return self._night_mode_end
 
     @night_mode_end.setter
-    def set_night_mode_end(self, time):
-        self._night_mode_end = time
-        self.settings.setValue("appearance/night_mode_end", time)
+    def night_mode_end(self, time_):
+        self._night_mode_end = time_
+        self.settings.setValue("appearance/night_mode_end", time_)
 
     @Slot(str)
     def delete_file(self, path):
         if os.path.exists(path):
             os.remove(path)
 
-    @Property(int, constant=True)
+    @Signal
+    def jump_timer_changed(self):
+        pass
+
+    @Property(int, notify=jump_timer_changed)
     def jump_timer(self):
         return int(self._jump_timer)
 
     @jump_timer.setter
-    def set_jump_timer(self, seconds):
+    def jump_timer(self, seconds):
         self._jump_timer = int(seconds)
         self.settings.setValue("appearance/jump_timer", seconds)
 
     @Signal
     def nightmodeChanged(self):
-        pass
+        self.check_nightmode()
 
     @Property(int, notify=nightmodeChanged)
     def night_mode(self):
-        return int(self._night_mode)
+        return self._night_mode
 
     @night_mode.setter
-    def set_night_mode(self, value):
+    def night_mode(self, value):
         self._night_mode = int(value)
         self.settings.setValue("appearance/night_mode", value)
         self.nightmodeChanged.emit()
 
-    @Property(int, constant=True)
+    @Signal
+    def off_timer_changed(self):
+        pass
+
+    @Property(int, notify=off_timer_changed)
     def off_timer(self):
         return int(self._off_timer)
 
     @off_timer.setter
-    def set_off_timer(self, seconds):
+    def off_timer(self, seconds):
         self._off_timer = int(seconds)
         self.settings.setValue("appearance/off_timer", seconds)
 
@@ -127,10 +156,9 @@ class Appearance(QObject):
         return bool(self._background_night)
 
     @background_night.setter
-    def set_background_night(self, min):
-        self._background_night = int(min)
-        self.settings.setValue(
-            "appearance/background_night", self._background_night)
+    def background_night(self, min_):
+        self._background_night = int(min_)
+        self.settings.setValue("appearance/background_night", self._background_night)
         self.background_Night_Changed.emit()
 
     @Signal
@@ -142,8 +170,8 @@ class Appearance(QObject):
         return int(self._min_backlight)
 
     @minbacklight.setter
-    def set_min_backlight(self, min):
-        self._min_backlight = int(min)
+    def minbacklight(self, min_):
+        self._min_backlight = int(min_)
         self.settings.setValue("appearance/min", self._min_backlight)
         self.rangeChanged.emit()
 
@@ -152,10 +180,9 @@ class Appearance(QObject):
         return int(self._min_backlight_night)
 
     @minbacklight_night.setter
-    def set_min_backlight_night(self, min):
-        self._min_backlight_night = int(min)
-        self.settings.setValue("appearance/min_night",
-                               self._min_backlight_night)
+    def minbacklight_night(self, min_):
+        self._min_backlight_night = int(min_)
+        self.settings.setValue("appearance/min_night", self._min_backlight_night)
         self.rangeChanged.emit()
 
     @Property(int, notify=rangeChanged)
@@ -163,8 +190,8 @@ class Appearance(QObject):
         return int(self._max_backlight)
 
     @maxbacklight.setter
-    def set_max_backlight(self, max):
-        self._max_backlight = int(max)
+    def maxbacklight(self, max_):
+        self._max_backlight = int(max_)
         self.rangeChanged.emit()
         self.settings.setValue("appearance/max", self._max_backlight)
         self.set_backlight(self._max_backlight)
@@ -175,11 +202,10 @@ class Appearance(QObject):
         return int(self._max_backlight_night)
 
     @maxbacklight_night.setter
-    def set_max_backlight_night(self, max):
-        self._max_backlight_night = int(max)
+    def maxbacklight_night(self, max_):
+        self._max_backlight_night = int(max_)
         self.rangeChanged.emit()
-        self.settings.setValue("appearance/max_night",
-                               self._max_backlight_night)
+        self.settings.setValue("appearance/max_night", self._max_backlight_night)
         self.set_backlight(self._max_backlight_night)
         self.rangeChanged.emit()
 
@@ -191,63 +217,75 @@ class Appearance(QObject):
     def night(self):
         return int(self._night)
 
-    def update(self):
+    def check_nightmode(self):
+        if not NightModes.is_valid(self._night_mode):
+            print('Unknown nightmode:', self._night_mode)
+            return
 
-        error = False
-        night = self._night
+        if self._night_mode in (NightModes.Off, NightModes.On):
+            # Easy job
+            if self._night != self._night_mode:
+                self._night = bool(self._night_mode)
+                self.nightChanged.emit()
+            return
 
-        if self._night_mode > -1 and self._night_mode_start != self._night_mode_end:
+        if self._night_mode == NightModes.FromTimer_StartStopInput:
+            return  # not yet supported
 
-            if self._night_mode == 0:
-                start = self._night_mode_start
-                end = self._night_mode_end
+            # Read start/end from inputs
+            if self._start_input_key not in self.inputs or self._stop_input_key not in self.inputs:
+                # print('Missing start and/or stop for automatic nightmode. Resetting to FromTimer.')
+                # self.night_mode = NightModes.FromTimer
+                return
 
-            elif self._night_mode == 1:
-                if self._night_mode_start in self.inputs and self.inputs[self._night_mode_start]['type'] == DataType.TIME:
-                    start = self.inputs[self._night_mode_start]['value']
-                else:
-                    error = True
-                    print('Datatype doesnt match, Nightmode disabled')
-                    self._night = 0
+            start_input = self.inputs[self._start_input_key]
+            stop_input = self.inputs[self._stop_input_key]
 
-                if self._night_mode_end in self.inputs and self.inputs[self._night_mode_end]['type'] == DataType.TIME:
-                    end = self.inputs[self._night_mode_end]['value']
-                else:
-                    error = True
-                    print('Datatype doesnt match, Nightmode disabled')
-                    self._night = 0
+            if start_input['type'] != DataType.TIME or stop_input['type'] != DataType.TIME:
+                # print('Unknown start/stop type. Resetting to FromTimer.')
+                # self.night_mode = NightModes.FromTimer
+                return
 
-            if error is False:
-                start = start.split(':')
-                start = int(start[0]) * 60 + int(start[1])
-                now = datetime.now().strftime("%H:%M").split(':')
-                now = int(now[0]) * 60 + int(now[1])
-                end = end.split(':')
-                end = int(end[0]) * 60 + int(end[1])
+            start_str = start_input['value']
+            stop_str = stop_input['value']
 
-                if start < end:  # 18 - 23:00
-                    if now > end or now < start:
-                        self._night = 0
-                    else:
-                        self._night = 1
+        else:  # self._night_mode == NightModes.FromTimer
+            # Read start/stop from static values
+            start_str = self._night_mode_start
+            stop_str = self._night_mode_end
 
-                else:  # end < start: # 18 - 3:00
-                    if now > end and now < start:
-                        self._night = 0
-                    else:
-                        self._night = 1
+        # Working with pure times.
+        try:
+            start_time = datetime.strptime(start_str, '%H:%M').time()
+            stop_time = datetime.strptime(stop_str, '%H:%M').time()
+        except ValueError:
+            start_time = datetime.strptime("00:00", '%H:%M').time()
+            stop_time = datetime.strptime("00:00", '%H:%M').time()
 
-        else:
-            self._night = 0
+        if start_time == stop_time:
+            # Invalid config. Do nothing.
+            return
 
-        if night != self._night:
+        now_time = datetime.now().time()
+
+        # Expect 18 - 23:00
+        night_new = start_time < now_time < stop_time
+        if start_time > stop_time:  # 18 - 23:00
+            # Just invert
+            night_new = not night_new
+
+        if night_new != self._night:
+            self._night = night_new
             self.nightChanged.emit()
 
-        if self.state in ('SLEEP') and self._off_timer > 0 and (self.lastuserinput + self._off_timer < time.time()):
+    def update(self):
+        self.check_nightmode()
+
+        if self.state in ('SLEEP',) and self._off_timer > 0 and (self.lastuserinput + self._off_timer < time.time()):
             self.set_backlight(0)
             self.state = 'OFF'
 
-        elif self.state in ('ACTIVE') and self.lastuserinput + self._dim_timer < time.time():
+        elif self.state in ('ACTIVE',) and self.lastuserinput + self._dim_timer < time.time():
             if self._night:
                 self.set_backlight(self._min_backlight_night)
             else:
@@ -270,7 +308,6 @@ class Appearance(QObject):
         pass
 
     def set_backlight(self, value):
-
         setthread = threading.Thread(target=self._set_backlight, args=(value,))
         setthread.start()
 
@@ -330,6 +367,8 @@ class Appearance(QObject):
     def blackfilter(self):
         return self._blackfilter
 
-    @Property("QVariantMap", constant=True)
+    # Workaround for https://bugreports.qt.io/browse/PYSIDE-1426
+    # @Property("QVariantMap", constant=True)
     def devices(self) -> dict:
         return dict(self.possible_devs)
+    devices = Property("QVariantMap", devices, constant=True)

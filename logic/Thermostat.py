@@ -1,14 +1,13 @@
+# -*- coding: utf-8 -*-
+
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 import time
 import threading
 
 
 class Shutter(QObject):
-
-    def __init__(self, inputs,
-                 settings: QSettings = None):
-
-        super(Shutter, self).__init__()
+    def __init__(self, inputs, settings: QSettings):
+        super().__init__()
         self.settings = settings
         self.inputs = inputs.entries
         self.up_time = int(settings.value("shutter/up_time", 3))
@@ -27,15 +26,13 @@ class Shutter(QObject):
 
         self.userinput = 0
 
-        self._actual_position = int(
-            settings.value("shutter/actual_position", 100))
+        self._actual_position = int(settings.value("shutter/actual_position", 100))
 
         self._desired_position = self._actual_position
         self.movethread = threading.Thread(target=self.move)
         self._state = 'STOP'  # 'UP', 'DOWN'
 
     def set_state(self, value):
-
         if value == 'UP':
             print('relais down 0')
             time.sleep(0.1)
@@ -87,12 +84,9 @@ class Shutter(QObject):
         return self._mode
 
     @mode.setter
-    def set_mode(self, key):
+    def mode(self, key):
         self._mode = key
         self.settings.setValue(self.path + "shutter/mode", key)
-
-
-
 
     @Property(int, notify=positionChanged)
     def desired_position(self):
@@ -100,16 +94,13 @@ class Shutter(QObject):
 
     @Property(float, notify=positionChanged)
     def actual_position(self):
-        return (self._actual_position)
-
+        return self._actual_position
 
     @actual_position.setter
-    def set_actual_position(self, key):
+    def actual_position(self, key):
         self._actual_position = int(key)
         self.settings.setValue("shutter/actual_position", int(key))
         self.positionChanged.emit()
-
-
 
     @Property(float, notify=positionChanged)
     def residue_time(self):
@@ -124,16 +115,14 @@ class Shutter(QObject):
         self.start_move()
 
     def move(self):
-
         was_in_loop = False
 
-        while (self._actual_position < self._desired_position) or (
-                self._actual_position > self._desired_position):
+        while (self._actual_position < self._desired_position) or \
+                (self._actual_position > self._desired_position):
 
             was_in_loop = True
 
             if self._actual_position < self._desired_position:
-
                 # need to move down, to close
                 if self.userinput == 1 and self._state != 'UP':
                     self.set_state('UP')

@@ -1,37 +1,37 @@
+# -*- coding: utf-8 -*-
+
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
-import time
-import os
+# import time
+# import os
 import importlib
 # from enum import Enum for self.state later
-import threading
-from datetime import datetime
-from core.DataTypes import DataType
+# import threading
+# from datetime import datetime
+# from core.DataTypes import DataType
 
 
 class ModuleManager(QObject):
-
-    def __init__(self,inputs, settings: QSettings = None):
-
-        super(ModuleManager, self).__init__()
-
+    def __init__(self, inputs, settings: QSettings):
+        super().__init__()
 
         self.settings = settings
         self.inputs = inputs
         self.available_modules = {'Logic': ['Shutter'],
                                   'Info': ['Weather'],
-                                  'UI' : ['UIShutter']}
+                                  'UI': ['UIShutter']}
 
         self._modules = dict()
         self._instances = dict()
 
         for category, modules in self.available_modules.items():
-            self._modules[category] = {
-            key : [(settings.value(category + "/" + key))]
-            if isinstance(settings.value(category + "/" + key, []), str)
-            else settings.value(category + "/" + key,[])
-            if isinstance(settings.value(category + "/" + key, []), list)
-            else []
-            for key in modules}
+            cat = self._modules[category] = dict()
+            for key in modules:
+                data = self.settings.value(f"{category}/{key}", [])
+
+                if isinstance(data, str):
+                    data = [data]
+
+                cat[key] = data
 
         for category, value in self._modules.items():
             self._instances[category] = dict()
@@ -65,15 +65,15 @@ class ModuleManager(QObject):
     def modulesChanged(self):
         pass
 
-    @Property('QVariantMap', constant=True)
+    # Workaround for https://bugreports.qt.io/browse/PYSIDE-1426
+    # @Property('QVariantMap', constant=True)
     def loaded_instances(self) -> dict:
         return self._instances
-
+    loaded_instances = Property('QVariantMap', loaded_instances, constant=True)
 
     @Property('QVariantMap', notify=modulesChanged)
     def modules(self):
         return self._modules
-
 
     @Slot(str, str, str)
     def add_instance(self, category, classname, instancename):
@@ -89,9 +89,7 @@ class ModuleManager(QObject):
             pass
         self.modulesChanged.emit()
 
-
-
-    @Slot(str,str,str)
+    @Slot(str, str, str)
     def remove_instance(self, category, classname, instancename):
         self._modules[category][classname].remove(instancename)
         self.settings.setValue(category + "/" + classname, self._modules[category][classname])
@@ -99,25 +97,18 @@ class ModuleManager(QObject):
         del self._instances[category][classname][instancename]
         self.modulesChanged.emit()
 
-
-
-
-    @Slot(str,str, result='QVariantList')
+    @Slot(str, str, result='QVariantList')
     def instances(self, category, classname):
-
         if category != '' and classname != '':
-            return (self._modules[category][classname])
+            return self._modules[category][classname]
         elif category != '':
             return list(self._modules[category].keys())
         else:
             return list(self._modules.keys())
 
-    @Property(int, constant=True)
+    # Workaround for https://bugreports.qt.io/browse/PYSIDE-1426
+    # @Property(int, constant=True)
     def dim_timer(self):
         return int(self._dim_timer)
 
-    @dim_timer.setter
-    def set_dim_timer(self, seconds):
-        self._dim_timer = int(seconds)
-        self.settings.setValue("appearance/dim_timer", seconds)
-
+    dim_timer = Property(int, dim_timer, constant=True)

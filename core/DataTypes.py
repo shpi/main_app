@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from hardware.iio import ChannelType
 from enum import Enum
 
@@ -78,27 +80,26 @@ class DataType(Enum):
 
 
 class Convert:
-
+    @staticmethod
     def iio_to_shpi(iio: ChannelType):
-
         if iio in Convert._mapping_iio_shpi:
             return Convert._mapping_iio_shpi[iio]
         else:
             return DataType.UNDEFINED
 
+    @staticmethod
     def type_to_str(datatype: DataType):
-
         if datatype in Convert._mapping_type_str:
             return Convert._mapping_type_str[datatype]
         else:
             return 'unknown'
 
+    @staticmethod
     def str_to_type(datatype: str):
-
-       if datatype in Convert._mapping_str_type:
-           return Convert._mapping_str_type[datatype]
-       else:
-           return 'unknown'
+        if datatype in Convert._mapping_str_type:
+            return Convert._mapping_str_type[datatype]
+        else:
+            return 'unknown'
 
     _mapping_type_str = {DataType.UNDEFINED: 'undefined',
                          DataType.FLOAT: 'float',
@@ -148,8 +149,7 @@ class Convert:
                          DataType.LONGITUDE: 'longitude',
                          DataType.WEBREQUEST: 'webrequest'}
 
-
-    _mapping_str_type = {value : key for (key, value) in _mapping_type_str.items()}
+    _mapping_str_type = {value: key for (key, value) in _mapping_type_str.items()}
 
     _mapping_iio_shpi = {
         ChannelType.IIO_VOLTAGE: DataType.VOLTAGE,

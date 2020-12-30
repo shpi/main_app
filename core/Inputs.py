@@ -1,4 +1,5 @@
-# This Python file uses the following encoding: utf-8
+# -*- coding: utf-8 -*-
+
 import time
 from PySide2.QtCore import Qt, QModelIndex, QSortFilterProxyModel
 from PySide2.QtCore import QAbstractListModel, Property, Signal, Slot, QObject
@@ -76,7 +77,6 @@ class InputListModel(QAbstractListModel):
 
 
 class InputsDict(QObject):
-
     def __init__(self, parent: QObject = None):
         super(InputsDict, self).__init__(parent)
         self.entries = dict()
@@ -107,45 +107,49 @@ class InputsDict(QObject):
     def dataChanged(self):
         pass
 
-    @Property(QObject, notify=dataChanged, constant=False)
+    @Property(QObject, notify=dataChanged)
     def inputList(self):
         self.completelist.filter = None
         return self.completelist
 
-    @Property(QObject, notify=dataChanged, constant=False)
+    @Property(QObject, notify=dataChanged)
     def outputList(self):
         return self.outputssearch
 
-
-    @Property(QObject, notify=dataChanged, constant=False)
+    @Property(QObject, notify=dataChanged)
     def typeList(self):
         return self.proxy
 
-    @Property(QObject, notify=dataChanged, constant=False)
+    @Property(QObject, notify=dataChanged)
     def searchList(self):
         return self.search
 
     @Slot(str)
-    def set_typeList(self, type):
-        self.proxy.setFilterFixedString(type)
+    def set_typeList(self, type_):
+        self.proxy.setFilterFixedString(type_)
 
     @Slot(str)
-    def set_outputList(self, type):
-        self.outputssearch.setFilterFixedString(type)
+    def set_outputList(self, type_):
+        self.outputssearch.setFilterFixedString(type_)
 
     @Slot(str, result=int)
     def getIndex(self, path):
         return self.completeList._keys.index(path)
 
     @Slot(str)
-    def set_searchList(self, type):
-        self.search.setFilterFixedString(type)
+    def set_searchList(self, type_):
+        self.search.setFilterFixedString(type_)
 
-    @Property('QVariantMap', constant=True)  # , notify=dataChanged)
+    # Workaround for https://bugreports.qt.io/browse/PYSIDE-1426
+    # @Property('QVariantMap', constant=True)  # , notify=dataChanged)
     def data(self) -> dict:
         return self.entries
+    data = Property('QVariantMap', data, constant=True)
 
-    def add(self, newinputs=dict()):
+    def add(self, newinputs=None):
+        if newinputs is None:
+            newinputs = {}
+
         for key in list(newinputs):
             if 'lastupdate' not in newinputs[key]:
                 newinputs[key]['lastupdate'] = 0
@@ -159,7 +163,6 @@ class InputsDict(QObject):
             # adding [interrupts] in InputsDevs from another class
 
             if key in self.entries:
-
                 for subkey in list(newinputs[key]):  # like lastupdate
                     if subkey in self.entries[key]:
 
@@ -178,7 +181,6 @@ class InputsDict(QObject):
         self.update(0)
         self.dataChanged.emit()
 
-
         # 'available' -> for ENUM datatype, list of option for dropdown box
         # 'lastupdate' -> lastupdate
         # 'call' -> for get actual sensor value
@@ -191,13 +193,10 @@ class InputsDict(QObject):
         # 'interrupts' -> for input devices, could be reworked to events for multipurpose
         # 'interval'  -> #  1 =  update through class, 0 =  one time,  > 0 = update throug  call function
 
-
-
     def update(self, lastupdate):
-
         for key, value in self.entries.items():
 
-            if (value['interval'] < 0 and value['lastupdate'] > lastupdate):
+            if value['interval'] < 0 and value['lastupdate'] > lastupdate:
                 self.completelist.updateListView(key)
 
             elif ((value['interval'] > 0) and (value['lastupdate'] +
@@ -205,22 +204,18 @@ class InputsDict(QObject):
 
                 self.update_value(key, value)
 
-
         # self.dataChanged.emit()
 
     def update_value(self, key, value=None):
-
         if value is None:
             value = self.entries[key]
 
         if 'call' in self.entries[key]:
             temp = self.entries[key]['call']()
-            if (temp != value['value']):
+            if temp != value['value']:
                 self.entries[key]['value'] = temp
                 self.completelist.updateListView(key)
             self.entries[key]['lastupdate'] = time.time()
-
-
 
     @Slot(str, str)
     def set(self, key, value):

@@ -1,2 +1,10 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
 
-__pycache__/backlight.cpython-37.pyc
+# Distribution / packaging
+venv/
+*.egg-info/
+
+# Intellij IDEA files
+.idea/*
