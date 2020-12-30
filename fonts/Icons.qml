@@ -18,6 +18,7 @@ QtObject {
     readonly property string logo : "\uE044"
     readonly property string gauge : "\uE00B"
     readonly property string sun : "\uE00C"
+    readonly property string ssun : "\uE047"
     readonly property string cloudsun : "\uE00D"
     readonly property string lightoff : "\uE00E"
     readonly property string lighton : "\uE00F"

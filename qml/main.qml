@@ -90,20 +90,20 @@ ApplicationWindow {
                 id: mainsettingsModel
                 ListElement {
                     title: "\uE00C" // Icons.sun
-                    page: "Backlight.qml"
+                    page: "core/AppearanceSettings.qml"
                 }
                 ListElement {
                     title: "\uE016" // Icons.wifi
-                    page: "Wifi.qml"
+                    page: "hardware/WifiSettings.qml"
                 }
                 ListElement {
                     title: "\uE046" // Icons.speaker
-                    page: "Alsa.qml"
+                    page: "hardware/AlsaSettings.qml"
                 }
 
                 ListElement {
                     title: "\uE045" // Icons.reset
-                    page: "Reset.qml"
+                    page: "hardware/Reset.qml"
                 }
 
                 ListElement {
@@ -160,14 +160,19 @@ ApplicationWindow {
 
         Loader {
             id: shutter
-            source: "shutter/Shutter.qml"
+            source: "ui/Shutter.qml"
         }
 
         Loader {
             id: ticks
-            source: "ticks.qml"
+            source: "ui/Thermostat.qml"
         }
 
+
+        Loader {
+            id: colorwheel
+            source: "ui/ColorWheel.qml"
+        }
 
         Loader {
             id: screensaver
@@ -180,10 +185,30 @@ ApplicationWindow {
             source: "thermostat/Thermostat.qml"
         }
 
-        Loader {
-            id: weatherslide
-            source: "weather/Weather.qml"
-        }
+
+
+Repeater {
+
+            id: weatherrepeater
+            model: modules.modules['Info']['Weather'].length > 0 ?  1 : 0
+
+            onItemAdded: console.log(weatherrepeater.count)
+            onItemRemoved:  console.log(weatherrepeater.count)
+
+            delegate: Loader {
+                id: weatherslide
+                source: "weather/Weather.qml"
+                visible: modules.modules['Info']['Weather'].length > 0 ?  1 : 0
+
+            }
+}
+
+
+
+
+
+
+
     }
 
     PageIndicator {
@@ -244,7 +269,7 @@ ApplicationWindow {
 
     Component.onCompleted: {
 
-
+        console.log('count of weater instances : ' + modules.modules['Info']['Weather'].length)
         Colors.night = appearance.night
 
         /*  for (let [key, value] of Object.entries(inputs.data)) {

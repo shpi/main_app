@@ -10,7 +10,11 @@ Item {
         id: pageModel
         ListElement {
             title: "System Variables"
-            page: "Inputs.qml"
+            page: "core/InputsSettings.qml"
+        }
+        ListElement {
+            title: "Modules"
+            page: "Modules.qml"
         }
         ListElement {
             title: "HTTP Server"
@@ -47,7 +51,7 @@ Item {
         id: listDelegate
 
         Item {
-            width: parent.width
+            width:parent.width
             height: 80
 
             Rectangle {

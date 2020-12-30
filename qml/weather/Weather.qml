@@ -9,7 +9,7 @@ Item {
     TabBar {
         anchors.top: parent.top
         anchors.left: parent.left
-        width: parent.width * 0.4
+        width: parent.width * 0.3
         id: tabBar
         height: parent.height
 
@@ -22,7 +22,7 @@ Item {
         TabButton {
 
             anchors.top: parent.top
-            height: parent.height / 3
+            height: parent.height / 2
             id: firstButton
             text: Icons.cloudsun
             font.family: localFont.name
@@ -43,7 +43,7 @@ Item {
                }
         }
         TabButton {
-            height: parent.height / 3
+            height: parent.height / 2
             id: secondButton
 
             text: Icons.graph
@@ -65,7 +65,7 @@ Item {
 
                }
         }
-        TabButton {
+     /*   TabButton {
             height: parent.height / 3
             text: Icons.settings
             font.family: localFont.name
@@ -85,18 +85,19 @@ Item {
                    color:  tabBar.currentIndex == 2 ? Colors.white :"#666"
 
                }
-        }
+        } */
     }
 
     SwipeView {
+        property string instancename: modules.modules['Info']['Weather'][0]
+
         id: swipeView
         anchors.right: parent.right
         anchors.top: parent.top
         height: parent.height
-        width: parent.width - (tabBar.width / 3)
+        width: parent.width - (tabBar.width / 2)
         currentIndex: tabBar.currentIndex
         orientation: Qt.Vertical
-
 
         Loader {
             width: parent.width
@@ -105,21 +106,27 @@ Item {
             source: "WeatherDays.qml"
          }
 
-        Loader {
-            width: parent.width
-            height: 480
-            id: weathergraph
-            source: "WeatherGraph.qml"
+        Connections {
+             target: weatherdays.item
+             onMessage: weathergraphloader.item.reload()
          }
 
         Loader {
+            width: parent.width
+            height: 480
+            id: weathergraphloader
+            source: "WeatherGraph.qml"
+
+         }
+
+  /*      Loader {
             width: parent.width
             height: 480
             id: weathersettings
             source: "WeatherSettings.qml"
          }
 
-
+*/
 
     }
 }

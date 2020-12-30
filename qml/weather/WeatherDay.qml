@@ -52,7 +52,7 @@ Rectangle {
     Text {
     text: Qt.formatDate(day, "dd.MM.")
     anchors.horizontalCenter: parent.horizontalCenter
-    anchors.bottomMargin: 10
+    anchors.bottomMargin: 15
     anchors.bottom:parent.bottom
     font.pointSize: 10
     color: Colors.black
@@ -60,7 +60,7 @@ Rectangle {
 
     Row {
         anchors.horizontalCenter: parent.horizontalCenter
-        spacing: 10
+        spacing: 5
 
     Repeater {
      model: dayrect.weather_icons.length

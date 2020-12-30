@@ -67,7 +67,9 @@ Row {
         }
 
 
-    }}
+    }
+
+}
 
     Row {
         spacing:  10

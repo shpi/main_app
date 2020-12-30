@@ -1,16 +1,15 @@
 # This Python file uses the following encoding: utf-8
-from IIO import IIO
-from Shutter import Shutter
-from Wifi import Wifi
-from Alsa import AlsaMixer
-from Leds import Led
-from System import SystemInfo
-from InputDevs import InputDevs
-from Inputs import InputsDict
-from HWMon import HWMon
-from Weather import WeatherWrapper
-from Appearance import Appearance
-from Backlight import Backlight
+from hardware.IIO import IIO
+from hardware.Wifi import Wifi
+from hardware.Alsa import AlsaMixer
+from hardware.Leds import Led
+from hardware.System import SystemInfo
+from hardware.InputDevs import InputDevs
+from hardware.HWMon import HWMon
+from hardware.Backlight import Backlight
+from core.ModuleManager import ModuleManager
+from core.Inputs import InputsDict
+from core.Appearance import Appearance
 from PySide2.QtQml import QQmlApplicationEngine
 from PySide2.QtWidgets import QApplication
 from PySide2.QtCore import QSettings
@@ -80,18 +79,16 @@ lastupdate = time.time()
 
 def check_loop():
     global lastupdate
-    weather[0].update()
     SystemInfo.update()
     alsamixer.update()
     appearance.update()
     wifi.update()
     inputs.update(lastupdate)
     lastupdate = time.time()
+    modules.update()
 
 
 settings = QSettings()
-weather = []
-weather.append(WeatherWrapper('weather', settings))
 backlight = Backlight()
 hwmon = HWMon()
 inputs = InputsDict()
@@ -118,10 +115,10 @@ inputs.add(backlight.get_inputs())
 inputs.add(SystemInfo.get_inputs())
 
 appearance = Appearance(inputs, settings)
-shutter = Shutter(inputs, settings)
+modules = ModuleManager(inputs, settings)
 
-for subweather in weather:
-    inputs.add(subweather.get_inputs())
+#uishutter = UIShutter('Wohnzimmer', inputs, settings)
+
 
 
 if __name__ == "__main__":
@@ -135,10 +132,11 @@ if __name__ == "__main__":
     engine = QQmlApplicationEngine()
 
     engine.rootContext().setContextProperty("inputs", inputs)
-    engine.rootContext().setContextProperty('weather', weather)
+    #engine.rootContext().setContextProperty('weather', weather)
     engine.rootContext().setContextProperty('wifi', wifi)
-    engine.rootContext().setContextProperty('shutter2', shutter)
+    #engine.rootContext().setContextProperty('shutter2', uishutter)
     engine.rootContext().setContextProperty("appearance", appearance)
+    engine.rootContext().setContextProperty("modules", modules)
 
     setup_interrupt_handling()
 
