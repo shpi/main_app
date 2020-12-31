@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
+from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
 import time
 import os
 # from enum import Enum for self.state later
 import threading
 from datetime import datetime
 from core.DataTypes import DataType
+from core.Toolbox import Pre_5_15_2_fix
 
 
 class NightModes:
@@ -67,11 +68,11 @@ class Appearance(QObject):
     def dim_timer_changed(self):
         pass
 
-    @Property(int, notify=dim_timer_changed)
+    # @Property(int, notify=dim_timer_changed)
     def dim_timer(self):
         return int(self._dim_timer)
 
-    @dim_timer.setter
+    @Pre_5_15_2_fix(int, dim_timer, notify=dim_timer_changed)
     def dim_timer(self, seconds):
         self._dim_timer = int(seconds)
         self.settings.setValue("appearance/dim_timer", seconds)
@@ -80,11 +81,12 @@ class Appearance(QObject):
     def night_mode_start_changed(self):
         pass
 
-    @Property(str, notify=night_mode_start_changed)
+    # @Property(str, notify=night_mode_start_changed)
     def night_mode_start(self):
         return self._night_mode_start
 
-    @night_mode_start.setter
+    # @night_mode_start.setter
+    @Pre_5_15_2_fix(str, night_mode_start, notify=night_mode_start_changed)
     def night_mode_start(self, time_):
         self._night_mode_start = time_
         self.settings.setValue("appearance/night_mode_start", time_)
@@ -93,11 +95,12 @@ class Appearance(QObject):
     def night_mode_end_changed(self):
         pass
 
-    @Property(str, notify=night_mode_end_changed)
+    # @Property(str, notify=night_mode_end_changed)
     def night_mode_end(self):
         return self._night_mode_end
 
-    @night_mode_end.setter
+    # @night_mode_end.setter
+    @Pre_5_15_2_fix(str, night_mode_end, notify=night_mode_end_changed)
     def night_mode_end(self, time_):
         self._night_mode_end = time_
         self.settings.setValue("appearance/night_mode_end", time_)
@@ -111,38 +114,41 @@ class Appearance(QObject):
     def jump_timer_changed(self):
         pass
 
-    @Property(int, notify=jump_timer_changed)
+    # @Property(int, notify=jump_timer_changed)
     def jump_timer(self):
         return int(self._jump_timer)
 
-    @jump_timer.setter
+    # @jump_timer.setter
+    @Pre_5_15_2_fix(int, jump_timer, notify=jump_timer_changed)
     def jump_timer(self, seconds):
         self._jump_timer = int(seconds)
         self.settings.setValue("appearance/jump_timer", seconds)
 
     @Signal
     def nightmodeChanged(self):
-        self.check_nightmode()
+        pass
 
-    @Property(int, notify=nightmodeChanged)
+    # @Property(int, notify=nightmodeChanged)
     def night_mode(self):
         return self._night_mode
 
-    @night_mode.setter
+    @Pre_5_15_2_fix(int, night_mode, notify=nightmodeChanged)  # XXX
     def night_mode(self, value):
         self._night_mode = int(value)
         self.settings.setValue("appearance/night_mode", value)
         self.nightmodeChanged.emit()
+        self.check_nightmode()
 
     @Signal
     def off_timer_changed(self):
         pass
 
-    @Property(int, notify=off_timer_changed)
+    # @Property(int, notify=off_timer_changed)
     def off_timer(self):
         return int(self._off_timer)
 
-    @off_timer.setter
+    # @off_timer.setter
+    @Pre_5_15_2_fix(int, off_timer, notify=off_timer_changed)
     def off_timer(self, seconds):
         self._off_timer = int(seconds)
         self.settings.setValue("appearance/off_timer", seconds)
@@ -151,13 +157,13 @@ class Appearance(QObject):
     def background_Night_Changed(self):
         pass
 
-    @Property(bool, notify=background_Night_Changed)
+    # @Property(bool, notify=background_Night_Changed)
     def background_night(self):
-        return bool(self._background_night)
+        return int(self._background_night)
 
-    @background_night.setter
-    def background_night(self, min_):
-        self._background_night = int(min_)
+    @Pre_5_15_2_fix(bool, background_night, notify=background_Night_Changed)  # XXX
+    def background_night(self, bg_night):
+        self._background_night = int(bg_night)
         self.settings.setValue("appearance/background_night", self._background_night)
         self.background_Night_Changed.emit()
 
@@ -165,31 +171,34 @@ class Appearance(QObject):
     def rangeChanged(self):
         pass
 
-    @Property(int, notify=rangeChanged)
+    # @Property(int, notify=rangeChanged)
     def minbacklight(self):
         return int(self._min_backlight)
 
-    @minbacklight.setter
+    # @minbacklight.setter
+    @Pre_5_15_2_fix(int, minbacklight, notify=rangeChanged)
     def minbacklight(self, min_):
         self._min_backlight = int(min_)
         self.settings.setValue("appearance/min", self._min_backlight)
         self.rangeChanged.emit()
 
-    @Property(int, notify=rangeChanged)
+    # @Property(int, notify=rangeChanged)
     def minbacklight_night(self):
         return int(self._min_backlight_night)
 
-    @minbacklight_night.setter
+    # @minbacklight_night.setter
+    @Pre_5_15_2_fix(int, minbacklight_night, notify=rangeChanged)
     def minbacklight_night(self, min_):
         self._min_backlight_night = int(min_)
         self.settings.setValue("appearance/min_night", self._min_backlight_night)
         self.rangeChanged.emit()
 
-    @Property(int, notify=rangeChanged)
+    # @Property(int, notify=rangeChanged)
     def maxbacklight(self):
         return int(self._max_backlight)
 
-    @maxbacklight.setter
+    # @maxbacklight.setter
+    @Pre_5_15_2_fix(int, maxbacklight, notify=rangeChanged)
     def maxbacklight(self, max_):
         self._max_backlight = int(max_)
         self.rangeChanged.emit()
@@ -197,11 +206,12 @@ class Appearance(QObject):
         self.set_backlight(self._max_backlight)
         self.rangeChanged.emit()
 
-    @Property(int, notify=rangeChanged)
+    # @Property(int, notify=rangeChanged)
     def maxbacklight_night(self):
         return int(self._max_backlight_night)
 
-    @maxbacklight_night.setter
+    # @maxbacklight_night.setter
+    @Pre_5_15_2_fix(int, maxbacklight_night, notify=rangeChanged)
     def maxbacklight_night(self, max_):
         self._max_backlight_night = int(max_)
         self.rangeChanged.emit()

@@ -264,11 +264,12 @@ Repeater {
 
     Connections {
         target: appearance
-        onJumpHome: view.currentIndex = 1
+        function onJumpHome() {
+            view.currentIndex = 1
+        }
     }
 
     Component.onCompleted: {
-
         console.log('count of weater instances : ' + modules.modules['Info']['Weather'].length)
         Colors.night = appearance.night
 
