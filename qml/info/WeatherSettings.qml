@@ -180,4 +180,5 @@ Flickable {
             }
         }
     }
+    Component.onCompleted: console.log()
 }

@@ -3,7 +3,7 @@ import time
 import threading
 from core.DataTypes import DataType
 
-class Shutter:
+class Shutter(QObject):
 
     def __init__(self, name, inputs,
                  settings: QSettings = None):
@@ -41,6 +41,8 @@ class Shutter:
 
         self.movethread = threading.Thread(target=self.move)
         self._state = 'STOP'  # 'UP', 'DOWN'
+
+
 
 
     def get_inputs(self) -> dict:
@@ -86,10 +88,39 @@ class Shutter:
             self.movethread.start()
 
 
+
+    @Signal
+    def stateChanged(self):
+       pass
+
+    @Signal
+    def positionChanged(self):
+       pass
+
+
+    @Property(str,notify=stateChanged)
+    def state(self):
+       return self._state
+
+
+    @Property(int,notify=positionChanged)
+    def desired_position(self):
+       return int(self._desired_position['value'])
+
+    @Property(float,notify=positionChanged)
+    def actual_position(self):
+       return (self._actual_position['value'])
+
+    @Property(float,notify=positionChanged)
+    def residue_time(self):
+       return float(self._residue_time)
+
+    @Slot(int)
     def set_position(self, value):
         self.userinput = 1
         self._desired_position['value'] = int(value)
         self._residue_time = 0
+        self.positionChanged.emit()
         self.start_move()
 
     def move(self):
@@ -112,13 +143,14 @@ class Shutter:
                 time.sleep(0.1)
                 self._actual_position['value'] = self.start_position + \
                     ((100 / self.down_time) * (time.time() - self.time_start))
+                self.positionChanged.emit()
                 self._residue_time = (
                     self._desired_position['value'] - self._actual_position['value']) * (self.down_time / 100)
                 if self._residue_time < 0:  # detected overshoot, so stopping
                     self._residue_time = 0
                     if self.userinput == 0:  # ignore overshoots and allow direction change only on new input
                         self._actual_position['value'] = self._desired_position['value']
-
+                        self.positionChanged.emit()
 
             elif self._actual_position['value'] > self._desired_position['value']:
 
@@ -131,13 +163,14 @@ class Shutter:
                 time.sleep(0.1)
                 self._actual_position['value'] = self.start_position - \
                     (100 / self.up_time) * (time.time() - self.time_start)
+                self.positionChanged.emit()
                 self._residue_time = (
                     self._actual_position['value'] - self._desired_position['value']) * (self.up_time / 100)
                 if self._residue_time < 0:
                     self._residue_time = 0
                     if self.userinput == 0:
                         self._actual_position['value'] = self._desired_position['value']
-
+                        self.positionChanged.emit()
             self._actual_position['lastupdate'] = time.time()
 
         self._residue_time = 0

@@ -4,79 +4,11 @@ import QtGraphicalEffects 1.12
 import "../../fonts/"
 
 Item {
+
+    property string instancename: 'local'
+
     anchors.fill: parent
 
-
-    TabBar {
-        anchors.top: parent.top
-        anchors.left: parent.left
-        width: parent.width * 0.266
-        id: tabBar
-        height: parent.height
-        currentIndex: swipeView.currentIndex
-        background: Rectangle {
-            color: Colors.white
-        }
-
-        TabButton {
-
-            anchors.top: parent.top
-            height: parent.height / 2
-            id: firstButton
-            text: Icons.shutter
-            font.family: localFont.name
-            font.pointSize: 25
-            anchors.right: parent.right
-
-            contentItem: Text {
-                   text: parent.text
-                   font: parent.font
-                   color: tabBar.currentIndex == 0 ? Colors.black : Colors.white
-                   horizontalAlignment: Text.AlignHCenter
-                   verticalAlignment: Text.AlignVCenter
-                   elide: Text.ElideRight
-               }
-            background: Rectangle {
-                   color:  tabBar.currentIndex == 0 ? "transparent" :"#22FFFFFF"
-
-               }
-
-        }
-        TabButton {
-            height: parent.height / 2
-            id: secondButton
-            text: Icons.settings
-            font.family: localFont.name
-            font.pointSize: 25
-            anchors.top: firstButton.bottom
-            anchors.right: parent.right
-
-            contentItem: Text {
-                   text: parent.text
-                   font: parent.font
-                   color: tabBar.currentIndex == 1 ? Colors.black : Colors.white
-                   horizontalAlignment: Text.AlignHCenter
-                   verticalAlignment: Text.AlignVCenter
-                   elide: Text.ElideRight
-               }
-            background: Rectangle {
-                   color:  tabBar.currentIndex == 1 ? "transparent" :"#22FFFFFF"
-
-               }
-        }
-
-    }
-
-    SwipeView {
-        id: swipeView
-        anchors.right: parent.right
-        anchors.top: parent.top
-        height: parent.height
-        width: parent.width - (tabBar.width / 2)
-        currentIndex: tabBar.currentIndex
-        orientation: Qt.Vertical
-
-    Item {
 
 
     Text {
@@ -109,20 +41,19 @@ Item {
         anchors.centerIn:parent
     Slider {
         id: control
-        enabled: shutter2.state !== 'STOPSLEEP'  ? true : false
         from: 0
         to: 100
-        value: pressed == false ? shutter2.actual_position : shutter2.desired_position
+        value: pressed == false ? modules.loaded_instances['Logic']['Shutter'][instancename].actual_position : modules.loaded_instances['Logic']['Shutter'][instancename].desired_position
         orientation: Qt.Vertical
         height: parent.height - 8
         width: 300
         anchors.centerIn: parent
         stepSize: 5
-        onPressedChanged: this.pressed === false ? shutter2.set_position(this.value) : undefined
+        onPressedChanged: if (this.pressed === false) modules.loaded_instances['Logic']['Shutter'][instancename].set_position(this.value)
 
 
         Text {
-            text: shutter2.desired_position + "%"
+            text: modules.loaded_instances['Logic']['Shutter'][instancename].desired_position + "%"
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.left
             font.pointSize: 15
@@ -193,13 +124,16 @@ Item {
 
         Rectangle {
         z: parent.handle.z - 0.01
-        visible: shutter2.state !== 'STOP' && parent.pressed == false ? true : false
+        visible: modules.loaded_instances['Logic']['Shutter'][instancename].actual_position !== modules.loaded_instances['Logic']['Shutter'][instancename].desired_position && parent.pressed == false ? true : false
+
+
+
         width: parent.width * 1.1
         height: parent.height * 0.15
         radius: 13
         opacity: 0.5
         color: Colors.black
-        y: control.topPadding + (1 - (shutter2.desired_position / 100)) * (control.availableHeight - height)
+        y: control.topPadding + (1 - (modules.loaded_instances['Logic']['Shutter'][instancename].desired_position / 100)) * (control.availableHeight - height)
         anchors.horizontalCenter: parent.horizontalCenter
        }
 
@@ -219,23 +153,14 @@ Item {
                 id: handleIcon
                 font.family: localFont.name
 
-                text: {shutter2.state === 'STOP' ? Icons.shutter :
-                       shutter2.state === 'STOPSLEEP' ?  Icons.locked : Icons.arrow
+                text: {modules.loaded_instances['Logic']['Shutter'][instancename].desired_position === modules.loaded_instances['Logic']['Shutter'][instancename].actual_position ? Icons.shutter :  Icons.arrow
                 }
-                rotation: shutter2.state === 'UP' ? 180 : 0
+                rotation: modules.loaded_instances['Logic']['Shutter'][instancename].actual_position > modules.loaded_instances['Logic']['Shutter'][instancename].desired_position ? 0 : 180
                 anchors.centerIn: parent
                 font.pointSize: 20
-                opacity: shutter2.state === 'STOP' ? 1 : 1
+                opacity: 1
 
-              /*  NumberAnimation {
-                     target: handleIcon
-                     from: 0.05
-                     to: 1
-                     properties: "opacity"
-                     duration: 1000
-                     running: shutter2.state === 'STOP' ? false : true
-                     loops: Animation.Infinite
-                 } */
+
             }
 
 
@@ -251,33 +176,8 @@ Item {
     }
 
 
-   /* Text {
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.bottomMargin: 10
-        anchors.right: parent.right
-        anchors.rightMargin: 10
-        font.pointSize: 15
-        color: Colors.black
-        //text: shutter2.residue_time === 0 ? '' : shutter2.residue_time.toFixed(1)  + Icons.timer
-        font.family: localFont.name
-    }
-  */
 
 
 }
 
-    Item {
 
-
-            Loader {
-
-                anchors.fill: parent
-
-                source: "ShutterSettings.qml"
-            }
-
-
-    }
-
-    }
-}

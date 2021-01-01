@@ -56,7 +56,6 @@ Item {
                 width: parent.width - 130
 
                 to: 100
-
                 stepSize: 1
                 first.value: appearance.minbacklight
                 second.value: appearance.maxbacklight
@@ -479,7 +478,7 @@ Item {
                     color: Colors.black
                     text: 'Show Background Pictures in Nightmode'
                 }
-                Component.onCompleted: checked = appearance.background_night
+                Component.onCompleted: this.checked = appearance.background_night
 
                 onCheckStateChanged: {
                     appearance.background_night = this.checked ? 1 : 0
@@ -513,6 +512,7 @@ Item {
     }
 
     Component.onCompleted: {
+        console.log(appearance.background_night)
         inputs.set_typeList('time')
 
         if (appearance.night_mode === 3) {

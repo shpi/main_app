@@ -130,7 +130,7 @@ class Weather(QObject):
         return self._api_key
 
     @api_key.setter
-    def set_api_key(self, key):
+    def api_key(self, key):
         self._api_key = key
         self.settings.setValue(self.path + "/api_key", key)
         self._weatherinputs[self.path + '/lastupdate']['value'] = 0
@@ -140,7 +140,7 @@ class Weather(QObject):
         return self._weatherinputs[self.path + '/lat']['value']
 
     @lat.setter
-    def set_lat(self, lat):
+    def lat(self, lat):
         self._weatherinputs[self.path + '/lat']['lastupdate'] = time.time()
         self._weatherinputs[self.path + '/lastupdate']['value'] = 0
         self._weatherinputs[self.path + '/lat']['value'] = lat
@@ -155,7 +155,7 @@ class Weather(QObject):
         return self._interval
 
     @interval.setter
-    def set_interval(self, interval):
+    def interval(self, interval):
         self._interval = int(interval)
         self.settings.setValue(self.path + "/interval", interval)
 
@@ -164,7 +164,7 @@ class Weather(QObject):
         return self._weatherinputs[self.path + '/lon']['value']
 
     @lon.setter
-    def set_lon(self, lon):
+    def lon(self, lon):
         self._weatherinputs[self.path + '/lon']['lastupdate'] = time.time()
         self._weatherinputs[self.path + '/lastupdate']['value'] = 0
         self._weatherinputs[self.path + '/lon']['value'] = lon
@@ -179,7 +179,7 @@ class Weather(QObject):
         return self._weatherinputs[self.path + '/city']['value']
 
     @city.setter
-    def set_city(self, city: str) -> None:
+    def city(self, city: str) -> None:
         self._weatherinputs[self.path + '/city']['lastupdate'] = time.time()
         self._weatherinputs[self.path + '/lastupdate']['value'] = 0
         self._weatherinputs[self.path + '/city']['value'] = city

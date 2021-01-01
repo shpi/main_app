@@ -2,6 +2,7 @@ import QtQuick 2.12
 import QtGraphicalEffects 1.12
 import QtQuick.Shapes 1.12
 
+import "../../fonts/"
 
 
 Rectangle {
@@ -24,7 +25,7 @@ Rectangle {
         //text: temperatur.toFixed(1) + '°C'
         //text: (32 - ( (rotator.rotation / 15))).toFixed(1) + "°C"
         text: (min_temp + (-rotator.rotation + 240) * ((max_temp - min_temp) / 240)).toFixed(1) + '°C'
-        color: "white"
+        color: Colors.black
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.horizontalCenterOffset: tickswindow.width * 0.02
@@ -98,7 +99,7 @@ Rectangle {
     anchors.horizontalCenterOffset:  rotator.width * 0.15
     color: "transparent"
     border.width: 1
-    border.color: "white"
+    border.color: Colors.black
     radius: width / 2
     rotation: 90
     Behavior on rotation {
@@ -132,7 +133,7 @@ Rectangle {
         anchors.verticalCenterOffset: rotator.width * -0.4
         anchors.horizontalCenterOffset: 0
         visible: index % 5  == 0  && this.text <= max_temp &&  this.text >= min_temp ?  true : false
-        color: "white"
+        color: Colors.black
         rotation:  90
         font.pixelSize: rotator.height * 0.04
     }

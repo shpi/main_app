@@ -48,6 +48,7 @@ class ModuleManager(QObject):
                     except:
                         pass
 
+
     # for key,value in weather.items():
     #    inputs.add(value.get_inputs())
 
@@ -56,7 +57,6 @@ class ModuleManager(QObject):
             for classname in self._instances[category]:
                 for instance in self._instances[category][classname]:
                     try:
-
                         self._instances[category][classname][instance].update()
                     except AttributeError:
                         pass
@@ -65,11 +65,10 @@ class ModuleManager(QObject):
     def modulesChanged(self):
         pass
 
-    # Workaround for https://bugreports.qt.io/browse/PYSIDE-1426
-    # @Property('QVariantMap', constant=True)
+
+    @Property('QVariantMap', notify=modulesChanged)
     def loaded_instances(self) -> dict:
         return self._instances
-    loaded_instances = Property('QVariantMap', loaded_instances, constant=True)
 
     @Property('QVariantMap', notify=modulesChanged)
     def modules(self):
