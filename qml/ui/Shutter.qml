@@ -49,7 +49,7 @@ Item {
         width: 300
         anchors.centerIn: parent
         stepSize: 5
-        onPressedChanged: if (this.pressed === false) modules.loaded_instances['Logic']['Shutter'][instancename].set_position(this.value)
+        onPressedChanged: if (this.pressed === false) modules.loaded_instances['Logic']['Shutter'][instancename].set_desired_position(this.value)
 
 
         Text {

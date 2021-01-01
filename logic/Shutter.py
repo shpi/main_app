@@ -2,6 +2,21 @@ from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 import time
 import threading
 from core.DataTypes import DataType
+from core.Toolbox import Pre_5_15_2_fix
+
+
+
+class ShutterModes:
+    STOP = 0
+    UP = 1
+    DOWN = 2
+    SLEEP = 3
+    __valid_range = STOP, SLEEP  # lowest and highest
+
+    @classmethod
+    def is_valid(cls, number) -> bool:
+        min_, max_ = cls.__valid_range
+        return min_ <= number <= max_
 
 class Shutter(QObject):
 
@@ -37,11 +52,10 @@ class Shutter(QObject):
         self._desired_position['type'] = DataType.PERCENT_INT
         self._desired_position['lastupdate'] = time.time()
         self._desired_position['value'] = self._actual_position['value']
-        self._desired_position['set'] = self.set_position
+        self._desired_position['set'] = self.set_desired_position
 
         self.movethread = threading.Thread(target=self.move)
-        self._state = 'STOP'  # 'UP', 'DOWN'
-
+        self._state = ShutterModes.STOP
 
 
 
@@ -53,33 +67,33 @@ class Shutter(QObject):
 
     def set_state(self, value):
 
-        if value == 'UP':
+        if value == ShutterModes.UP:
             print('relais down 0')
             time.sleep(0.1)
             print('relais up 1')
-            self._state = 'UP'
+            self._state = ShutterModes.UP
 
 
-        elif value == 'DOWN':
+        elif value == ShutterModes.DOWN:
             print('relais down 1')
             time.sleep(0.1)
             print('relais up 0')
-            self._state = 'DOWN'
+            self._state = ShutterModes.DOWN
 
 
-        elif value == 'STOPSLEEP':
-            self._state = 'STOPSLEEP'
+        elif value == ShutterModes.SLEEP:
+            self._state = ShutterModes.SLEEP
 
             time.sleep(1)
             print('relais down 0')
             print('relais up 0')
-            self._state = 'STOP'
+            self._state = ShutterModes.STOP
 
 
-        elif value == 'STOP':
+        elif value == ShutterModes.STOP:
             print('relais down 0')
             print('relais up 0')
-            self._state = 'STOP'
+            self._state = ShutterModes.STOP
 
 
     def start_move(self):
@@ -107,6 +121,17 @@ class Shutter(QObject):
     def desired_position(self):
        return int(self._desired_position['value'])
 
+    @Slot(int)
+    #@desired_position.setter
+    #@Pre_5_15_2_fix(str, desired_position, notify=positionChanged)
+    def set_desired_position(self, value): #we need special name here for SET field in dict ??
+       self.userinput = 1
+       self._desired_position['value'] = int(value)
+       self._residue_time = 0
+       self.positionChanged.emit()
+       self.start_move()
+
+
     @Property(float,notify=positionChanged)
     def actual_position(self):
        return (self._actual_position['value'])
@@ -115,13 +140,7 @@ class Shutter(QObject):
     def residue_time(self):
        return float(self._residue_time)
 
-    @Slot(int)
-    def set_position(self, value):
-        self.userinput = 1
-        self._desired_position['value'] = int(value)
-        self._residue_time = 0
-        self.positionChanged.emit()
-        self.start_move()
+
 
     def move(self):
 
@@ -135,8 +154,8 @@ class Shutter(QObject):
             if self._actual_position['value'] < self._desired_position['value']:
 
                 # need to move down, to close
-                if self.userinput == 1 and self._state != 'UP':
-                    self.set_state('UP')
+                if self.userinput == 1 and self._state != ShutterModes.UP:
+                    self.set_state(ShutterModes.UP)
                     self.userinput = 0
                     self.time_start = time.time()
                     self.start_position = self._actual_position['value']
@@ -155,8 +174,8 @@ class Shutter(QObject):
             elif self._actual_position['value'] > self._desired_position['value']:
 
                 # need to move up, to open
-                if self.userinput == 1 and self._state != 'DOWN':
-                    self.set_state('DOWN')
+                if self.userinput == 1 and self._state != ShutterModes.DOWN:
+                    self.set_state(ShutterModes.DOWN)
                     self.userinput = 0
                     self.time_start = time.time()
                     self.start_position = self._actual_position['value']
@@ -178,6 +197,6 @@ class Shutter(QObject):
         if was_in_loop and self._desired_position['value'] == 100 or self._desired_position['value'] == 0:
             self._actual_position['value'] = self._desired_position['value']
             self._actual_position['lastupdate'] = time.time()
-            self.set_state('STOPSLEEP')
+            self.set_state(ShutterModes.SLEEP)
         else:
-            self.set_state('STOP')
+            self.set_state(ShutterModes.STOP)
