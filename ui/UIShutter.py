@@ -12,8 +12,8 @@ class UIShutter(QObject):
         self.settings = settings
         self.inputs = inputs
         self.name = name
-        self._actual_position_path = settings.value(self.name + "/actual_position", 'shutter/shutter/actual_position')
-        self._desired_position_path = settings.value(self.name + "/desired_position", 'shutter/shutter/desired_position')
+        self._actual_position_path = settings.value('uishutter/' + self.name + "/actual_position", 'shutter/local/actual_position')
+        self._desired_position_path = settings.value('uishutter/' + self.name + "/desired_position", 'shutter/local/desired_position')
 
         try:
             self._actual_position = int(self.inputs.entries[self._actual_position_path]['value'])
@@ -36,7 +36,7 @@ class UIShutter(QObject):
     @actual_position_path.setter
     def actual_position_path(self, key):
         self._actual_position_path = key
-        self.settings.setValue(self.name + "/actual_position", key)
+        self.settings.setValue('uishutter/' + self.name + "/actual_position", key)
 
     @Property(str)
     def desired_position_path(self):
@@ -45,7 +45,7 @@ class UIShutter(QObject):
     @desired_position_path.setter
     def desired_position_path(self, key):
         self._desired_position_path = key
-        self.settings.setValue(self.name + "/desired_position", key)
+        self.settings.setValue('uishutter/' + self.name + "/desired_position", key)
 
     def update(self):
         if self._desired_position !=  self.inputs.entries[self._desired_position_path]['value']:
