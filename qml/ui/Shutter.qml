@@ -5,6 +5,7 @@ import "../../fonts/"
 
 Item {
 
+    //property string instancename: modules.modules['Logic']['Shutter'][0]
     property string instancename: 'local'
 
     anchors.fill: parent
@@ -174,9 +175,6 @@ Item {
 
 
     }
-
-
-
 
 }
 

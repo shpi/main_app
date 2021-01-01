@@ -76,7 +76,10 @@ Item {
 
                 id: up_time
                 from: 0
-                value: 100
+
+                Component.onCompleted: up_time.value = modules.loaded_instances['Logic']['Shutter'][instancename].up_time
+
+                onValueChanged: modules.loaded_instances['Logic']['Shutter'][instancename].up_time = this.value
                 to: 300 * 100
                 stepSize: 10
                 font.pointSize: 12
@@ -110,7 +113,10 @@ Item {
 
                 id: down_time
                 from: 0
-                value: 100
+
+                Component.onCompleted: down_time.value = modules.loaded_instances['Logic']['Shutter'][instancename].down_time
+
+                onValueChanged: modules.loaded_instances['Logic']['Shutter'][instancename].down_time = this.value
                 to: 300 * 100
                 stepSize: 10
                 font.pointSize: 12
