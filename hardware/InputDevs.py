@@ -1,10 +1,31 @@
 import subprocess
 import threading
-import multiprocessing
 import struct
+import ctypes
 import time
 from core.DataTypes import DataType
 from functools import partial
+
+
+
+class eThread(threading.Thread):
+
+    def get_id(self):
+
+        # returns id of the respective thread
+        if hasattr(self, '_thread_id'):
+            return self._thread_id
+        for id, thread in threading._active.items():
+            if thread is self:
+                return id
+
+    def raise_exception(self):
+        thread_id = self.get_id()
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,
+              ctypes.py_object(SystemExit))
+        if res > 1:
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
+            print('Exception raise failure')
 
 
 class InputDevs:
@@ -77,10 +98,8 @@ class InputDevs:
             self.inputs[f'dev/{str(id)}/thread']['interval'] = -1
             self.inputs[f'dev/{str(id)}/thread']['lastupdate'] = 0
             self.inputs[f'dev/{str(id)}/thread']['interrupts'] = []
-            # self.inputs[f'dev/{str(id)}/thread']['thread'] = threading.Thread(
-            #    target=self.devloop, args=(f"/dev/input/{subdevice['event'][0]}", id))
-            self.inputs[f'dev/{str(id)}/thread']['thread'] = multiprocessing.Process(
-                    target=self.devloop, args=(f"/dev/input/{subdevice['event'][0]}", id))
+            self.inputs[f'dev/{str(id)}/thread']['thread'] = eThread(
+                target=self.devloop, args=(f"/dev/input/{subdevice['event'][0]}", id))
 
             self.inputs[f'dev/{str(id)}/thread']['type'] = DataType.BOOL
             self.inputs[f'dev/{str(id)}/thread']['set'] = partial(self.control_thread, id)
@@ -93,11 +112,11 @@ class InputDevs:
 
         if value != self.inputs[f'dev/{str(id)}/thread']['value']:
             if value and not self.inputs[f'dev/{str(id)}/thread']['thread'].is_alive():
-                self.inputs[f'dev/{str(id)}/thread']['thread'] = multiprocessing.Process(
+                self.inputs[f'dev/{str(id)}/thread']['thread'] = eThread(
                         target=self.devloop, args=(f"/dev/input/{self.devs[{id}]['event'][0]}", id))
                 self.inputs[f'dev/{str(id)}/thread']['thread'].start()
             elif not value and self.inputs[f'dev/{str(id)}/thread']['thread'].is_alive():
-                self.inputs[f'dev/{str(id)}/thread']['thread'].terminate()
+                self.inputs[f'dev/{str(id)}/thread']['thread'].raise_exception()
 
     def devloop(self, devpath, id):
         systembits = (struct.calcsize("P") * 8)

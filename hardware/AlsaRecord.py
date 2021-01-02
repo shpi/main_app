@@ -41,7 +41,7 @@ class AlsaRecord:
         self.thread_stderr = None
 
     def control(self, onoff):
-        self._control = onoff
+        self._control['value'] = onoff
 
     def get_inputs(self) -> dict:
 
@@ -51,7 +51,7 @@ class AlsaRecord:
 
     def process_arecord_stdout(self, arecord_process):  # output-consuming thread
 
-        while self._control['value']:
+        while self._control['value'] > 0:
             for i in range(0, self.buffersize):
                 self.bufferpos = i
                 self.buffer[i] = arecord_process.stdout.read(self.chunksize)
@@ -59,7 +59,7 @@ class AlsaRecord:
     def process_arecord_stderr(self, arecord_process):
         dat = bytearray()
 
-        while self._control['value']:
+        while self._control['value'] > 0:
             buf = arecord_process.stderr.read(1)
             if buf == b'\r':
                 if dat.endswith(b'MAX'):
@@ -73,7 +73,7 @@ class AlsaRecord:
 
     def update(self):
 
-        if self._control['value']:
+        if self._control['value'] > 0:
             if not self.arecord_process or self.arecord_process.poll() is not None:
                 print('starting arecord process on ' + self.card)
                 self.arecord_process = Popen(['arecord', '-D', 'plughw:' + self.card, '-c', str(self.channels), '-r', str(
