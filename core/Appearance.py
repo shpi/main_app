@@ -290,8 +290,9 @@ class Appearance(QObject):
             else:
                 night_new = 1
 
+
         # Expect 18 - 23:00
-        # night_new = start_time < now_time < stop_time
+        # night_new = start_time < now_time < stop_time or not (stop_time < now_time < start_time)
         # if start_time > stop_time:  # 18 - 23:00
         # Just invert
         #    night_new = not night_new

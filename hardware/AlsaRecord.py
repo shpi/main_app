@@ -3,7 +3,7 @@ from threading import Thread
 # import socket for later audio intercom
 import time
 from core.DataTypes import DataType
-
+from functools import partial
 
 class AlsaRecord:
 
@@ -12,7 +12,14 @@ class AlsaRecord:
         super(AlsaRecord, self).__init__()
 
         self.input = dict()
-
+        self._control = {
+                        'interval': -1,
+                        'type': DataType.BOOL,
+                        'lastupdate': 0,
+                        'description': 'Microphone Thread start/stop',
+                        'value': 1,
+                        'set': partial(self.control)
+                       }
         self.card = card
         self.bufferpos = 0
         self.buffersize = 10
@@ -27,20 +34,24 @@ class AlsaRecord:
         self.bits = 16  # S8, S16_LE, S32_BE ..
         self.channels = 1
         self.chunksize = int((self.rate * (self.bits/8) * self.channels) // 10)
-        self.running = True
         #self.input['sending'] = False
         #self.input['receiver'] = [] for later use, to send audio packages for intercom
         self.arecord_process = None
         self.thread_stdout = None
         self.thread_stderr = None
 
+    def control(self, onoff):
+        self._control = onoff
+
     def get_inputs(self) -> dict:
 
-        return self.input
+        return {f'alsa/{self.card}/recording': self.input,
+                f'alsa/{self.card}/thread': self._control
+                }
 
     def process_arecord_stdout(self, arecord_process):  # output-consuming thread
 
-        while self.running:
+        while self._control['value']:
             for i in range(0, self.buffersize):
                 self.bufferpos = i
                 self.buffer[i] = arecord_process.stdout.read(self.chunksize)
@@ -48,7 +59,7 @@ class AlsaRecord:
     def process_arecord_stderr(self, arecord_process):
         dat = bytearray()
 
-        while self.running:
+        while self._control['value']:
             buf = arecord_process.stderr.read(1)
             if buf == b'\r':
                 if dat.endswith(b'MAX'):
@@ -62,8 +73,9 @@ class AlsaRecord:
 
     def update(self):
 
-        if self.running:
+        if self._control['value']:
             if not self.arecord_process or self.arecord_process.poll() is not None:
+                print('starting arecord process on ' + self.card)
                 self.arecord_process = Popen(['arecord', '-D', 'plughw:' + self.card, '-c', str(self.channels), '-r', str(
                     self.rate), '-t', 'raw', '-f', self.format, '-V', 'mono'], stdout=PIPE, stderr=PIPE)  # output-producing process
 

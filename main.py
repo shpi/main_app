@@ -119,11 +119,15 @@ modules = ModuleManager(inputs, settings)
 
 #uishutter = UIShutter('Wohnzimmer', inputs, settings)
 
-
+def KillThreads():
+    for key in inputs.entries:
+        if key.endswith('thread'):
+            inputs.entries[key]['set'](0)
 
 if __name__ == "__main__":
 
     app = QApplication(sys.argv)
+    app.aboutToQuit.connect(KillThreads)
     # app.setAttribute(Qt.AA_EnableHighDpiScaling)
     app.setApplicationName("Main")
     app.setOrganizationName("SHPI GmbH")

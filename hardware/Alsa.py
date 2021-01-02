@@ -118,7 +118,7 @@ class AlsaMixer:
 
             self.recorder[card_name] = AlsaRecord(card_name)
 
-            return {f'alsa/{card_name}/recording': self.recorder[card_name].get_inputs()}
+            return self.recorder[card_name].get_inputs()
 
         else:
             return {}

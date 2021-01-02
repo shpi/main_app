@@ -1,8 +1,10 @@
 import subprocess
 import threading
+import multiprocessing
 import struct
 import time
 from core.DataTypes import DataType
+from functools import partial
 
 
 class InputDevs:
@@ -69,19 +71,33 @@ class InputDevs:
         f.close()
 
         for id, subdevice in self.devs.items():
-            self.inputs[f'dev/{str(id)}'] = dict()
-            self.inputs[f'dev/{str(id)}']['description'] = subdevice['name']
-            self.inputs[f'dev/{str(id)}']['value'] = 1
-            self.inputs[f'dev/{str(id)}']['interval'] = -1
-            self.inputs[f'dev/{str(id)}']['lastupdate'] = 0
-            self.inputs[f'dev/{str(id)}']['interrupts'] = []
-            self.inputs[f'dev/{str(id)}']['thread'] = threading.Thread(
-                target=self.devloop, args=(f"/dev/input/{subdevice['event'][0]}", id))
-            self.inputs[f'dev/{str(id)}']['type'] = DataType.INT
-            self.inputs[f'dev/{str(id)}']['thread'].start()
+            self.inputs[f'dev/{str(id)}/thread'] = dict()
+            self.inputs[f'dev/{str(id)}/thread']['description'] = 'Reading Thread for ' + subdevice['name']
+            self.inputs[f'dev/{str(id)}/thread']['value'] = 1
+            self.inputs[f'dev/{str(id)}/thread']['interval'] = -1
+            self.inputs[f'dev/{str(id)}/thread']['lastupdate'] = 0
+            self.inputs[f'dev/{str(id)}/thread']['interrupts'] = []
+            # self.inputs[f'dev/{str(id)}/thread']['thread'] = threading.Thread(
+            #    target=self.devloop, args=(f"/dev/input/{subdevice['event'][0]}", id))
+            self.inputs[f'dev/{str(id)}/thread']['thread'] = multiprocessing.Process(
+                    target=self.devloop, args=(f"/dev/input/{subdevice['event'][0]}", id))
+
+            self.inputs[f'dev/{str(id)}/thread']['type'] = DataType.BOOL
+            self.inputs[f'dev/{str(id)}/thread']['set'] = partial(self.control_thread, id)
+            self.inputs[f'dev/{str(id)}/thread']['thread'].start()
 
     def get_inputs(self) -> dict:
         return self.inputs
+
+    def control_thread(self,id, value):
+
+        if value != self.inputs[f'dev/{str(id)}/thread']['value']:
+            if value and not self.inputs[f'dev/{str(id)}/thread']['thread'].is_alive():
+                self.inputs[f'dev/{str(id)}/thread']['thread'] = multiprocessing.Process(
+                        target=self.devloop, args=(f"/dev/input/{self.devs[{id}]['event'][0]}", id))
+                self.inputs[f'dev/{str(id)}/thread']['thread'].start()
+            elif not value and self.inputs[f'dev/{str(id)}/thread']['thread'].is_alive():
+                self.inputs[f'dev/{str(id)}/thread']['thread'].terminate()
 
     def devloop(self, devpath, id):
         systembits = (struct.calcsize("P") * 8)
@@ -116,6 +132,6 @@ class InputDevs:
                             self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = timestamp
 
         except:
-            self.inputs[f'dev/{str(id)}']['value'] = 0
-            self.inputs[f'dev/{str(id)}']['lastupdate'] = time.time()
-            self.inputs[f'dev/{str(id)}']['description'] += ' [access error]'
+            self.inputs[f'dev/{str(id)}/thread']['value'] = 0
+            self.inputs[f'dev/{str(id)}/thread']['lastupdate'] = time.time()
+            self.inputs[f'dev/{str(id)}/thread']['description'] += ' [access error]'
