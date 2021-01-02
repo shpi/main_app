@@ -278,24 +278,12 @@ class Appearance(QObject):
 
         now_time = datetime.now().time()
 
-        if start_time < stop_time:  # 18 - 23:00
-            if now_time > stop_time or now_time < start_time:
-                night_new = 0
-            else:
-                night_new = 1
-
-        else:  # end < start: # 18 - 3:00
-            if now_time > stop_time and now_time < start_time:
-                night_new = 0
-            else:
-                night_new = 1
-
-
-        # Expect 18 - 23:00
-        # night_new = start_time < now_time < stop_time or not (stop_time < now_time < start_time)
-        # if start_time > stop_time:  # 18 - 23:00
-        # Just invert
-        #    night_new = not night_new
+        if start_time < stop_time:
+             # 18:00 - 23:00
+             night_new = start_time < now_time < stop_time
+        else:
+             # 23:00 - 8:00
+             night_new = not(stop_time < now_time < start_time)
 
         if night_new != self._night:
             self._night = night_new
