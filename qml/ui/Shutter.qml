@@ -5,34 +5,11 @@ import "../../fonts/"
 
 Item {
 
-    //property string instancename: modules.modules['Logic']['Shutter'][0]
-    property string instancename: 'local'
+    property string instancename: modules.modules['Logic']['Shutter'][0]
+    //property string instancename: 'local'
 
     anchors.fill: parent
 
-
-
-    Text {
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 10
-        anchors.left: parent.left
-        anchors.leftMargin: 10
-        text: Icons.sunset
-        font.family: localFont.name
-        font.pointSize: 30
-        color: Colors.black
-    }
-
-    Text {
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 10
-        anchors.right: parent.right
-        anchors.rightMargin: 10
-        font.pointSize: 30
-        font.family: localFont.name
-        text: Icons.sunrise
-        color: Colors.black
-    }
 
     Rectangle {
         height: parent.height * 0.75 + 8
@@ -156,7 +133,7 @@ Item {
 
                 text: {modules.loaded_instances['Logic']['Shutter'][instancename].desired_position === modules.loaded_instances['Logic']['Shutter'][instancename].actual_position ? Icons.shutter :  Icons.arrow
                 }
-                rotation: modules.loaded_instances['Logic']['Shutter'][instancename].actual_position > modules.loaded_instances['Logic']['Shutter'][instancename].desired_position ? 0 : 180
+                rotation: modules.loaded_instances['Logic']['Shutter'][instancename].desired_position > modules.loaded_instances['Logic']['Shutter'][instancename].actual_position ? 180 : 0
                 anchors.centerIn: parent
                 font.pointSize: 20
                 opacity: 1

@@ -1,30 +1,195 @@
 import QtQuick 2.12
 import QtGraphicalEffects 1.12
 import QtQuick.Shapes 1.12
+import QtQuick.Controls 2.12
 
 import "../../fonts/"
 
-
 Rectangle {
 
+    property string instancename: modules.modules['Logic']['Thermostat'][0]
     property real max_temp: 32
     property real min_temp: 16
 
     id: tickswindow
-    height:parent.height
+    height: parent.height
     width: height
     anchors.horizontalCenter: parent.horizontalCenter
 
     color: "transparent"
 
+    Slider {
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: 100
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.horizontalCenterOffset: -100
+        id: control
+        property real radius: 32
+        from: 0 // 0 off, 1 away, 2 eco , 3 normal, 4 party
+        to: 4
+        stepSize: 1
+        value: 3
+        snapMode: Slider.SnapAlways
+
+        width: 500
+        height: radius * 2
+        background: Rectangle {
+
+            width: control.width
+            height: control.height
+            radius: control.radius
+            color: "#44000000"
+            border.width: 1
+            border.color: Colors.black
+
+            Row {
+
+                spacing: 1
+                anchors.fill: parent
+
+                Rectangle {
+                    width: control.width / 5 - 1
+                    height: control.height
+                    clip: true
+                    color: "transparent"
+
+                    Rectangle {
+                        anchors.left: parent.left
+                        width: control.value == 0 ? control.width / 5 - 1 : control.width
+                                                    / 5 - 1 + control.radius
+                        height: control.height - 2
+                        radius: control.radius
+                        anchors.verticalCenter: parent.verticalCenter
+                        opacity: control.value == 0 ? 1 : 0.1
+                        gradient: RadialGradient {
+                            GradientStop {
+                                position: 0.0
+                                color: "#ddd"
+                            }
+                            GradientStop {
+                                position: 0.5
+                                color: "#444"
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: control.width / 5 - 1
+                    height: control.height - 2
+                    radius: control.value == 1 ? control.radius : 0
+                    opacity: control.value == 1 ? 1 : 0.1
+                    gradient: RadialGradient {
+                        GradientStop {
+                            position: 0.0
+                            color: "lightblue"
+                        }
+                        GradientStop {
+                            position: 0.5
+                            color: "darkblue"
+                        }
+                    }
+                }
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: control.width / 5 - 1
+                    height: control.height - 2
+                    radius: control.value == 2 ? control.radius : 0
+                    opacity: control.value == 2 ? 1 : 0.1
+                    gradient: RadialGradient {
+                        GradientStop {
+                            position: 0.0
+                            color: "lightgreen"
+                        }
+                        GradientStop {
+                            position: 0.5
+                            color: "darkgreen"
+                        }
+                    }
+                }
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: control.width / 5 - 1
+                    height: control.height - 2
+                    radius: control.value == 3 ? control.radius : 0
+                    opacity: control.value == 3 ? 1 : 0.1
+                    gradient: RadialGradient {
+                        GradientStop {
+                            position: 0.0
+                            color: "yellow"
+                        }
+                        GradientStop {
+                            position: 0.5
+                            color: "darkorange"
+                        }
+                    }
+                }
+
+                Rectangle {
+                    width: control.width / 5 - 1
+                    height: control.height
+                    clip: true
+                    color: "transparent"
+
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.right: parent.right
+                        width: control.value == 4 ? control.width / 5 - 1 : control.width
+                                                    / 5 - 1 + control.radius
+                        height: control.height - 2
+                        radius: control.radius
+                        opacity: control.value == 4 ? 1 : 0.1
+                        gradient: RadialGradient {
+                            GradientStop {
+                                position: 0.0
+                                color: "red"
+                            }
+                            GradientStop {
+                                position: 0.5
+                                color: "darkred"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        handle: Rectangle {
+            x: control.leftPadding + control.availableWidth * 0.08
+               + control.visualPosition * (control.availableWidth * 0.84 - width)
+            y: control.topPadding + control.availableHeight / 2 - height / 2
+            width: 5
+            height: 5
+            color: Colors.black
+            opacity: 0.8
+            radius: width / 2
+        }
+
+
+        Text {
+        id:thermostatmodus
+        text: control.value == 0 ? 'Off' : control.value == 1 ? 'Away' : control.value == 2 ? 'Eco' :
+               control.value == 3 ? 'Auto' : control.value == 4 ? 'Party' : 'Unknown'
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.bottom
+        font.pointSize: 18
+        color: Colors.black
+
+        }
+
+    }
 
     Text {
         id: temptext
-        property real temperatur : 20
+        property real temperatur: 20
 
         //text: temperatur.toFixed(1) + '°C'
         //text: (32 - ( (rotator.rotation / 15))).toFixed(1) + "°C"
-        text: (min_temp + (-rotator.rotation + 240) * ((max_temp - min_temp) / 240)).toFixed(1) + '°C'
+        text: (min_temp + (-rotator.rotation + 240) * ((max_temp - min_temp) / 240)).toFixed(
+                  1) + '°C'
         color: Colors.black
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter
@@ -32,131 +197,112 @@ Rectangle {
         font.pixelSize: tickswindow.width * 0.10
     }
 
-
     Rectangle {
         anchors.top: tickswindow.top
-        height:tickswindow.height
-        width: tickswindow.width/4
+        height: tickswindow.height
+        width: tickswindow.width / 4
         anchors.right: tickswindow.right
         //border.width: 1
         //border.color: "white"
         //opacity: 0.5
         color: "transparent"
 
+        MouseArea {
+            anchors.fill: parent
+            preventStealing: true
+            property real velocity: 0.0
+            property int xStart: 0
+            property int xPrev: 0
+            property bool tracing: false
+            onPressed: {
+                xStart = mouse.y
+                xPrev = mouse.y
+                velocity = 0
+                tracing = true
+            }
+            onPositionChanged: {
+                if (!tracing)
+                    return
+                var currVel = (mouse.y - xPrev)
+                velocity = (velocity + currVel) / 2.0
+                xPrev = mouse.y
+                if (velocity > 10) {
 
-
-    MouseArea {
-                anchors.fill: parent
-                preventStealing: true
-                property real velocity: 0.0
-                property int xStart: 0
-                property int xPrev: 0
-                property bool tracing: false
-                onPressed: {
-                    xStart = mouse.y
-                    xPrev = mouse.y
-                    velocity = 0
-                    tracing = true
-
-
+                    if (rotator.rotation - (velocity / 10) * (velocity / 10) < 0)
+                        rotator.rotation = 0
+                    else
+                        rotator.rotation -= (velocity / 10) * (velocity / 10)
                 }
-                onPositionChanged: {
-                    if ( !tracing ) return
-                    var currVel = (mouse.y-xPrev)
-                    velocity = (velocity + currVel)/2.0
-                    xPrev = mouse.y
-                    if ( velocity > 10) {
 
-                        if (rotator.rotation - (velocity/10)*(velocity/10) < 0) rotator.rotation = 0
-                        else rotator.rotation -= (velocity/10)*(velocity/10)
-
-
-                  }
-
-                    if ( velocity < -10) {
-                        if (rotator.rotation + (velocity/10)*(velocity/10) > 240) rotator.rotation = 240
-                        else rotator.rotation += (velocity/10)*(velocity/10)
-
-
-
-                  }
-
+                if (velocity < -10) {
+                    if (rotator.rotation + (velocity / 10) * (velocity / 10) > 240)
+                        rotator.rotation = 240
+                    else
+                        rotator.rotation += (velocity / 10) * (velocity / 10)
                 }
-                onReleased: {
-                    tracing = false
-
-                }
-            }}
-
-
-
-Rectangle {
-    id: rotator
-    height: tickswindow.height * 1.5
-    width: height
-    anchors.verticalCenter: tickswindow.verticalCenter
-    anchors.horizontalCenter: tickswindow.right
-    anchors.horizontalCenterOffset:  rotator.width * 0.15
-    color: "transparent"
-    border.width: 1
-    border.color: Colors.black
-    radius: width / 2
-    rotation: 90
-    Behavior on rotation {
-
-
-
-        PropertyAnimation {}
-
-
+            }
+            onReleased: {
+                tracing = false
+            }
+        }
     }
 
-Repeater {
+    Rectangle {
+        id: rotator
+        height: tickswindow.height * 1.5
+        width: height
+        anchors.verticalCenter: tickswindow.verticalCenter
+        anchors.horizontalCenter: tickswindow.right
+        anchors.horizontalCenterOffset: rotator.width * 0.15
+        color: "transparent"
+        border.width: 1
+        border.color: Colors.black
+        radius: width / 2
+        rotation: 90
+        Behavior on rotation {
 
-model: 120
+            PropertyAnimation {}
+        }
 
-Rectangle {
-    anchors.centerIn: parent
-    width: 5
-    height: parent.height * 0.97
-    color: "transparent"
-    rotation: index * 3 - 27
-    //border.width: 1
-    //border.color: "white"
+        Repeater {
 
+            model: 120
 
+            Rectangle {
+                anchors.centerIn: parent
+                width: 5
+                height: parent.height * 0.97
+                color: "transparent"
+                rotation: index * 3 - 27
 
-    Text {
-        text: index % 5 == 0 ? (min_temp + ((index * 3) - 60) * ((max_temp - min_temp) / 240)).toFixed(0)  : ''
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenterOffset: rotator.width * -0.4
-        anchors.horizontalCenterOffset: 0
-        visible: index % 5  == 0  && this.text <= max_temp &&  this.text >= min_temp ?  true : false
-        color: Colors.black
-        rotation:  90
-        font.pixelSize: rotator.height * 0.04
+                //border.width: 1
+                //border.color: "white"
+                Text {
+                    text: index % 5 == 0 ? (min_temp + ((index * 3) - 60)
+                                            * ((max_temp - min_temp) / 240)).toFixed(
+                                               0) : ''
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenterOffset: rotator.width * -0.4
+                    anchors.horizontalCenterOffset: 0
+                    visible: index % 5 == 0 && this.text <= max_temp
+                             && this.text >= min_temp ? true : false
+                    color: Colors.black
+                    rotation: 90
+                    font.pixelSize: rotator.height * 0.04
+                }
+
+                Rectangle {
+                    color: Qt.rgba(
+                               ((index - 20) / 80), (1 - 2 * Math.abs(
+                                                         ((index - 20) / 80) - 0.5)),
+                               1 - ((index - 20) / 80), 1)
+                    width: rotator.width * 0.01
+                    height: rotator.height * 0.05
+                    anchors.left: parent.left
+                    antialiasing: true
+                }
+            }
+        }
     }
-
-
-
-Rectangle {
-    color: Qt.rgba(((index-20)/80), (1 - 2 * Math.abs(((index-20)/80) - 0.5)), 1-((index-20)/80), 1)
-    width: rotator.width * 0.01
-    height: rotator.height * 0.05
-    anchors.left: parent.left
-    antialiasing : true
-
-
-}}}
 }
-
-
-
-}
-
-
-
-
-
-

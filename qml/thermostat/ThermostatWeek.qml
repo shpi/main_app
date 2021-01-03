@@ -8,22 +8,25 @@ Item {
 
 Component.onCompleted: {
 
+    var scedulelist = '';
+
     for (var i = 0; i < dayrepeater.count; i++)
     {
 
-    console.log(dayrepeater.itemAt(i).dayname);
+    //console.log(dayrepeater.itemAt(i).dayname);
 
         for (var a = 0; a < dayrepeater.itemAt(i).children.length; a++)
         {
-
-            console.log(dayrepeater.itemAt(i).children[a].value + ':' + dayrepeater.itemAt(i).children[a].temperature);
-
+            if (dayrepeater.itemAt(i).children[a].temperature !== undefined)
+            scedulelist += dayrepeater.itemAt(i).children[a].value + ':' + dayrepeater.itemAt(i).children[a].temperature + ';'
 
         }
 
+        scedulelist += '\n'
+
     }
 
-
+    console.log(scedulelist)
 }
 
 Column {
