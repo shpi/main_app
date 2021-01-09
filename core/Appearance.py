@@ -54,7 +54,8 @@ class Appearance(QObject):
         self.possible_devs['list'] = list()
 
         for key in self.inputs.keys():
-            if key.startswith('dev/') and key.find('/', 4) == -1:
+            if key.startswith('dev/') and key.find('/thread', 4) > 0:
+
                 self.possible_devs['list'].append(key)
                 try:
                     self.possible_devs[key] = int(
@@ -63,6 +64,8 @@ class Appearance(QObject):
                     self.possible_devs[key] = 1
                 if self.possible_devs[key] == 1:
                     inputs.entries[key]['interrupts'].append(self.interrupt)
+
+
 
     @Signal
     def dim_timer_changed(self):

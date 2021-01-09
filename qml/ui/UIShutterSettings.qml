@@ -7,8 +7,7 @@ Rectangle {
 
     Component.onCompleted: {
 
-           inputs.set_outputList('boolean')
-
+        inputs.set_outputList('boolean')
     }
     anchors.fill: parent
 
@@ -76,7 +75,7 @@ Rectangle {
                 width: 550
                 model: inputs.outputList
                 textRole: 'path'
-                onPressedChanged: shutter2.relay_up = this.currentText
+                onActivated: shutter2.relay_up = this.currentText
 
                 Label {
                     anchors.right: parent.left
@@ -94,7 +93,7 @@ Rectangle {
                 width: 550
                 model: inputs.outputList
                 textRole: 'path'
-                onPressedChanged: shutter2.relay_down = this.currentText
+                onActivated: shutter2.relay_down = this.currentText
 
                 Label {
                     anchors.right: parent.left
@@ -192,13 +191,12 @@ Rectangle {
                                                             "stop")
                     onClicked: {
                         control.running = !control.running
-                        if (control.running){
+                        if (control.running) {
                             controlup.running = !control.running
 
                             time.startTime = new Date().getTime()
                             timer.running = true
-                        }
-                        else {
+                        } else {
                             timer.running = false
                             shutter2.actual_position = 0
                             //time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
@@ -248,14 +246,11 @@ Rectangle {
                             control.running = !controlup.running
                             time.startTime = new Date().getTime()
                             timer.running = true
-                        }
-                        else {
+                        } else {
                             timer.running = false
                             shutter2.actual_position = 100
                             //time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
                         }
-
-
                     }
                     font.pointSize: 15
 
@@ -287,33 +282,28 @@ Rectangle {
                             }
                         }
                     }
-                }}
-
-                Text {
-                    id: time
-                    font.pixelSize: 30
-                    color: Colors.black
-                    text: time.startTime != 0 ? new Date().getTime(
-                                                    ) - time.startTime + " ms" : 0
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    property double startTime: 0
                 }
+            }
 
+            Text {
+                id: time
+                font.pixelSize: 30
+                color: Colors.black
+                text: time.startTime != 0 ? new Date().getTime(
+                                                ) - time.startTime + " ms" : 0
+                anchors.horizontalCenter: parent.horizontalCenter
+                property double startTime: 0
+            }
 
-
-                Timer {
-                    id: timer
-                    interval: 200
-                    running: false
-                    repeat: true
-                    onTriggered: time.text = ((new Date().getTime(
-                                                   ) - time.startTime) / 1000).toFixed(
-                                     1) + "s"
-                }
-
-
+            Timer {
+                id: timer
+                interval: 200
+                running: false
+                repeat: true
+                onTriggered: time.text = ((new Date().getTime(
+                                               ) - time.startTime) / 1000).toFixed(
+                                 1) + "s"
             }
         }
-
     }
-
+}

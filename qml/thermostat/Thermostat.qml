@@ -1,362 +1,356 @@
 import QtQuick 2.12
-import QtQuick.Controls 2.12
 import QtGraphicalEffects 1.12
 import QtQuick.Shapes 1.12
-//import QtTest 1.15
+import QtQuick.Controls 2.12
 
 import "../../fonts/"
 
-Item {
-    anchors.fill: parent
+Rectangle {
+
+    property string instancename: modules.modules['Logic']['Thermostat'][0]
+    property real max_temp: 32
+    property real min_temp: 16
+
+    id: tickswindow
+    height: parent.height
+    width: height
+    anchors.horizontalCenter: parent.horizontalCenter
+    clip: true
+    color: "transparent"
+
+    Slider {
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: 150
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.horizontalCenterOffset: -100
+        id: control
+        property real radius: 25
+        from: 0 // 0 off, 1 away, 2 eco , 3 normal, 4 party
+        to: 4
+        stepSize: 1
+        value: 3
+        snapMode: Slider.SnapAlways
+
+        width: 500
+        height: radius * 2
+        background: Rectangle {
+
+            width: control.width
+            height: control.height
+            radius: control.radius
+            color: "transparent"
+
+            Row {
+
+                spacing: 12
+                anchors.fill: parent
+
+                Rectangle {
+                    width: control.width / 5 - 10
+                    height: control.height
+                    clip: true
+                    color: "transparent"
+
+                    Rectangle {
+                        anchors.left: parent.left
+                        width: control.value == 0 ? control.width / 5 - 10 : control.width
+                                                    / 5 - 10 + control.radius
+                        height: control.height
+                        radius: control.radius
+                        anchors.verticalCenter: parent.verticalCenter
+                        opacity: control.value == 0 ? 1 : 0.2
+                        gradient: RadialGradient {
+                            GradientStop {
+                                position: 0.0
+                                color: "#ddd"
+                            }
+                            GradientStop {
+                                position: 0.5
+                                color: "#444"
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: control.width / 5 - 10
+                    height: control.height
+                    radius: control.value == 1 ? control.radius : 0
+                    opacity: control.value == 1 ? 1 : 0.2
+                    gradient: RadialGradient {
+                        GradientStop {
+                            position: 0.0
+                            color: "#ddd"
+                        }
+                        GradientStop {
+                            position: 0.5
+                            color: "blue"
+                        }
+                    }
+                }
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: control.width / 5 - 10
+                    height: control.height
+                    radius: control.value == 2 ? control.radius : 0
+                    opacity: control.value == 2 ? 1 : 0.2
+                    gradient: RadialGradient {
+                        GradientStop {
+                            position: 0.0
+                            color: "#ddd"
+                        }
+                        GradientStop {
+                            position: 0.5
+                            color: "darkgreen"
+                        }
+                    }
+                }
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: control.width / 5 - 10
+                    height: control.height
+                    radius: control.value == 3 ? control.radius : 0
+                    opacity: control.value == 3 ? 1 : 0.2
+                    gradient: RadialGradient {
+                        GradientStop {
+                            position: 0.0
+                            color: "#ddd"
+                        }
+                        GradientStop {
+                            position: 0.5
+                            color: "darkorange"
+                        }
+                    }
+                }
+
+                Rectangle {
+                    width: control.width / 5 - 10
+                    height: control.height
+                    clip: true
+                    color: "transparent"
+
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.right: parent.right
+                        width: control.value == 4 ? control.width / 5 - 10 : control.width
+                                                    / 5 - 10 + control.radius
+                        height: control.height
+                        radius: control.radius
+                        opacity: control.value == 4 ? 1 : 0.2
+                        gradient: RadialGradient {
+                            GradientStop {
+                                position: 0.0
+                                color: "#ddd"
+                            }
+                            GradientStop {
+                                position: 0.5
+                                color: "red"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        handle: Rectangle {
+            x: control.leftPadding + 23 + control.visualPosition * (control.availableWidth * 0.84)
+            y: control.topPadding + control.availableHeight / 2 - height / 2
+            width: 30
+            height: 30
+            color: "transparent"
+            //border.width: 5
+            //border.color: "white"
+            opacity: 1
+            radius: width / 2
+
+            Text {
+                id: thermostatmodus
+                text: control.value == 0 ? 'Off' : control.value == 1 ? 'Away' : control.value == 2 ? 'Eco' : control.value == 3 ? 'Auto' : control.value == 4 ? 'Party' : 'Unknown'
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                font.pointSize: 11
+                color: Colors.black
+            }
+        }
+    }
+
+    Text {
+        id: temptext
+        property real temperatur: 20
+
+        //text: temperatur.toFixed(1) + '°C'
+        //text: (32 - ( (rotator.rotation / 15))).toFixed(1) + "°C"
+        text: (min_temp + (-rotator.rotation + 240) * ((max_temp - min_temp) / 240)).toFixed(
+                  1) + '°C'
+        color: Colors.black
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.horizontalCenter: parent.horizontalCenter
+
+        font.pixelSize: tickswindow.width * 0.10
+    }
+
+    RoundButton {
+        anchors.right: temptext.left
+        anchors.rightMargin: 30
+        anchors.verticalCenter: temptext.verticalCenter
+        width: height
+        font.family: localFont.name
+        text: Icons.schedule
+        palette.button: Colors.grey
+        palette.buttonText: Colors.black
+        font.pointSize: 25
+        onClicked: thermostatPopup.open()
+    }
+
+    Rectangle {
+        anchors.top: tickswindow.top
+        height: tickswindow.height
+        width: tickswindow.width / 4
+        anchors.right: tickswindow.right
+        //border.width: 1
+        //border.color: "white"
+        //opacity: 0.5
+        color: "transparent"
+
+        MouseArea {
+            anchors.fill: parent
+            preventStealing: true
+            property real velocity: 0.0
+            property int xStart: 0
+            property int xPrev: 0
+            property bool tracing: false
+            onPressed: {
+                xStart = mouse.y
+                xPrev = mouse.y
+                velocity = 0
+                tracing = true
+            }
+            onPositionChanged: {
+                if (!tracing)
+                    return
+                var currVel = (mouse.y - xPrev)
+                velocity = (velocity + currVel) / 2.0
+                xPrev = mouse.y
+                if (velocity > 10) {
+
+                    if (rotator.rotation - (velocity / 10) * (velocity / 10) < 0)
+                        rotator.rotation = 0
+                    else
+                        rotator.rotation -= (velocity / 10) * (velocity / 10)
+                }
+
+                if (velocity < -10) {
+                    if (rotator.rotation + (velocity / 10) * (velocity / 10) > 240)
+                        rotator.rotation = 240
+                    else
+                        rotator.rotation += (velocity / 10) * (velocity / 10)
+                }
+            }
+            onReleased: {
+                tracing = false
+            }
+        }
+    }
+
+    Rectangle {
+        id: rotator
+        height: tickswindow.height * 1.5
+        width: height
+        anchors.verticalCenter: tickswindow.verticalCenter
+        anchors.horizontalCenter: tickswindow.right
+        anchors.horizontalCenterOffset: rotator.width * 0.15
+        color: "transparent"
+        border.width: 1
+        border.color: Colors.black
+        radius: width / 2
+        rotation: 90
 
 
-    TabBar {
-        anchors.top: parent.top
-        anchors.left: parent.left
-        width: parent.width * 0.4
-        id: tabBar
+        /* Behavior on rotation {
+
+            PropertyAnimation {}
+        }*/
+        Repeater {
+
+            model: 120
+
+            Rectangle {
+                anchors.centerIn: parent
+                width: 5
+                height: parent.height - 10
+                color: "transparent"
+                rotation: index * 3 - 27
+
+                //border.width: 1
+                //border.color: "white"
+                Text {
+                    text: index % 5 == 0 ? (min_temp + ((index * 3) - 60)
+                                            * ((max_temp - min_temp) / 240)).toFixed(
+                                               0) : ''
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenterOffset: rotator.width * -0.4
+                    anchors.horizontalCenterOffset: -15
+                    visible: index % 5 == 0 && this.text <= max_temp
+                             && this.text >= min_temp ? true : false
+                    color: Colors.black
+                    rotation: 87
+                    font.pixelSize: rotator.height * 0.04
+                }
+
+                Rectangle {
+                    color: Qt.rgba(
+                               ((index - 20) / 80), (1 - 2 * Math.abs(
+                                                         ((index - 20) / 80) - 0.5)),
+                               1 - ((index - 20) / 80), 1)
+                    width: rotator.width * 0.01
+                    height: rotator.height * 0.05
+                    anchors.left: parent.left
+                    antialiasing: true
+                }
+            }
+        }
+    }
+
+    Rectangle {
+
+        anchors.verticalCenter: tickswindow.verticalCenter
+        anchors.right: tickswindow.right
+        anchors.rightMargin: rotator.width * 0.21
+        width: 100
+        height: 34
+        radius: height / 4
+        color: "transparent"
+        border.width: 5
+
+        border.color: Colors.black
+    }
+
+    Popup {
+
+        id: thermostatPopup
+        width: parent.width
         height: parent.height
-
-        currentIndex: swipeView.currentIndex
+        parent: Overlay.overlay
+        x: Math.round((parent.width - width) / 2)
+        y: Math.round((parent.height - height) / 2)
+        padding: 0
+        topInset: 0
+        leftInset: 0
+        rightInset: 0
+        bottomInset: 0
 
         background: Rectangle {
             color: Colors.white
         }
 
-        TabButton {
-            anchors.top: parent.top
-            height: parent.height / 3
-            id: firstButton
-            text: Icons.fire
-            font.family: localFont.name
-            font.pointSize: 25
-            anchors.right: parent.right
-
-            contentItem: Text {
-                   text: parent.text
-                   font: parent.font
-                   color: tabBar.currentIndex == 0 ? Colors.black : Colors.white
-                   horizontalAlignment: Text.AlignHCenter
-                   verticalAlignment: Text.AlignVCenter
-                   elide: Text.ElideRight
-               }
-            background: Rectangle {
-                   color:  tabBar.currentIndex == 0 ? Colors.white :"#666"
-
-               }
-
-
-
-        }
-        TabButton {
-            height: parent.height / 3
-            id: secondButton
-
-            text: Icons.settings
-            font.family: localFont.name
-            font.pointSize: 25
-            anchors.top: firstButton.bottom
-            anchors.right: parent.right
-
-
-            contentItem: Text {
-                   text: parent.text
-                   font: parent.font
-                   color: tabBar.currentIndex == 1 ? Colors.black : Colors.white
-                   horizontalAlignment: Text.AlignHCenter
-                   verticalAlignment: Text.AlignVCenter
-                   elide: Text.ElideRight
-               }
-            background: Rectangle {
-                   color:  tabBar.currentIndex == 1 ? Colors.white : "#666"
-
-               }
-
-
-        }
-        TabButton {
-            height: parent.height / 3
-            text: Icons.schedule
-            font.family: localFont.name
-            font.pointSize: 25
-            anchors.top: secondButton.bottom
-            anchors.right: parent.right
-
-            contentItem: Text {
-                   text: parent.text
-                   font: parent.font
-                   color: tabBar.currentIndex == 2 ? Colors.black : Colors.white
-                   horizontalAlignment: Text.AlignHCenter
-                   verticalAlignment: Text.AlignVCenter
-                   elide: Text.ElideRight
-               }
-            background: Rectangle {
-                   color:  tabBar.currentIndex == 2 ? Colors.white : "#666"
-
-               }
-
-        }
-    }
-
-    SwipeView {
-        id: swipeView
-        anchors.right: parent.right
-        anchors.top: parent.top
-        height: parent.height
-        width: parent.width - (tabBar.width / 3)
-        currentIndex: tabBar.currentIndex
-        orientation: Qt.Vertical
-
-        Item {
-
-            Dial {
-                id: dialTherm
-                width: parent.width * 0.8
-                height: parent.height * 0.8
-                anchors.centerIn: parent
-                property real colortemp: ((value - from) / (to - from))
-
-                background: Rectangle {
-                     x:  dialTherm.width / 2 -  width / 2
-                     y:  dialTherm.height / 2 - height / 2
-                     width: Math.max(64, Math.min( dialTherm.width,  dialTherm.height))
-                     height: width
-
-                     color: dialTherm.enabled ? "transparent" : "#40aaaaaa"
-                     radius: width / 2
-                     border.color:  Colors.black
-                     border.width: dialTherm.enabled ? 2 : 1
-                     antialiasing: true
-                                      }
-
-
-                handle: Rectangle {
-
-                       id: handleItem
-                       x: dialTherm.background.x + dialTherm.background.width / 2 - width / 2
-                       y: dialTherm.background.y + dialTherm.background.height / 2 - height / 2
-                       width: 20
-                       height: 20
-                       color: dialTherm.enabled ? Qt.rgba(parent.colortemp, (1 - 2 * Math.abs(parent.colortemp - 0.5)), 1-parent.colortemp, 1) : Colors.black
-                       border.color: dialTherm.enabled ? "black" : "lightgrey"
-
-                       radius: 10
-                       antialiasing: true
-
-                       transform: [
-                           Translate {
-                               y: -Math.min(dialTherm.background.width, dialTherm.background.height) * 0.45 + handleItem.height / 2
-                           },
-                           Rotation {
-                               angle: dialTherm.angle
-                               origin.x: handleItem.width / 2
-                               origin.y: handleItem.height / 2
-                           }
-                       ]
-                   }
-
-                enabled: false
-                from: 15.0
-                to: 32.0
-                stepSize: 0.2
-                snapMode: Dial.SnapAlways
-                onPressedChanged: if (pressed == false) {
-                                      enabled = false
-                                      dialLocker.enabled = true
-                                      view.interactive = true
-                                  }
-
-                Text {
-                visible: !parent.enabled
-                anchors.centerIn:parent
-                anchors.verticalCenterOffset: 100
-                minimumPointSize: 6
-                font.pointSize: 9
-
-                color: "green"
-                text: "Press and hold to unlock"
-                }
-
-                Text {
-                    id: actualSetTemperature
-                    text: parent.value.toFixed(1) + "°"
-                    anchors.top: parent.verticalCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    font.pointSize: 30
-                    color:  Colors.black
-                }
-
-                Text {
-                    id: actualTemperature
-                    text: parent.value.toFixed(1) + "°"
-                    anchors.bottom: parent.verticalCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    font.pointSize: 40
-                    color: Colors.black
-                }
-
-                Shape {
-                    id: thermostatrange
-                    width: parent.height * 1.2
-                    height: parent.height * 1.2
-                    anchors.centerIn: parent
-                    layer.enabled: true
-                    layer.smooth: true
-                    layer.samples: 4
-
-                    ShapePath {
-                        strokeWidth: 0
-                        strokeColor: "transparent"
-                        fillGradient: ConicalGradient {
-
-                            centerX: (thermostatrange.width / 2)
-                            centerY: (thermostatrange.height / 2)
-                            angle: -120
-                            GradientStop {
-                                position: 1
-                                color: "#0000ff"
-                            }
-                            GradientStop {
-                                position: 0.7
-                                color: "#00ff00"
-                            }
-                            GradientStop {
-                                position: 0.4
-                                color: "#ff0000"
-                            }
-                        }
-
-                        PathAngleArc {
-                            id: outer
-                            centerX: (thermostatrange.width / 2)
-                            centerY: (thermostatrange.height / 2)
-                            radiusX: (thermostatrange.width / 2)
-                            radiusY: (thermostatrange.width / 2)
-                            startAngle: -230
-                            sweepAngle: dialTherm.angle + 140
-                        }
-                        PathAngleArc {
-                            moveToStart: false
-                            centerX: outer.centerX
-                            centerY: outer.centerY
-                            radiusX: (thermostatrange.width / 2) * 0.83
-                            radiusY: (thermostatrange.width / 2) * 0.83
-                            startAngle: outer.startAngle + outer.sweepAngle
-                            sweepAngle: -outer.sweepAngle
-                        }
-                    }
-                }
-
-                InnerShadow {
-                    anchors.fill: thermostatrange
-                    radius: 8.0
-                    samples: 16
-                    horizontalOffset: -3
-                    verticalOffset: 3
-                    color: "#b0000000"
-                    source: thermostatrange
-                }
-            }
-
-            MouseArea {
-                id: dialLocker
-                anchors.fill: parent
-                onDoubleClicked: {
-                    dialTherm.enabled = true
-                    enabled = false
-                    view.interactive = false
-                }
-                onPressAndHold: {
-                    dialTherm.enabled = true
-                    enabled = false
-                    view.interactive = false
-                }
-            }
-
-
-  /*          TestCase {
-                      name: "Dial Unlock"
-                      when: dialLocker.pressed
-                      id: test1
-
-                      function test_touch() {
-                          var touch = touchEvent(area);
-                          touch.release();
-                          touch.commit();
-
-                      }}
-*/
-            RoundButton {
-            width: height
-            id: cooling
-            text: Icons.freeze
-            font.pointSize: 35
-            font.family: localFont.name
-            palette.buttonText:  "blue"
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.bottomMargin: 20
-            anchors.leftMargin: 20
-
-            }
-
-
-            RoundButton {
-            id: heating
-            text: Icons.fire
-            width: height
-            font.pointSize: 35
-            font.family: localFont.name
-            palette.buttonText:  "orange"
-            anchors.bottom: parent.bottom
-            anchors.right: parent.right
-            anchors.bottomMargin: 20
-            anchors.rightMargin: 20
-
-            }
-
-            RoundButton {
-            id: fan
-            text: Icons.fan
-            width: height
-            font.pointSize: 35
-            font.family: localFont.name
-            palette.buttonText:  "black"
-            anchors.top: parent.top
-            anchors.right: parent.right
-            anchors.topMargin: 20
-            anchors.rightMargin: 20
-
-            }
-
-
-        }
-
-        Item {
-
-
-                Loader {
-
-                    anchors.fill: parent
-
-                    source: "ThermostatSettings.qml"
-                }
-
-
-        }
-
-        Item {
-            Flickable {
-                clip: true
-                id: flickable
-                anchors.fill: parent
-                contentHeight: parent.height * 1.7
-                Behavior on contentY { NumberAnimation {} }
-                Loader {
-                    anchors.fill: parent
-                    source: "ThermostatWeek.qml"
-                }
-            }
+        Loader {
+            anchors.fill: parent
+            id: thermostatSchedule
+            source: "../thermostat/ThermostatWeek.qml"
         }
     }
 }

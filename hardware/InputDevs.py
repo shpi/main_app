@@ -105,6 +105,7 @@ class InputDevs:
             self.inputs[f'dev/{str(id)}/thread']['set'] = partial(self.control_thread, id)
             self.inputs[f'dev/{str(id)}/thread']['thread'].start()
 
+
     def get_inputs(self) -> dict:
         return self.inputs
 

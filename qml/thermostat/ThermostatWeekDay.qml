@@ -1,21 +1,24 @@
-import QtQuick 2.12
+﻿import QtQuick 2.12
 import QtQuick.Controls 2.12
 
 import "../../fonts/"
 
 Rectangle {
+
     property string dayname
     property bool active: false
+    property bool selected: false
     property bool even: false
-
 
     //opacity: 0.7
     width: parent.width
     height: active ? 300 : 100
-    border.color: "grey"
-    border.width: 1
+    border.color: selected ? "lightgreen" : "grey"
+    border.width: selected ? 5 : 1
     color: even ? Colors.white : "#aaa"
-    Behavior on height { NumberAnimation {} }
+    Behavior on height {
+        NumberAnimation {}
+    }
     Label {
 
         anchors.verticalCenter: parent.verticalCenter
@@ -28,8 +31,16 @@ Rectangle {
         font.pointSize: parent.active ? 40 : 20
     }
 
+    MouseArea {
 
+        anchors.fill: parent
+        onClicked: {
+            var component
 
-
+            for (var i = 0; i < dayrepeater.count; i++) {
+                dayrepeater.itemAt(i).selected = false
+            }
+            parent.selected = true
+        }
+    }
 }
-

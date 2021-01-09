@@ -32,7 +32,7 @@ Rectangle {
     radius: 10
     border.width: 2
     border.color: Colors.black
-    color: Colors.white
+    color: Colors.whitetrans
 
     Text {
         text: dayname
@@ -43,33 +43,31 @@ Rectangle {
     }
 
     Text {
-    text: average_temp + "°C"
-    anchors.centerIn:parent
-    font.pointSize: 15
-    color: Colors.black
+        text: average_temp + "°C"
+        anchors.centerIn: parent
+        font.pointSize: 15
+        color: Colors.black
     }
 
     Text {
-    text: Qt.formatDate(day, "dd.MM.")
-    anchors.horizontalCenter: parent.horizontalCenter
-    anchors.bottomMargin: 15
-    anchors.bottom:parent.bottom
-    font.pointSize: 10
-    color: Colors.black
+        text: Qt.formatDate(day, "dd.MM.")
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottomMargin: 15
+        anchors.bottom: parent.bottom
+        font.pointSize: 10
+        color: Colors.black
     }
 
     Row {
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: 5
 
-    Repeater {
-     model: dayrect.weather_icons.length
+        Repeater {
+            model: dayrect.weather_icons.length
 
-    Image {
-    source: "http://openweathermap.org/img/wn/" + weather_icons[index] + "@2x.png"
-
-    }}}
-
-
-
+            Image {
+                source: "http://openweathermap.org/img/wn/" + weather_icons[index] + "@2x.png"
+            }
+        }
+    }
 }

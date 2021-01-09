@@ -1,12 +1,9 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 
-
 import "../../fonts/"
 
-
 Item {
-
 
     ComboBox {
 
@@ -18,33 +15,32 @@ Item {
         visible: (wifi.devices.length) > 1 ? true : false
     }
 
-
-
     Text {
 
         anchors.horizontalCenter: parent.horizontalCenter
         color: Colors.black
-        text: 'status: ' + (actualDevice.currentText != '' ? wifi.wpa_status(wifi.devices[actualDevice.currentIndex]) + ' ' + wifi.signal_status(wifi.devices[actualDevice.currentIndex]) + '%': '')
-
+        text: 'status: ' + (actualDevice.currentText
+                            != '' ? wifi.wpa_status(
+                                        wifi.devices[actualDevice.currentIndex])
+                                    + ' ' + wifi.signal_status(
+                                        wifi.devices[actualDevice.currentIndex]) + '%' : '')
     }
 
+    Column {
+        padding: 5
+        anchors.fill: parent
 
-
-
-Column{
-    padding: 5
-    anchors.fill:parent
-
-
-       ListView {
+        ListView {
             property int selectednetwork: -1
             height: parent.height - 80
-            width:parent.width
+            width: parent.width
             clip: true
             orientation: Qt.Vertical
             id: inputsview
-            onModelChanged: {busy.running = false
-                             inputsview.selectednetwork = -1}
+            onModelChanged: {
+                busy.running = false
+                inputsview.selectednetwork = -1
+            }
 
             model: wifi.networks
 
@@ -67,7 +63,6 @@ Column{
                         leftPadding: 10
                         height: 60
 
-
                         ProgressBar {
                             id: wifiStrength
                             anchors.verticalCenter: parent.verticalCenter
@@ -84,18 +79,18 @@ Column{
                                 radius: 3
                             }
                             contentItem: Item {
-                                    implicitWidth: 100
-                                    implicitHeight: 16
+                                implicitWidth: 100
+                                implicitHeight: 16
 
-                                    Rectangle {
-                                        width: wifiStrength.visualPosition * parent.width
-                                        height: parent.height
-                                        radius: 2
-                                        color: Qt.rgba((1 - (signal/100)), (signal/100), 0, 1)
-                                    }
+                                Rectangle {
+                                    width: wifiStrength.visualPosition * parent.width
+                                    height: parent.height
+                                    radius: 2
+                                    color: Qt.rgba((1 - (signal / 100)),
+                                                   (signal / 100), 0, 1)
                                 }
+                            }
                         }
-
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
@@ -105,41 +100,38 @@ Column{
                         }
 
                         RoundButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: height
-                        text: flags ? Icons.locked : Icons.unlocked
-                        font.pointSize: 10
-                        font.family: localFont.name
-                        palette.buttonText: flags != 'OPEN'  ?  "green" : "red"
-
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: height
+                            text: flags ? Icons.locked : Icons.unlocked
+                            font.pointSize: 10
+                            font.family: localFont.name
+                            palette.buttonText: flags != 'OPEN' ? "green" : "red"
                         }
-}
-                        Row {
-                            width: parent.width
-                            height: 100
-                            padding: 10
-                            spacing: 10
-                            anchors.bottom: parent.bottom
-                            visible: inputsview.selectednetwork == index ? true : false
-                            id: wifiform
+                    }
+                    Row {
+                        width: parent.width
+                        height: 100
+                        padding: 10
+                        spacing: 10
+                        anchors.bottom: parent.bottom
+                        visible: inputsview.selectednetwork == index ? true : false
+                        id: wifiform
 
-                            Column {
+                        Column {
 
-                                anchors.verticalCenter: parent.verticalCenter
+                            anchors.verticalCenter: parent.verticalCenter
 
-                                height: parent.height
+                            height: parent.height
 
-                         TextField {
-                         id: wifipasswd
-                         width: 300
-                         font.pointSize: 10
-                         placeholderText: 'password please'
-                         text: password != '' ? password : ''
+                            TextField {
+                                id: wifipasswd
+                                width: 300
+                                font.pointSize: 10
+                                placeholderText: 'password please'
+                                text: password != '' ? password : ''
+                            }
 
-
-                         }
-
-                         CheckBox {
+                            CheckBox {
 
                                 id: bssidcheck
                                 checked: false
@@ -147,51 +139,49 @@ Column{
                             }
                         }
 
-                         RoundButton {
-                             anchors.verticalCenter: parent.verticalCenter
-                             text: "Connect"
-                             font.pointSize: 15
-                             radius: 10
-                             onClicked: wifi.write_settings(actualDevice.currentText,flags,bssid,ssid,wifipasswd.text,bssidcheck.checked)
-                         }
-}
+                        RoundButton {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Connect"
+                            font.pointSize: 15
+                            radius: 10
+                            onClicked: wifi.write_settings(
+                                           actualDevice.currentText, flags,
+                                           bssid, ssid, wifipasswd.text,
+                                           bssidcheck.checked)
+                        }
+                    }
 
-
-                    MouseArea {         enabled: inputsview.selectednetwork != index ? true : false
-                                        anchors.fill: parent
-                                        onClicked: {inputsview.currentIndex = index
-                                                    inputsview.selectednetwork = index
-                                        }}
-
+                    MouseArea {
+                        enabled: inputsview.selectednetwork != index ? true : false
+                        anchors.fill: parent
+                        onClicked: {
+                            inputsview.currentIndex = index
+                            inputsview.selectednetwork = index
+                        }
+                    }
                 }
-
-
             }
         }
 
+        RoundButton {
 
-       RoundButton {
+            padding: 5
+            radius: 20
+            text: 'SCAN'
+            anchors.horizontalCenter: parent.horizontalCenter
+            font.pointSize: 20
+            onClicked: {
+                busy.running = true
+                wifi.scan_wifi(actualDevice.currentText)
+            }
+        }
+    }
+    BusyIndicator {
+        width: parent.width / 3
+        height: width
 
-       padding: 5
-       radius: 20
-       text: 'SCAN'
-       anchors.horizontalCenter: parent.horizontalCenter
-       font.pointSize: 20
-       onClicked: { busy.running = true
-                    wifi.scan_wifi(actualDevice.currentText)
-
-                  }
-       }
-
-
-
-}
-BusyIndicator {
-    width: parent.width/3
-    height: width
-
-    anchors.centerIn: parent
-    id: busy
-    running: true
-}
+        anchors.centerIn: parent
+        id: busy
+        running: true
+    }
 }

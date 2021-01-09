@@ -1,102 +1,136 @@
 import QtQuick 2.12
-import Qt.labs.folderlistmodel 2.12
-import QtGraphicalEffects 1.12
+
 import "../../fonts/"
 
 Item {
 
-property int i: 0
+    Rectangle {
 
-FolderListModel {
-          caseSensitive: false
-          id: folderModel
-          folder: "../../backgrounds/"
-          nameFilters: [ "*.png", "*.jpg" ]
-          onCountChanged: {
-                        if (folderModel.count > 0)
-                           bg.source =  folderModel.get (i, "fileURL")
-                      }
-
-      }
-
-
-Rectangle {
-
-    color: Colors.white
-    anchors.fill:parent
-
-Image {
+        color: "transparent"
         anchors.fill: parent
-        id: bg
-        source :  ""
-        fillMode: Image.Stretch
-}
 
-}
-
-Timer {
-            property bool direction: true
-            property int speed: 3
-            id: resetTimer
-            interval: 10000
-            repeat: true
-            running: parent.parent._isCurrentItem
-            onTriggered: {
-
-            //moving_text.opacity = 0
-            moving_text.x = 10 + Math.random() * Math.floor(parent.width - moving_text.width - 20)
-            moving_text.y = 10 + Math.random() * Math.floor(parent.height - moving_text.height - 20)
-            //showSlow.start()
-
-            if (appearance.night === 0 || appearance.background_night > 0) {
-            if (Math.random() > 0.9 || bg.source === '') bg.source =  folderModel.get (Math.random() * Math.floor(folderModel.count), "fileURL")
-            } else bg.source = ''
-
-             /*
-             if (direction)    moving_text.x = moving_text.x - speed
-             else              moving_text.x = moving_text.x + speed
-
-             if(moving_text.x < 0) direction = false
-             else
-
-            if(moving_text.x > (parent.width - moving_text.width)) {
-              direction = true
-              speed = Math.random() * Math.floor(5)
-           }
-            */
-
-            }
-
-
-
-        }
-
-
-        Text{
-            id:moving_text
-            x:parent.width - moving_text.width
-            y:parent.height - moving_text.width
-            text: "Uhrzeit"
+        Text {
+            id: moving_text
+            x: 0
+            y: 0
+            text: Qt.formatDateTime(new Date(), "HH:mm") //"yyMMdd")
             color: Colors.black
             font.pointSize: 40
-            //NumberAnimation {id:showSlow; target: moving_text; property: "opacity"; from: 0.00; to:1.00; duration: 300 }
-            DropShadow {
-                   anchors.fill: moving_text
-                   z: parent.z - 0.1
-                   horizontalOffset: 3
-                   verticalOffset: 3
-                   opacity: 0.5
-                   radius: 4.0
-                   samples: 4
-                   color: Colors.white
-                   source: moving_text
-               }
 
-
+            Text {
+                id: moving_subtext
+                anchors.top: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: Qt.formatDateTime(new Date(),
+                                        "dddd, dd.MM.yy") //"yyMMdd")
+                color: Colors.black
+                font.pointSize: 10
+            }
         }
 
+        Rectangle {
 
+            width: parent.width
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 20
+            height: 130
+            color: "transparent"
 
+            Row {
 
+                height: parent.height
+                spacing: 30
+                anchors.horizontalCenter: parent.horizontalCenter
+                id: screensaverRow
+            }
+        }
+
+        Connections {
+            id: screensaverconn
+            target: modules
+
+            onRoomsChanged: {
+
+                var is
+
+                for (i = screensaverRow.children.length; i > 0; i--) {
+
+                    screensaverRow.children[i - 1].destroy()
+                }
+
+                var component
+
+                for (var i = 0; i < modules.rooms['Screensaver'].length; i++) {
+
+                    var module
+                    module = modules.rooms['Screensaver'][i].split('/')
+
+                    component = Qt.createComponent(
+                                "../" + module[0].toLowerCase(
+                                    ) + "/" + module[1] + ".qml")
+
+                    if (component.status !== Component.Ready) {
+                        if (component.status === Component.Error)
+                            console.log("Error:" + component.errorString())
+                    }
+
+                    component.createObject(screensaverRow, {
+                                               "width": "100",
+                                               "name": module[2]
+                                           })
+                }
+            }
+        }
+
+        Component.onCompleted: {
+
+            var component
+            var i
+
+            for (i = screensaverRow.children.length; i > 0; i--) {
+
+                screensaverRow.children[i - 1].destroy()
+            }
+
+            for (i = 0; i < modules.rooms['Screensaver'].length; i++) {
+
+                var module
+                module = modules.rooms['Screensaver'][i].split('/')
+
+                component = Qt.createComponent("../" + module[0].toLowerCase(
+                                                   ) + "/" + module[1] + ".qml")
+
+                if (component.status !== Component.Ready) {
+                    if (component.status === Component.Error)
+                        console.log("Error:" + component.errorString())
+                }
+
+                component.createObject(screensaverRow, {
+                                           "width": "100",
+                                           "name": module[2]
+                                       })
+            }
+        }
+    }
+
+    Timer {
+        property bool direction: true
+        property int speed: 3
+        interval: 10000
+        repeat: true
+        running: parent.parent._isCurrentItem
+        onTriggered: {
+
+            //moving_text.opacity = 0
+            moving_text.x = Math.random() * Math.floor(
+                        parent.width - moving_text.width)
+            moving_text.y = 50 + Math.random() * Math.floor(
+                        (parent.height - 250 - moving_text.height))
+
+            moving_text.text = Qt.formatDateTime(new Date(),
+                                                 "HH:mm") //"yyMMdd")
+            moving_subtext.text = Qt.formatDateTime(
+                        new Date(), "dddd, dd.MM.yy") //"yyMMdd")
+        }
+    }
 }
-

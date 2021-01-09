@@ -86,7 +86,7 @@ Rectangle {
                     width: control.width
                     border.width: 1
                     border.color: Colors.grey
-                    color: appearance.night === 1 ? "#117" : "#99f"
+                    color: "#331111ff"
 
 
                     /* LinearGradient {

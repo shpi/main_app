@@ -7,7 +7,6 @@ Item {
 
     property string category
 
-
     Component {
         id: listDelegate
 
@@ -18,7 +17,6 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 color: index % 2 === 0 ? "transparent" : Colors.white
-
             }
 
             Text {
@@ -49,45 +47,43 @@ Item {
                 color: Colors.black
             }
 
-
             MouseArea {
                 id: mouse
                 anchors.fill: parent
-                onClicked: if (category == '') settingsstackView.push(Qt.resolvedUrl('Modules.qml'), {"category" : modelData})
-                           else settingsstackView.push(Qt.resolvedUrl('ModulesClasses.qml'), {"category": category, "classname" : modelData })
-
-
+                onClicked: if (category == '')
+                               settingsstackView.push(Qt.resolvedUrl(
+                                                          'Modules.qml'), {
+                                                          "category": modelData
+                                                      })
+                           else
+                               settingsstackView.push(
+                                           Qt.resolvedUrl(
+                                               'ModulesClasses.qml'), {
+                                               "category": category,
+                                               "classname": modelData
+                                           })
             }
-
-     }
-
+        }
     }
 
+    ListView {
 
-            ListView {
+        header: Rectangle {
 
-
-                header: Rectangle {
-
-                      width: parent.width
-                      height:50
-                      color:  "transparent"
-                      Text {
-                      padding: 10
-                      width: parent.width
-                      text: category != '' ? '<b>' + category + ' Modules </b>' : '<b>Modules</b>'
-                      color: Colors.black
-                      font.pointSize: 12
-                      }
-                    }
-
-                model: modules.instances(category,'')
-                anchors.fill: parent
-                delegate: listDelegate
-
+            width: parent.width
+            height: 50
+            color: "transparent"
+            Text {
+                padding: 10
+                width: parent.width
+                text: category != '' ? '<b>' + category + ' Modules </b>' : '<b>Modules</b>'
+                color: Colors.black
+                font.pointSize: 12
             }
-
         }
 
-
-
+        model: modules.instances(category, '')
+        anchors.fill: parent
+        delegate: listDelegate
+    }
+}

@@ -8,57 +8,51 @@ Item {
     id: weathergraph
     anchors.fill: parent
 
-
-
-
-
     function reload() {
 
+        for (var i = 0; i < weatherconn.target.data['daily'].length; i++) {
 
-            for (var i = 0; i < weatherconn.target.data['daily'].length; i++) {
-
-                if (daytemps.count > 7) {
-                    daytemps.remove(0)
-                    mintemps.remove(0)
-                    maxtemps.remove(0)
-                    feeltemps.remove(0)
-                    dailyrain.remove(0)
-                    humiditySeries.remove(0)
-                }
-
-                if (i === 0)
-                    chart.mindate = new Date(weatherconn.target.data['daily'][i]['dt'] * 1000)
-
-                chart.maxdate = new Date(weatherconn.target.data['daily'][i]['dt'] * 1000)
-                daytemps.append(
-                            new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
-                            weatherconn.target.data['daily'][i]['temp']['day'])
-                mintemps.append(
-                            new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
-                            weatherconn.target.data['daily'][i]['temp']['min'])
-                maxtemps.append(
-                            new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
-                            weatherconn.target.data['daily'][i]['temp']['max'])
-                feeltemps.append(
-                            new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
-                            weatherconn.target.data['daily'][i]['feels_like']['day'])
-                humiditySeries.append(
-                            new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
-                           weatherconn.target.data['daily'][i]['humidity'])
-
-                if (weatherconn.target.data['daily'][i]['rain'] !== undefined)
-                    dailyrain.append(
-                                new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
-                                weatherconn.target.data['daily'][i]['rain'])
-                else
-                    dailyrain.append(
-                                new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
-                                0)
-
-                //Wind direction increases clockwise such that a northerly wind is 0°, an easterly wind is 90°, a southerly wind is 180°, and a westerly wind is 270°.
+            if (daytemps.count > 7) {
+                daytemps.remove(0)
+                mintemps.remove(0)
+                maxtemps.remove(0)
+                feeltemps.remove(0)
+                dailyrain.remove(0)
+                humiditySeries.remove(0)
             }
-        }
 
+            if (i === 0)
+                chart.mindate = new Date(weatherconn.target.data['daily'][i]['dt'] * 1000)
+
+            chart.maxdate = new Date(weatherconn.target.data['daily'][i]['dt'] * 1000)
+            daytemps.append(
+                        new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
+                        weatherconn.target.data['daily'][i]['temp']['day'])
+            mintemps.append(
+                        new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
+                        weatherconn.target.data['daily'][i]['temp']['min'])
+            maxtemps.append(
+                        new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
+                        weatherconn.target.data['daily'][i]['temp']['max'])
+            feeltemps.append(
+                        new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
+                        weatherconn.target.data['daily'][i]['feels_like']['day'])
+            humiditySeries.append(
+                        new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
+                        weatherconn.target.data['daily'][i]['humidity'])
+
+            if (weatherconn.target.data['daily'][i]['rain'] !== undefined)
+                dailyrain.append(
+                            new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
+                            weatherconn.target.data['daily'][i]['rain'])
+            else
+                dailyrain.append(
+                            new Date(weatherconn.target.data['daily'][i]['dt'] * 1000),
+                            0)
+
+            //Wind direction increases clockwise such that a northerly wind is 0°, an easterly wind is 90°, a southerly wind is 180°, and a westerly wind is 270°.
+        }
+    }
 
     ChartView {
         property date mindate
@@ -71,7 +65,6 @@ Item {
         margins.right: 0
 
         //theme: appearance.night ? ChartView.ChartThemeDark : ChartView.ChartThemeLight
-
         legend.labelColor: Colors.black
         legend.borderColor: "transparent"
         legend.font.pointSize: 8
@@ -80,7 +73,6 @@ Item {
         plotAreaColor: Colors.white
         titleColor: Colors.black
         backgroundColor: Colors.white
-
 
         DateTimeAxis {
             id: dateAxis
@@ -198,12 +190,9 @@ Item {
     Connections {
         id: weatherconn
         target: modules.loaded_instances['Info']['Weather'][swipeView.instancename]
-        onDataChanged: { if (!weatherconn.target.hasError()) reload()
-
+        onDataChanged: {
+            if (!weatherconn.target.hasError())
+                reload()
         }
-            }
-
-
-
-
+    }
 }

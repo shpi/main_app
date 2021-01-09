@@ -1,3 +1,4 @@
+
 /*
  *
  * Copyright (c) 2014 Robin Burchell <robin.burchell@viroteck.net>
@@ -22,6 +23,7 @@
  */
 import QtQuick 2.0
 import "../fonts/"
+
 Rectangle {
     width: 640
     height: 480
@@ -33,19 +35,7 @@ Rectangle {
         property var lastPosById
         property var posById
 
-        property var colors: [
-            "#00BFFF",
-            "#FF69B4",
-            "#F0E68C",
-            "#ADD8E6",
-            "#FFA07A",
-            "#9370DB",
-            "#98FB98",
-            "#DDA0DD",
-            "#FF6347",
-            "#40E0D0"
-
-        ]
+        property var colors: ["#00BFFF", "#FF69B4", "#F0E68C", "#ADD8E6", "#FFA07A", "#9370DB", "#98FB98", "#DDA0DD", "#FF6347", "#40E0D0"]
 
         onPaint: {
             var ctx = getContext('2d')
@@ -66,42 +56,41 @@ Rectangle {
             }
         }
 
-       MultiPointTouchArea {
-           anchors.fill: parent
+        MultiPointTouchArea {
+            anchors.fill: parent
 
-           onPressed: {
+            onPressed: {
                 for (var i = 0; i < touchPoints.length; ++i) {
                     var point = touchPoints[i]
                     // update both so we have data
                     myCanvas.lastPosById[point.pointId] = {
-                        x: point.x,
-                        y: point.y
+                        "x": point.x,
+                        "y": point.y
                     }
                     myCanvas.posById[point.pointId] = {
-                        x: point.x,
-                        y: point.y
+                        "x": point.x,
+                        "y": point.y
                     }
                 }
-           }
-           onUpdated: {
+            }
+            onUpdated: {
                 for (var i = 0; i < touchPoints.length; ++i) {
                     var point = touchPoints[i]
                     // only update current pos, last update set on paint
                     myCanvas.posById[point.pointId] = {
-                        x: point.x,
-                        y: point.y
+                        "x": point.x,
+                        "y": point.y
                     }
                 }
-               myCanvas.requestPaint()
-           }
-           onReleased: {
+                myCanvas.requestPaint()
+            }
+            onReleased: {
                 for (var i = 0; i < touchPoints.length; ++i) {
                     var point = touchPoints[i]
                     delete myCanvas.lastPosById[point.pointId]
                     delete myCanvas.posById[point.pointId]
                 }
-           }
-       }
+            }
+        }
     }
-
 }

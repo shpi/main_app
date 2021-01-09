@@ -371,7 +371,7 @@ Item {
                 width: 600
                 model: inputs.typeList
                 textRole: 'path'
-                onPressedChanged: appearance.night_mode_start = this.currentText
+                onActivated: appearance.night_mode_start = this.currentText
             }
 
             ComboBox {
@@ -387,7 +387,7 @@ Item {
                 width: 600
                 model: inputs.typeList
                 textRole: 'path'
-                onPressedChanged: appearance.night_mode_end = this.currentText
+                onActivated: appearance.night_mode_end = this.currentText
             }
 
             Text {
@@ -512,7 +512,7 @@ Item {
     }
 
     Component.onCompleted: {
-        console.log(appearance.background_night)
+
         inputs.set_typeList('time')
 
         if (appearance.night_mode === 3) {

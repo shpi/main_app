@@ -1,111 +1,217 @@
-import QtQuick 2.12
+﻿import QtQuick 2.12
 import QtQuick.Controls 2.12
 
 import "../../fonts/"
 
-Item {
-    anchors.fill: parent
+Rectangle {
 
-Component.onCompleted: {
+    color: Colors.white
 
-    var scedulelist = '';
+    function extractSchedule() {
 
-    for (var i = 0; i < dayrepeater.count; i++)
-    {
+        var schedulelist = ''
 
-    //console.log(dayrepeater.itemAt(i).dayname);
+        for (var i = 0; i < dayrepeater.count; i++) {
 
-        for (var a = 0; a < dayrepeater.itemAt(i).children.length; a++)
-        {
-            if (dayrepeater.itemAt(i).children[a].temperature !== undefined)
-            scedulelist += dayrepeater.itemAt(i).children[a].value + ':' + dayrepeater.itemAt(i).children[a].temperature + ';'
+            for (var a = 0; a < dayrepeater.itemAt(i).children.length; a++) {
+                if (dayrepeater.itemAt(i).children[a].temperature !== undefined)
+                    schedulelist += dayrepeater.itemAt(
+                                i).children[a].value + ':' + dayrepeater.itemAt(
+                                i).children[a].temperature + ';'
+            }
 
+            schedulelist += '\n'
         }
 
-        scedulelist += '\n'
-
+        modules.loaded_instances['Logic']['Thermostat']['local'].save_schedule(
+                    schedulelist)
     }
 
-    console.log(scedulelist)
-}
+    function deleteKnob() {
 
-Column {
-     property var weekday: ["Sunday", "Monday", "Tuesday","Wednesday","Thursday","Friday","Saturday"]
-     id: weekdays
-     anchors.horizontalCenter: parent.horizontalCenter
-     anchors.verticalCenter: parent.verticalCenter
-     anchors.fill: parent
-     spacing: 1
+        for (var i = 0; i < dayrepeater.count; i++) {
+            if (dayrepeater.itemAt(i).selected === true) {
 
+                var last = dayrepeater.itemAt(i).children.length
 
-     Repeater{
-       id: dayrepeater
+                for (var a = 0; a < last; a++) {
 
-         model: 13
-
-     ThermostatWeekDay {
-      dayname: (Math.floor(index / 7) + 1)  + "." + parent.weekday[(index%7)]
-      even: index % 2 ? true : false
-     ThermostatWeekKnob {value:1440;to:1440;from:0}
-     ThermostatWeekKnob {value:550;to:1440;from:0}
-
-    }
+                    if (dayrepeater.itemAt(
+                                i).children[a].dayindex !== undefined) {
+                        if (dayrepeater.itemAt(i).children[a].model > 0)
+                            dayrepeater.itemAt(i).children[a].model -= 1
+                    }
+                }
+            }
+        }
     }
 
+    function addKnob() {
 
+        for (var i = 0; i < dayrepeater.count; i++) {
+            if (dayrepeater.itemAt(i).selected === true) {
 
-}
+                var last = dayrepeater.itemAt(i).children.length
 
-Row {
-    anchors.top: parent.top
-    height: parent.height
-    anchors.centerIn: parent
-    width: parent.width - 80  //weekknob width
-    spacing: ((parent.width) / 14) +1
+                for (var a = 0; a < last; a++) {
 
+                    if (dayrepeater.itemAt(
+                                i).children[a].dayindex !== undefined) {
 
-
-Repeater{
-    model: 13
+                        dayrepeater.itemAt(i).children[a].model += 1
+                    }
+                }
+            }
+        }
+    }
 
     Rectangle {
-    color: Colors.black
-    //opacity: 0.3
-    width:1
-    height: parent.height
-    anchors.top: parent.top
-    Label {
-    anchors.horizontalCenter: parent.horizontalCenter
-    anchors.top: parent.top
-    text: index * 2
-    font.pointSize: 8
+        id: header
+        anchors.top: parent.top
+        width: parent.width
+        height: 100
+        color: Colors.white
 
+        RoundButton {
+            id: exitbutton
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.leftMargin: 10
+            rotation: 90
+            font.family: localFont.name
+            font.pointSize: 20
+            text: Icons.arrow
+            onClicked: thermostatPopup.close()
+            palette.button: 'lightgrey'
+            palette.buttonText: "#555"
+            width: height
+        }
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: exitbutton.right
+            anchors.leftMargin: 10
+            text: 'Thermostat Schedule'
+            color: Colors.black
+            font.bold: true
+        }
+
+        Row {
+            anchors.right: parent.right
+            anchors.rightMargin: 10
+            height: parent.height
+            spacing: 10
+
+            RoundButton {
+                anchors.verticalCenter: parent.verticalCenter
+                font.family: localFont.name
+                font.pointSize: 20
+                text: '+'
+                onClicked: addKnob()
+                palette.button: 'lightgrey'
+                palette.buttonText: "#555"
+                width: height
+            }
+
+            RoundButton {
+                anchors.verticalCenter: parent.verticalCenter
+                font.family: localFont.name
+                font.pointSize: 20
+                text: Icons.trash
+                onClicked: deleteKnob()
+                palette.button: 'lightgrey'
+                palette.buttonText: "#555"
+                width: height
+            }
+        }
     }
 
-    Label {
-    anchors.horizontalCenter: parent.horizontalCenter
-    anchors.top: parent.bottom
-    text: index * 2
-    font.pointSize: 8
+    Flickable {
+        id: scheduleFlick
+        width: parent.width
+        contentHeight: dayrepeater.count * 100 + 200
+        height: 380
+        anchors.top: header.bottom
+        clip: true
+
+        Column {
+            property var weekday: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+            id: weekdays
+            width: parent.width
+            height: dayrepeater.count * 100 + 200
+            spacing: 0
+
+            Repeater {
+                id: dayrepeater
+
+                model: 2
+
+                ThermostatWeekDay {
+                    dayname: (Math.floor(
+                                  index / 7) + 1) + "." + parent.weekday[(index % 7)]
+                    even: index % 2 ? true : false
+
+                    Repeater {
+
+                        id: knobrepeater
+                        property int dayindex: index
+                        model: modules.loaded_instances['Logic']['Thermostat']['local'].schedule[index] !== undefined ? modules.loaded_instances['Logic']['Thermostat']['local'].schedule[index].length : 1
+
+                        ThermostatWeekKnob {
+                            value: modules.loaded_instances['Logic']['Thermostat']['local'].schedule[knobrepeater.dayindex][index] !== undefined ? modules.loaded_instances['Logic']['Thermostat']['local'].schedule[knobrepeater.dayindex][index][0] : 1440
+                            temperature: 25
+                            to: 1440
+                            from: 0
+                        }
+                    }
+                }
+            }
+        }
     }
+
+    Row {
+        anchors.top: header.bottom
+        height: 380
+        width: parent.width - 80 //weekknob width
+        spacing: ((parent.width) / 14) + 1
+        anchors.horizontalCenter: parent.horizontalCenter
+
+        Repeater {
+            model: 13
+
+            Rectangle {
+                color: Colors.black
+                width: 1
+                height: parent.height
+                anchors.top: parent.top
+
+                Label {
+
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    x: header.height + 5
+                    text: index * 2
+                    font.pointSize: 8
+                    color: Colors.black
+                }
+
+                Label {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    text: index * 2
+                    font.pointSize: 8
+                    color: Colors.black
+                }
+            }
+        }
     }
 
-}
-
-
-
-}
-
-Loader {
-       property int value: 0
-       id: loader
-       focus: true
-       width: parent.width
-       height: 280
-       anchors.centerIn:parent
-       source: "ThermostatKnobSlider.qml"
-       visible: false
-   }
-
-
+    Loader {
+        property int value: 0
+        id: loader
+        width: parent.width
+        height: 290
+        anchors.centerIn: parent
+        source: "ThermostatKnobSlider.qml"
+        visible: false
+    }
 }

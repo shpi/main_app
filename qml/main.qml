@@ -1,6 +1,8 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.VirtualKeyboard 2.1
+import Qt.labs.folderlistmodel 2.12
+import QtGraphicalEffects 1.12
 
 import "../fonts/"
 
@@ -10,9 +12,80 @@ ApplicationWindow {
     width: 800
     height: 480
     visible: true
+    font.family: localFont.name
+
+    function getIndex(path, mmodel) {
+        for (var i = 0; i < mmodel.rowCount(); i++) {
+            var idx = mmodel.index(i, 0)
+            var value = mmodel.data(idx, Qt.UserRole + 1000)
+            if (path === value) {
+                return i
+            }
+        }
+        return 0
+    }
 
     background: Rectangle {
-       color: Colors.white
+        color: Colors.white
+    }
+
+    property int i: 0
+
+    FolderListModel {
+        caseSensitive: false
+        id: folderModel
+        folder: "../backgrounds/"
+        nameFilters: ["*.png", "*.jpg"]
+        onCountChanged: {
+            if (folderModel.count > 0)
+                bg.source = folderModel.get(i, "fileURL")
+        }
+    }
+
+    Image {
+        anchors.fill: parent
+        id: bg
+        source: ""
+        fillMode: Image.Stretch
+
+        RadialGradient {
+            angle: 30
+            horizontalOffset: 0
+            verticalOffset: 0
+            horizontalRadius: parent.height
+            verticalRadius: parent.height
+
+            Behavior on angle {
+                PropertyAnimation {
+                    duration: 1000
+                }
+            }
+
+            Behavior on horizontalOffset {
+                PropertyAnimation {
+                    duration: 1000
+                }
+            }
+
+            Behavior on verticalOffset {
+                PropertyAnimation {
+                    duration: 1000
+                }
+            }
+
+            id: mask
+            anchors.fill: parent
+            gradient: Gradient {
+                GradientStop {
+                    position: -0.10
+                    color: "transparent"
+                }
+                GradientStop {
+                    position: 0.6
+                    color: Colors.white
+                }
+            }
+        }
     }
 
     FontLoader {
@@ -38,7 +111,7 @@ ApplicationWindow {
         Rectangle {
 
             id: drawerheader
-            color: Colors.white
+            color: appearance.night ? "#222222" : Colors.white
             opacity: 0.9
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width - 20
@@ -132,7 +205,7 @@ ApplicationWindow {
         }
 
         Rectangle {
-            color: Colors.white
+            color: appearance.night ? "#222222" : Colors.white
             opacity: 0.9
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width - 20
@@ -159,19 +232,9 @@ ApplicationWindow {
         anchors.bottom: inputPanel.top
 
         Loader {
-            id: shutter
-            source: "ui/Shutter.qml"
-        }
-
-        Loader {
-            id: ticks
-            source: "ui/Thermostat.qml"
-        }
-
-
-        Loader {
-            id: colorwheel
-            source: "ui/ColorWheel.qml"
+            id: clock
+            property bool _isCurrentItem: SwipeView.isCurrentItem
+            source: "Clock.qml"
         }
 
         Loader {
@@ -185,30 +248,19 @@ ApplicationWindow {
             source: "thermostat/Thermostat.qml"
         }
 
-
-
-Repeater {
+        Repeater {
 
             id: weatherrepeater
-            model: modules.modules['Info']['Weather'].length > 0 ?  1 : 0
+            model: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
 
-            onItemAdded: console.log(weatherrepeater.count)
-            onItemRemoved:  console.log(weatherrepeater.count)
-
+            //onItemAdded: console.log(weatherrepeater.count)
+            //onItemRemoved:  console.log(weatherrepeater.count)
             delegate: Loader {
                 id: weatherslide
-                source: "weather/Weather.qml"
-                visible: modules.modules['Info']['Weather'].length > 0 ?  1 : 0
-
+                source: "weather/WeatherFull.qml"
+                visible: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
             }
-}
-
-
-
-
-
-
-
+        }
     }
 
     PageIndicator {
@@ -244,18 +296,6 @@ Repeater {
         }
     }
 
-    Text {
-
-        anchors.bottom: view.bottom
-        anchors.right: view.right
-        anchors.rightMargin: 30
-        font.family: localFont.name
-        font.pointSize: 50
-        text: Icons.logo
-        color: Colors.white
-        visible: drawer.position == 0 ? false : true
-    }
-
     Rectangle {
         id: backlighthelper
         anchors.fill: parent
@@ -269,9 +309,33 @@ Repeater {
         }
     }
 
+    Timer {
+
+        interval: 30000
+        repeat: true
+        onTriggered: {
+
+            mask.angle = Math.random() * 180
+
+            mask.verticalOffset = -mask.height / 4 + (Math.random(
+                                                          ) * mask.height) / 2
+            mask.horizontalOffset = -mask.width / 4 + (Math.random(
+                                                           ) * mask.width) / 2
+
+            if (appearance.night === 0 || appearance.background_night > 0) {
+                if (Math.random() > 0.5 || bg.source === '')
+                    bg.source = folderModel.get(Math.random() * Math.floor(
+                                                    folderModel.count),
+                                                "fileURL")
+            } else
+                bg.source = ''
+        }
+    }
+
     Component.onCompleted: {
-        console.log('count of weater instances : ' + modules.modules['Info']['Weather'].length)
+        //console.log('count of weater instances : ' + modules.modules['Info']['Weather'].length)
         Colors.night = appearance.night
+
 
         /*  for (let [key, value] of Object.entries(inputs.data)) {
       if (key.toString().startsWith('alsa'))   { console.log(`${key}: ${value}`);

@@ -10,9 +10,8 @@ Item {
 
     StackView.onActivated: {
 
-        instantview.model = modules.instances(category,classname)
+        instantview.model = modules.instances(category, classname)
         instantview.forceLayout()
-
     }
 
     Component {
@@ -25,14 +24,13 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 color: index % 2 === 0 ? "transparent" : Colors.white
-
             }
 
             Text {
                 id: textitem
                 color: Colors.black
                 font.pixelSize: 32
-                text:  modelData
+                text: modelData
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: parent.left
                 anchors.leftMargin: 30
@@ -44,8 +42,6 @@ Item {
                 anchors.margins: 10
                 height: 1
                 color: "transparent"
-
-
             }
 
             Text {
@@ -61,61 +57,54 @@ Item {
             MouseArea {
                 id: mouse
                 anchors.fill: parent
-                onClicked: settingsstackView.push(Qt.resolvedUrl(category.toLowerCase() + '/' + classname + 'Settings.qml'), {"instancename" : modelData})
-
-
-
+                onClicked: settingsstackView.push(
+                               Qt.resolvedUrl(
+                                   category.toLowerCase(
+                                       ) + '/' + classname + 'Settings.qml'), {
+                                   "instancename": modelData
+                               })
             }
-
-
-
-     }
-
+        }
     }
 
+    ListView {
+        anchors.fill: parent
+        anchors.horizontalCenter: parent.horizontalCenter
 
+        id: instantview
 
-            ListView {
-                anchors.fill: parent
-                anchors.horizontalCenter: parent.horizontalCenter
+        header: Rectangle {
 
-                id: instantview
-
-
-                header: Rectangle {
-
-                      width: parent.width
-                      height:50
-                      color:  "transparent"
-                      Text {
-                      padding: 10
-                      width: parent.width
-                      text: '<b>' + category + ' > ' + classname + '</b>'
-                      color: Colors.black
-                      font.pointSize: 12
-                      }
-                    }
-
-                model: modules.instances(category,classname)
+            width: parent.width
+            height: 50
+            color: "transparent"
+            Text {
+                padding: 10
                 width: parent.width
-                delegate: listDelegate
+                text: '<b>' + category + ' > ' + classname + '</b>'
+                color: Colors.black
+                font.pointSize: 12
+            }
+        }
 
+        model: modules.instances(category, classname)
+        width: parent.width
+        delegate: listDelegate
 
-                footer:  Row {
-                    spacing: 20
-                    anchors.horizontalCenter: parent.horizontalCenter
+        footer: Row {
+            spacing: 20
+            anchors.horizontalCenter: parent.horizontalCenter
 
-                TextField {
+            TextField {
 
-                    id:instancename
-                    font.pointSize: 14
-                    height: 50
-                    width: 400
-                    placeholderText: 'Add new instance'
+                id: instancename
+                font.pointSize: 14
+                height: 50
+                width: 400
+                placeholderText: 'Add new instance'
+            }
 
-                }
-
-                RoundButton {
+            RoundButton {
                 anchors.verticalCenter: parent.verticalCenter
                 radius: 20
                 height: 50
@@ -123,26 +112,14 @@ Item {
                 text: '<b>Add</b>'
                 font.pixelSize: 30
 
-                onClicked: { modules.add_instance(category,classname,instancename.text)
-                             instantview.model = modules.instances(category,classname)
-                             instantview.forceLayout()
+                onClicked: {
+                    modules.add_instance(category, classname, instancename.text)
+                    instantview.model = modules.instances(category, classname)
+                    instantview.forceLayout()
 
-
-                             weatherrepeater.model = 1
-
-
-
+                    weatherrepeater.model = 1
                 }
-                }
-
-                }
-
             }
-
-
-
-Component.onCompleted: console.log(modules.instances(category,classname))
         }
-
-
-
+    }
+}

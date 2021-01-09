@@ -101,6 +101,7 @@ leds = Led()
 alsamixer = AlsaMixer(settings)
 wifi = Wifi(settings)
 inputs.add(wifi.get_inputs())
+
 try:
     inputs.add(iio.get_inputs())
 except:
@@ -110,7 +111,7 @@ inputs.add(alsamixer.get_inputs())
 inputs.add(leds.get_inputs())
 inputs.add(hwmon.get_inputs())
 inputdevs = InputDevs()
-inputs.add(inputdevs.inputs)
+inputs.add(inputdevs.get_inputs())
 inputs.add(backlight.get_inputs())
 inputs.add(SystemInfo.get_inputs())
 

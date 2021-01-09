@@ -5,7 +5,6 @@ import "../fonts/"
 
 Item {
 
-
     ListModel {
         id: pageModel
         ListElement {
@@ -16,6 +15,12 @@ Item {
             title: "Modules"
             page: "Modules.qml"
         }
+
+        ListElement {
+            title: "Rooms"
+            page: "Rooms.qml"
+        }
+
         ListElement {
             title: "HTTP Server"
             page: "content/SliderPage.qml"
@@ -43,22 +48,18 @@ Item {
             title: "Set Language"
             page: "Language.qml"
         }
-
     }
-
 
     Component {
         id: listDelegate
 
         Item {
-            width:parent.width
+            width: parent.width
             height: 80
 
             Rectangle {
                 anchors.fill: parent
                 color: index % 2 === 0 ? "transparent" : Colors.white
-
-                visible: mouse.pressed
             }
 
             Text {
@@ -94,35 +95,27 @@ Item {
                 anchors.fill: parent
                 onClicked: settingsstackView.push(Qt.resolvedUrl(page))
             }
-
-     }
-
+        }
     }
 
+    ListView {
 
-            ListView {
+        header: Rectangle {
 
-
-                header: Rectangle {
-
-                      width: parent.width
-                      height:50
-                      color:  "transparent"
-                      Text {
-                      padding: 10
-                      width: parent.width
-                      text: '<b>Settings</b>'
-                      color: Colors.black
-                      font.pointSize: 12
-                      }
-                    }
-
-                model: pageModel
-                anchors.fill: parent
-                delegate: listDelegate
-
+            width: parent.width
+            height: 50
+            color: "transparent"
+            Text {
+                padding: 10
+                width: parent.width
+                text: '<b>Settings</b>'
+                color: Colors.black
+                font.pointSize: 12
             }
         }
 
-
-
+        model: pageModel
+        anchors.fill: parent
+        delegate: listDelegate
+    }
+}

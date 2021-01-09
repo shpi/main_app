@@ -16,7 +16,7 @@ Item {
         currentIndex: swipeView.currentIndex
 
         background: Rectangle {
-            color: Colors.white
+            color: "transparent"
         }
 
         TabButton {
@@ -30,17 +30,16 @@ Item {
             anchors.right: parent.right
 
             contentItem: Text {
-                   text: parent.text
-                   font: parent.font
-                   color: tabBar.currentIndex == 0 ? Colors.black : Colors.white
-                   horizontalAlignment: Text.AlignHCenter
-                   verticalAlignment: Text.AlignVCenter
-                   elide: Text.ElideRight
-               }
+                text: parent.text
+                font: parent.font
+                color: tabBar.currentIndex == 0 ? Colors.black : Colors.white
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+            }
             background: Rectangle {
-                   color:  tabBar.currentIndex == 0 ? Colors.white :"#666"
-
-               }
+                color: tabBar.currentIndex == 0 ? Colors.whitetrans : Colors.blacktrans
+            }
         }
         TabButton {
             height: parent.height / 2
@@ -53,19 +52,19 @@ Item {
             anchors.right: parent.right
 
             contentItem: Text {
-                   text: parent.text
-                   font: parent.font
-                   color: tabBar.currentIndex == 1 ? Colors.black : Colors.white
-                   horizontalAlignment: Text.AlignHCenter
-                   verticalAlignment: Text.AlignVCenter
-                   elide: Text.ElideRight
-               }
+                text: parent.text
+                font: parent.font
+                color: tabBar.currentIndex == 1 ? Colors.black : Colors.white
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+            }
             background: Rectangle {
-                   color:  tabBar.currentIndex == 1 ? Colors.white :"#666"
-
-               }
+                color: tabBar.currentIndex == 1 ? Colors.whitetrans : Colors.blacktrans
+            }
         }
-     /*   TabButton {
+
+        /*   TabButton {
             height: parent.height / 3
             text: Icons.settings
             font.family: localFont.name
@@ -104,22 +103,22 @@ Item {
             height: 480
             id: weatherdays
             source: "WeatherDays.qml"
-         }
+        }
 
         Connections {
-             target: weatherdays.item
-             onMessage: weathergraphloader.item.reload()
-         }
+            target: weatherdays.item
+            onMessage: weathergraphloader.item.reload()
+        }
 
         Loader {
             width: parent.width
             height: 480
             id: weathergraphloader
             source: "WeatherGraph.qml"
+        }
 
-         }
 
-  /*      Loader {
+        /*      Loader {
             width: parent.width
             height: 480
             id: weathersettings
@@ -127,7 +126,5 @@ Item {
          }
 
 */
-
     }
 }
-

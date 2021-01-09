@@ -11,10 +11,8 @@ Item {
 
     Component.onCompleted: {
 
-           inputs.set_outputList('boolean')
-
+        inputs.set_outputList('boolean')
     }
-
 
     Flickable {
         anchors.fill: parent
@@ -26,9 +24,6 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             id: list
             spacing: 20
-
-
-
 
             Text {
                 text: "Controlled Outputs"
@@ -43,7 +38,8 @@ Item {
                 width: 550
                 model: inputs.outputList
                 textRole: 'path'
-                onPressedChanged: modules.loaded_instances['Logic']['Shutter'][instancename].relay_up = this.currentText
+                onActivated: modules.loaded_instances['Logic']['Shutter'][instancename].relay_up
+                             = this.currentText
 
                 Label {
                     anchors.right: parent.left
@@ -61,7 +57,8 @@ Item {
                 width: 550
                 model: inputs.outputList
                 textRole: 'path'
-                onPressedChanged: modules.loaded_instances['Logic']['Shutter'][instancename].relay_down = this.currentText
+                onActivated: modules.loaded_instances['Logic']['Shutter'][instancename].relay_down
+                             = this.currentText
 
                 Label {
                     anchors.right: parent.left
@@ -79,7 +76,8 @@ Item {
 
                 Component.onCompleted: up_time.value = modules.loaded_instances['Logic']['Shutter'][instancename].up_time
 
-                onValueChanged: modules.loaded_instances['Logic']['Shutter'][instancename].up_time = this.value
+                onValueChanged: modules.loaded_instances['Logic']['Shutter'][instancename].up_time
+                                = this.value
                 to: 300 * 100
                 stepSize: 10
                 font.pointSize: 12
@@ -116,7 +114,8 @@ Item {
 
                 Component.onCompleted: down_time.value = modules.loaded_instances['Logic']['Shutter'][instancename].down_time
 
-                onValueChanged: modules.loaded_instances['Logic']['Shutter'][instancename].down_time = this.value
+                onValueChanged: modules.loaded_instances['Logic']['Shutter'][instancename].down_time
+                                = this.value
                 to: 300 * 100
                 stepSize: 10
                 font.pointSize: 12
@@ -165,13 +164,12 @@ Item {
                                                             "stop")
                     onClicked: {
                         control.running = !control.running
-                        if (control.running){
+                        if (control.running) {
                             controlup.running = !control.running
 
                             time.startTime = new Date().getTime()
                             timer.running = true
-                        }
-                        else {
+                        } else {
                             timer.running = false
                             modules.loaded_instances['Logic']['Shutter'][instancename].actual_position = 0
                             //time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
@@ -221,14 +219,11 @@ Item {
                             control.running = !controlup.running
                             time.startTime = new Date().getTime()
                             timer.running = true
-                        }
-                        else {
+                        } else {
                             timer.running = false
                             modules.loaded_instances['Logic']['Shutter'][instancename].actual_position = 100
                             //time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
                         }
-
-
                     }
                     font.pointSize: 15
 
@@ -260,33 +255,28 @@ Item {
                             }
                         }
                     }
-                }}
-
-                Text {
-                    id: time
-                    font.pixelSize: 30
-                    color: Colors.black
-                    text: time.startTime != 0 ? new Date().getTime(
-                                                    ) - time.startTime + " ms" : 0
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    property double startTime: 0
                 }
+            }
 
+            Text {
+                id: time
+                font.pixelSize: 30
+                color: Colors.black
+                text: time.startTime != 0 ? new Date().getTime(
+                                                ) - time.startTime + " ms" : 0
+                anchors.horizontalCenter: parent.horizontalCenter
+                property double startTime: 0
+            }
 
-
-                Timer {
-                    id: timer
-                    interval: 200
-                    running: false
-                    repeat: true
-                    onTriggered: time.text = ((new Date().getTime(
-                                                   ) - time.startTime) / 1000).toFixed(
-                                     1) + "s"
-                }
-
-
+            Timer {
+                id: timer
+                interval: 200
+                running: false
+                repeat: true
+                onTriggered: time.text = ((new Date().getTime(
+                                               ) - time.startTime) / 1000).toFixed(
+                                 1) + "s"
             }
         }
-
     }
-
+}
