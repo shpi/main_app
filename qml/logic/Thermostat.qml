@@ -63,6 +63,7 @@ Rectangle {
         enabled: false
         from: 15.0
         to: 32.0
+        value:25
         stepSize: 0.2
         snapMode: Dial.SnapAlways
         onPressedChanged: if (pressed == false) {
@@ -71,17 +72,7 @@ Rectangle {
                               view.interactive = true
                           }
 
-        Text {
-            visible: !parent.enabled
-            anchors.top: parent.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
 
-            font.pointSize: 6
-            color: "green"
-            font.family: localFont.name
-
-            text: "Press & hold to " + Icons.unlocked
-        }
 
         Text {
             id: actualSetTemperature
@@ -146,7 +137,7 @@ Rectangle {
         }
     }
 
-    MouseArea {
+   /* MouseArea {
         id: dialLocker
         anchors.fill: parent
         onDoubleClicked: {
@@ -159,5 +150,5 @@ Rectangle {
             enabled = false
             view.interactive = false
         }
-    }
+    } */
 }

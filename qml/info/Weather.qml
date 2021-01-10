@@ -58,7 +58,7 @@ Rectangle {
     MouseArea {
         anchors.fill: parent
 
-        onPressAndHold: popupWeather.open()
+        onClicked: popupWeather.open()
     }
 
     Popup {
@@ -84,6 +84,8 @@ Rectangle {
             anchors.fill: parent
             id: thermostatSchedule
             source: "../weather/WeatherFull.qml"
+            asynchronous: true
+
         }
 
         RoundButton {

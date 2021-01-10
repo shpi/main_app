@@ -144,11 +144,10 @@ Rectangle {
             Repeater {
                 id: dayrepeater
 
-                model: 2
+                model: 7
 
                 ThermostatWeekDay {
-                    dayname: (Math.floor(
-                                  index / 7) + 1) + "." + parent.weekday[(index % 7)]
+                    dayname:  parent.weekday[(index % 7)] //(Math.floor(index / 7) + 1) + "." +
                     even: index % 2 ? true : false
 
                     Repeater {

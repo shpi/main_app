@@ -47,6 +47,7 @@ ApplicationWindow {
         id: bg
         source: ""
         fillMode: Image.Stretch
+        visible: appearance.night === 0 || appearance.background_night > 0 ? true : false
 
         RadialGradient {
             angle: 30
@@ -236,6 +237,11 @@ ApplicationWindow {
             property bool _isCurrentItem: SwipeView.isCurrentItem
             source: "Clock.qml"
         }
+        Loader {
+            id: rooms
+            property bool _isCurrentItem: SwipeView.isCurrentItem
+            source: "Rooms.qml"
+        }
 
         Loader {
             id: screensaver
@@ -323,18 +329,20 @@ ApplicationWindow {
                                                            ) * mask.width) / 2
 
             if (appearance.night === 0 || appearance.background_night > 0) {
-                if (Math.random() > 0.5 || bg.source === '')
+                if (Math.random() > 0.5)
                     bg.source = folderModel.get(Math.random() * Math.floor(
                                                     folderModel.count),
                                                 "fileURL")
-            } else
-                bg.source = ''
+            }
         }
     }
 
     Component.onCompleted: {
         //console.log('count of weater instances : ' + modules.modules['Info']['Weather'].length)
         Colors.night = appearance.night
+        bg.source = folderModel.get(Math.random() * Math.floor(
+                                        folderModel.count),
+                                    "fileURL")
 
 
         /*  for (let [key, value] of Object.entries(inputs.data)) {

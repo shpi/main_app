@@ -17,8 +17,8 @@ Item {
         }
 
         ListElement {
-            title: "Rooms"
-            page: "Rooms.qml"
+            title: "Rooms / Categories"
+            page: "RoomManager.qml"
         }
 
         ListElement {
