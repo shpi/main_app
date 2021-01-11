@@ -24,7 +24,7 @@ Item {
                 text: Qt.formatDateTime(new Date(),
                                         "dddd, dd.MM.yy") //"yyMMdd")
                 color: Colors.black
-                font.pixelSize: 32
+                font.pixelSize: 24
             }
         }
 

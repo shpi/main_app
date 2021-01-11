@@ -21,33 +21,13 @@ Item {
             page: "RoomManager.qml"
         }
 
-        ListElement {
-            title: "HTTP Server"
-            page: "content/SliderPage.qml"
-        }
-        ListElement {
-            title: "MQTT Client"
-            page: "content/ProgressBarPage.qml"
-        }
+
         ListElement {
             title: "Screensaver Pictures"
             page: "Pictures.qml"
         }
 
-        ListElement {
-            title: "Change Device Name"
-            page: "Hostname.qml"
-        }
 
-        ListElement {
-            title: "Set Timezone"
-            page: "Timezone.qml"
-        }
-
-        ListElement {
-            title: "Set Language"
-            page: "Language.qml"
-        }
     }
 
     Component {

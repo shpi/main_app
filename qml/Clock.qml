@@ -134,34 +134,7 @@ Item {
                 anchors.centerIn: parent
             }
 
-            Rectangle {
-                id: _mask
-                anchors.fill: parent
-                color: "transparent"
-                visible: true
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: clock.height * 0.7
-                    height: clock.height * 0.7
-                    radius: height / 2
-                    color: "black"
-                }
 
-                layer.enabled: true
-                layer.samplerName: "maskSource"
-                layer.effect: ShaderEffect {
-                    property variant source: clockRect
-                    fragmentShader: "
-varying highp vec2 qt_TexCoord0;
-uniform highp float qt_Opacity;
-uniform lowp sampler2D source;
-uniform lowp sampler2D maskSource;
-void main(void) {
-gl_FragColor = texture2D(source, qt_TexCoord0.st) * (1.0-texture2D(maskSource, qt_TexCoord0.st).a) * qt_Opacity;
-}
-"
-                }
-            }
         }
     }
 

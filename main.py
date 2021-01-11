@@ -86,7 +86,7 @@ def check_loop():
     modules.update()
 
 
-settings = QSettings("SHPI GmbH", "Main")
+settings = QSettings("SHPI GmbH", "Main434")
 backlight = Backlight()
 hwmon = HWMon()
 inputs = InputsDict()

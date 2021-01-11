@@ -175,10 +175,6 @@ ApplicationWindow {
                     page: "hardware/AlsaSettings.qml"
                 }
 
-                ListElement {
-                    title: "\uE045" // Icons.reset
-                    page: "hardware/Reset.qml"
-                }
 
                 ListElement {
                     title: "\uE010" // Icons.settings
@@ -255,12 +251,14 @@ ApplicationWindow {
 
             id: thermostatrepeater
             model: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
-
+            visible: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
 
             delegate: Loader {
                 id: thermostatslide
                 source: "thermostat/Thermostat.qml"
                 visible: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
+                active: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
+
             }
         }
 
@@ -268,13 +266,14 @@ ApplicationWindow {
 
             id: weatherrepeater
             model: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
-
+            visible: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
             //onItemAdded: console.log(weatherrepeater.count)
             //onItemRemoved:  console.log(weatherrepeater.count)
             delegate: Loader {
                 id: weatherslide
                 source: "weather/WeatherFull.qml"
                 visible: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
+                 active: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
             }
         }
     }
@@ -287,30 +286,6 @@ ApplicationWindow {
         anchors.horizontalCenter: parent.horizontalCenter
     }
 
-    InputPanel {
-        id: inputPanel
-        y: Qt.inputMethod.visible ? parent.height - inputPanel.height : parent.height
-        anchors.left: parent.left
-        anchors.right: parent.right
-
-        Rectangle {
-            visible: Qt.inputMethod.visible
-            anchors.bottom: parent.top
-            width: parent.width
-            height: 50
-            color: Colors.white
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.top: parent.top
-                padding: 2
-                anchors.left: parent.left
-                anchors.leftMargin: this.width > parent.width ? parent.width - this.width : 5
-                color: Colors.black
-                text: InputContext.surroundingText
-                font.pixelSize: 45
-            }
-        }
-    }
 
     Rectangle {
         id: backlighthelper
@@ -367,4 +342,31 @@ ApplicationWindow {
     }
 
 */ }
+
+
+    InputPanel {
+        id: inputPanel
+        y: Qt.inputMethod.visible ? parent.height - inputPanel.height : parent.height
+        anchors.left: parent.left
+        anchors.right: parent.right
+
+        Rectangle {
+            visible: Qt.inputMethod.visible
+            anchors.bottom: parent.top
+            width: parent.width
+            height: 50
+            color: Colors.white
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.top: parent.top
+                padding: 2
+                anchors.left: parent.left
+                anchors.leftMargin: this.width > parent.width ? parent.width - this.width : 5
+                color: Colors.black
+                text: InputContext.surroundingText
+                font.pixelSize: 45
+            }
+        }
+    }
+
 }
