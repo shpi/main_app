@@ -28,7 +28,7 @@ Rectangle {
 
         color: even ? "#aaa" : Colors.white
 
-        font.pointSize: parent.active ? 40 : 20
+        font.pixelSize: parent.active ? 90 : 50
     }
 
     MouseArea {

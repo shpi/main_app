@@ -79,7 +79,7 @@ Rectangle {
             anchors.leftMargin: 10
             rotation: 90
             font.family: localFont.name
-            font.pointSize: 20
+            font.pixelSize: 50
             text: Icons.arrow
             onClicked: thermostatPopup.close()
             palette.button: 'lightgrey'
@@ -105,7 +105,7 @@ Rectangle {
             RoundButton {
                 anchors.verticalCenter: parent.verticalCenter
                 font.family: localFont.name
-                font.pointSize: 20
+                font.pixelSize: 50
                 text: '+'
                 onClicked: addKnob()
                 palette.button: 'lightgrey'
@@ -116,7 +116,7 @@ Rectangle {
             RoundButton {
                 anchors.verticalCenter: parent.verticalCenter
                 font.family: localFont.name
-                font.pointSize: 20
+                font.pixelSize: 50
                 text: Icons.trash
                 onClicked: deleteKnob()
                 palette.button: 'lightgrey'
@@ -189,7 +189,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     x: header.height + 5
                     text: index * 2
-                    font.pointSize: 8
+                    font.pixelSize: 24
                     color: Colors.black
                 }
 
@@ -197,7 +197,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.bottom: parent.bottom
                     text: index * 2
-                    font.pointSize: 8
+                    font.pixelSize: 24
                     color: Colors.black
                 }
             }

@@ -18,7 +18,7 @@ Item {
                 id: inputtitle
                 width: parent.width
                 text: '<b>Available Variables</b>'
-                font.pointSize: 12
+                font.pixelSize: 32
                 color: Colors.black
             }
         }
@@ -50,7 +50,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     text: value
-                    font.pointSize: 11
+                    font.pixelSize: 32
                     color: Colors.black
                 }
 
@@ -62,14 +62,14 @@ Item {
                     Text {
 
                         text: '<b>' + path + '</b> ' // + description + ', ' + type + ': ' + (output == '1' ? '' : value)
-                        font.pointSize: 10
+                        font.pixelSize: 32
                         color: inputsview.currentIndex == index ? "green" : Colors.black
                     }
 
                     Text {
 
                         text: description + ' (' + type + ')'
-                        font.pointSize: 9
+                        font.pixelSize: 32
                         color: Colors.black
                     }
 
@@ -113,7 +113,7 @@ Item {
                             //onValueChanged: weather[0].interval =  this.value
                             from: 1
                             to: 600
-                            font.pointSize: 9
+                            font.pixelSize: 32
 
                             contentItem: TextInput {
                                 z: 2
@@ -135,7 +135,7 @@ Item {
                     /* TextField {
                          anchors.verticalCenter: parent.verticalCenter
                          visible: output == '1' ? 1 : 0
-                         font.pointSize: 8
+                         font.pixelSize: 24
                          placeholderText: (output == '1' ? value.toString() : '')
                          onEditingFinished: inputs.set(path,this.text)
                          }

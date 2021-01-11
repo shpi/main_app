@@ -80,7 +80,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
 
             anchors.horizontalCenter: parent.horizontalCenter
-            font.pointSize: 14
+            font.pixelSize: 32
             color: Colors.black
         }
 

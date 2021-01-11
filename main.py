@@ -20,11 +20,9 @@ import sys
 import signal
 import os
 
-os.environ["QT_WAYLAND_FORCE_DPI"] = "128"
+
 os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
-os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "0"
-# os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
-os.environ["QT_SCALE_FACTOR"] = "1"
+
 # os.environ["QT_QPA_PLATFORM"] = "eglfs"
 # os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
 # os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"

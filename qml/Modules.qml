@@ -78,7 +78,7 @@ Item {
                 width: parent.width
                 text: category != '' ? '<b>' + category + ' Modules </b>' : '<b>Modules</b>'
                 color: Colors.black
-                font.pointSize: 12
+                font.pixelSize: 32
             }
         }
 

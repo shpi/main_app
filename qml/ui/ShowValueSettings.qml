@@ -121,7 +121,7 @@ Rectangle {
 
                 id: iconpreview
                 font.family: localFont.name
-                font.pointSize: 40
+                font.pixelSize: 120
                 anchors.top: parent.bottom
                 anchors.topMargin: 10
                 anchors.horizontalCenter: parent.horizontalCenter

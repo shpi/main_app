@@ -49,7 +49,7 @@ Slider {
         Label {
             anchors.centerIn: parent
             text: parent.parent.value.toFixed(0)
-            font.pointSize: 22
+            font.pixelSize: 50
             font.bold: true
         }
     }

@@ -111,7 +111,7 @@ Rectangle {
                 value: 100
                 to: 300 * 100
                 stepSize: 10
-                font.pointSize: 12
+                font.pixelSize: 32
                 property int decimals: 2
                 property real realValue: value / 100
                 anchors.right: parent.right
@@ -145,7 +145,7 @@ Rectangle {
                 value: 100
                 to: 300 * 100
                 stepSize: 10
-                font.pointSize: 12
+                font.pixelSize: 32
                 property int decimals: 2
                 property real realValue: value / 100
                 anchors.right: parent.right
@@ -202,7 +202,7 @@ Rectangle {
                             //time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
                         }
                     }
-                    font.pointSize: 15
+                    font.pixelSize: 50
 
                     contentItem: Text {
                         text: control.text
@@ -252,7 +252,7 @@ Rectangle {
                             //time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
                         }
                     }
-                    font.pointSize: 15
+                    font.pixelSize: 50
 
                     contentItem: Text {
                         text: controlup.text

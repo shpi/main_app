@@ -80,7 +80,7 @@ Item {
                                 = this.value
                 to: 300 * 100
                 stepSize: 10
-                font.pointSize: 12
+                font.pixelSize: 36
                 property int decimals: 2
                 property real realValue: value / 100
                 anchors.right: parent.right
@@ -118,7 +118,7 @@ Item {
                                 = this.value
                 to: 300 * 100
                 stepSize: 10
-                font.pointSize: 12
+                font.pixelSize: 36
                 property int decimals: 2
                 property real realValue: value / 100
                 anchors.right: parent.right
@@ -175,7 +175,7 @@ Item {
                             //time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
                         }
                     }
-                    font.pointSize: 15
+                    font.pixelSize: 36
 
                     contentItem: Text {
                         text: control.text
@@ -225,7 +225,7 @@ Item {
                             //time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
                         }
                     }
-                    font.pointSize: 15
+                    font.pixelSize: 36
 
                     contentItem: Text {
                         text: controlup.text
@@ -260,7 +260,7 @@ Item {
 
             Text {
                 id: time
-                font.pixelSize: 30
+                font.pixelSize: 32
                 color: Colors.black
                 text: time.startTime != 0 ? new Date().getTime(
                                                 ) - time.startTime + " ms" : 0

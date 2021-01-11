@@ -46,7 +46,7 @@ Item {
         id: weatherselect
         anchors.top: parent.top
         anchors.topMargin: 5
-        font.pointSize: 15
+        font.pixelSize: 50
         height: 52
         width: 300
         model: modules.modules['Info']['Weather']

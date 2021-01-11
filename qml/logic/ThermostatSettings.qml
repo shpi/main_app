@@ -45,7 +45,7 @@ Rectangle {
                 value: 10
                 to: 100 * 100
                 stepSize: 10
-                font.pointSize: 18
+                font.pixelSize: 50
                 property int decimals: 2
                 property real realValue: value / 100
 
@@ -80,7 +80,7 @@ Rectangle {
                 to: 100 * 100
                 stepSize: 10
 
-                font.pointSize: 18
+                font.pixelSize: 50
                 property int decimals: 2
                 property real realValue: value / 100
 
@@ -110,7 +110,7 @@ Rectangle {
                 text: Icons.schedule
                 palette.button: "lightgrey"
                 palette.buttonText: Colors.black
-                font.pointSize: 25
+                font.pixelSize: 50
                 enabled: false
             }
 

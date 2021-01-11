@@ -22,7 +22,7 @@ Rectangle {
 
     Text {
         text: dayname
-        font.pointSize: 7
+        font.pixelSize: 32
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         color: Colors.black
@@ -33,7 +33,7 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 5
         anchors.horizontalCenter: parent.horizontalCenter
-        font.pointSize: 15
+        font.pixelSize: 50
         color: Colors.black
     }
 
@@ -97,7 +97,7 @@ Rectangle {
             text: Icons.close
             palette.button: "darkred"
             palette.buttonText: "white"
-            font.pointSize: 20
+            font.pixelSize: 50
             font.family: localFont.name
             onClicked: popupWeather.close()
         }

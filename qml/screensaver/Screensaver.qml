@@ -15,7 +15,7 @@ Item {
             y: 0
             text: Qt.formatDateTime(new Date(), "HH:mm") //"yyMMdd")
             color: Colors.black
-            font.pointSize: 40
+            font.pixelSize: 90
 
             Text {
                 id: moving_subtext
@@ -24,7 +24,7 @@ Item {
                 text: Qt.formatDateTime(new Date(),
                                         "dddd, dd.MM.yy") //"yyMMdd")
                 color: Colors.black
-                font.pointSize: 10
+                font.pixelSize: 32
             }
         }
 

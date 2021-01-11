@@ -36,7 +36,7 @@ Rectangle {
 
     Text {
         text: dayname
-        font.pointSize: 10
+        font.pixelSize: 24
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         color: Colors.black
@@ -45,7 +45,7 @@ Rectangle {
     Text {
         text: average_temp + "°C"
         anchors.centerIn: parent
-        font.pointSize: 15
+        font.pixelSize: 50
         color: Colors.black
     }
 
@@ -54,7 +54,7 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottomMargin: 15
         anchors.bottom: parent.bottom
-        font.pointSize: 10
+        font.pixelSize: 24
         color: Colors.black
     }
 

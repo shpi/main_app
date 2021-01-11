@@ -122,7 +122,7 @@ ApplicationWindow {
             anchors.topMargin: 5
 
             ListView {
-                spacing: settingsstackView.depth > 0 ? 10 : 25
+                spacing: 10
                 height: settingsstackView.depth > 0 ? 85 : 130
                 id: mainsettingsView
                 orientation: ListView.Horizontal
@@ -145,7 +145,7 @@ ApplicationWindow {
                 width: height
                 palette.button: settingsstackView.depth > 0 ? "darkred" : "#11000000"
                 palette.buttonText: settingsstackView.depth > 0 ? "white" : Colors.black
-                font.pointSize: settingsstackView.depth > 0 ? 20 : 30
+                font.pixelSize: settingsstackView.depth > 0 ? 50 : 80
                 onClicked: {
                     if (settingsstackView.depth === 0)
                         drawer.position = 0
@@ -191,7 +191,7 @@ ApplicationWindow {
                 RoundButton {
                     anchors.verticalCenter: parent.verticalCenter
                     font.family: localFont.name
-                    font.pointSize: settingsstackView.depth > 0 ? 20 : 30
+                    font.pixelSize: settingsstackView.depth > 0 ?  50 : 80
                     text: title
                     onClicked: {
                         settingsstackView.clear()
@@ -249,9 +249,19 @@ ApplicationWindow {
             source: "screensaver/Screensaver.qml"
         }
 
-        Loader {
-            id: thermostat
-            source: "thermostat/Thermostat.qml"
+
+
+        Repeater {
+
+            id: thermostatrepeater
+            model: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
+
+
+            delegate: Loader {
+                id: thermostatslide
+                source: "thermostat/Thermostat.qml"
+                visible: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
+            }
         }
 
         Repeater {
@@ -297,7 +307,7 @@ ApplicationWindow {
                 anchors.leftMargin: this.width > parent.width ? parent.width - this.width : 5
                 color: Colors.black
                 text: InputContext.surroundingText
-                font.pointSize: 15
+                font.pixelSize: 45
             }
         }
     }

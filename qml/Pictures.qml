@@ -47,7 +47,7 @@ Item {
                     width: height
                     palette.button: "#1E90FF"
                     palette.buttonText: Colors.black
-                    font.pointSize: 20
+                    font.pixelSize: 50
                     onClicked: appearance.delete_file('backgrounds/' + fileName)
                 }
             }
@@ -55,7 +55,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: fileName
                 color: Colors.black
-                font.pointSize: 5
+                font.pixelSize: 24
             }
         }
     }

@@ -30,7 +30,7 @@ Rectangle {
     Label {
         anchors.centerIn: parent
         text: parent.temperature
-        font.pointSize: parent.parent.active ? 22 : 17
+        font.pixelSize:  50
         visible: parent.parent.active ? false : true
     }
 
@@ -41,7 +41,7 @@ Rectangle {
         anchors.horizontalCenterOffset: (parent.value > (parent.to / 2)) ? -100 : 100
 
         text: parent.time
-        font.pointSize: 14
+        font.pixelSize: 50
         visible: false
         color: Colors.black
     }

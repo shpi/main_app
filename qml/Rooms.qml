@@ -33,7 +33,7 @@ Item {
                 Text {
                     id: textitem
                     color: Colors.black
-                    font.pixelSize: 45
+                    font.pixelSize: 32
                     text: modelData
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left

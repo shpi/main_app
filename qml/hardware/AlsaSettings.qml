@@ -49,7 +49,7 @@ Item {
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             text: description + ' '
-                            font.pointSize: 8
+                            font.pixelSize: 24
                             color: Colors.black
                         }
 
@@ -72,7 +72,7 @@ Item {
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: sensorvalue
-                                    font.pointSize: 8
+                                    font.pixelSize: 24
                                     color: Colors.black
                                 }
                             }
@@ -99,7 +99,7 @@ Item {
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         anchors.verticalCenter: parent.verticalCenter
                                         text: sensorvalue + '%'
-                                        font.pointSize: 8
+                                        font.pixelSize: 24
                                         color: Colors.black
                                     }
                                 }
@@ -129,7 +129,7 @@ Item {
                                 TextField {
                                     anchors.verticalCenter: parent.verticalCenter
                                     //visible: output == '1' ? 1 : 0
-                                    font.pointSize: 8
+                                    font.pixelSize: 24
                                     width: 300
                                     color: Colors.black
                                     placeholderText: (output == '1' ? value.toString(

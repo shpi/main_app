@@ -26,7 +26,7 @@ Item {
             id: firstButton
             text: Icons.cloudsun
             font.family: localFont.name
-            font.pointSize: 30
+            font.pixelSize: 90
             anchors.right: parent.right
 
             contentItem: Text {
@@ -47,7 +47,7 @@ Item {
 
             text: Icons.graph
             font.family: localFont.name
-            font.pointSize: 30
+            font.pixelSize: 90
             anchors.top: firstButton.bottom
             anchors.right: parent.right
 
@@ -68,7 +68,7 @@ Item {
             height: parent.height / 3
             text: Icons.settings
             font.family: localFont.name
-            font.pointSize: 30
+            font.pixelSize: 90
             anchors.top: secondButton.bottom
             anchors.right: parent.right
 

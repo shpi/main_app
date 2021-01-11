@@ -67,7 +67,7 @@ Item {
         //theme: appearance.night ? ChartView.ChartThemeDark : ChartView.ChartThemeLight
         legend.labelColor: Colors.black
         legend.borderColor: "transparent"
-        legend.font.pointSize: 8
+        legend.font.pixelSize: 24
         legend.markerShape: Legend.MarkerShapeCircle
         legend.color: Colors.black
         plotAreaColor: Colors.white
@@ -81,7 +81,7 @@ Item {
             min: chart.mindate
             max: chart.maxdate
             labelsAngle: 270
-            labelsFont.pointSize: 8
+            labelsFont.pixelSize: 24
             color: Colors.black
             labelsColor: Colors.black
         }
@@ -90,7 +90,7 @@ Item {
             id: degreeAxis
             min: -20
             max: 40
-            labelsFont.pointSize: 8
+            labelsFont.pixelSize: 24
             color: Colors.black
             labelsColor: Colors.black
         }
@@ -99,7 +99,7 @@ Item {
             id: pressureAxis
             min: 0
             max: 1400
-            labelsFont.pointSize: 8
+            labelsFont.pixelSize: 24
             color: Colors.black
             labelsColor: Colors.black
         }
@@ -108,7 +108,7 @@ Item {
             id: humidityAxis
             min: 0
             max: 100
-            labelsFont.pointSize: 8
+            labelsFont.pixelSize: 24
             color: Colors.black
             labelsColor: Colors.black
         }
@@ -176,7 +176,7 @@ Item {
             axisYRight: ValueAxis {
                 min: 0
                 max: 5
-                labelsFont.pointSize: 8
+                labelsFont.pixelSize: 24
                 labelsColor: Colors.black
             }
             axisX: dateAxis

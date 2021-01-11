@@ -110,7 +110,7 @@ Item {
                 width: parent.width
                 text: '<b>Settings</b>'
                 color: Colors.black
-                font.pointSize: 12
+                font.pixelSize: 32
             }
         }
 

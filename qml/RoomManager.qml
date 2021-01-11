@@ -22,7 +22,7 @@ Item {
                 text: root.roomname === '' ? '<b>Available Rooms</b>' : '<b>Room: '
                                              + roomname + '</b>'
                 color: Colors.black
-                font.pointSize: 12
+                font.pixelSize: 32
             }
         }
 
@@ -44,7 +44,7 @@ Item {
                 TextField {
 
                     id: roomname_text
-                    font.pointSize: 14
+                    font.pixelSize: 32
                     height: 50
                     width: 600
                     placeholderText: 'Add new room'
@@ -67,7 +67,7 @@ Item {
                     height: 50
                     padding: 10
                     text: '<b>Add</b>'
-                    font.pixelSize: 30
+                    font.pixelSize: 32
 
                     onClicked: {
                         var roomarr

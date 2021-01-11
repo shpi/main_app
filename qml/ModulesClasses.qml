@@ -83,7 +83,7 @@ Item {
                 width: parent.width
                 text: '<b>' + category + ' > ' + classname + '</b>'
                 color: Colors.black
-                font.pointSize: 12
+                font.pixelSize: 32
             }
         }
 
@@ -98,7 +98,7 @@ Item {
             TextField {
 
                 id: instancename
-                font.pointSize: 14
+                font.pixelSize: 32
                 height: 50
                 width: 400
                 placeholderText: 'Add new instance'
@@ -110,7 +110,7 @@ Item {
                 height: 50
                 padding: 10
                 text: '<b>Add</b>'
-                font.pixelSize: 30
+                font.pixelSize: 32
 
                 onClicked: {
                     modules.add_instance(category, classname, instancename.text)

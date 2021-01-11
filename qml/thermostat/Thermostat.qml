@@ -171,7 +171,7 @@ Rectangle {
                 text: control.value == 0 ? 'Off' : control.value == 1 ? 'Away' : control.value == 2 ? 'Eco' : control.value == 3 ? 'Auto' : control.value == 4 ? 'Party' : 'Unknown'
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
-                font.pointSize: 11
+                font.pixelSize: 36
                 color: Colors.black
             }
         }
@@ -201,7 +201,7 @@ Rectangle {
         text: Icons.schedule
         palette.button: Colors.grey
         palette.buttonText: Colors.black
-        font.pointSize: 25
+        font.pixelSize: 90
         onClicked: thermostatPopup.open()
     }
 

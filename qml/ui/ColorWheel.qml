@@ -52,7 +52,7 @@ Rectangle {
 
             Text {
                 font.family: localFont.name
-                font.pointSize: 20
+                font.pixelSize: 50
                 color: "white"
                 anchors.rightMargin: 15
                 text: Icons.sun
@@ -62,7 +62,7 @@ Rectangle {
 
             Text {
                 font.family: localFont.name
-                font.pointSize: 20
+                font.pixelSize: 50
                 color: "white"
                 anchors.leftMargin: 15
                 text: Icons.ssun

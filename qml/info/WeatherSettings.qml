@@ -21,7 +21,7 @@ Flickable {
 
             text: '<b>' + classname + ' > ' + instancename + '</b>'
             color: Colors.black
-            font.pointSize: 12
+            font.pixelSize: 32
         }
 
         Row {
@@ -39,7 +39,7 @@ Flickable {
                                 = this.value
                 from: 60
                 to: 1000
-                font.pointSize: 14
+                font.pixelSize: 32
             }
         }
 
@@ -51,7 +51,7 @@ Flickable {
             }
 
             TextField {
-                font.pointSize: 14
+                font.pixelSize: 32
                 text: modules.loaded_instances['Info']['Weather'][instancename].api_key
                 onEditingFinished: modules.loaded_instances['Info']['Weather'][instancename].api_key
                                    = text
@@ -64,7 +64,7 @@ Flickable {
                 id: city_tf
                 text: modules.loaded_instances['Info']['Weather'][instancename].city
                 placeholderText: qsTr("City")
-                font.pointSize: 14
+                font.pixelSize: 32
                 selectByMouse: true
             }
             Button {
@@ -142,7 +142,7 @@ Flickable {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: '<b>' + name + ' ' + stat + '</b>, ' + country
 
-                                font.pointSize: 12
+                                font.pixelSize: 32
                                 color: Colors.black
                                 MouseArea {
                                     anchors.fill: parent
@@ -154,7 +154,7 @@ Flickable {
                         Text {
 
                             text: 'Latitude: ' + lat + ', Longitude: ' + lon
-                            font.pointSize: 8
+                            font.pixelSize: 24
                             color: Colors.black
                         }
                     }

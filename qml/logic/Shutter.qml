@@ -206,7 +206,7 @@ Rectangle {
             text: Icons.close
             palette.button: "darkred"
             palette.buttonText: "white"
-            font.pointSize: 20
+            font.pixelSize: 50
             font.family: localFont.name
             onClicked:  { shutterObject.iconview2 = true; shutterObject.parent = shutterFrame; popupShutter.close() }
 

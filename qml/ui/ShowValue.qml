@@ -25,7 +25,7 @@ Rectangle {
         anchors.top: parent.top
         anchors.topMargin: 5
         anchors.horizontalCenter: parent.horizontalCenter
-        font.pointSize: 30
+        font.pixelSize: 90
         font.family: localFont.name
     }
 
@@ -36,6 +36,6 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 5
         anchors.horizontalCenter: parent.horizontalCenter
-        font.pointSize: 15
+        font.pixelSize: 50
     }
 }

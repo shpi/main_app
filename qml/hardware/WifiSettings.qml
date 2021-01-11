@@ -95,7 +95,7 @@ Item {
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             text: '<b>' + ssid + '</b> ,  ' + frequency
-                            font.pointSize: 9
+                            font.pixelSize: 24
                             color: "white"
                         }
 
@@ -103,7 +103,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             width: height
                             text: flags ? Icons.locked : Icons.unlocked
-                            font.pointSize: 10
+                            font.pixelSize: 32
                             font.family: localFont.name
                             palette.buttonText: flags != 'OPEN' ? "green" : "red"
                         }
@@ -126,7 +126,7 @@ Item {
                             TextField {
                                 id: wifipasswd
                                 width: 300
-                                font.pointSize: 10
+                                font.pixelSize: 32
                                 placeholderText: 'password please'
                                 text: password != '' ? password : ''
                             }
@@ -142,7 +142,7 @@ Item {
                         RoundButton {
                             anchors.verticalCenter: parent.verticalCenter
                             text: "Connect"
-                            font.pointSize: 15
+                            font.pixelSize: 50
                             radius: 10
                             onClicked: wifi.write_settings(
                                            actualDevice.currentText, flags,
@@ -169,7 +169,7 @@ Item {
             radius: 20
             text: 'SCAN'
             anchors.horizontalCenter: parent.horizontalCenter
-            font.pointSize: 20
+            font.pixelSize: 50
             onClicked: {
                 busy.running = true
                 wifi.scan_wifi(actualDevice.currentText)
