@@ -10,9 +10,12 @@ from core.Toolbox import Pre_5_15_2_fix
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 #import urlparse
 import urllib.parse as urlparse
-
+import json
 
 class ServerHandler(BaseHTTPRequestHandler):
+
+    inputs = None
+
     def do_GET(self):
 
         try:
@@ -36,11 +39,12 @@ class ServerHandler(BaseHTTPRequestHandler):
 
             else:
                 self.send_response(202)
-                message = ''
+                self.send_header('Content-type', 'text')
+                self.end_headers()
 
-                for key in self.inputs:
-                    message += ', ' + key
-                self.wfile.write(bytes(message, "utf8"))
+                exposed = list(filter(lambda x: self.inputs[x]['exposed'], self.inputs.keys()))
+
+                self.wfile.write(bytes(json.dumps(exposed), "utf8"))
 
                 self.connection.close()
         except Exception as e:
@@ -71,10 +75,11 @@ class HTTPServer(QObject):
     def __init__(self, inputs, settings: QSettings):
         super().__init__()
 
-        self.inputs = inputs.entries
+
         self.settings = settings
         self._port = int(settings.value("httpserver/port", 9000))
 
+        ServerHandler.inputs = inputs.entries
         self.server = ThreadingHTTPServer(("0.0.0.0", self._port), ServerHandler)
 
 
