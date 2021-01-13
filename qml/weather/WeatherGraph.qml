@@ -70,9 +70,9 @@ Item {
         legend.font.pixelSize: 24
         legend.markerShape: Legend.MarkerShapeCircle
         legend.color: Colors.black
-        plotAreaColor: Colors.white
+        plotAreaColor: Colors.whitetrans
         titleColor: Colors.black
-        backgroundColor: Colors.white
+        backgroundColor: "transparent"
 
         DateTimeAxis {
             id: dateAxis

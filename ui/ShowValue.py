@@ -29,7 +29,12 @@ class ShowValue(QObject):
             self.valueChanged.emit()
 
 
-    @Property(str)
+    @Property(bool,notify=valueChanged)
+    def logging(self):
+        return self.inputs.entries[self._value_path]['logging']
+
+
+    @Property(str,notify=valueChanged)
     def value_path(self):
         return self._value_path
 

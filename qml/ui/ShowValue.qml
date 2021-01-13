@@ -14,7 +14,7 @@ Rectangle {
 
     radius: 10
 
-    color: "#11000000"
+    color: Colors.whitetrans
 
     clip: true
 
@@ -36,6 +36,20 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 5
         anchors.horizontalCenter: parent.horizontalCenter
-        font.pixelSize: 50
+        font.pixelSize: 40
     }
+
+
+    MouseArea {
+    anchors.fill: parent
+    enabled: modules.loaded_instances['UI']['ShowValue'][name].logging
+    onClicked: {
+    graphLoader.sensorpath = modules.loaded_instances['UI']['ShowValue'][name].value_path
+    graphLoader.divider = modules.loaded_instances['UI']['ShowValue'][name].divider
+    graphPopup.open()
+    }
+
+    }
+
+
 }

@@ -11,7 +11,7 @@ Rectangle {
     height: parent.height
     width: height
     radius: 10
-    color: "#11000000"
+    color: Colors.whitetrans
 
     Dial {
         id: dialTherm
@@ -80,7 +80,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
 
             anchors.horizontalCenter: parent.horizontalCenter
-            font.pixelSize: 32
+            font.pixelSize: 40
             color: Colors.black
         }
 

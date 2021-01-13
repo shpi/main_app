@@ -71,8 +71,9 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
 
                         text: index !== 0 ? index : '12'
+                        font.pixelSize: 24
                         anchors.top: parent.top
-                        anchors.topMargin: -17
+                        anchors.topMargin: -15
                         color: Colors.black
                     }
                 }

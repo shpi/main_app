@@ -17,7 +17,7 @@ class _SystemInfo:
         self.diskstats = dict()
         self._keys = 'read_bps', 'write_bps', 'read_abs', 'write_abs'
         self.last_diskstat = 0
-        self.interval = 10
+        self.interval = 60
         self.update_diskstats(init=True)
 
     def update_diskstats(self, stat_path='/proc/diskstats', init=False):

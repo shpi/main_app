@@ -45,7 +45,7 @@ Rectangle {
     Text {
         text: average_temp + "°C"
         anchors.centerIn: parent
-        font.pixelSize: 50
+        font.pixelSize: 32
         color: Colors.black
     }
 

@@ -228,6 +228,8 @@ ApplicationWindow {
         anchors.fill: parent
         anchors.bottom: inputPanel.top
 
+
+
         Loader {
             id: clock
             property bool _isCurrentItem: SwipeView.isCurrentItem
@@ -267,8 +269,7 @@ ApplicationWindow {
             id: weatherrepeater
             model: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
             visible: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
-            //onItemAdded: console.log(weatherrepeater.count)
-            //onItemRemoved:  console.log(weatherrepeater.count)
+
             delegate: Loader {
                 id: weatherslide
                 source: "weather/WeatherFull.qml"
@@ -304,6 +305,7 @@ ApplicationWindow {
 
         interval: 30000
         repeat: true
+        running: true
         onTriggered: {
 
             mask.angle = Math.random() * 180
@@ -325,9 +327,7 @@ ApplicationWindow {
     Component.onCompleted: {
         //console.log('count of weater instances : ' + modules.modules['Info']['Weather'].length)
         Colors.night = appearance.night
-        bg.source = folderModel.get(Math.random() * Math.floor(
-                                        folderModel.count),
-                                    "fileURL")
+
 
 
         /*  for (let [key, value] of Object.entries(inputs.data)) {
@@ -342,6 +342,55 @@ ApplicationWindow {
     }
 
 */ }
+
+
+
+
+    Popup {
+
+        id: graphPopup
+        width: parent.width
+        height: parent.height
+        parent: Overlay.overlay
+        x: Math.round((parent.width - width) / 2)
+        y: Math.round((parent.height - height) / 2)
+        padding: 0
+        topInset: 0
+        leftInset: 0
+        rightInset: 0
+        bottomInset: 0
+
+        background: Rectangle {
+            color: Colors.white
+        }
+
+        Loader {
+            property string sensorpath: ''
+            property real divider: 0
+
+            anchors.fill: parent
+            id: graphLoader
+            source: "Graph.qml"
+
+        }
+
+
+        RoundButton {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.topMargin: 10
+            anchors.leftMargin: 10
+            width: height
+            text: Icons.close
+            palette.button: "darkred"
+            palette.buttonText: "white"
+            font.pixelSize: 50
+            font.family: localFont.name
+            onClicked:  {graphPopup.close()
+                         graphLoader.sensorpath = ''
+                         graphLoader.divider = 0}
+        }
+    }
 
 
     InputPanel {

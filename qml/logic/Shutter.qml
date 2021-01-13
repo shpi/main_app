@@ -7,7 +7,7 @@ Rectangle {
     id: shutterFrame
     height: parent.height
     radius: 10
-    color: "#11000000"
+    color: Colors.whitetrans
     clip: true
     property string name: modules.modules['Logic']['Shutter'][0]
     property bool iconview: false

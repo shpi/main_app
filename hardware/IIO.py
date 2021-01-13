@@ -77,7 +77,7 @@ class IIO:
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}']['value'] = channel.attrs[channel_attr].value
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}']['call'] = partial(
                             IIO.read_iio, dev.id, path)
-                        self.inputs[f'{self.path}/{dev.name}/{channel.id}']['interval'] = 10
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}']['interval'] = 60
 
                     elif channel_attr == 'raw':
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}']['raw'] = channel.attrs[channel_attr].value
@@ -94,7 +94,7 @@ class IIO:
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['value'] = channel.attrs[channel_attr].value.rstrip()
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['call'] = partial(
                             IIO.read_iio, dev.id, path)
-                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['interval'] = 10
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['interval'] = 60
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['type'] = DataType.FLOAT
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['description'] = channel.id + ' ' + channel_attr
                         # print(f'/sys/bus/iio/devices/{dev.id}/{path}')
@@ -124,7 +124,7 @@ class IIO:
                     self.inputs[f'{self.path}/{dev.name}/{channel.id}']['call'] = partial(
                         IIO.read_processed, str(dev.id), str(channel.attrs['raw'].filename), scale, offset)
                     # print(self.inputs[f'{self.path}/{dev.name}/{channel.id}']['call'])
-                    self.inputs[f'{self.path}/{dev.name}/{channel.id}']['interval'] = 10
+                    self.inputs[f'{self.path}/{dev.name}/{channel.id}']['interval'] = 60
 
         if len(dev.attrs) > 0:
             #print("\t\t%u device-specific attributes found: " % len(dev.attrs))

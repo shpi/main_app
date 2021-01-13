@@ -8,7 +8,7 @@ Rectangle {
     height: parent.height
 
     radius: 10
-    color: "#11000000"
+    color: Colors.whitetrans
     clip: true
     property string instancename: modules.modules['Logic']['Shutter'][0]
 

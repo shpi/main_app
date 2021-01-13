@@ -44,7 +44,7 @@ def setup_interrupt_handling():
     """Setup handling of KeyboardInterrupt (Ctrl-C) for PyQt."""
     signal.signal(signal.SIGINT, _interrupt_handler)
     """Timer"""
-    safe_timer(3000, check_loop)
+    safe_timer(1000, check_loop)
 
 # Define this as a global function to make sure it is not garbage
 # collected when going out of scope:
@@ -77,19 +77,25 @@ lastupdate = time.time()
 
 def check_loop():
     global lastupdate
+    start = time.time()
     SystemInfo.update()
-    alsamixer.update()
+
     appearance.update()
-    wifi.update()
+
+    #wifi.update()
+
     inputs.update(lastupdate)
+    print('needed for inputs update:' + str(time.time() - start))
+
     lastupdate = time.time()
     modules.update()
 
 
-settings = QSettings("SHPI GmbH", "Main434")
+settings = QSettings("SHPI GmbH", "Main")
 backlight = Backlight()
 hwmon = HWMon()
-inputs = InputsDict()
+inputs = InputsDict(settings)
+
 try:
     iio = IIO()
 except:
@@ -116,8 +122,6 @@ inputs.add(SystemInfo.get_inputs())
 appearance = Appearance(inputs, settings)
 modules = ModuleManager(inputs, settings)
 
-#uishutter = UIShutter('Wohnzimmer', inputs, settings)
-
 def KillThreads():
     for key in inputs.entries:
         if key.endswith('thread'):
@@ -127,7 +131,6 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     app.aboutToQuit.connect(KillThreads)
-    # app.setAttribute(Qt.AA_EnableHighDpiScaling)
     app.setApplicationName("Main")
     app.setOrganizationName("SHPI GmbH")
     app.setOrganizationDomain("shpi.de")
@@ -135,9 +138,7 @@ if __name__ == "__main__":
     engine = QQmlApplicationEngine()
 
     engine.rootContext().setContextProperty("inputs", inputs)
-    #engine.rootContext().setContextProperty('weather', weather)
     engine.rootContext().setContextProperty('wifi', wifi)
-    #engine.rootContext().setContextProperty('shutter2', uishutter)
     engine.rootContext().setContextProperty("appearance", appearance)
     engine.rootContext().setContextProperty("modules", modules)
 

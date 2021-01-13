@@ -8,6 +8,7 @@
     "fonts/Icons.qml",
     "fonts/Colors.qml",
     "qml/fingerpaint.qml",
+     "qml/Graph.qml",
     "qml/ModulesClasses.qml",
     "qml/Rooms.qml",
     "qml/RoomManager.qml",

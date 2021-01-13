@@ -62,14 +62,14 @@ Item {
                     Text {
 
                         text: '<b>' + path + '</b> ' // + description + ', ' + type + ': ' + (output == '1' ? '' : value)
-                        font.pixelSize: 32
+                        font.pixelSize: 24
                         color: inputsview.currentIndex == index ? "green" : Colors.black
                     }
 
                     Text {
 
                         text: description + ' (' + type + ')'
-                        font.pixelSize: 32
+                        font.pixelSize: 24
                         color: Colors.black
                     }
 
@@ -78,7 +78,8 @@ Item {
                         visible: inputsview.currentIndex == index ? true : false
                         spacing: 150
                         CheckBox {
-                            checked: true
+                            checked: logging
+                            onClicked: inputs.set_logging(path, this.checked)
 
                             Text {
                                 text: "logging"
@@ -89,8 +90,8 @@ Item {
                         }
 
                         CheckBox {
-                            checked: true
-
+                            checked: exposed
+                            onClicked: inputs.set_exposed(path, this.checked)
                             Text {
                                 text: "exposed"
                                 color: Colors.black
@@ -104,13 +105,15 @@ Item {
                             visible: interval > 0 ? true : false
                             value: interval
                             stepSize: 5
+
+                            onValueModified:  inputs.set_interval(path, value)
                             Text {
                                 text: "Interval"
                                 color: Colors.black
                                 anchors.left: parent.right
                                 anchors.leftMargin: 15
                             }
-                            //onValueChanged: weather[0].interval =  this.value
+
                             from: 1
                             to: 600
                             font.pixelSize: 32

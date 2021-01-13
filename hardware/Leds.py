@@ -36,7 +36,7 @@ class Led:
                                 'max': self.leds[file]['max'],
                                 'value': 100 / self.leds[file]['max'] * self.leds[file]['rawvalue'],
                                 'lastupdate': time.time(),
-                                'interval': 8,
+                                'interval': 60,
                                 'call': partial(self.get_brightness, file),
                                 'set': partial(self.set_brightness, file)}
 
@@ -59,8 +59,7 @@ class Led:
             self.leds[file]['rawvalue'] = int(bright.readline().rstrip())
             pbrightness = int((100 / self.leds[file]['max'])
                               * self.leds[file]['rawvalue'])
-            if self.inputs['leds/' + file]['interval'] < 0:
-                self.inputs['leds/' + file]['value'] = pbrightness
-                self.inputs['leds/' + file]['lastupdate'] = time.time()
+            self.inputs['leds/' + file]['value'] = pbrightness
+            self.inputs['leds/' + file]['lastupdate'] = time.time()
 
         return pbrightness

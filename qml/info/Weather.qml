@@ -18,11 +18,11 @@ Rectangle {
     width: height * 0.7
     radius: 10
 
-    color: "#11000000"
+    color: Colors.whitetrans
 
     Text {
         text: dayname
-        font.pixelSize: 32
+        font.pixelSize: 24
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         color: Colors.black
@@ -33,7 +33,7 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 5
         anchors.horizontalCenter: parent.horizontalCenter
-        font.pixelSize: 50
+        font.pixelSize: 40
         color: Colors.black
     }
 

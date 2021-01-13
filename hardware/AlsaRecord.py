@@ -13,12 +13,13 @@ class AlsaRecord:
 
         self.input = dict()
         self._control = {
-                        'interval': -1,
                         'type': DataType.BOOL,
                         'lastupdate': 0,
                         'description': 'Microphone Thread start/stop',
                         'value': 1,
-                        'set': partial(self.control)
+                        'set': partial(self.control),
+                        'interval': 10,
+                        'call': self.update
                        }
         self.card = card
         self.bufferpos = 0
@@ -93,3 +94,5 @@ class AlsaRecord:
         elif self.arecord_process and self.arecord_process.poll() is None:
             self.arecord_process.kill()
             self.arecord_process.wait()
+
+        return self._control['value']

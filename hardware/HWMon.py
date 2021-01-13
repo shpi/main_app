@@ -78,6 +78,7 @@ class HWMon:
             if (value['rights'] & 0o444 == 0o444):
                 hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"] = {"description": value['description'],
                                                                             #"rights": value['rights'],
+                                                                            "interval": 60,
                                                                             "type": value['type'], "call": partial(self.read_hwmon, value['id'], value['channel'])}
 
             if (value['rights'] == 0o644):
@@ -89,7 +90,7 @@ class HWMon:
     def read_hwmon(self, id, channel):
         if os.path.isfile(f'/sys/class/hwmon/{id}/{channel}'):
             with open(f'/sys/class/hwmon/{id}/{channel}', 'r') as rf:
-                return (rf.read().rstrip())
+                return int(rf.read().rstrip())
                 rf.close()
         else:
             return False

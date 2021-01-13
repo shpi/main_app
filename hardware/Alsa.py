@@ -20,10 +20,6 @@ class AlsaMixer:
         self.system_cards = []
         self.cards = self.get_cards()
 
-    def update(self):
-
-        for key, value in self.recorder.items():
-            value.update()
 
     def get_inputs(self) -> dict:
         return self.cards

@@ -123,7 +123,7 @@ class InputDevs:
         systembits = (struct.calcsize("P") * 8)
         try:
             with open(devpath, 'rb') as devfile:
-                while self.inputs[f'dev/{str(id)}']['value']:
+                while self.inputs[f'dev/{str(id)}/thread']['value']:
                     # 16 byte for 32bit,  24 for 64bit
                     event = devfile.read(16 if systembits == 32 else 24)
                     (timestamp, _id, type, keycode,

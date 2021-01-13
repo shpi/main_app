@@ -86,8 +86,8 @@ class Wifi(QObject):
         for device in self.found_devices:
             self.scan_wifi(device)
 
-    def update(self):
-        self.read_signal()
+    #def update(self):
+        #self.read_signal()
 
     def get_inputs(self) -> dict:
         return self.inputs
@@ -196,7 +196,7 @@ class Wifi(QObject):
             # systemctl restart dhcpcd
 
     def read_signal(self):
-
+        self.new_devices = list()
         if os.path.isfile('/proc/net/wireless'):
             with open('/proc/net/wireless', 'r') as rf:
                 line = rf.readline()
@@ -206,9 +206,10 @@ class Wifi(QObject):
                         device = line[0].rstrip(":")
                         if device not in self.found_devices:
                             self.found_devices.append(device)
+                        self.new_devices.append(device)
                         if f'wifi/{device}/link' not in self.inputs:
                             self.inputs[f'wifi/{device}/link'] = {'description': f'link quality of device {line[0].rstrip(":")}',
-                                                                  'interval': -1, 'lastupdate': 0}
+                                                                  'interval': 30, 'lastupdate': 0, 'call': self.read_signal}
                         self.signals[device] = self.dbmtoperc[int(
                             line[3].rstrip('.'))]
                         self.inputs[f'wifi/{device}/link']['value'] = self.dbmtoperc[int(
@@ -221,7 +222,7 @@ class Wifi(QObject):
 
             rf.close()
             for device in self.found_devices:  # reset values before checking
-                if self.inputs[f'wifi/{device}/link']['lastupdate'] < time.time() - 1:
+                if device not in self.new_devices:
                     self.inputs[f'wifi/{device}/link']['value'] = 0
                     self.inputs[f'wifi/{device}/link']['status'] = 0
                     self.inputs[f'wifi/{device}/link']['level'] = 0
