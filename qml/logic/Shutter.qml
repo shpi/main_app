@@ -6,6 +6,7 @@ import "../../fonts/"
 Rectangle {
     id: shutterFrame
     height: parent.height
+    width: height * 0.7
     radius: 10
     color: Colors.whitetrans
     clip: true

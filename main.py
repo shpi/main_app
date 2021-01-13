@@ -10,6 +10,7 @@ from hardware.Backlight import Backlight
 from core.ModuleManager import ModuleManager
 from core.Inputs import InputsDict
 from core.Appearance import Appearance
+from core.HTTPServer import HTTPServer
 from PySide2.QtQml import QQmlApplicationEngine
 from PySide2.QtWidgets import QApplication
 from PySide2.QtCore import QSettings
@@ -77,7 +78,7 @@ lastupdate = time.time()
 
 def check_loop():
     global lastupdate
-    start = time.time()
+
     SystemInfo.update()
 
     appearance.update()
@@ -85,7 +86,6 @@ def check_loop():
     #wifi.update()
 
     inputs.update(lastupdate)
-    print('needed for inputs update:' + str(time.time() - start))
 
     lastupdate = time.time()
     modules.update()
@@ -95,6 +95,7 @@ settings = QSettings("SHPI GmbH", "Main")
 backlight = Backlight()
 hwmon = HWMon()
 inputs = InputsDict(settings)
+httpserver = HTTPServer(inputs, settings)
 
 try:
     iio = IIO()

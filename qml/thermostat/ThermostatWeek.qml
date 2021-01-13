@@ -94,6 +94,7 @@ Rectangle {
             text: 'Thermostat Schedule'
             color: Colors.black
             font.bold: true
+            font.pixelSize:40
         }
 
         Row {

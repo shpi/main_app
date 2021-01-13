@@ -13,7 +13,6 @@ Rectangle {
     property string dayname: Qt.formatDate(day, "dddd")
 
     id: dayrect
-
     height: parent.height
     width: height * 0.7
     radius: 10
@@ -22,7 +21,8 @@ Rectangle {
 
     Text {
         text: dayname
-        font.pixelSize: 24
+        font.pixelSize: 20
+        fontSizeMode: Text.Fit
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         color: Colors.black
@@ -57,14 +57,14 @@ Rectangle {
 
     MouseArea {
         anchors.fill: parent
-
-        onClicked: popupWeather.open()
+        onClicked: view.currentIndex = (view.count - 1)
+        //onClicked: popupWeather.open()
     }
 
-    Popup {
+ /*   Popup {
         id: popupWeather
 
-        height: window.height
+      height: window.height
         width: window.width
 
         parent: Overlay.overlay
@@ -80,7 +80,7 @@ Rectangle {
             color: Colors.white
         }
 
-        Loader {
+       Loader {
             anchors.fill: parent
             id: thermostatSchedule
             source: "../weather/WeatherFull.qml"
@@ -101,5 +101,5 @@ Rectangle {
             font.family: localFont.name
             onClicked: popupWeather.close()
         }
-    }
+    } */
 }

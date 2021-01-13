@@ -76,7 +76,6 @@ Item {
 
                     component.createObject(screensaverRow, {
                                                "iconview": true,
-                                               "width": "100",
                                                "name": module[2]
                                            })
                 }
@@ -108,7 +107,6 @@ Item {
 
                 component.createObject(screensaverRow, {
                                            "iconview": true,
-                                           "width": "100",
                                            "name": module[2]
                                        })
             }

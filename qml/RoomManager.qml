@@ -93,6 +93,10 @@ Item {
             RoundButton {
 
                 text: 'Delete Room'
+                palette.button: "darkred"
+                palette.buttonText: "white"
+                font.pixelSize: 32
+                font.family: localFont.name
                 onClicked: {
                     modules.delete_room(roomname)
                     settingsstackView.pop()
@@ -162,7 +166,7 @@ Item {
                     anchors.fill: parent
                     onClicked: if (roomname == '')
                                    settingsstackView.push(Qt.resolvedUrl(
-                                                              'Rooms.qml'), {
+                                                              'RoomManager.qml'), {
                                                               "roomname": modelData
                                                           })
                     enabled: roomname === '' ? true : false

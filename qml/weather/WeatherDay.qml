@@ -31,7 +31,7 @@ Rectangle {
     height: 200
     radius: 10
     border.width: 2
-    border.color: Colors.black
+    border.color: Colors.white
     color: Colors.whitetrans
 
     Text {

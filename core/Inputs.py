@@ -268,6 +268,10 @@ class InputsDict(QObject):
                 if value['logging'] > 0:
                     self.buffer[key].append((value['lastupdate'], value['value']))
 
+                    # just for now, to avoid overflows
+                    if len(self.buffer[key]) > 30000:
+                        self.buffer[key] = self.buffer[key][10000:]
+
             elif ((value['interval'] > 0) and (value['lastupdate'] +
                                                value['interval'] < time.time())):
 
@@ -288,6 +292,10 @@ class InputsDict(QObject):
 
             if self.entries[key]['logging'] > 0:
                 self.buffer[key].append((self.entries[key]['lastupdate'], self.entries[key]['value']))
+
+                # just for now, to avoid overflows
+                if len(self.buffer[key]) > 30000:
+                    self.buffer[key] = self.buffer[key][10000:]
 
 
 

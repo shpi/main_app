@@ -5,6 +5,14 @@ import "../fonts/"
 
 Item {
 
+    StackView {
+        id: roomstackView
+        anchors.fill: parent
+        initialItem: roomStart
+
+        Component {
+
+            id: roomStart
 
     ListView {
 
@@ -12,7 +20,7 @@ Item {
 
 
         model: modules.available_rooms
-        anchors.fill: parent
+
         delegate: listDelegate
 
 
@@ -60,8 +68,18 @@ Item {
 
                 }
 
+                MouseArea {
+                    id: mouse
+                    anchors.fill: parent
+                    onClicked: roomstackView.push(
+                                   Qt.resolvedUrl('Room.qml'), {
+                                       "roomname": modelData
+                                   })
+                }
+
 
             }
         }
     }
 }
+}}
