@@ -7,18 +7,67 @@ import shutil
 import re
 import glob
 import time
+import threading
+from subprocess import check_output, call, Popen, PIPE, DEVNULL
 from core.DataTypes import DataType
 
 
-class _SystemInfo:
+class SystemInfo:
 
     def __init__(self,  parent=None):
-        super(_SystemInfo, self).__init__()
+        super(SystemInfo, self).__init__()
         self.diskstats = dict()
         self._keys = 'read_bps', 'write_bps', 'read_abs', 'write_abs'
         self.last_diskstat = 0
         self.interval = 60
         self.update_diskstats(init=True)
+
+        self.network_devices = SystemInfo.get_net_devs()
+
+        self.network_hosts = dict()
+
+        for netdev in self.network_devices:
+            if netdev != 'lo':
+                threading.Thread(target=self.scan_hosts, args=(netdev,)).start()
+
+
+
+    def scan_hosts(self, device):
+
+        p = Popen(['nmap', '-sn', SystemInfo.get_ip4_address(device)+'/24'], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+        #'sudo', '-S',
+        #stdout_data = p.communicate(input=b'password')[0].split(b'\n')
+        stdout_data = p.communicate()[0].split(b'\n')
+
+        for key in self.network_hosts:
+            if self.network_hosts[key]['dev'] == device:
+                del self.network_hosts[key]
+
+        for line in stdout_data:
+            output = re.search(b'Nmap scan report for ([^ ]*) \(([^\)]*)\)', line)
+            if output:
+                    ip = output.group(2).decode()
+                    self.network_hosts[ip] = {'hostname':output.group(1).decode(), 'dev' : device}
+            else:
+                output = re.search(b'Nmap scan report for ([^\n]*)', line)
+                if output:
+                    ip = output.group(1).decode()
+                    self.network_hosts[ip] = {'dev' : device}
+            output = re.search(b'Host is up \(([^ ]*) latency\)', line)
+            if output:
+                self.network_hosts[ip]['latency'] = output.group(1).decode()
+            output = re.search(b'MAC Address: ([^ ]*) \(([^\)]*)\)', line)
+            if output:
+                self.network_hosts[ip]['mac'] = output.group(1).decode()
+                self.network_hosts[ip]['manufacturer'] = output.group(2).decode()
+
+
+
+
+
+
+
+
 
     def update_diskstats(self, stat_path='/proc/diskstats', init=False):
         if os.path.isfile(stat_path):
@@ -211,4 +260,4 @@ class _SystemInfo:
         return netdevs
 
 
-SystemInfo = _SystemInfo()
+

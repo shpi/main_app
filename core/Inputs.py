@@ -22,7 +22,7 @@ class InputListModel(QAbstractListModel):
     def __init__(self, dictionary, parent=None):
         super(InputListModel, self).__init__(parent)
         self.entries = dictionary
-        self._keys = list()
+        self._keys = list(self.entries.keys())
 
     def updateKeys(self):
         self._keys = list(self.entries.keys())
@@ -256,8 +256,6 @@ class InputsDict(QObject):
             self.settings.setValue(key + "/exposed", int(value))
         except KeyError:
             print(key + ' not in Inputdictionary')
-
-
 
 
     def update(self, lastupdate):

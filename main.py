@@ -79,8 +79,7 @@ lastupdate = time.time()
 def check_loop():
     global lastupdate
 
-    SystemInfo.update()
-
+    systeminfo.update()
     appearance.update()
 
     #wifi.update()
@@ -90,7 +89,7 @@ def check_loop():
     lastupdate = time.time()
     modules.update()
 
-
+systeminfo = SystemInfo()
 settings = QSettings("SHPI GmbH", "Main")
 backlight = Backlight()
 hwmon = HWMon()
@@ -118,7 +117,7 @@ inputs.add(hwmon.get_inputs())
 inputdevs = InputDevs()
 inputs.add(inputdevs.get_inputs())
 inputs.add(backlight.get_inputs())
-inputs.add(SystemInfo.get_inputs())
+inputs.add(systeminfo.get_inputs())
 
 appearance = Appearance(inputs, settings)
 modules = ModuleManager(inputs, settings)

@@ -3,386 +3,146 @@
 from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
 import time
 import os
-# from enum import Enum for self.state later
 import threading
 from datetime import datetime
 from core.DataTypes import DataType
 from core.Toolbox import Pre_5_15_2_fix
+from core.Inputs import InputListModel
+from functools import partial
+import urllib.request
+import json
+from core.DataTypes import Convert
 
 
-class NightModes:
-    Off = 0
-    On = 1
-    FromTimer = 2  # Static configured start stop times
-    FromTimer_StartStopInput = 3  # Fallback to FromInput if not in self.inputs
-    # FromInput = 4
-    __valid_range = Off, FromTimer_StartStopInput  # lowest and highest
-
-    @classmethod
-    def is_valid(cls, number) -> bool:
-        min_, max_ = cls.__valid_range
-        return min_ <= number <= max_
-
-
-class Appearance(QObject):
-    def __init__(self, inputs, settings: QSettings):
+class HTTP(QObject):
+    def __init__(self, name, inputs, settings: QSettings):
         super().__init__()
 
-        self.inputs = inputs.entries
-        self.backlightlevel = 0
-        self._blackfilter = 0
+        self.name = name
+        self.inputs = inputs
         self.settings = settings
-        self._background_night = int(settings.value("appearance/background_night", 1))
-        self._min_backlight = int(settings.value("appearance/min", 20))
-        self._max_backlight = int(settings.value("appearance/max", 100))
-        self._min_backlight_night = int(settings.value("appearance/min_night", 20))
-        self._max_backlight_night = int(settings.value("appearance/max_night", 100))
+        self._ip = str(settings.value("http/" + name + "/ip", '127.0.0.1'))
+        self._port = int(settings.value("http/" + name + "/port", '9000'))
+        self._vars = list(settings.value("http/" + name + "/vars", []))
+        self._ssl = False
+        self.http_inputs = dict()
 
-        self._night_mode = int(settings.value("appearance/night_mode", 0))
-        self._night_mode_start = settings.value("appearance/night_mode_start", '00:00')
-        self._night_mode_end = settings.value("appearance/night_mode_end", '00:00')
+        self.update_vars()
+        self.selected_inputs = dict()
 
-        self._jump_timer = int(settings.value("appearance/jump_timer", 20))
-        self.jump_state = 0
-        self._dim_timer = int(settings.value("appearance/dim_timer", 100))
-        self._off_timer = int(settings.value("appearance/off_timer", 300))
-        self.lastuserinput = time.time()
-        self.state = 'ACTIVE'  # Enum('ACTIVE','SLEEP','OFF')
-        self._night = False
+        self.inputlist = InputListModel(self.http_inputs)
 
-        self.possible_devs = dict()
-        self.possible_devs['list'] = list()
+        #minimum fields: path, value, interval, type, lastupdate
 
-        for key in self.inputs.keys():
-            if key.startswith('dev/') and key.find('/thread', 4) > 0:
+    def get_inputs(self) -> dict:
 
-                self.possible_devs['list'].append(key)
-                try:
-                    self.possible_devs[key] = int(
-                        settings.value("appearance/" + key, 1))
-                except KeyError:
-                    self.possible_devs[key] = 1
-                if self.possible_devs[key] == 1:
-                    inputs.entries[key]['interrupts'].append(self.interrupt)
+        for key in self.selected_inputs:
+            if key[len("http/" + self.name + "/"):] not in self._vars:
+                del self.selected_inputs[key]
 
+        for key in self._vars:
+            #data[key]['interval'] = int(settings.value("http/" + name + "/" + key + '/interval', data[key]['interval']))
+            if key in self.http_inputs:
+                self.selected_inputs["http/" + self.name + "/" + key] = self.http_inputs[key]
+                self.selected_inputs["http/" + self.name + "/" + key]["call"] = partial(self.get_value, key)
+                self.selected_inputs["http/" + self.name + "/" + key]["type"] = Convert.str_to_type(self.http_inputs[key]['type'])
+
+                if 'set' in self.http_inputs[key] and self.http_inputs[key]['set']:
+                    self.selected_inputs["http/" + self.name + "/" + key]["set"] = partial(self.set_value, key, value)
+
+
+        return self.selected_inputs
 
 
     @Signal
-    def dim_timer_changed(self):
+    def dataChanged(self):
         pass
 
-    # @Property(int, notify=dim_timer_changed)
-    def dim_timer(self):
-        return int(self._dim_timer)
+    @Property(QObject, notify=dataChanged)
+    def inputList(self):
 
-    @Pre_5_15_2_fix(int, dim_timer, notify=dim_timer_changed)
-    def dim_timer(self, seconds):
-        self._dim_timer = int(seconds)
-        self.settings.setValue("appearance/dim_timer", seconds)
+        return self.inputlist
 
-    @Signal
-    def night_mode_start_changed(self):
-        pass
 
-    # @Property(str, notify=night_mode_start_changed)
-    def night_mode_start(self):
-        return self._night_mode_start
 
-    # @night_mode_start.setter
-    @Pre_5_15_2_fix(str, night_mode_start, notify=night_mode_start_changed)
-    def night_mode_start(self, time_):
-        self._night_mode_start = time_
-        self.settings.setValue("appearance/night_mode_start", time_)
-
-    @Signal
-    def night_mode_end_changed(self):
-        pass
-
-    # @Property(str, notify=night_mode_end_changed)
-    def night_mode_end(self):
-        return self._night_mode_end
-
-    # @night_mode_end.setter
-    @Pre_5_15_2_fix(str, night_mode_end, notify=night_mode_end_changed)
-    def night_mode_end(self, time_):
-        self._night_mode_end = time_
-        self.settings.setValue("appearance/night_mode_end", time_)
-
-    @Slot(str)
-    def delete_file(self, path):
-        if os.path.exists(path):
-            os.remove(path)
-
-    @Signal
-    def jump_timer_changed(self):
-        pass
-
-    # @Property(int, notify=jump_timer_changed)
-    def jump_timer(self):
-        return int(self._jump_timer)
-
-    # @jump_timer.setter
-    @Pre_5_15_2_fix(int, jump_timer, notify=jump_timer_changed)
-    def jump_timer(self, seconds):
-        self._jump_timer = int(seconds)
-        self.settings.setValue("appearance/jump_timer", seconds)
-
-    @Signal
-    def nightmodeChanged(self):
-        pass
-
-    # @Property(int, notify=nightmodeChanged)
-    def night_mode(self):
-        return self._night_mode
-
-    @Pre_5_15_2_fix(int, night_mode, notify=nightmodeChanged)  # XXX
-    def night_mode(self, value):
-        self._night_mode = int(value)
-        self.settings.setValue("appearance/night_mode", value)
-        self.nightmodeChanged.emit()
-        self.check_nightmode()
-
-    @Signal
-    def off_timer_changed(self):
-        pass
-
-    # @Property(int, notify=off_timer_changed)
-    def off_timer(self):
-        return int(self._off_timer)
-
-    # @off_timer.setter
-    @Pre_5_15_2_fix(int, off_timer, notify=off_timer_changed)
-    def off_timer(self, seconds):
-        self._off_timer = int(seconds)
-        self.settings.setValue("appearance/off_timer", seconds)
-
-    @Signal
-    def background_Night_Changed(self):
-        pass
-
-    # @Property(bool, notify=background_Night_Changed)
-    def background_night(self):
-        return int(self._background_night)
-
-    @Pre_5_15_2_fix(bool, background_night, notify=background_Night_Changed)  # XXX
-    def background_night(self, bg_night):
-        self._background_night = int(bg_night)
-        self.settings.setValue("appearance/background_night", self._background_night)
-        self.background_Night_Changed.emit()
-
-    @Signal
-    def rangeChanged(self):
-        pass
-
-    # @Property(int, notify=rangeChanged)
-    def minbacklight(self):
-        return int(self._min_backlight)
-
-    # @minbacklight.setter
-    @Pre_5_15_2_fix(int, minbacklight, notify=rangeChanged)
-    def minbacklight(self, min_):
-        self._min_backlight = int(min_)
-        self.settings.setValue("appearance/min", self._min_backlight)
-        self.rangeChanged.emit()
-
-    # @Property(int, notify=rangeChanged)
-    def minbacklight_night(self):
-        return int(self._min_backlight_night)
-
-    # @minbacklight_night.setter
-    @Pre_5_15_2_fix(int, minbacklight_night, notify=rangeChanged)
-    def minbacklight_night(self, min_):
-        self._min_backlight_night = int(min_)
-        self.settings.setValue("appearance/min_night", self._min_backlight_night)
-        self.rangeChanged.emit()
-
-    # @Property(int, notify=rangeChanged)
-    def maxbacklight(self):
-        return int(self._max_backlight)
-
-    # @maxbacklight.setter
-    @Pre_5_15_2_fix(int, maxbacklight, notify=rangeChanged)
-    def maxbacklight(self, max_):
-        self._max_backlight = int(max_)
-        self.rangeChanged.emit()
-        self.settings.setValue("appearance/max", self._max_backlight)
-        self.set_backlight(self._max_backlight)
-        self.rangeChanged.emit()
-
-    # @Property(int, notify=rangeChanged)
-    def maxbacklight_night(self):
-        return int(self._max_backlight_night)
-
-    # @maxbacklight_night.setter
-    @Pre_5_15_2_fix(int, maxbacklight_night, notify=rangeChanged)
-    def maxbacklight_night(self, max_):
-        self._max_backlight_night = int(max_)
-        self.rangeChanged.emit()
-        self.settings.setValue("appearance/max_night", self._max_backlight_night)
-        self.set_backlight(self._max_backlight_night)
-        self.rangeChanged.emit()
-
-    @Signal
-    def nightChanged(self):
-        pass
-
-    @Property(int, notify=nightChanged)
-    def night(self):
-        return int(self._night)
-
-    def check_nightmode(self):
-        if not NightModes.is_valid(self._night_mode):
-            print('Unknown nightmode:', self._night_mode)
-            return
-
-        if self._night_mode in (NightModes.Off, NightModes.On):
-            # Easy job
-            if self._night != self._night_mode:
-                self._night = bool(self._night_mode)
-                self.nightChanged.emit()
-            return
-
-        if self._night_mode == NightModes.FromTimer_StartStopInput:
-            return  # not yet supported
-
-            # Read start/end from inputs
-            if self._start_input_key not in self.inputs or self._stop_input_key not in self.inputs:
-                # print('Missing start and/or stop for automatic nightmode. Resetting to FromTimer.')
-                # self.night_mode = NightModes.FromTimer
-                return
-
-            start_input = self.inputs[self._start_input_key]
-            stop_input = self.inputs[self._stop_input_key]
-
-            if start_input['type'] != DataType.TIME or stop_input['type'] != DataType.TIME:
-                # print('Unknown start/stop type. Resetting to FromTimer.')
-                # self.night_mode = NightModes.FromTimer
-                return
-
-            start_str = start_input['value']
-            stop_str = stop_input['value']
-
-        else:  # self._night_mode == NightModes.FromTimer
-            # Read start/stop from static values
-            start_str = self._night_mode_start
-            stop_str = self._night_mode_end
-
-        # Working with pure times.
+    @Slot()
+    def update_vars(self):
         try:
-            start_time = datetime.strptime(start_str, '%H:%M').time()
-            stop_time = datetime.strptime(stop_str, '%H:%M').time()
-        except ValueError:
-            start_time = datetime.strptime("00:00", '%H:%M').time()
-            stop_time = datetime.strptime("00:00", '%H:%M').time()
+            url = 'https://' if self._ssl else 'http://'
+            url += self._ip + ':' + str(self._port) + '/'
+            response = urllib.request.urlopen(url)
+            data = response.read().decode('utf-8')
+            data =  json.loads(data)
 
-        if start_time == stop_time:
-            # Invalid config. Do nothing.
-            return
+            for key in data:
+                data[key]["type"] = Convert.str_to_type(data[key]['type'])
 
-        now_time = datetime.now().time()
 
-        if start_time < stop_time:
-             # 18:00 - 23:00
-             night_new = start_time < now_time < stop_time
-        else:
-             # 23:00 - 8:00
-             night_new = not(stop_time < now_time < start_time)
+            self.http_inputs = data
 
-        if night_new != self._night:
-            self._night = night_new
-            self.nightChanged.emit()
 
-    def update(self):
-        self.check_nightmode()
+            #TODO check for correctness of dict
 
-        if self.state in ('SLEEP',) and self._off_timer > 0 and (self.lastuserinput + self._off_timer < time.time()):
-            self.set_backlight(0)
-            self.state = 'OFF'
+            self.vars_changed.emit()
 
-        elif self.state in ('ACTIVE',) and self.lastuserinput + self._dim_timer < time.time():
-            if self._night:
-                self.set_backlight(self._min_backlight_night)
-            else:
-                self.set_backlight(self._min_backlight)
-            self.state = 'SLEEP'
+        except Exception as ex:
+            print(ex)
+            return {}
 
-        elif self.state in ('SLEEP', 'OFF') and self._dim_timer > 0 and self.lastuserinput + self._dim_timer > time.time():
-            if self._night:
-                self.set_backlight(self._max_backlight_night)
-            else:
-                self.set_backlight(self._max_backlight)
-            self.state = 'ACTIVE'
 
-        if self.jump_state == 0 and self._jump_timer + self.lastuserinput < time.time():
-            self.jump_state = 1
-            self.jumpHome.emit()
+    def set_value(self, path, value):
+       try:
+           url = 'https://' if self._ssl else 'http://'
+           params = {'key': path, 'set': str(value)}
+           url += self._ip + ':' + str(self._port) + '/?' + urllib.parse.urlencode(params)
+           response = urllib.request.urlopen(url)
+           data = response.read().decode('utf-8')
+           data =  json.loads(data)
 
-    @Signal
-    def jumpHome(self):
-        pass
+           #TODO check for correctness of dict
 
-    def set_backlight(self, value):
-        setthread = threading.Thread(target=self._set_backlight, args=(value,))
-        setthread.start()
+           return data['value']
 
-    def _set_backlight(self, value):
-        value = int(value)
-        if value != self.backlightlevel:
-            if value < 1:
-                self.inputs['backlight/brightness']['set'](0)
+       except Exception as ex:
+           print(ex)
+           return None
 
-            elif value < 30:
-                self.inputs['backlight/brightness']['set'](1)
-                self._blackfilter = ((100 - (value * 3.3)) / 100)
-                self.blackChanged.emit()
 
-            elif value <= 100:
-                self.inputs['backlight/brightness']['set'](
-                    int(self.mapFromTo(value, 30, 100, 1, 100)))
-                self._blackfilter = 0
-                self.blackChanged.emit()
 
-            self.backlightlevel = (value)
+    def get_value(self, path):
+       try:
+           url = 'https://' if self._ssl else 'http://'
+           params = {'key': path}
+           url += self._ip + ':' + str(self._port) + '/?' + urllib.parse.urlencode(params)
+           response = urllib.request.urlopen(url)
+           data = response.read().decode('utf-8')
+           data =  json.loads(data)
 
-    def mapFromTo(self, x, a, b, c, d):
-        y = (x-a)/(b-a)*(d-c)+c
-        return y
+           #TODO check for correctness of dict
 
-    def interrupt(self, key, value):
-        self.lastuserinput = time.time()
-        self.jump_state = 0
+           return data['value']
 
-        if self.state in ('OFF', 'SLEEP'):
-            self.state = 'ACTIVE'
-            self.set_backlight(self._max_backlight)
+       except Exception as ex:
+           print(ex)
+           return None
+
+
 
     @Signal
-    def blackChanged(self):
+    def vars_changed(self):
         pass
 
-    @Slot(str, int)
-    def setDeviceTrack(self, path, value):
-        value = int(value)
-        if value != self.possible_devs[path]:
-            self.possible_devs[path] = value
-            self.settings.setValue("appearance/" + path, value)
+    @Signal
+    def ip_changed(self):
+        pass
 
-            if self.possible_devs[path] == 1:
-                self.inputs[path]['interrupts'].append(self.interrupt)
+    # @Property(str, notify=ip_changed)
+    def ip(self):
+        return str(self._ip)
 
-            else:
-                i = 0
-                for interrupt in self.inputs[path]['interrupts']:
-                    if interrupt == self.interrupt:
-                        self.inputs[path]['interrupts'].pop(i)
-                    i += 1
+    @Pre_5_15_2_fix(str, ip, notify=ip_changed)
+    def ip(self, ip):
+        self._ip = str(ip)
+        self.settings.setValue("http/" + self.name + "/ip", ip)
 
-    @Property(float, notify=blackChanged)
-    def blackfilter(self):
-        return self._blackfilter
 
-    # Workaround for https://bugreports.qt.io/browse/PYSIDE-1426
-    # @Property("QVariantMap", constant=True)
-    def devices(self) -> dict:
-        return dict(self.possible_devs)
-    devices = Property("QVariantMap", devices, constant=True)

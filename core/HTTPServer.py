@@ -8,43 +8,84 @@ from datetime import datetime
 from core.DataTypes import DataType
 from core.Toolbox import Pre_5_15_2_fix
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-#import urlparse
 import urllib.parse as urlparse
 import json
+from core.DataTypes import Convert
 
 class ServerHandler(BaseHTTPRequestHandler):
 
     inputs = None
 
     def do_GET(self):
-
+        start_time = time.time()
         try:
+            succ = True
+
             if "?" in self.path:
-                start_time = time.time()
-                message = 'SHPI'
-                self.send_response(200)
+                query = dict(urlparse.parse_qsl(self.path.split("?")[1], True))
+            else:
+                succ = False
 
-                print('http request from: ' + self.client_address[0])
+            if succ and ('key' in query) and (query['key'] in self.inputs) and self.inputs[query['key']].get('exposed', False):
 
-                print(dict(urlparse.parse_qsl(self.path.split("?")[1], True)))
 
-                self.send_header('Content-type', 'text')
-                self.end_headers()
+                     if ('set' in query):
+                         self.inputs[query['key']]['set'](query['set'])
 
-                self.wfile.write(bytes(message, "utf8"))
-                self.connection.close()
 
-                print("request finished in:  %s seconds" %
-                              (time.time() - start_time))
+                     value = self.inputs[query['key']]
+                     self.send_response(200)
+                     self.send_header('Content-type', 'text')
+                     self.end_headers()
+                     message = '{'
+                     #message += '"description":"' + str(value.get('description', '')) + '",'
+                     #message += '"type":"' + Convert.type_to_str(value["type"]) + '",'
+                     message += '"lastupdate":' + str(value.get('lastupdate', '')) + ','
+                     #if 'set' in value: message += '"set": true,'
+                     message += '"interval":' + str(value.get('interval', '0')) + ','
+                     message += '"value":"' + str(value.get('value', '')) + '"}'
+
+                     #print(json.loads(message))
+
+                     self.wfile.write(bytes(message, "utf8"))
+                     self.connection.close()
 
             else:
-                self.send_response(202)
+                succ = False
+
+
+            if not succ:
+                self.send_response(200)
                 self.send_header('Content-type', 'text')
                 self.end_headers()
+                message = '{'
+                #exposed = list(filter(lambda x: self.inputs[x]['exposed'], self.inputs.keys()))
 
-                exposed = list(filter(lambda x: self.inputs[x]['exposed'], self.inputs.keys()))
+                for key, value in self.inputs.items():
+                   if value['exposed'] == True:
 
-                self.wfile.write(bytes(json.dumps(exposed), "utf8"))
+                       message += '"' + key + '":{'
+                       message += '"description":"' + str(value.get('description', '')) + '",'
+                       message += '"type":"' + Convert.type_to_str(value["type"]) + '",'
+                       message += '"lastupdate":' + str(value.get('lastupdate', '')) + ','
+                       if 'set' in value: message += '"set": true,'
+                       message += '"interval":' + str(value.get('interval', '0')) + ','
+                       message += '"value":"' + str(value.get('value', '')) + '"'
+
+                       #print('<td>' + str(value.get('available', '')) + '</td>')
+                       #print('<td>' + str(value.get('min', '')) + '</td>')
+                       #print('<td>' + str(value.get('max', '')) + '</td>')
+                       #print('<td>' + str(value.get('step', '')) + '</td>')
+                       message += '},'
+
+                message = message[0:-1]
+                message += '}'
+
+                #print(json.loads(message))
+
+                self.wfile.write(bytes(message, "utf8"))
+
+                #self.wfile.write(bytes(json.dumps(exposed), "utf8"))
 
                 self.connection.close()
         except Exception as e:
@@ -52,7 +93,9 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.send_response(400)
             self.connection.close()
 
-        return
+        print("request finished in:  %s seconds" %
+                          (time.time() - start_time))
+        #return
 
     def log_request(self, code):
 

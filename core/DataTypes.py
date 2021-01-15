@@ -96,10 +96,11 @@ class Convert:
 
     @staticmethod
     def str_to_type(datatype: str):
+
         if datatype in Convert._mapping_str_type:
             return Convert._mapping_str_type[datatype]
         else:
-            return 'unknown'
+            return DataType.UNDEFINED
 
     _mapping_type_str = {DataType.UNDEFINED: 'undefined',
                          DataType.FLOAT: 'float',
@@ -150,6 +151,8 @@ class Convert:
                          DataType.WEBREQUEST: 'webrequest'}
 
     _mapping_str_type = {value: key for (key, value) in _mapping_type_str.items()}
+
+
 
     _mapping_iio_shpi = {
         ChannelType.IIO_VOLTAGE: DataType.VOLTAGE,
