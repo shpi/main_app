@@ -156,11 +156,11 @@ class InputsDict(QObject):
 
         for key in list(newinputs):
 
-            newinputs[key]['logging'] = bool(self.settings.value(key + "/logging", 0))
+            newinputs[key]['logging'] = bool(int(self.settings.value(key + "/logging", 0)))
             if newinputs[key]['logging']:
                 self.buffer[key] = list()
 
-            newinputs[key]['exposed'] = bool(self.settings.value(key + "/exposed", 0))
+            newinputs[key]['exposed'] = bool(int(self.settings.value(key + "/exposed", 0)))
 
             if 'lastupdate' not in newinputs[key]:
                 newinputs[key]['lastupdate'] = 0
@@ -250,10 +250,12 @@ class InputsDict(QObject):
 
     @Slot(str, bool)
     def set_exposed(self, key, value):
-        print('set_exposed' + key + ' ' + str(value))
+        print('set_exposed ' + key + ' ' + str(value))
         try:
             self.entries[key]['exposed'] = bool(value)
+
             self.settings.setValue(key + "/exposed", int(value))
+
         except KeyError:
             print(key + ' not in Inputdictionary')
 

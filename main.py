@@ -127,6 +127,9 @@ def KillThreads():
         if key.endswith('thread'):
             inputs.entries[key]['set'](0)
 
+    httpserver.server.shutdown()
+    httpserver.server_thread.join()
+
 if __name__ == "__main__":
 
     app = QApplication(sys.argv)
