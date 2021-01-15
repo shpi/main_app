@@ -85,7 +85,9 @@ class InputsDict(QObject):
         self.settings = settings
         self.entries = dict()
         self.buffer = dict()
-        self.threadlist = list()
+
+        self.timerschedule = dict()
+
         self.completelist = InputListModel(self.entries)
 
         self.outputs = QSortFilterProxyModel()
@@ -152,6 +154,20 @@ class InputsDict(QObject):
         return self.entries
     data = Property('QVariantMap', data, constant=True)
 
+    def register_timerschedule(self, key, interval):
+        interval = int(interval)
+        if interval not in self.timerschedule:
+            self.timerschedule[interval] = list()
+
+        self.timerschedule[interval].append(key)
+
+
+    def delete_timerschedule(self,key, interval):
+        if int(interval) in self.timerschedule:
+            if key in self.timerschedule[interval]:
+                self.timerschedule[interval].remove(key)
+
+
     def add(self, newinputs=None):
         if newinputs is None:
             newinputs = {}
@@ -170,6 +186,9 @@ class InputsDict(QObject):
                 newinputs[key]['value'] = 0
             if 'call' in newinputs[key]:
                 newinputs[key]['interval'] = int(self.settings.value(key + "/interval", newinputs[key].get('interval', 60)))
+
+            if newinputs[key]['interval'] != 0:
+                self.register_timerschedule(key, newinputs[key]['interval'])
 
 
             # following lines are inserted to make it possible to update values from another class
@@ -192,7 +211,6 @@ class InputsDict(QObject):
 
         self.entries.update(newinputs)
         self.completelist.updateKeys()
-        self.update(0)
         self.dataChanged.emit()
 
         # 'available' -> for ENUM datatype, list of option for dropdown box
@@ -233,7 +251,9 @@ class InputsDict(QObject):
     def set_interval(self, key, value):
         print('set_interval' + key + ' ' + str(value))
         try:
+            self.delete_timerschedule(key, self.entries[key]['interval'])
             self.entries[key]['interval'] = int(value)
+            self.register_timerschedule(key, int(value))
             self.settings.setValue(key + "/interval", value)
         except KeyError:
             print(key + ' not in Inputdictionary')
@@ -263,9 +283,10 @@ class InputsDict(QObject):
 
 
     def update(self, lastupdate):
-        for key, value in self.entries.items():
 
-            if value['interval'] < 0 and value['lastupdate'] > lastupdate:
+        for key in self.timerschedule[-1]:
+            value = self.entries[key]
+            if value['lastupdate'] > lastupdate:
                 self.completelist.updateListView(key)
                 if value['logging'] > 0:
                     self.buffer[key].append((value['lastupdate'], value['value']))
@@ -274,14 +295,18 @@ class InputsDict(QObject):
                     if len(self.buffer[key]) > 30000:
                         self.buffer[key] = self.buffer[key][10000:]
 
-            elif ((value['interval'] > 0) and (value['lastupdate'] +
-                                               value['interval'] < time.time())):
-                if (key.startswith('http')):
-                    if 'updatethread' not in self.entries[key] or not self.entries[key]['updatethread'].is_alive():
-                        self.entries[key]['updatethread'] = (threading.Thread(target=self.update_value, args=(key, value,)))
-                        self.entries[key]['updatethread'].start()
-                else:
-                    self.update_value(key, value)
+        for timeinterval in self.timerschedule:
+
+            if timeinterval != -1 and lastupdate % timeinterval == 0:
+
+                for key in self.timerschedule[timeinterval]:
+
+                    if (key.startswith('http')):
+                        if 'updatethread' not in self.entries[key] or not self.entries[key]['updatethread'].is_alive():
+                            self.entries[key]['updatethread'] = (threading.Thread(target=self.update_value, args=(key,)))
+                            self.entries[key]['updatethread'].start()
+                    else:
+                        self.update_value(key)
 
         # self.dataChanged.emit()
 

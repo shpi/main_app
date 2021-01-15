@@ -73,12 +73,11 @@ def safe_timer(timeout, func, *args, **kwargs):
 
 """ Loop for checking logic regularly """
 
-lastupdate = time.time()
+lastupdate = int(time.time())
 ready = True
 
 def check_loop():
     global lastupdate, ready
-
 
     systeminfo.update()
     appearance.update()
@@ -87,7 +86,7 @@ def check_loop():
     if ready:
         ready = False
         inputs.update(lastupdate)
-        lastupdate = time.time()
+        lastupdate = int(time.time())
         ready = True
     modules.update()
 

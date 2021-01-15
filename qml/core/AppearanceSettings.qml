@@ -305,6 +305,7 @@ Item {
                         delegate: delegateTime
                         visibleItemCount: 3
                         height: 100
+
                         onCurrentIndexChanged: {
                             if (appearance.night_mode === 2)
                                 appearance.night_mode_start = hoursTumbler.currentIndex.toString(

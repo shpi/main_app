@@ -57,7 +57,6 @@ Item {
                     height: 50
                     width: 600
                     model: modules.all_instances()
-
                     visible: root.roomname !== '' ? true : false
                 }
 

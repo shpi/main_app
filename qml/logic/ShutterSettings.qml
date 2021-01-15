@@ -38,6 +38,13 @@ Item {
                 width: 550
                 model: inputs.outputList
                 textRole: 'path'
+
+                Component.onCompleted: {
+
+                    combo_boolean_up.currentIndex = getIndex(modules.loaded_instances['Logic']['Shutter'][instancename].relay_up, inputs.outputList)
+                }
+
+
                 onActivated: modules.loaded_instances['Logic']['Shutter'][instancename].relay_up
                              = this.currentText
 
@@ -57,6 +64,13 @@ Item {
                 width: 550
                 model: inputs.outputList
                 textRole: 'path'
+
+                Component.onCompleted: {
+
+                    combo_boolean_down.currentIndex = getIndex(modules.loaded_instances['Logic']['Shutter'][instancename].relay_down, inputs.outputList)
+                }
+
+
                 onActivated: modules.loaded_instances['Logic']['Shutter'][instancename].relay_down
                              = this.currentText
 

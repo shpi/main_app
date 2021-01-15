@@ -4,7 +4,7 @@ import QtQuick.Controls 2.12
 import "../../fonts/"
 
 Item {
-        property string instancename
+    property string instancename
 
     ListView {
 
@@ -14,65 +14,62 @@ Item {
             height: 150
             color: "transparent"
             Column {
-            Text {
-                padding: 10
-                id: inputtitle
+
                 width: parent.width
-                text: '<b>Available Variables</b>'
-                font.pixelSize: 32
-                color: Colors.black
-            }
+
+                Text {
+                    padding: 10
+                    id: inputtitle
+                    width: parent.width
+                    text: '<b>Available Variables</b>'
+                    font.pixelSize: 32
+                    color: Colors.black
+                }
 
                 Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 10
                     Label {
                         anchors.verticalCenter: parent.verticalCenter
                         text: "IP"
                         color: Colors.black
                     }
 
-            TextField {
-                id: ip_text
-                width:450
-                Component.onCompleted: ip_text.text = modules.loaded_instances['Connections']['HTTP'][instancename].ip
-                onTextChanged: modules.loaded_instances['Connections']['HTTP'][instancename].ip
-                               = ip_text.text
+                    TextField {
+                        id: ip_text
+                        width: 450
+                        Component.onCompleted: ip_text.text = modules.loaded_instances['Connections']['HTTP'][instancename].ip
+                        onTextChanged: modules.loaded_instances['Connections']['HTTP'][instancename].ip = ip_text.text
+                    }
 
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: ":"
+                        color: Colors.black
+                    }
 
-            }
+                    TextField {
+                        id: port_text
 
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: ":"
-                color: Colors.black
-            }
+                        width: 100
+                        Component.onCompleted: port_text.text = modules.loaded_instances['Connections']['HTTP'][instancename].port
+                        onTextChanged: modules.loaded_instances['Connections']['HTTP'][instancename].port = parseInt(
+                                           port_text.text)
+                    }
 
-            TextField {
-                id: port_text
+                    RoundButton {
 
-                width: 100
-                Component.onCompleted: port_text.text = modules.loaded_instances['Connections']['HTTP'][instancename].port
-                onTextChanged: modules.loaded_instances['Connections']['HTTP'][instancename].port
-                               = parseInt(port_text.text)
-
-
-            }
-
-            RoundButton {
-
-                text: 'Update'
-                palette.button: "darkred"
-                palette.buttonText: "white"
-                font.pixelSize: 32
-                font.family: localFont.name
-                onClicked: {
-                    modules.loaded_instances['Connections']['HTTP'][instancename].update_vars()
-
+                        text: 'Update'
+                        palette.button: "darkred"
+                        palette.buttonText: "white"
+                        font.pixelSize: 32
+                        font.family: localFont.name
+                        onClicked: {
+                            modules.loaded_instances['Connections']['HTTP'][instancename].update_vars()
+                        }
+                    }
                 }
-                }
-
-                }
-          }
-
+            }
         }
 
         height: parent.height
@@ -130,14 +127,17 @@ Item {
                         visible: inputsview.currentIndex == index ? true : false
                         spacing: 250
 
-
                         CheckBox {
-                            checked: modules.loaded_instances['Connections']['HTTP'][instancename].vars.indexOf(path) !== -1 ? true : false
-                            onClicked:
-                            {
+                            checked: modules.loaded_instances['Connections']['HTTP'][instancename].vars.indexOf(
+                                         path) !== -1 ? true : false
+                            onClicked: {
 
-                                if (this.checked)  modules.loaded_instances['Connections']['HTTP'][instancename].add_var(path)
-                                else modules.loaded_instances['Connections']['HTTP'][instancename].delete_var(path)
+                                if (this.checked)
+                                    modules.loaded_instances['Connections']['HTTP'][instancename].add_var(
+                                                path)
+                                else
+                                    modules.loaded_instances['Connections']['HTTP'][instancename].delete_var(
+                                                path)
                             }
                             Text {
                                 text: "make available"
@@ -147,23 +147,11 @@ Item {
                             }
                         }
 
-
-
-
-
-
-
-                            Text {
-                                text: "Interval: " + interval
-                                color: Colors.black
-
-                            }
-
-
+                        Text {
+                            text: "Interval: " + interval
+                            color: Colors.black
+                        }
                     }
-
-
-
                 }
 
                 MouseArea {
