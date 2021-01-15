@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import time
+import threading
 from PySide2.QtCore import Qt, QModelIndex, QSortFilterProxyModel
 from PySide2.QtCore import QAbstractListModel, Property, Signal, Slot, QObject
 from core.DataTypes import Convert
@@ -84,6 +85,7 @@ class InputsDict(QObject):
         self.settings = settings
         self.entries = dict()
         self.buffer = dict()
+        self.threadlist = list()
         self.completelist = InputListModel(self.entries)
 
         self.outputs = QSortFilterProxyModel()
@@ -274,8 +276,12 @@ class InputsDict(QObject):
 
             elif ((value['interval'] > 0) and (value['lastupdate'] +
                                                value['interval'] < time.time())):
-
-                self.update_value(key, value)
+                if (key.startswith('http')):
+                    if 'updatethread' not in self.entries[key] or not self.entries[key]['updatethread'].is_alive():
+                        self.entries[key]['updatethread'] = (threading.Thread(target=self.update_value, args=(key, value,)))
+                        self.entries[key]['updatethread'].start()
+                else:
+                    self.update_value(key, value)
 
         # self.dataChanged.emit()
 

@@ -87,13 +87,15 @@ class HTTP(QObject):
                     return {}
 
             else:
-                print(response)
+
                 data = response.read().decode('utf-8')
                 data =  json.loads(data)
                 for key in data:
-                    print(data[key]["type"])
+
                     data[key]["type"] = Convert.str_to_type(data[key]['type'])
-                    print(data[key]["type"])
+
+                    if data[key]['interval'] == -1: data[key]['interval']  = 60
+                    # -1 means updated through class on remote device, so we need to define standard interval for network vars
 
                 self.http_inputs = data
 
