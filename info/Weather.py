@@ -6,6 +6,7 @@ import json
 import time
 import datetime
 from core.DataTypes import DataType
+from core.Toolbox import Pre_5_15_2_fix
 
 
 class CityModel(QAbstractListModel):
@@ -124,21 +125,23 @@ class Weather(QObject):
     def api_keyChanged(self):
         pass
 
-    @Property(str, notify=api_keyChanged)
+    #@Property(str, notify=api_keyChanged)
     def api_key(self):
         return self._api_key
 
-    @api_key.setter
+    #@api_key.setter
+    @Pre_5_15_2_fix(str, api_key, notify=api_keyChanged)
     def api_key(self, key):
         self._api_key = key
         self.settings.setValue(self.path + "/api_key", key)
         self._weatherinputs['weather/' + self.path + '/lastupdate']['value'] = 0
 
-    @Property(str)
+    #@Property(str)
     def lat(self):
         return self._weatherinputs['weather/' + self.path + '/lat']['value']
 
-    @lat.setter
+    #@lat.setter
+    @Pre_5_15_2_fix(str, lat, notify=api_keyChanged)
     def lat(self, lat):
         self._weatherinputs['weather/' + self.path + '/lat']['lastupdate'] = time.time()
         self._weatherinputs['weather/' + self.path + '/lastupdate']['value'] = 0
@@ -149,20 +152,22 @@ class Weather(QObject):
     def intervalChanged(self):
         pass
 
-    @Property(int, notify=intervalChanged)
+    #@Property(int, notify=intervalChanged)
     def interval(self):
         return self._interval
 
-    @interval.setter
+    #@interval.setter
+    @Pre_5_15_2_fix(int, interval, notify=intervalChanged)
     def interval(self, interval):
         self._interval = int(interval)
         self.settings.setValue(self.path + "/interval", interval)
 
-    @Property(str)
+    #@Property(str)
     def lon(self):
         return self. _weatherinputs[ 'weather/' + self.path + '/lon']['value']
 
-    @lon.setter
+    #@lon.setter
+    @Pre_5_15_2_fix(str, lon, notify=api_keyChanged)
     def lon(self, lon):
         self. _weatherinputs[ 'weather/' + self.path + '/lon']['lastupdate'] = time.time()
         self. _weatherinputs[ 'weather/' + self.path + '/lastupdate']['value'] = 0
@@ -173,11 +178,12 @@ class Weather(QObject):
     def cityChanged(self):
         pass
 
-    @Property(str, notify=cityChanged)
+    #@Property(str, notify=cityChanged)
     def city(self):
         return self. _weatherinputs[ 'weather/' + self.path + '/city']['value']
 
-    @city.setter
+    #@city.setter
+    @Pre_5_15_2_fix(str, city, notify=cityChanged)
     def city(self, city: str) -> None:
         self. _weatherinputs[ 'weather/' + self.path + '/city']['lastupdate'] = time.time()
         self. _weatherinputs[ 'weather/' + self.path + '/lastupdate']['value'] = 0

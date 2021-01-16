@@ -3,6 +3,7 @@
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 import time
 import threading
+from core.Toolbox import Pre_5_15_2_fix
 
 
 class ShowValue(QObject):
@@ -34,21 +35,23 @@ class ShowValue(QObject):
         return self.inputs.entries[self._value_path]['logging']
 
 
-    @Property(str,notify=valueChanged)
+    #@Property(str,notify=valueChanged)
     def value_path(self):
         return self._value_path
 
 
-    @value_path.setter
+    #@value_path.setter
+    @Pre_5_15_2_fix(str, value_path, notify=valueChanged)
     def value_path(self, key):
         self._value_path = key
         self.settings.setValue('showvalue/' + self.name + "/path", key)
 
-    @Property(str,notify=valueChanged)
+    #@Property(str,notify=valueChanged)
     def icon(self):
         return self._icon
 
-    @icon.setter
+    #@icon.setter
+    @Pre_5_15_2_fix(str, icon, notify=valueChanged)
     def icon(self, key):
 
         self._icon = key
@@ -56,11 +59,12 @@ class ShowValue(QObject):
         self.valueChanged.emit()
 
 
-    @Property(str,notify=valueChanged)
+    #@Property(str,notify=valueChanged)
     def divider(self):
         return str(self._divider)
 
-    @divider.setter
+    #@divider.setter
+    @Pre_5_15_2_fix(str, divider, notify=valueChanged)
     def divider(self, key):
 
         self._divider = float(key)

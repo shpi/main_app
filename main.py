@@ -103,7 +103,7 @@ except:
     pass
 
 leds = Led()
-alsamixer = AlsaMixer(settings)
+alsamixer = AlsaMixer(inputs,settings)
 wifi = Wifi(settings)
 inputs.add(wifi.get_inputs())
 

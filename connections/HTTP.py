@@ -68,7 +68,7 @@ class HTTP(QObject):
 
     @Slot()
     def update_vars(self):
-
+        self.http_inputs = dict()
         try:
             url = 'https://' if self._ssl else 'http://'
             url += self._ip + ':' + str(self._port) + '/'
@@ -78,13 +78,13 @@ class HTTP(QObject):
 
             except HTTPError as error:
                     print('Data not retrieved because %s\nURL: %s', error, url)
-                    return {}
+
             except URLError as error:
                     if isinstance(error.reason, socket.timeout):
                         print('socket timed out - URL %s', url)
                     else:
                         print('some other error happened')
-                    return {}
+
 
             else:
 
@@ -93,20 +93,23 @@ class HTTP(QObject):
                 for key in data:
 
                     data[key]["type"] = Convert.str_to_type(data[key]['type'])
-
                     if data[key]['interval'] == -1: data[key]['interval']  = 60
                     # -1 means updated through class on remote device, so we need to define standard interval for network vars
 
                 self.http_inputs = data
 
                 #TODO check for correctness of dict
-                self.inputlist = InputListModel(self.http_inputs)
-                self.vars_changed.emit()
-                self.dataChanged.emit()
+
 
         except Exception as ex:
             print(ex)
-            return {}
+
+        self.inputlist = InputListModel(self.http_inputs)
+        self.vars_changed.emit()
+        self.dataChanged.emit()
+
+
+
 
 
     def set_value(self, path, value):
@@ -231,6 +234,7 @@ class HTTP(QObject):
     def ip(self, ip):
         self._ip = str(ip)
         self.settings.setValue("http/" + self.name + "/ip", ip)
+        self.ip_changed.emit()
 
 
     @Signal

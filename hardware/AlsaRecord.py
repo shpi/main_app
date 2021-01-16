@@ -7,10 +7,10 @@ from functools import partial
 
 class AlsaRecord:
 
-    def __init__(self, card='1',  parent=None):
+    def __init__(self,inputs, card='1',  parent=None):
 
         super(AlsaRecord, self).__init__()
-
+        self.inputs = inputs
         self.input = dict()
         self._control = {
                         'type': DataType.BOOL,
@@ -69,7 +69,7 @@ class AlsaRecord:
                     self.input['value'] = 100
                 elif dat.endswith(b'%'):
                     self.input['value'] = int(dat[-3:-1])
-                self.input['lastupdate'] = int(time.time())
+                self.input['lastupdate'] = time.time()
                 dat = bytearray()
             else:
                 dat += buf

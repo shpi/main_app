@@ -11,11 +11,12 @@ from PySide2.QtCore import QSettings
 
 class AlsaMixer:
 
-    def __init__(self,
+    def __init__(self,inputs,
                  settings: QSettings = None, parent=None):
 
         super(AlsaMixer, self).__init__()
         self.settings = settings
+        self.inputs = inputs
         self.recorder = dict()
         self.system_cards = []
         self.cards = self.get_cards()
@@ -112,7 +113,7 @@ class AlsaMixer:
                 break
         if card_rchannel > 0:
 
-            self.recorder[card_name] = AlsaRecord(card_name)
+            self.recorder[card_name] = AlsaRecord(self.inputs,card_name)
 
             return self.recorder[card_name].get_inputs()
 

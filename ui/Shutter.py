@@ -3,6 +3,7 @@
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 import time
 import threading
+from core.Toolbox import Pre_5_15_2_fix
 
 
 class Shutter(QObject):
@@ -29,20 +30,27 @@ class Shutter(QObject):
         self.checkthread = threading.Thread(target=self.thread)
         self.checkthread.start()
 
-    @Property(str)
+
+    @Signal
+    def position_pathChanged(self):
+        pass
+
+    #@Property(str)
     def actual_position_path(self):
         return self._actual_position_path
 
-    @actual_position_path.setter
+    #@actual_position_path.setter
+    @Pre_5_15_2_fix(str, actual_position_path, notify=position_pathChanged)
     def actual_position_path(self, key):
         self._actual_position_path = key
         self.settings.setValue('shutter/' + self.name + "/actual_position", key)
 
-    @Property(str)
+    #@Property(str)
     def desired_position_path(self):
         return self._desired_position_path
 
-    @desired_position_path.setter
+    #@desired_position_path.setter
+    @Pre_5_15_2_fix(str, desired_position_path, notify=position_pathChanged)
     def desired_position_path(self, key):
         self._desired_position_path = key
         self.settings.setValue('shutter/' + self.name + "/desired_position", key)

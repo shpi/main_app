@@ -2,10 +2,12 @@
 
 import os
 import time
+import re
 import threading
 from subprocess import check_output, call, Popen, PIPE, DEVNULL
 from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
 from core.DataTypes import DataType
+from hardware.System import SystemInfo
 
 
 class WifiNetworkModel(QAbstractListModel):
@@ -77,6 +79,8 @@ class Wifi(QObject):
         super(Wifi, self).__init__(parent)
         self.settings = settings
         self.inputs = dict()
+        self.netdevs = SystemInfo.get_net_devs()
+        self._network_hosts = dict()
 
         self._networks = WifiNetworkModel([], self.settings)
         self.found_devices = []
@@ -86,11 +90,70 @@ class Wifi(QObject):
         for device in self.found_devices:
             self.scan_wifi(device)
 
+        self.start_scan_hosts()
+
+    @Slot()
+    def start_scan_hosts(self):
+        for netdev in self.netdevs:
+            if netdev != 'lo':
+                threading.Thread(target=self.scan_hosts, args=(netdev,)).start()
+
+
     #def update(self):
         #self.read_signal()
 
     def get_inputs(self) -> dict:
         return self.inputs
+
+
+
+    @Signal
+    def hostsChanged(self):
+        pass
+
+
+    def scan_hosts(self, device):
+
+        p = Popen(['nmap', '-sn', SystemInfo.get_ip4_address(device)+'/24'], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+        #'sudo', '-S',
+        #stdout_data = p.communicate(input=b'password')[0].split(b'\n')
+        stdout_data = p.communicate()[0].split(b'\n')
+
+        found_hosts =  list(self._network_hosts.keys())
+
+        for key in found_hosts:
+
+            if 'dev' in self._network_hosts[key]: # because helper list in dictionary for qml
+                if self._network_hosts[key]['dev'] == device:
+                    del self._network_hosts[key]
+
+        for line in stdout_data:
+            output = re.search(b'Nmap scan report for ([^ ]*) \(([^\)]*)\)', line)
+            if output:
+                    ip = output.group(2).decode()
+                    self._network_hosts[ip] = {'ip':ip, 'hostname':output.group(1).decode(), 'dev' : device}
+            else:
+                output = re.search(b'Nmap scan report for ([^\n]*)', line)
+                if output:
+                    ip = output.group(1).decode()
+                    self._network_hosts[ip] = {'ip': ip, 'dev' : device}
+            output = re.search(b'Host is up \(([^ ]*) latency\)', line)
+            if output:
+                self._network_hosts[ip]['latency'] = output.group(1).decode()
+            output = re.search(b'MAC Address: ([^ ]*) \(([^\)]*)\)', line)
+            if output:
+                self._network_hosts[ip]['mac'] = output.group(1).decode()
+                self._network_hosts[ip]['manufacturer'] = output.group(2).decode()
+        self.hostsChanged.emit()
+
+
+
+    @Property('QVariantMap', notify=hostsChanged)
+    def network_hosts(self):
+        if 'list' in self._network_hosts:
+            del self._network_hosts['list']
+        self._network_hosts['list'] = list(self._network_hosts.keys())
+        return (self._network_hosts)
 
     @Signal
     def devicesChanged(self):
@@ -209,7 +272,7 @@ class Wifi(QObject):
                         self.new_devices.append(device)
                         if f'wifi/{device}/link' not in self.inputs:
                             self.inputs[f'wifi/{device}/link'] = {'description': f'link quality of device {line[0].rstrip(":")}',
-                                                                  'interval': 30, 'lastupdate': 0, 'call': self.read_signal}
+                                                                  'interval': 60, 'lastupdate': 0, 'call': self.read_signal}
                         self.signals[device] = self.dbmtoperc[int(
                             line[3].rstrip('.'))]
                         self.inputs[f'wifi/{device}/link']['value'] = self.dbmtoperc[int(

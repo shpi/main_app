@@ -36,10 +36,10 @@ Item {
                     }
 
                     TextField {
-                        id: ip_text
-                        width: 450
-                        Component.onCompleted: ip_text.text = modules.loaded_instances['Connections']['HTTP'][instancename].ip
-                        onTextChanged: modules.loaded_instances['Connections']['HTTP'][instancename].ip = ip_text.text
+                        id: ip_textfield
+                        width: 350
+                        text: modules.loaded_instances['Connections']['HTTP'][instancename].ip
+                        //onTextChanged: modules.loaded_instances['Connections']['HTTP'][instancename].ip = ip_textfield.text
                     }
 
                     Text {
@@ -50,7 +50,6 @@ Item {
 
                     TextField {
                         id: port_text
-
                         width: 100
                         Component.onCompleted: port_text.text = modules.loaded_instances['Connections']['HTTP'][instancename].port
                         onTextChanged: modules.loaded_instances['Connections']['HTTP'][instancename].port = parseInt(
@@ -65,13 +64,67 @@ Item {
                         font.pixelSize: 32
                         font.family: localFont.name
                         onClicked: {
+                            modules.loaded_instances['Connections']['HTTP'][instancename].ip = ip_textfield.text
                             modules.loaded_instances['Connections']['HTTP'][instancename].update_vars()
+                        }
+                    }
+
+                    RoundButton {
+                        text: 'Rescan'
+                        palette.button: "darkred"
+                        palette.buttonText: "white"
+                        visible:  inputsview.count > 0 ? false : true
+                        font.pixelSize: 32
+                        font.family: localFont.name
+                        onClicked: wifi.start_scan_hosts()
+
+                    }
+                }
+            }
+        }
+        footer: Rectangle {
+            color: "transparent"
+            width: parent.width
+            height: hostsrepeater.count * 50
+
+            Column {
+                visible: inputsview.count > 0 ? false : true
+                width: parent.width
+                height: hostsrepeater.count * 50
+
+
+
+
+                Repeater {
+                    id: hostsrepeater
+                    model: wifi.network_hosts['list']
+                    Rectangle {
+                        color: index % 2 === 0 ? Colors.white : "transparent"
+                        height: 50
+                        width: parent.width
+                        anchors.left: parent.left
+                        anchors.leftMargin: 10
+
+                        Text {
+                            width: parent.width
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: Colors.black
+                            text: modelData + ', ' + wifi.network_hosts[modelData]['hostname']
+                        }
+                        RoundButton {
+                            text: 'select'
+                            palette.button: "darkred"
+                            palette.buttonText: "white"
+                            anchors.right: parent.right
+                            anchors.rightMargin: 20
+                            font.pixelSize: 24
+                            font.family: localFont.name
+                            onClicked: modules.loaded_instances['Connections']['HTTP'][instancename].ip = modelData
                         }
                     }
                 }
             }
         }
-
         height: parent.height
         width: parent.width
         clip: true
