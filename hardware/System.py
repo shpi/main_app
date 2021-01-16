@@ -8,116 +8,187 @@ import re
 import glob
 import time
 import threading
+from typing import List, Dict
 from subprocess import check_output, call, Popen, PIPE, DEVNULL
 from core.DataTypes import DataType
+from core.Toolbox import netmaskbytes_to_prefixlen, ipbytes_to_ipstr, IPEndpoint, lookup_oui
+
+_re_ifname = re.compile(r'\s*(\S+):')
+_re_ifname_w_stats = re.compile(r'\s*(\S+):' + (r'\s+(\d+)' * 16))  # 16 stat columns
+
+# "Host: 192.168.51.31 (DVS-605-Series-0D-27-D6.fritz.box)"
+_re_scanreport = re.compile(r'Host: (\S+) \((.*)\)')
+
+# "192.168.51.5     0x1         0x2         9c:1c:12:ca:de:27     *        enp4s0"
+_re_arp = re.compile(r'(\S+).*(\S{2}:\S{2}:\S{2}:\S{2}:\S{2}:\S{2})')
+
+
+SIOCGIFNETMASK = 0x891b
+SIOCGIFHWADDR = 0x8927
+SIOCGIFADDR = 0x8915
+
+
+class InterfaceInfo:
+    def __init__(self, interface: str):
+        self._name = interface
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, bytes(self._name, encoding="ascii"))
+        self._endpoints = []
+        self._scanthread = threading.Thread(target=self._scan_thread_func)
+
+    @property
+    def endpoints(self) -> List[IPEndpoint]:
+        return self._endpoints
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def mask(self) -> bytes:
+        raw = fcntl.ioctl(self._sock.fileno(), SIOCGIFNETMASK, struct.pack("16s16x", bytes(self._name, encoding="ascii")))
+        subnet_bytes = raw[20:24]
+        return subnet_bytes
+
+    @property
+    def mask_human(self) -> str:
+        return ipbytes_to_ipstr(self.mask)
+
+    @property
+    def mask_prefix_length(self) -> int:
+        return netmaskbytes_to_prefixlen(self.mask)
+
+    @property
+    def ip(self) -> bytes:
+        raw = fcntl.ioctl(self._sock.fileno(), SIOCGIFADDR, struct.pack('256s', bytes(self._name, encoding="ascii")))
+        ip_bytes = raw[20:24]
+        return ip_bytes
+
+    @property
+    def ip_human(self) -> str:
+        return ipbytes_to_ipstr(self.ip)
+
+    @property
+    def mac_address(self) -> bytes:
+        ifreq = struct.pack('16sH14s', bytes(self._name, encoding="ascii"), socket.AF_UNIX, b'\x00'*14)
+        raw = fcntl.ioctl(self._sock.fileno(), SIOCGIFHWADDR, ifreq)
+
+        mac_bytes = raw[18:24]
+        return mac_bytes
+
+    @property
+    def mac_address_human(self) -> str:
+        return ":".join(['%02X' % byte for byte in self.mac_address])
+
+    def cidr(self) -> str:
+        return f"{self.ip_human}/{self.mask_prefix_length}"
+
+    def endpoint(self) -> IPEndpoint:
+        return IPEndpoint(self.ip_human, socket.gethostname(), self.mac_address_human, lookup_oui(self.mac_address), self._name)
+
+    def scan(self):
+        if self._scanthread.is_alive():
+            return
+
+        self._scanthread.start()
+
+    def _scan_thread_func(self):
+        ip_list: Dict[str, List[str, str, str]] = {}
+
+        p = Popen(['nmap', '-sn', self.cidr(), '--unprivileged', '-oG', '-'], stdout=PIPE, stdin=PIPE, stderr=PIPE, encoding="utf8")
+        stdout_data = p.communicate()[0]
+
+        for line in stdout_data.splitlines(False):
+            m = _re_scanreport.match(line)
+            if m:
+                ip_list[m.group(1)] = [m.group(2), "", ""]
+
+        with open("/proc/net/arp") as arps:
+            for arp in arps:
+                m = _re_arp.match(arp)
+                if m:
+                    ip = m.group(1)
+                    if ip in ip_list:
+                        mac = m.group(2)
+                        sublist = ip_list[ip]
+                        sublist[1] = mac
+                        sublist[2] = lookup_oui(mac)
+
+        self._endpoints.clear()
+        for ip, data in ip_list.items():
+            self._endpoints.append(IPEndpoint(ip, *data, self._name))
+
+    def __del__(self):
+        try:
+            self._sock.close()
+        except Exception:
+            pass
 
 
 class SystemInfo:
+    _keys = 'read_bps', 'write_bps', 'read_abs', 'write_abs'
 
-    def __init__(self,  parent=None):
-        super(SystemInfo, self).__init__()
+    def __init__(self, parent=None):
+        super().__init__()
         self.diskstats = dict()
-        self._keys = 'read_bps', 'write_bps', 'read_abs', 'write_abs'
         self.last_diskstat = 0
         self.interval = 60
         self.update_diskstats(init=True)
 
-        self.network_devices = SystemInfo.get_net_devs()
+        self.network_devices: Dict[str, InterfaceInfo] = \
+            {ifname: InterfaceInfo(ifname) for ifname in SystemInfo.get_net_devs()}
 
-        self.network_hosts = dict()
-
-        for netdev in self.network_devices:
-            if netdev != 'lo':
-                threading.Thread(target=self.scan_hosts, args=(netdev,)).start()
-
-
-
-    def scan_hosts(self, device):
-
-        p = Popen(['nmap', '-sn', SystemInfo.get_ip4_address(device)+'/24'], stdout=PIPE, stdin=PIPE, stderr=PIPE)
-        #'sudo', '-S',
-        #stdout_data = p.communicate(input=b'password')[0].split(b'\n')
-        stdout_data = p.communicate()[0].split(b'\n')
-
-        for key in self.network_hosts:
-            if self.network_hosts[key]['dev'] == device:
-                del self.network_hosts[key]
-
-        for line in stdout_data:
-            output = re.search(b'Nmap scan report for ([^ ]*) \(([^\)]*)\)', line)
-            if output:
-                    ip = output.group(2).decode()
-                    self.network_hosts[ip] = {'hostname':output.group(1).decode(), 'dev' : device}
-            else:
-                output = re.search(b'Nmap scan report for ([^\n]*)', line)
-                if output:
-                    ip = output.group(1).decode()
-                    self.network_hosts[ip] = {'dev' : device}
-            output = re.search(b'Host is up \(([^ ]*) latency\)', line)
-            if output:
-                self.network_hosts[ip]['latency'] = output.group(1).decode()
-            output = re.search(b'MAC Address: ([^ ]*) \(([^\)]*)\)', line)
-            if output:
-                self.network_hosts[ip]['mac'] = output.group(1).decode()
-                self.network_hosts[ip]['manufacturer'] = output.group(2).decode()
-
-
-
-
-
-
-
-
+        for netdev in self.network_devices.values():
+            netdev.scan()
 
     def update_diskstats(self, stat_path='/proc/diskstats', init=False):
-        if os.path.isfile(stat_path):
-            acttime = (time.time())
-            quotient = acttime - self.last_diskstat
-            self.last_diskstat = acttime
+        if not os.path.isfile(stat_path):
+            return
 
-            with open(stat_path) as stat_file:
-                while True:
-                    line = stat_file.readline().split()
-                    if line:
+        acttime = time.time()
+        quotient = acttime - self.last_diskstat
+        self.last_diskstat = acttime
 
-                        if not line[2].startswith('loop'):
-                            # only physical devices
+        with open(stat_path) as stat_file:
+            for line in stat_file:
+                line = line.split()
+                if not line:
+                    continue
 
-                            if init:
-                                self.diskstats[f'system/disk_{line[2]}/read_bps'] = {'value': 0,
-                                                                                     'interval': -1,
-                                                                                     'type': DataType.INT,
-                                                                                     'description': 'read bytes per second'}
+                if line[2].startswith('loop'):
+                    # only physical devices
+                    continue
 
-                                self.diskstats[f'system/disk_{line[2]}/write_bps'] = {'value': 0,
-                                                                                      'interval': -1,
-                                                                                      'type': DataType.INT,
-                                                                                      'description': 'write bytes per second'}
-                                self.diskstats[f'system/disk_{line[2]}/read_abs'] = {'value': 0,
-                                                                                     'interval': -1,
-                                                                                     'type': DataType.INT,
-                                                                                     'description': 'read bytes absolute'}
-                                self.diskstats[f'system/disk_{line[2]}/write_abs'] = {'value': 0,
-                                                                                      'interval': -1,
-                                                                                      'type': DataType.INT,
-                                                                                      'description': 'write bytes absolute'}
+                if init:
+                    self.diskstats[f'system/disk_{line[2]}/read_bps'] = {'value': 0,
+                                                                         'interval': -1,
+                                                                         'type': DataType.INT,
+                                                                         'description': 'read bytes per second'}
 
-                            self.diskstats[f'system/disk_{line[2]}/read_bps']['value'] = (int(line[3]) -
-                                                                                          self.diskstats[f'system/disk_{line[2]}/read_abs']['value']) // quotient
+                    self.diskstats[f'system/disk_{line[2]}/write_bps'] = {'value': 0,
+                                                                          'interval': -1,
+                                                                          'type': DataType.INT,
+                                                                          'description': 'write bytes per second'}
+                    self.diskstats[f'system/disk_{line[2]}/read_abs'] = {'value': 0,
+                                                                         'interval': -1,
+                                                                         'type': DataType.INT,
+                                                                         'description': 'read bytes absolute'}
+                    self.diskstats[f'system/disk_{line[2]}/write_abs'] = {'value': 0,
+                                                                          'interval': -1,
+                                                                          'type': DataType.INT,
+                                                                          'description': 'write bytes absolute'}
 
-                            self.diskstats[f'system/disk_{line[2]}/write_bps']['value'] = (int(line[7]) -
-                                                                                           self.diskstats[f'system/disk_{line[2]}/write_abs']['value']) // quotient
+                self.diskstats[f'system/disk_{line[2]}/read_bps']['value'] = (int(line[3]) -
+                                                                              self.diskstats[f'system/disk_{line[2]}/read_abs']['value']) // quotient
 
-                            self.diskstats[f'system/disk_{line[2]}/read_abs']['value'] = int(
-                                line[3])
-                            self.diskstats[f'system/disk_{line[2]}/write_abs']['value'] = int(
-                                line[7])
+                self.diskstats[f'system/disk_{line[2]}/write_bps']['value'] = (int(line[7]) -
+                                                                               self.diskstats[f'system/disk_{line[2]}/write_abs']['value']) // quotient
 
-                            for key in self._keys:
-                                self.diskstats[f'system/disk_{line[2]}/{key}']['lastupdate'] = acttime
+                self.diskstats[f'system/disk_{line[2]}/read_abs']['value'] = int(line[3])
+                self.diskstats[f'system/disk_{line[2]}/write_abs']['value'] = int(line[7])
 
-                    else:
-                        break
+                for key in self._keys:
+                    self.diskstats[f'system/disk_{line[2]}/{key}']['lastupdate'] = acttime
 
     def update(self):
         if self.last_diskstat + self.interval < time.time():
@@ -127,7 +198,6 @@ class SystemInfo:
         return self.diskstats
 
     def get_inputs(self) -> dict:
-
         inputs = self.diskstats
 
         inputs['system/is64bit'] = {"description": "64bit system?",
@@ -190,9 +260,9 @@ class SystemInfo:
     def get_ip4_address(ifname):
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            return socket.inet_ntoa(fcntl.ioctl(
-                s.fileno(), 0x8915,  # SIOCGIFADDR
-                struct.pack('256s', bytes(ifname[:15], 'utf-8'))
+            return ipbytes_to_ipstr(fcntl.ioctl(
+                s.fileno(), SIOCGIFADDR,
+                struct.pack('256s', bytes(ifname[:15], 'ascii'))
             )[20:24])
         except OSError:
             return -1
@@ -213,7 +283,7 @@ class SystemInfo:
     @staticmethod
     def cpu_usage():
         # /proc/loadavg maybe better for processcount
-        return (os.getloadavg()[0] / os.cpu_count() * 100)
+        return os.getloadavg()[0] / os.cpu_count() * 100
 
     @staticmethod
     def ram_usage():
@@ -240,24 +310,65 @@ class SystemInfo:
                 return int(float(next(stat_file).split()[0]))
 
     @staticmethod
-    def get_net_devs(stat_path='/proc/net/dev'):
+    def get_net_devs(stat_path='/proc/net/dev', with_lo=False):
         netdevs = []
-        if os.path.isfile(stat_path):
-            with open(stat_path) as net_file:
-                net_file.readline()
-                net_file.readline()
-                # ['name',
-                # 'received', 'packets', 'errs', 'drop', 'fifo', 'frame', 'compressed', 'multicast',
-                # 'transmit, 'packets', 'errs', 'drop', 'fifo', 'colls', 'carrier', 'compressed']
-                # print(re.split('\s+\||\s+|\|',net_file.readline().strip()))
-                while True:
-                    line = net_file.readline()
-                    if line:
-                        netdevs.append(re.split(r'\s+|:\s+', line.strip())[0])
-                        # print(netdevs[-1])
-                    else:
-                        break
+        if not os.path.isfile(stat_path):
+            return
+
+        with open(stat_path) as net_file:
+            # ['name',
+            # 'received', 'packets', 'errs', 'drop', 'fifo', 'frame', 'compressed', 'multicast',
+            # 'transmit, 'packets', 'errs', 'drop', 'fifo', 'colls', 'carrier', 'compressed']
+            """
+            Inter-|   Receive                                                |  Transmit
+             face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+                lo:   84522     961    0    0    0     0     0         0    84522     961    0    0    0     0       0          0
+            enp4s0: 402485511 4188225    0    0    0     0    0      1891 232774205 4096081    0    0    0     0       0          0
+            wlp5s0u4u2u2:  605332    8593    0    0    0     0    0   0    94686     462    0    0    0     0       0          0
+            """
+            for line in net_file:
+                # match = _re_ifname_w_stats.match(line)
+                match = _re_ifname.match(line)
+
+                if match:
+                    # print(match.groups())
+                    ifname = match.group(1)
+                    if with_lo or ifname != "lo":
+                        netdevs.append(ifname)
         return netdevs
 
 
+si = SystemInfo()
 
+from time import sleep
+sleep(5)
+
+for iface, info in si.network_devices.items():
+    print(iface, info.endpoint())
+    for e in info.endpoints:
+        print(e)
+
+"""
+enp4s0 192.168.51.50: station2 [B4:2E:99:3F:20:FA, Giga-byte Technology]
+192.168.51.1: fritz.box [e0:28:6d:52:f2:54, AVM Audiovisuelles Marketing und Computersysteme GmbH]
+192.168.51.2:  [b0:7f:b9:41:b2:d1, Netgear]
+192.168.51.5: AP105.fritz.box [9c:1c:12:ca:de:27, Aruba, a Hewlett Packard Enterprise Company]
+192.168.51.10: raider.fritz.box [d0:50:99:52:18:0a, ASRock Incorporation]
+192.168.51.30: amx.fritz.box [00:60:9f:a3:29:7e, Phast]
+192.168.51.31: DVS-605-Series-0D-27-D6.fritz.box [00:05:a6:0d:27:d6, Extron Electronics]
+192.168.51.50: station.fritz.box [, ]
+192.168.51.119: Galaxy-S10-von-Adrian.fritz.box [8c:b8:4a:28:a9:76, Samsung Electro-mechanics(thailand)]
+192.168.51.134: android-664973fe4eb0be35.fritz.box [54:40:ad:6d:7a:c8, Samsung Electronics]
+192.168.51.135: station2.fritz.box [, ]
+wlp5s0u4u2u2 192.168.51.135: station2 [80:1F:02:C4:FA:99, Edimax Technology]
+192.168.51.1: fritz.box [e0:28:6d:52:f2:54, AVM Audiovisuelles Marketing und Computersysteme GmbH]
+192.168.51.2:  [b0:7f:b9:41:b2:d1, Netgear]
+192.168.51.5: AP105.fritz.box [9c:1c:12:ca:de:27, Aruba, a Hewlett Packard Enterprise Company]
+192.168.51.10: raider.fritz.box [d0:50:99:52:18:0a, ASRock Incorporation]
+192.168.51.30: amx.fritz.box [00:60:9f:a3:29:7e, Phast]
+192.168.51.31: DVS-605-Series-0D-27-D6.fritz.box [00:05:a6:0d:27:d6, Extron Electronics]
+192.168.51.50: station.fritz.box [, ]
+192.168.51.119: Galaxy-S10-von-Adrian.fritz.box [8c:b8:4a:28:a9:76, Samsung Electro-mechanics(thailand)]
+192.168.51.134: android-664973fe4eb0be35.fritz.box [54:40:ad:6d:7a:c8, Samsung Electronics]
+192.168.51.135: station2.fritz.box [, ]
+"""

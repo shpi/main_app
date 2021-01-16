@@ -1,5 +1,7 @@
-from typing import Callable
+from typing import Callable, NamedTuple, Optional, Union
 from PySide2.QtCore import Property, __version_info__
+import socket
+from re import compile
 
 """
     # Perfect world as with Python's own 'property' (since 5.15.2):
@@ -86,3 +88,64 @@ def Pre_5_15_2_fix(type: type,
         )
 
     return setter_fix
+
+
+SIOCGIFNETMASK = 0x891b
+SIOCGIFHWADDR = 0x8927
+SIOCGIFADDR = 0x8915
+
+
+class IPEndpoint(NamedTuple):
+    ip: str
+    hostname: str
+    mac: Optional[str] = None
+    oui: Optional[str] = None
+    iface: Optional[str] = None
+
+    def __repr__(self):
+        return f"{self.ip}: {self.hostname} [{self.mac}, {self.oui}]"
+
+
+def lookup_oui(mac: Union[bytes, str]) -> str:
+    file_path = "/usr/share/nmap/nmap-mac-prefixes"
+
+    if type(mac) is bytes:
+        mac = "".join(['%02X' % byte for byte in mac])
+    elif type(mac) is str:
+        mac = mac.replace(":", "")
+    else:
+        raise ValueError("mac must be bytes or string")
+
+    mac = mac[:6].upper()
+
+    # 887E25 Extreme Networks
+    matcher = compile(f"^{mac} (.*)$")
+    # Caching in a dict: +5MB RAM
+
+    with open(file_path, encoding="utf8") as file:
+        for line in file:
+            m = matcher.match(line)
+            if m:
+                return m.group(1)
+        else:
+            return "-Unknown Vendor-"
+
+
+def ipbytes_to_ipstr(ip: bytes) -> str:
+    return socket.inet_ntoa(ip)
+
+
+def netmaskbytes_to_prefixlen(netmask: bytes) -> int:
+    bits = 0
+    valid_maskbytes = {255<<8-bits & 255: bits for bits in range(9)}
+
+    for b in netmask:
+        if b not in valid_maskbytes:
+            raise ValueError("Invalid subnet mask")
+
+        if not b:
+            break
+
+        bits += valid_maskbytes[b]
+
+    return bits
