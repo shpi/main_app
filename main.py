@@ -73,20 +73,21 @@ def safe_timer(timeout, func, *args, **kwargs):
 
 """ Loop for checking logic regularly """
 
-lastupdate = time.time()
-
+lastupdate = int(time.time())
+ready = True
 
 def check_loop():
-    global lastupdate
+    global lastupdate, ready
 
     systeminfo.update()
     appearance.update()
 
     #wifi.update()
-
-    inputs.update(lastupdate)
-
-    lastupdate = time.time()
+    if ready:
+        ready = False
+        inputs.update(lastupdate)
+        lastupdate = int(time.time())
+        ready = True
     modules.update()
 
 systeminfo = SystemInfo()
@@ -126,6 +127,9 @@ def KillThreads():
     for key in inputs.entries:
         if key.endswith('thread'):
             inputs.entries[key]['set'](0)
+
+    httpserver.server.shutdown()
+    httpserver.server_thread.join()
 
 if __name__ == "__main__":
 

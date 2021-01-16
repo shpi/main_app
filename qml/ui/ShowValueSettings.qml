@@ -109,6 +109,8 @@ Rectangle {
                 iconpreview.text = icons[combo_icon.currentIndex]
             }
 
+
+
             Label {
                 anchors.right: parent.left
                 anchors.rightMargin: 10
@@ -118,7 +120,7 @@ Rectangle {
             }
 
             Text {
-
+                text: icons[combo_icon.currentIndex]
                 id: iconpreview
                 font.family: localFont.name
                 font.pixelSize: 120

@@ -41,6 +41,8 @@ class AlsaRecord:
         self.thread_stdout = None
         self.thread_stderr = None
 
+        self._control['value'] = self.update()
+
     def control(self, onoff):
         self._control['value'] = onoff
 
