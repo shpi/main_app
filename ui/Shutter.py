@@ -13,8 +13,8 @@ class Shutter(QObject):
         self.settings = settings
         self.inputs = inputs
         self.name = name
-        self._actual_position_path = settings.value('shutter/' + self.name + "/actual_position", 'shutter/local/actual_position')
-        self._desired_position_path = settings.value('shutter/' + self.name + "/desired_position", 'shutter/local/desired_position')
+        self._actual_position_path = settings.value('shutter/' + self.name + "/actual_position", '')
+        self._desired_position_path = settings.value('shutter/' + self.name + "/desired_position", '')
 
         try:
             self._actual_position = int(self.inputs.entries[self._actual_position_path]['value'])
@@ -42,6 +42,7 @@ class Shutter(QObject):
     #@actual_position_path.setter
     @Pre_5_15_2_fix(str, actual_position_path, notify=position_pathChanged)
     def actual_position_path(self, key):
+        print(key)
         self._actual_position_path = key
         self.settings.setValue('shutter/' + self.name + "/actual_position", key)
 
@@ -52,6 +53,7 @@ class Shutter(QObject):
     #@desired_position_path.setter
     @Pre_5_15_2_fix(str, desired_position_path, notify=position_pathChanged)
     def desired_position_path(self, key):
+        print(key)
         self._desired_position_path = key
         self.settings.setValue('shutter/' + self.name + "/desired_position", key)
 

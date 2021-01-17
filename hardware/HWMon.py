@@ -95,16 +95,27 @@ class HWMon:
         else:
             return False
 
-    def write_hwmon(self, id, channel, value):
+    def write_hwmon(self, id, channel, value, retries=0):
         value = str(value)
         if os.path.isfile(f'/sys/class/hwmon/{id}/{channel}'):
-            with open(f'/sys/class/hwmon/{id}/{channel}', 'r+') as rf:
-                rf.write(value)
-                rf.seek(0)
-                if (value == rf.read().rstrip()):
-                    return True
+            try:
+                with open(f'/sys/class/hwmon/{id}/{channel}', 'r+') as rf:
+                    rf.write(value)
+                    rf.seek(0)
+                    if (value == rf.read().rstrip()):
+                        return True
+                    else:
+                        if retries < 5:
+                             retries += 1
+                             return self.write_hwmon(id, channel, value, retries)
+                        else:
+                             return False
+            except Exception as e:
+                if retries < 5:
+                     retries += 1
+                     return self.write_hwmon(id, channel, value, retries)
                 else:
-                    return False
-
+                     print(e)
+                     return False
         else:
             return False

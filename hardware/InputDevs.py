@@ -112,14 +112,15 @@ class InputDevs:
     def control_thread(self,id, value):
 
         if value != self.inputs[f'dev/{str(id)}/thread']['value']:
-            if value and not self.inputs[f'dev/{str(id)}/thread']['thread'].is_alive():
+            if value and (not self.inputs[f'dev/{str(id)}/thread']['thread'] or not self.inputs[f'dev/{str(id)}/thread']['thread'].is_alive()):
                 self.inputs[f'dev/{str(id)}/thread']['thread'] = eThread(
-                        target=self.devloop, args=(f"/dev/input/{self.devs[{id}]['event'][0]}", id))
+                        target=self.devloop, args=("/dev/input/"+ self.devs[id]['event'][0], id))
                 self.inputs[f'dev/{str(id)}/thread']['thread'].start()
             elif not value and self.inputs[f'dev/{str(id)}/thread']['thread'].is_alive():
                 self.inputs[f'dev/{str(id)}/thread']['thread'].raise_exception()
 
     def devloop(self, devpath, id):
+
         systembits = (struct.calcsize("P") * 8)
         try:
             with open(devpath, 'rb') as devfile:

@@ -4,14 +4,20 @@ import QtGraphicalEffects 1.12
 import "../../fonts/"
 
 Rectangle {
+
+
+
     id: shutterFrame
     height: parent.height
     width: height * 0.7
     radius: 10
     color: Colors.whitetrans
-    clip: true
-    property string name: modules.modules['Logic']['Shutter'][0]
+    //clip: true
     property bool iconview: false
+
+    property string name: modules.modules['UI']['MultiShutter'][0]
+
+
 
     Rectangle {
 
@@ -19,32 +25,57 @@ Rectangle {
 
         id: shutterObject
 
+
         height: parent.height * 0.75
         width: height * 0.7
         border.width: 1
         border.color: Colors.black
+
         anchors.horizontalCenter: parent.horizontalCenter
+
         anchors.verticalCenter: parent.verticalCenter
 
+        Text {
+        anchors.top: parent.top
+        anchors.right: parent.left
+        text: modules.loaded_instances['UI']['MultiShutter'][name].success.toString()
+        color: "green"
+        anchors.rightMargin: 2
+        font.pixelSize: shutterObject.iconview2 ? 30 : 50
+        }
+
+
+        Text {
+
+        anchors.bottom: parent.bottom
+        anchors.right: parent.left
+        anchors.rightMargin: 2
+        text: modules.loaded_instances['UI']['MultiShutter'][name].failed.toString()
+        color: "red"
+        font.pixelSize:  shutterObject.iconview2 ? 30 : 50
+        }
+
+
         Slider {
+
+            enabled: shutterObject.iconview2 ? false : true
+
             id: control
             from: 0
             to: 100
-            value: pressed == false ? modules.loaded_instances['Logic']['Shutter'][name].actual_position : modules.loaded_instances['Logic']['Shutter'][name].desired_position
+            value: modules.loaded_instances['UI']['MultiShutter'][name].desired_position
             orientation: Qt.Vertical
             height: parent.height - 2
             width: parent.width - 2
             anchors.centerIn: parent
 
-            enabled: shutterObject.iconview2 ? false : true
-
             stepSize: 5
             onPressedChanged: if (this.pressed === false)
-                                  modules.loaded_instances['Logic']['Shutter'][name].set_desired_position(
+                                  modules.loaded_instances['UI']['MultiShutter'][name].set_position(
                                               this.value)
 
             Text {
-                text: modules.loaded_instances['Logic']['Shutter'][name].desired_position
+                text: modules.loaded_instances['UI']['MultiShutter'][name].desired_position
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.horizontalCenterOffset: -parent.width * 0.07
@@ -86,14 +117,12 @@ Rectangle {
 
                 Rectangle {
 
-
                     anchors.bottom: parent.bottom
                     height: parent.height - (control.visualPosition * parent.height)
                     width: control.width
                     border.width: 1
                     border.color: Colors.grey
                     color: appearance.night === 1 ? "#117" : "#99f"
-
 
 
                     /* LinearGradient {
@@ -114,25 +143,6 @@ Rectangle {
                 }
             }
 
-            Rectangle {
-                z: parent.handle.z - 0.01
-                visible: modules.loaded_instances['Logic']['Shutter'][name].actual_position
-                         !== modules.loaded_instances['Logic']['Shutter'][name].desired_position
-                         && parent.pressed == false ? true : false
-
-                width: parent.width * 1.1
-                height: parent.height * 0.15
-                radius: height / 2
-                opacity: 0.5
-                color: Colors.black
-
-                y: control.height
-                   - ((modules.loaded_instances['Logic']['Shutter'][name].desired_position
-                       / 100) * control.height) - height / 2
-
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-
 
 
             handle: Rectangle {
@@ -148,12 +158,7 @@ Rectangle {
                 Text {
                     id: handleIcon
                     font.family: localFont.name
-
-                    text: {
-                        modules.loaded_instances['Logic']['Shutter'][name].desired_position
-                                === modules.loaded_instances['Logic']['Shutter'][name].actual_position ? Icons.shutter : Icons.arrow
-                    }
-                    rotation: modules.loaded_instances['Logic']['Shutter'][name].desired_position > modules.loaded_instances['Logic']['Shutter'][name].actual_position ? 180 : 0
+                    text:  Icons.shutter
                     anchors.centerIn: parent
                     font.pixelSize: parent.height
                     opacity: 1
@@ -161,9 +166,6 @@ Rectangle {
             }
         }
     }
-
-
-
 
 
 
@@ -219,15 +221,6 @@ Rectangle {
 
 
     }
-
-
-
-
-
-
-
-
-
 
 
 

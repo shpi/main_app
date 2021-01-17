@@ -123,6 +123,8 @@ inputs.add(systeminfo.get_inputs())
 appearance = Appearance(inputs, settings)
 modules = ModuleManager(inputs, settings)
 
+
+
 def KillThreads():
     for key in inputs.entries:
         if key.endswith('thread'):

@@ -73,9 +73,10 @@ class Shutter(QObject):
             if self.inputs[self._relay_up]['type'] == DataType.BOOL:
                 if 'set' in self.inputs[self._relay_up]:
                     try:
+
                         self.inputs[self._relay_up]['set'](bool(value))
-                    except Error as e:
-                        print('Error UP control:' + self._relay_up + ' error: ' + e)
+                    except Exception as e:
+                        print('Error UP control:' + self._relay_up + ' error: ' + str(e))
                 else:
                     print('Error UP control:' + self._relay_up + ' set missing.')
             else:
@@ -90,8 +91,8 @@ class Shutter(QObject):
                 if 'set' in self.inputs[self._relay_down]:
                     try:
                         self.inputs[self._relay_down]['set'](bool(value))
-                    except Error as e:
-                        print('Error down control:' + self._relay_down + ' error: ' + e)
+                    except Exception as e:
+                        print('Error down control:' + self._relay_down + ' error: ' + str(e))
                 else:
                     print('Error down control:' + self._relay_down + ' set missing.')
             else:
@@ -100,10 +101,12 @@ class Shutter(QObject):
             print('Error down control ' + self._relay_down + ' not in Inputs.')
 
 
-
+    @Slot(int)
     def set_state(self, value):
 
+
         if value == ShutterModes.UP:
+
             self.set_down(0)
             time.sleep(0.1)
             self.set_up(1)

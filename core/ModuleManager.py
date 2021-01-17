@@ -19,7 +19,7 @@ class ModuleManager(QObject):
         self.inputs = inputs
         self.available_modules = {'Logic': ['Shutter','Thermostat'],
                                   'Info': ['Weather'],
-                                  'UI': ['Shutter','ShowValue'],
+                                  'UI': ['Shutter','ShowValue','MultiShutter'],
                                   'Connections': ['HTTP']}
 
         self._modules = dict()

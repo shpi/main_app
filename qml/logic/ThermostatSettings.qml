@@ -3,32 +3,32 @@ import QtQuick.Controls 2.12
 
 import "../../fonts/"
 
-Rectangle {
-    anchors.fill: parent
-    color: Colors.white
+Item {
 
-    // Temperaturreduzierung bei Abwesenheit 1′ pro 24h ? Urlaubsmodus
+    property string category
+    property string classname
+    property string instancename
+
+    Component.onCompleted: {
+
+        inputs.set_outputList('boolean')
+        inputs.set_typeList('temperature')
+    }
+
+    Flickable {
+        anchors.fill: parent
+        contentHeight: list.implicitHeight + 10
+
+
+
+
     Column {
 
-        anchors.centerIn: parent
-        spacing: 20
+        id: list
 
-        Row {
-            spacing: 10
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Auto-Away"
-                color: Colors.black
-            }
-            Switch {}
 
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: "Valveprotection"
-                color: Colors.black
-            }
-            Switch {}
-        }
+        spacing: 10
+
 
         Row {
             spacing: 10
@@ -123,19 +123,45 @@ Rectangle {
                     RadioButton {
                         checked: true
                         text: qsTr("No schedule")
+
+                            contentItem: Text {
+                                text: parent.text
+                                color: Colors.black
+                                 leftPadding: parent.indicator.width + parent.spacing
+                                verticalAlignment: Text.AlignVCenter
+                            }
                     }
                     RadioButton {
                         text: qsTr("Daily")
+                        contentItem: Text {
+                            text: parent.text
+                            color: Colors.black
+                            leftPadding: parent.indicator.width + parent.spacing
+                            verticalAlignment: Text.AlignVCenter
+                        }
                     }
 
                     RadioButton {
-                        text: qsTr("Weekly")
+                        text: qsTr("Weekday / Weekend")
+                        contentItem: Text {
+                            text: parent.text
+                            color: Colors.black
+                             leftPadding: parent.indicator.width + parent.spacing
+                            verticalAlignment: Text.AlignVCenter
+                        }
                     }
                     RadioButton {
-                        text: qsTr("Monthly")
+                        text: qsTr("Weekly")
+                        contentItem: Text {
+                            text: parent.text
+                            color: Colors.black
+                             leftPadding: parent.indicator.width + parent.spacing
+                            verticalAlignment: Text.AlignVCenter
+                        }
                     }
                 }
             }
         }
     }
+}
 }

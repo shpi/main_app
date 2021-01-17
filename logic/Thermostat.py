@@ -5,6 +5,22 @@ import time
 import threading
 
 
+
+
+class ThermostatModes:
+    OFF = 0 # totally off
+    AWAY = 1 # constant away temp
+    ECO = 2 # reduced automatic temp
+    AUTO = 3 # automatic temp regarding schedule
+    PARTY = 4 # ignore schedule
+    __valid_range = OFF, PARTY  # lowest and highest
+
+    @classmethod
+    def is_valid(cls, number) -> bool:
+        min_, max_ = cls.__valid_range
+        return min_ <= number <= max_
+
+
 class Thermostat(QObject):
     def __init__(self, name, inputs, settings: QSettings):
         super().__init__()
@@ -13,14 +29,15 @@ class Thermostat(QObject):
         self.inputs = inputs.entries
         self._schedule = self.convert_schedule(settings.value("thermostat/"+ self.name + '/schedule', ''))
 
-        self._schedulemode = (settings.value("thermostat/"+ self.name + '/schedulemode', 'off'))
-        # off, day, workday/weekend, week
+        self._schedulemode = int(settings.value("thermostat/"+ self.name + '/schedulemode', 7))
+        # 0 off, 1 day, 2 workday/weekend,  7 week
 
-        self._mode = settings.value("thermostat/"+ self.name + '/mode', 'Auto')
+        self._mode = int(settings.value("thermostat/"+ self.name + '/mode', 3))
 
-        # boolean mode with two binary outputs
-        self._heatingcontact = settings.value("thermostat/"+ self.name + '/heatingcontact', '')
-        self._coolingcontact = settings.value("thermostat/"+ self.name + '/coolingcontact', '')
+
+        self._heatingcontact_path = settings.value("thermostat/"+ self.name + '/heatingcontact', '')
+        self._irtemp_path = settings.value("thermostat/"+ self.name + '/irtemp', '')
+        self._internaltemp_path = settings.value("thermostat/"+ self.name + '/internaltemp', '')
 
 
     def convert_schedule(self,value):

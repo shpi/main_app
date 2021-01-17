@@ -32,7 +32,7 @@ class InterfaceInfo:
     def __init__(self, interface: str):
         self._name = interface
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, bytes(self._name, encoding="ascii"))
+        #self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, bytes(self._name, encoding="ascii"))
         self._endpoints = []
         self._scanthread = threading.Thread(target=self._scan_thread_func)
 
@@ -338,37 +338,3 @@ class SystemInfo:
         return netdevs
 
 
-si = SystemInfo()
-
-from time import sleep
-sleep(5)
-
-for iface, info in si.network_devices.items():
-    print(iface, info.endpoint())
-    for e in info.endpoints:
-        print(e)
-
-"""
-enp4s0 192.168.51.50: station2 [B4:2E:99:3F:20:FA, Giga-byte Technology]
-192.168.51.1: fritz.box [e0:28:6d:52:f2:54, AVM Audiovisuelles Marketing und Computersysteme GmbH]
-192.168.51.2:  [b0:7f:b9:41:b2:d1, Netgear]
-192.168.51.5: AP105.fritz.box [9c:1c:12:ca:de:27, Aruba, a Hewlett Packard Enterprise Company]
-192.168.51.10: raider.fritz.box [d0:50:99:52:18:0a, ASRock Incorporation]
-192.168.51.30: amx.fritz.box [00:60:9f:a3:29:7e, Phast]
-192.168.51.31: DVS-605-Series-0D-27-D6.fritz.box [00:05:a6:0d:27:d6, Extron Electronics]
-192.168.51.50: station.fritz.box [, ]
-192.168.51.119: Galaxy-S10-von-Adrian.fritz.box [8c:b8:4a:28:a9:76, Samsung Electro-mechanics(thailand)]
-192.168.51.134: android-664973fe4eb0be35.fritz.box [54:40:ad:6d:7a:c8, Samsung Electronics]
-192.168.51.135: station2.fritz.box [, ]
-wlp5s0u4u2u2 192.168.51.135: station2 [80:1F:02:C4:FA:99, Edimax Technology]
-192.168.51.1: fritz.box [e0:28:6d:52:f2:54, AVM Audiovisuelles Marketing und Computersysteme GmbH]
-192.168.51.2:  [b0:7f:b9:41:b2:d1, Netgear]
-192.168.51.5: AP105.fritz.box [9c:1c:12:ca:de:27, Aruba, a Hewlett Packard Enterprise Company]
-192.168.51.10: raider.fritz.box [d0:50:99:52:18:0a, ASRock Incorporation]
-192.168.51.30: amx.fritz.box [00:60:9f:a3:29:7e, Phast]
-192.168.51.31: DVS-605-Series-0D-27-D6.fritz.box [00:05:a6:0d:27:d6, Extron Electronics]
-192.168.51.50: station.fritz.box [, ]
-192.168.51.119: Galaxy-S10-von-Adrian.fritz.box [8c:b8:4a:28:a9:76, Samsung Electro-mechanics(thailand)]
-192.168.51.134: android-664973fe4eb0be35.fritz.box [54:40:ad:6d:7a:c8, Samsung Electronics]
-192.168.51.135: station2.fritz.box [, ]
-"""

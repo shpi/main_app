@@ -114,7 +114,7 @@ class Wifi(QObject):
 
     def scan_hosts(self, device):
 
-        p = Popen(['nmap', '-sn', SystemInfo.get_ip4_address(device)+'/24'], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+        p = Popen(['nmap', '-sn', str(SystemInfo.get_ip4_address(device))+'/24'], stdout=PIPE, stdin=PIPE, stderr=PIPE)
         #'sudo', '-S',
         #stdout_data = p.communicate(input=b'password')[0].split(b'\n')
         stdout_data = p.communicate()[0].split(b'\n')

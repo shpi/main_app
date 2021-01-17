@@ -111,5 +111,5 @@ Item {
         }
     }
 
-    Component.onCompleted: console.log(roomview.count)
+
 }

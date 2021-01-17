@@ -39,9 +39,10 @@ Rectangle {
 
     Image {
         anchors.horizontalCenter: parent.horizontalCenter
-        source: weatherimage !== ''
-                && weatherimage !== undefined ? "http://openweathermap.org/img/wn/"
+        source: weatherimage !== '0' ? "http://openweathermap.org/img/wn/"
                                                 + weatherimage + "@2x.png" : ""
+
+
     }
 
     Connections {
