@@ -219,6 +219,34 @@ ApplicationWindow {
                 focus: true
             }
         }
+
+
+        InputPanel {
+            id: inputPanel
+            z: 999
+            y: Qt.inputMethod.visible ? parent.height - inputPanel.height : parent.height
+            anchors.left: parent.left
+            anchors.right: parent.right
+
+            Rectangle {
+                visible: Qt.inputMethod.visible
+                anchors.bottom: parent.top
+                width: parent.width
+                height: 50
+                color: Colors.white
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.top: parent.top
+                    padding: 2
+                    anchors.left: parent.left
+                    anchors.leftMargin: this.width > parent.width ? parent.width - this.width : 5
+                    color: Colors.black
+                    text: InputContext.surroundingText
+                    font.pixelSize: 45
+                }
+            }
+        }
+
     }
 
     SwipeView {
@@ -286,6 +314,7 @@ ApplicationWindow {
 
     Rectangle {
         id: backlighthelper
+        visible: false
         anchors.fill: parent
         color: Qt.rgba(0, 0, 0, appearance.blackfilter)
     }
@@ -389,30 +418,6 @@ ApplicationWindow {
     }
 
 
-    InputPanel {
-        id: inputPanel
-        z: 999
-        y: Qt.inputMethod.visible ? parent.height - inputPanel.height : parent.height
-        anchors.left: parent.left
-        anchors.right: parent.right
 
-        Rectangle {
-            visible: Qt.inputMethod.visible
-            anchors.bottom: parent.top
-            width: parent.width
-            height: 50
-            color: Colors.white
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.top: parent.top
-                padding: 2
-                anchors.left: parent.left
-                anchors.leftMargin: this.width > parent.width ? parent.width - this.width : 5
-                color: Colors.black
-                text: InputContext.surroundingText
-                font.pixelSize: 45
-            }
-        }
-    }
 
 }
