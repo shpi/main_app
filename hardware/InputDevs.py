@@ -39,6 +39,14 @@ class InputDevs:
         self.devs = dict()
         self.inputs = dict()
 
+
+        self.inputs['lastinput'] = dict()
+        self.inputs['lastinput']['description'] = 'Last User Input'
+        self.inputs['lastinput']['value'] = time.time()
+        self.inputs['lastinput']['lastupdate'] = time.time()
+        self.inputs['lastinput']['type'] = DataType.TIMESTAMP
+        self.inputs['lastinput']['interval'] = -1
+
         with open(self.FILENAME, 'r') as f:
 
             while True:
@@ -133,6 +141,9 @@ class InputDevs:
                     if (type == 1):
 
                         try:
+                            self.inputs['lastinput']['value'] = time.time()
+                            self.inputs['lastinput']['lastupdate'] = time.time()
+
                             self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['value'] = value
                             self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = time.time(
                             )

@@ -53,7 +53,7 @@ class Shutter(QObject):
     #@desired_position_path.setter
     @Pre_5_15_2_fix(str, desired_position_path, notify=position_pathChanged)
     def desired_position_path(self, key):
-        print(key)
+
         self._desired_position_path = key
         self.settings.setValue('shutter/' + self.name + "/desired_position", key)
 

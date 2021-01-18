@@ -88,14 +88,14 @@ Item {
             height: hostsrepeater.count * 50
 
             Column {
-                visible: inputsview.count > 0 ? false : true
+
                 width: parent.width
+                visible: inputsview.count > 0 ? false : true
                 height: hostsrepeater.count * 50
 
-
-
-
                 Repeater {
+
+
                     id: hostsrepeater
                     model: wifi.network_hosts['list']
                     Rectangle {
@@ -122,6 +122,23 @@ Item {
                             onClicked: modules.loaded_instances['Connections']['HTTP'][instancename].ip = modelData
                         }
                     }
+                }
+
+
+
+
+            }
+
+            RoundButton {
+                text: 'Delete Instance'
+                palette.button: "darkred"
+                palette.buttonText: "white"
+                onClicked: {
+
+                    settingsstackView.pop()
+                    modules.remove_instance('Connections', 'HTTP', instancename)
+
+
                 }
             }
         }

@@ -130,6 +130,19 @@ Rectangle {
                 color: Colors.black
             }
         }
+
+        RoundButton {
+            text: 'Delete Instance'
+            palette.button: "darkred"
+            palette.buttonText: "white"
+            onClicked: {
+
+                settingsstackView.pop()
+                modules.remove_instance('UI', 'ShowValue', instancename)
+
+
+            }
+        }
     }
 
     Component.onCompleted: {

@@ -183,8 +183,10 @@ Rectangle {
 
         //text: temperatur.toFixed(1) + '°C'
         //text: (32 - ( (rotator.rotation / 15))).toFixed(1) + "°C"
-        text: (min_temp + (-rotator.rotation + 240) * ((max_temp - min_temp) / 240)).toFixed(
-                  1) + '°C'
+        text: modules.loaded_instances['Logic']['Thermostat'][instancename].set_temp.toFixed(1)  + '°C'
+        // (min_temp + (-rotator.rotation + 240) * ((max_temp - min_temp) / 240)).toFixed(1) + '°C'
+
+
         color: Colors.black
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter
@@ -248,6 +250,10 @@ Rectangle {
                     else
                         rotator.rotation += (velocity / 10) * (velocity / 10)
                 }
+
+
+                modules.loaded_instances['Logic']['Thermostat'][instancename].set_temp =  (min_temp + (-rotator.rotation + 240) * ((max_temp - min_temp) / 240)).toFixed(1)
+
             }
             onReleased: {
                 tracing = false

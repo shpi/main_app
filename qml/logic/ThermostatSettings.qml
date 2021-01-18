@@ -25,13 +25,94 @@ Item {
     Column {
 
         id: list
+        width:parent.width * 0.9
+        anchors.horizontalCenter: parent.horizontalCenter
 
 
-        spacing: 10
+        spacing: 20
+
+        Text {
+            text: "Thermostat Settings"
+            color: Colors.black
+            font.bold: true
+            anchors.topMargin: 20
+        }
+
+
+        ComboBox {
+            id: combo_temperature1
+            anchors.right: parent.right
+            width: 550
+            model: inputs.typeList
+            textRole: 'path'
+            onActivated:  modules.loaded_instances['Logic']['Thermostat'][instancename].irtemp_path = this.currentText
+
+            Component.onCompleted: {
+
+                combo_temperature1.currentIndex = getIndex(modules.loaded_instances['Logic']['Thermostat'][instancename].irtemp_path, inputs.typeList)
+            }
+
+            Label {
+                anchors.right: parent.left
+                anchors.rightMargin: 10
+                text: "Room Temp."
+
+                font.family: localFont.name
+                color: Colors.black
+            }
+        }
+
+        ComboBox {
+            id: combo_temperature2
+            anchors.right: parent.right
+            width: 550
+            model: inputs.typeList
+            textRole: 'path'
+            onActivated:  modules.loaded_instances['Logic']['Thermostat'][instancename].internaltemp_path = this.currentText
+
+            Component.onCompleted: {
+
+                combo_temperature2.currentIndex = getIndex(modules.loaded_instances['Logic']['Thermostat'][instancename].internaltemp_path, inputs.typeList)
+            }
+
+            Label {
+                anchors.right: parent.left
+                anchors.rightMargin: 10
+                text: "Int. Temp."
+
+                font.family: localFont.name
+                color: Colors.black
+            }
+        }
+
+
+        ComboBox {
+            id: combo_heatingcontact
+            anchors.right: parent.right
+            width: 550
+            model: inputs.outputList
+            textRole: 'path'
+            onActivated:  modules.loaded_instances['Logic']['Thermostat'][instancename].heating_contact_path = this.currentText
+
+            Component.onCompleted: {
+
+                combo_temperature2.currentIndex = getIndex(modules.loaded_instances['Logic']['Thermostat'][instancename].heating_contact_path, inputs.outputList)
+            }
+
+            Label {
+                anchors.right: parent.left
+                anchors.rightMargin: 10
+                text: "Heating Contact"
+
+                font.family: localFont.name
+                color: Colors.black
+            }
+        }
 
 
         Row {
             spacing: 10
+            anchors.horizontalCenter: parent.horizontalCenter
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "Temperature offset"
@@ -45,7 +126,7 @@ Item {
                 value: 10
                 to: 100 * 100
                 stepSize: 10
-                font.pixelSize: 50
+                font.pixelSize: 32
                 property int decimals: 2
                 property real realValue: value / 100
 
@@ -65,43 +146,11 @@ Item {
             }
         }
 
-        Row {
-            spacing: 10
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                color: Colors.black
-                text: "Temperature hysteresis"
-            }
-            SpinBox {
 
-                id: hysterese
-                from: 0
-                value: 10
-                to: 100 * 100
-                stepSize: 10
-
-                font.pixelSize: 50
-                property int decimals: 2
-                property real realValue: value / 100
-
-                validator: DoubleValidator {
-                    bottom: Math.min(hysterese.from, hysterese.to)
-                    top: Math.max(hysterese.from, hysterese.to)
-                }
-
-                textFromValue: function (value, locale) {
-                    return Number(value / 100).toLocaleString(
-                                locale, 'f', hysterese.decimals) + "°"
-                }
-
-                valueFromText: function (text, locale) {
-                    return Number.fromLocaleString(locale, text) * 100
-                }
-            }
-        }
 
         Row {
             spacing: 20
+            anchors.horizontalCenter: parent.horizontalCenter
 
             RoundButton {
 
@@ -121,7 +170,7 @@ Item {
                     columns: 2
                     spacing: 2
                     RadioButton {
-                        checked: true
+                        enabled: false
                         text: qsTr("No schedule")
 
                             contentItem: Text {
@@ -132,6 +181,7 @@ Item {
                             }
                     }
                     RadioButton {
+                        enabled: false
                         text: qsTr("Daily")
                         contentItem: Text {
                             text: parent.text
@@ -142,7 +192,8 @@ Item {
                     }
 
                     RadioButton {
-                        text: qsTr("Weekday / Weekend")
+                        enabled: false
+                        text: qsTr("Workday / Weekend")
                         contentItem: Text {
                             text: parent.text
                             color: Colors.black
@@ -151,6 +202,7 @@ Item {
                         }
                     }
                     RadioButton {
+                        checked: true
                         text: qsTr("Weekly")
                         contentItem: Text {
                             text: parent.text
@@ -160,6 +212,20 @@ Item {
                         }
                     }
                 }
+            }
+        }
+
+
+        RoundButton {
+            text: 'Delete Instance'
+            palette.button: "darkred"
+            palette.buttonText: "white"
+            onClicked: {
+
+                settingsstackView.pop()
+                modules.remove_instance('Logic', 'Thermostat', instancename)
+
+
             }
         }
     }

@@ -37,8 +37,8 @@ Flickable {
                 stepSize: 60
                 onValueChanged: modules.loaded_instances['Info']['Weather'][instancename].interval
                                 = this.value
-                from: 60
-                to: 1000
+                from: 600
+                to: 10000
                 font.pixelSize: 32
             }
         }
@@ -47,10 +47,11 @@ Flickable {
             spacing: 5
             Text {
                 color: Colors.black
-                text: "OpenWeather API Key"
+                text: "OWM API Key"
             }
 
             TextField {
+                width:400
                 font.pixelSize: 32
                 text: modules.loaded_instances['Info']['Weather'][instancename].api_key
                 onEditingFinished: modules.loaded_instances['Info']['Weather'][instancename].api_key
@@ -61,6 +62,7 @@ Flickable {
             spacing: 20
 
             TextField {
+                width: 400
                 id: city_tf
                 text: modules.loaded_instances['Info']['Weather'][instancename].city
                 placeholderText: qsTr("City")
@@ -78,7 +80,7 @@ Flickable {
         }
 
         RoundButton {
-            text: 'x'
+            text: 'Delete Instance'
             palette.button: "darkred"
             palette.buttonText: "white"
             onClicked: {

@@ -12,6 +12,7 @@ Rectangle {
     width: height
     radius: 10
     color: Colors.whitetrans
+    property string name: modules.modules['Logic']['Thermostat'][0]
 
     Dial {
         id: dialTherm
@@ -63,7 +64,7 @@ Rectangle {
         enabled: false
         from: 15.0
         to: 32.0
-        value:25
+        value: modules.loaded_instances['Logic']['Thermostat'][name].set_temp
         stepSize: 0.2
         snapMode: Dial.SnapAlways
         onPressedChanged: if (pressed == false) {
@@ -78,11 +79,25 @@ Rectangle {
             id: actualSetTemperature
             text: parent.value.toFixed(1) + "°"
             anchors.verticalCenter: parent.verticalCenter
-
+            anchors.verticalCenterOffset: -5
             anchors.horizontalCenter: parent.horizontalCenter
             font.pixelSize: 40
             color: Colors.black
         }
+
+
+        Text{
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenterOffset: 30
+            font.pixelSize: 40
+            font.family: localFont.name
+            text: Icons.fire
+            color: modules.loaded_instances['Logic']['Thermostat'][name].heatingstate ? "yellow" : "grey"
+
+
+        }
+
 
         Shape {
             id: thermostatrange

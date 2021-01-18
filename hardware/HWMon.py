@@ -96,7 +96,7 @@ class HWMon:
             return False
 
     def write_hwmon(self, id, channel, value, retries=0):
-        value = str(value)
+        value = str(int(value))
         if os.path.isfile(f'/sys/class/hwmon/{id}/{channel}'):
             try:
                 with open(f'/sys/class/hwmon/{id}/{channel}', 'r+') as rf:

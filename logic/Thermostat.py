@@ -3,6 +3,7 @@
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 import time
 import threading
+from core.Toolbox import Pre_5_15_2_fix
 
 
 
@@ -38,6 +39,113 @@ class Thermostat(QObject):
         self._heatingcontact_path = settings.value("thermostat/"+ self.name + '/heatingcontact', '')
         self._irtemp_path = settings.value("thermostat/"+ self.name + '/irtemp', '')
         self._internaltemp_path = settings.value("thermostat/"+ self.name + '/internaltemp', '')
+        self._heatingstate = False
+        self._actual_temp = 20.5
+        self._hysteresis = 0.5
+        self._set_temp = float(settings.value("thermostat/"+ self.name + '/set_temp', 20))
+
+
+
+    @Signal
+    def stateChanged(self):
+                        pass
+
+    @Signal
+    def tempChanged(self):
+                    pass
+
+
+    @Signal
+    def settingsChanged(self):
+                        pass
+
+
+
+    @Property(bool,notify=stateChanged)
+    def heatingstate(self):
+       return int(self._heatingstate)
+
+
+    @Property(float,notify=tempChanged)
+    def actual_temp(self):
+      return float(self._actual_temp)
+
+
+
+    def set_temp(self):
+       return float(self._set_temp)
+
+
+    @Pre_5_15_2_fix(float, set_temp, notify=settingsChanged)
+    def set_temp(self, value):
+        self._set_temp = float(value)
+        self.settings.setValue("thermostat/"+ self.name + '/set_temp', value)
+        self.settingsChanged.emit()
+
+
+    def heatingcontact_path(self):
+       return int(self._heatingcontact_path)
+
+
+    @Pre_5_15_2_fix(str, heatingcontact_path, notify=settingsChanged)
+    def heatingcontact_path(self, value):
+        self._heatingcontact_path = str(value)
+        self.settings.setValue("thermostat/"+ self.name + '/heatingcontact', self._heatingcontact_path)
+        self.settingsChanged.emit()
+
+
+
+    def irtemp_path(self):
+       return int(self._heatingcontact_path)
+
+
+    @Pre_5_15_2_fix(str, irtemp_path, notify=settingsChanged)
+    def irtemp_path(self, value):
+        self._irtemp_path = str(value)
+        self.settings.setValue("thermostat/"+ self.name + '/irtemp', self._irtemp_path)
+        self.settingsChanged.emit()
+
+    def internaltemp_path(self):
+       return int(self._internaltemp_path)
+
+
+    @Pre_5_15_2_fix(str, internaltemp_path, notify=settingsChanged)
+    def internaltemp_path(self, value):
+        self._internaltemp_path = str(value)
+        self.settings.setValue("thermostat/"+ self.name + '/internaltemp', value)
+        self.settingsChanged.emit()
+
+
+
+
+
+    def update(self):
+
+       try:
+        if (self.inputs['lastinput']['value'] + 10 < time.time()):
+
+            objecttemp = float(self.inputs[self._irtemp_path]['value'])
+            internaltemp = float(self.inputs[self._internaltemp_path]['value'])
+            correctedtemp = objecttemp - 1
+            self._actual_temp = correctedtemp
+
+            if (internaltemp > objecttemp):
+                        correctedtemp = objecttemp - ((correctedtemp - internaltemp) / 6)
+                        self._actual_temp = correctedtemp
+                        self.tempChanged.emit()
+
+            if   (correctedtemp + self._hysteresis) < self._set_temp:
+                               self.inputs[self._heatingcontact_path]['set'](True)
+                               self._heatingstate = True
+                               self.stateChanged.emit()
+
+            elif (correctedtemp - self._hysteresis) > self._set_temp:
+                               self.inputs[self._heatingcontact_path]['set'](False)
+                               self._heatingstate = False
+                               self.stateChanged.emit()
+       except Exception as e:
+           print(e)
+
 
 
     def convert_schedule(self,value):

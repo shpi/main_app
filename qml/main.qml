@@ -230,11 +230,7 @@ ApplicationWindow {
 
 
 
-        Loader {
-            id: clock
-            property bool _isCurrentItem: SwipeView.isCurrentItem
-            source: "Clock.qml"
-        }
+
         Loader {
             id: rooms
             property bool _isCurrentItem: SwipeView.isCurrentItem
@@ -395,6 +391,7 @@ ApplicationWindow {
 
     InputPanel {
         id: inputPanel
+        z: 999
         y: Qt.inputMethod.visible ? parent.height - inputPanel.height : parent.height
         anchors.left: parent.left
         anchors.right: parent.right

@@ -295,6 +295,20 @@ Item {
                                                ) - time.startTime) / 1000).toFixed(
                                  1) + "s"
             }
+
+
+            RoundButton {
+                text: 'Delete Instance'
+                palette.button: "darkred"
+                palette.buttonText: "white"
+                onClicked: {
+
+                    settingsstackView.pop()
+                    modules.remove_instance('Logic', 'Shutter', instancename)
+
+
+                }
+            }
         }
     }
 }
