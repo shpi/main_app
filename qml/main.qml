@@ -97,6 +97,7 @@ ApplicationWindow {
     Drawer {
         property string actual_setting
         id: drawer
+        z: 98
         width: window.width
         height: parent.height
         edge: Qt.TopEdge
@@ -219,34 +220,6 @@ ApplicationWindow {
                 focus: true
             }
         }
-
-
-        InputPanel {
-            id: inputPanel
-            z: 999
-            y: Qt.inputMethod.visible ? parent.height - inputPanel.height : parent.height
-            anchors.left: parent.left
-            anchors.right: parent.right
-
-            Rectangle {
-                visible: Qt.inputMethod.visible
-                anchors.bottom: parent.top
-                width: parent.width
-                height: 50
-                color: Colors.white
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.top: parent.top
-                    padding: 2
-                    anchors.left: parent.left
-                    anchors.leftMargin: this.width > parent.width ? parent.width - this.width : 5
-                    color: Colors.black
-                    text: InputContext.surroundingText
-                    font.pixelSize: 45
-                }
-            }
-        }
-
     }
 
     SwipeView {
@@ -418,6 +391,30 @@ ApplicationWindow {
     }
 
 
+    InputPanel {
+        id: inputPanel
+        z: 99
+        y: Qt.inputMethod.visible ? parent.height - inputPanel.height : parent.height
+        anchors.left: parent.left
+        anchors.right: parent.right
 
+        Rectangle {
+            visible: Qt.inputMethod.visible
+            anchors.bottom: parent.top
+            width: parent.width
+            height: 50
+            color: Colors.white
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.top: parent.top
+                padding: 2
+                anchors.left: parent.left
+                anchors.leftMargin: this.width > parent.width ? parent.width - this.width : 5
+                color: Colors.black
+                text: InputContext.surroundingText
+                font.pixelSize: 45
+            }
+        }
+    }
 
 }
