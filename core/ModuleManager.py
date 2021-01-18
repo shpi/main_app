@@ -104,8 +104,6 @@ class ModuleManager(QObject):
 
 
 
-
-
     @Slot(str, list)
     def set_rooms(self, roomname, rooms):
 
@@ -115,6 +113,25 @@ class ModuleManager(QObject):
         self._rooms[roomname] = rooms
         self.settings.setValue(f"room/{roomname}", rooms)
         self.roomsChanged.emit()
+
+
+    @Slot(str,str)
+    def add_to_room(self, roomname, room):
+
+                if room not in self._rooms[roomname]:
+                    self._rooms[roomname].append(room)
+                    self.settings.setValue(f"room/{roomname}", self._rooms[roomname])
+                    self.roomsChanged.emit()
+
+
+    @Slot(str,str)
+    def del_from_room(self, roomname, room):
+
+                if room in self._rooms[roomname]:
+                    self._rooms[roomname].remove(room)
+                    self.settings.setValue(f"room/{roomname}", self._rooms[roomname])
+                    self.roomsChanged.emit()
+
 
 
 

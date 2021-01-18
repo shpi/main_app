@@ -79,9 +79,7 @@ Item {
                             roomview.forceLayout()
                         } else {
 
-                            roomarr = modules.rooms[roomname]
-                            roomarr.push(combo_value_path.currentText)
-                            modules.set_rooms(roomname, roomarr)
+                            modules.add_to_room(roomname, combo_value_path.currentText)
                             roomview.model = modules.rooms[roomname]
                             roomview.forceLayout()
                         }
@@ -150,9 +148,9 @@ Item {
                         anchors.fill: parent
                         onClicked: if (roomname !== '') {
                                        var roomarr
-                                       roomarr = modules.rooms[roomname]
-                                       roomarr.splice(parent.parent.index, 1)
-                                       modules.set_rooms(roomname, roomarr)
+                                       //roomarr = modules.rooms[roomname]
+                                       //roomarr.splice(parent.parent.index, 1)
+                                       modules.del_from_room(roomname,modelData )
                                        parent.parent.parent.model = modules.rooms[roomname]
                                        roomview.forceLayout()
                                    }
