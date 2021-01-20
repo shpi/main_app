@@ -7,7 +7,7 @@ import "../../fonts/"
 
 Rectangle {
 
-    property string name: modules.modules['UI']['ShowValue'][0]
+    property string instancename: parent.instancename != undefined ? parent.instancename : modules.modules['UI']['ShowValue'][0]
 
     height: parent.height
     width: height * 0.7
@@ -17,7 +17,7 @@ Rectangle {
 
     Text {
         id: icontext
-        text: modules.loaded_instances['UI']['ShowValue'][name].icon
+        text: modules.loaded_instances['UI']['ShowValue'][instancename].icon
         color: Colors.black
         anchors.top: parent.top
         anchors.topMargin: 5
@@ -28,7 +28,7 @@ Rectangle {
 
     Text {
         id: valuetext
-        text: modules.loaded_instances['UI']['ShowValue'][name].value
+        text: modules.loaded_instances['UI']['ShowValue'][instancename].value
         color: Colors.black
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 5
@@ -39,10 +39,10 @@ Rectangle {
 
     MouseArea {
     anchors.fill: parent
-    enabled: modules.loaded_instances['UI']['ShowValue'][name].logging
+    enabled: modules.loaded_instances['UI']['ShowValue'][instancename].logging
     onClicked: {
-    graphLoader.sensorpath = modules.loaded_instances['UI']['ShowValue'][name].value_path
-    graphLoader.divider = modules.loaded_instances['UI']['ShowValue'][name].divider
+    graphLoader.sensorpath = modules.loaded_instances['UI']['ShowValue'][instancename].value_path
+    graphLoader.divider = modules.loaded_instances['UI']['ShowValue'][instancename].divider
     graphPopup.open()
     }
 

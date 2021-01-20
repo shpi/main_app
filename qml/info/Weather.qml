@@ -6,10 +6,10 @@ import "../../fonts/"
 
 Rectangle {
 
-    property string name: modules.modules['Info']['Weather'][0]
-    property string weatherimage: inputs.data['weather/' + name + '/current_weather_icon']['value']
-    property string average_temp: inputs.data['weather/' + name + '/current_temp']['value']
-    property string day: new Date(inputs.data['weather/' + name + '/lastupdate']['value'] * 1000)
+    property string instancename: parent.instancename != undefined ? parent.instancename : modules.modules['Info']['Weather'][0]
+    property string weatherimage: inputs.data['weather/' + instancename + '/current_weather_icon']['value']
+    property string average_temp: inputs.data['weather/' + instancename + '/current_temp']['value']
+    property string day: new Date(inputs.data['weather/' + instancename + '/lastupdate']['value'] * 1000)
     property string dayname: Qt.formatDate(day, "dddd")
 
     id: dayrect
@@ -39,20 +39,20 @@ Rectangle {
 
     Image {
         anchors.horizontalCenter: parent.horizontalCenter
-        source: weatherimage !== '0' ? "http://openweathermap.org/img/wn/"
-                                                + weatherimage + "@2x.png" : ""
+        source: weatherimage !== '0' ? "../../weathersprites/"
+                                                + weatherimage + ".png" : ""
 
 
     }
 
     Connections {
         id: weatherdaysconn
-        target: modules.loaded_instances['Info']['Weather'][name]
+        target: modules.loaded_instances['Info']['Weather'][instancename]
         onDataChanged: {
 
-            weatherimage = inputs.data['weather/' + name + '/current_weather_icon']['value']
-            average_temp = inputs.data['weather/' + name + '/current_temp']['value']
-            day = new Date(inputs.data['weather/' + name + '/lastupdate']['value'] * 1000)
+            weatherimage = inputs.data['weather/' + instancename + '/current_weather_icon']['value']
+            average_temp = inputs.data['weather/' + instancename + '/current_temp']['value']
+            day = new Date(inputs.data['weather/' + instancename + '/lastupdate']['value'] * 1000)
         }
     }
 

@@ -12,7 +12,9 @@ Rectangle {
     width: height
     radius: 10
     color: Colors.whitetrans
-    property string name: modules.modules['Logic']['Thermostat'][0]
+    property string instancename: parent.instancename != undefined ? parent.instancename : modules.modules['Logic']['Thermostat'][0]
+
+
 
     Dial {
         id: dialTherm
@@ -64,7 +66,7 @@ Rectangle {
         enabled: false
         from: 15.0
         to: 32.0
-        value: modules.loaded_instances['Logic']['Thermostat'][name].set_temp
+        value: modules.loaded_instances['Logic']['Thermostat'][instancename].set_temp
         stepSize: 0.2
         snapMode: Dial.SnapAlways
         onPressedChanged: if (pressed == false) {
@@ -93,7 +95,7 @@ Rectangle {
             font.pixelSize: 40
             font.family: localFont.name
             text: Icons.fire
-            color: modules.loaded_instances['Logic']['Thermostat'][name].heatingstate ? "yellow" : "grey"
+            color: modules.loaded_instances['Logic']['Thermostat'][instancename].heatingstate ? "yellow" : "grey"
 
 
         }

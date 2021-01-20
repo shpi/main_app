@@ -66,7 +66,7 @@ Rectangle {
             model: dayrect.weather_icons.length
 
             Image {
-                source: "http://openweathermap.org/img/wn/" + weather_icons[index] + "@2x.png"
+                source: "../../weathersprites/" + weather_icons[index] + ".png"
             }
         }
     }

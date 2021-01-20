@@ -73,20 +73,21 @@ Item {
 
                 Loader {
                 id: componentLoader
-                source: ""
+                source: model[0].toLowerCase() + "/" + model[1] + ".qml"
                 anchors.fill: parent
-
-
+                asynchronous: true
+                property var instancename: model[2]
+                property var iconview: true
 
                 }
 
-                Component.onCompleted: {
+                /* Component.onCompleted: {
 
                 componentLoader.setSource( model[0].toLowerCase() + "/" + model[1] + ".qml",
                                          { "iconview": true,
                                            "name": model[2]
                                       })
-                }
+                } */
 
               /*  Text {
                     id: textitem

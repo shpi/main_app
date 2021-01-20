@@ -10,8 +10,8 @@ Rectangle {
     radius: 10
     color: Colors.whitetrans
     clip: true
-    property string name: modules.modules['Logic']['Shutter'][0]
-    property bool iconview: false
+    property string instancename: parent.instancename != undefined ? parent.instancename : modules.modules['Logic']['Shutter'][0]
+    property bool iconview: parent.iconview != undefined ? parent.iconview : false
 
     Rectangle {
 
@@ -30,7 +30,7 @@ Rectangle {
             id: control
             from: 0
             to: 100
-            value: pressed == false ? modules.loaded_instances['Logic']['Shutter'][name].actual_position : modules.loaded_instances['Logic']['Shutter'][name].desired_position
+            value: pressed == false ? modules.loaded_instances['Logic']['Shutter'][instancename].actual_position : modules.loaded_instances['Logic']['Shutter'][instancename].desired_position
             orientation: Qt.Vertical
             height: parent.height - 2
             width: parent.width - 2
@@ -40,11 +40,11 @@ Rectangle {
 
             stepSize: 5
             onPressedChanged: if (this.pressed === false)
-                                  modules.loaded_instances['Logic']['Shutter'][name].set_desired_position(
+                                  modules.loaded_instances['Logic']['Shutter'][instancename].set_desired_position(
                                               this.value)
 
             Text {
-                text: modules.loaded_instances['Logic']['Shutter'][name].desired_position
+                text: modules.loaded_instances['Logic']['Shutter'][instancename].desired_position
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.horizontalCenterOffset: -parent.width * 0.07
@@ -116,8 +116,8 @@ Rectangle {
 
             Rectangle {
                 z: parent.handle.z - 0.01
-                visible: modules.loaded_instances['Logic']['Shutter'][name].actual_position
-                         !== modules.loaded_instances['Logic']['Shutter'][name].desired_position
+                visible: modules.loaded_instances['Logic']['Shutter'][instancename].actual_position
+                         !== modules.loaded_instances['Logic']['Shutter'][instancename].desired_position
                          && parent.pressed == false ? true : false
 
                 width: parent.width * 1.1
@@ -127,7 +127,7 @@ Rectangle {
                 color: Colors.black
 
                 y: control.height
-                   - ((modules.loaded_instances['Logic']['Shutter'][name].desired_position
+                   - ((modules.loaded_instances['Logic']['Shutter'][instancename].desired_position
                        / 100) * control.height) - height / 2
 
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -150,10 +150,10 @@ Rectangle {
                     font.family: localFont.name
 
                     text: {
-                        modules.loaded_instances['Logic']['Shutter'][name].desired_position
-                                === modules.loaded_instances['Logic']['Shutter'][name].actual_position ? Icons.shutter : Icons.arrow
+                        modules.loaded_instances['Logic']['Shutter'][instancename].desired_position
+                                === modules.loaded_instances['Logic']['Shutter'][instancename].actual_position ? Icons.shutter : Icons.arrow
                     }
-                    rotation: modules.loaded_instances['Logic']['Shutter'][name].desired_position > modules.loaded_instances['Logic']['Shutter'][name].actual_position ? 180 : 0
+                    rotation: modules.loaded_instances['Logic']['Shutter'][instancename].desired_position > modules.loaded_instances['Logic']['Shutter'][instancename].actual_position ? 180 : 0
                     anchors.centerIn: parent
                     font.pixelSize: parent.height
                     opacity: 1

@@ -26,11 +26,11 @@ class IIO:
         try:
             if os.path.isfile(f'/sys/bus/iio/devices/{id}/{channel}'):
                 with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
-                    return (rf.read().rstrip())
+                    return int(rf.read().rstrip())
                     rf.close()
         except:
             if (retries < 3):
-                return read_iio(id, channel, retries+1)
+                return IIO.read_iio(id, channel, retries+1)
             else:
                 return None
 
@@ -39,11 +39,11 @@ class IIO:
             try:
                 with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
                     value = scale * (int(rf.read().rstrip()) + offset)
-                    return (value)
+                    return float(value)
                     rf.close()
             except:
                 if (retries < 3):
-                    return read_processed(id, channel, scale, offset, retries+1)
+                    return IIO.read_processed(id, channel, scale, offset, retries+1)
                 else:
                     return None
 
