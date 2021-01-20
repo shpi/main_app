@@ -1,3 +1,4 @@
+import logging
 from subprocess import Popen, PIPE
 from threading import Thread
 # import socket for later audio intercom
@@ -78,7 +79,7 @@ class AlsaRecord:
 
         if self._control['value'] > 0:
             if not self.arecord_process or self.arecord_process.poll() is not None:
-                print('starting arecord process on ' + self.card)
+                logging.debug('starting arecord process on ' + self.card)
                 self.arecord_process = Popen(['arecord', '-D', 'plughw:' + self.card, '-c', str(self.channels), '-r', str(
                     self.rate), '-t', 'raw', '-f', self.format, '-V', 'mono'], stdout=PIPE, stderr=PIPE)  # output-producing process
 

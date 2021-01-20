@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import os
-import hardware.iio
+import hardware.iio as iio
 from functools import partial
 from core.DataTypes import Convert, DataType
 
@@ -22,21 +22,30 @@ class IIO:
         return self.inputs
 
     @staticmethod
-    def read_iio(id, channel):
+    def read_iio(id, channel, retries=0):
         try:
             if os.path.isfile(f'/sys/bus/iio/devices/{id}/{channel}'):
                 with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
                     return (rf.read().rstrip())
                     rf.close()
         except:
-            return read_iio(id, channel)
+            if (retries < 3):
+                return read_iio(id, channel, retries+1)
+            else:
+                return None
 
-    def read_processed(id, channel, scale=1, offset=0):
+    def read_processed(id, channel, scale=1, offset=0, retries=0):
         if os.path.isfile(f'/sys/bus/iio/devices/{id}/{channel}'):
-            with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
-                value = scale * (int(rf.read().rstrip()) + offset)
-                return (value)
-                rf.close()
+            try:
+                with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
+                    value = scale * (int(rf.read().rstrip()) + offset)
+                    return (value)
+                    rf.close()
+            except:
+                if (retries < 3):
+                    return read_processed(id, channel, scale, offset, retries+1)
+                else:
+                    return None
 
     @staticmethod
     def write_iio(id, channel, value):

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
+import logging
 import time
 import os
 import threading
@@ -77,13 +78,13 @@ class HTTP(QObject):
                 response = urllib.request.urlopen(url, timeout=5)
 
             except HTTPError as error:
-                    print('Data not retrieved because %s\nURL: %s', error, url)
+                    logging.debug('Data not retrieved because %s\nURL: %s', error, url)
 
             except URLError as error:
                     if isinstance(error.reason, socket.timeout):
-                        print('socket timed out - URL %s', url)
+                        logging.debug('socket timed out - URL %s', url)
                     else:
-                        print('some other error happened')
+                        logging.debug('unknown error happened')
 
 
             else:
@@ -102,7 +103,7 @@ class HTTP(QObject):
 
 
         except Exception as ex:
-            print(ex)
+            logging.debug(ex)
 
         self.inputlist = InputListModel(self.http_inputs)
         self.vars_changed.emit()
@@ -122,13 +123,13 @@ class HTTP(QObject):
                response = urllib.request.urlopen(url, timeout=5)
 
            except HTTPError as error:
-                   print('Data not retrieved because %s\nURL: %s', error, url)
+                   logging.debug('Data not retrieved because %s\nURL: %s', error, url)
                    return None
            except URLError as error:
                    if isinstance(error.reason, socket.timeout):
-                       print('socket timed out - URL %s', url)
+                       logging.debug('socket timed out - URL %s', url)
                    else:
-                       print('some other error happened')
+                       logging.debug('some other error happened')
                    return None
 
            else:
@@ -141,7 +142,7 @@ class HTTP(QObject):
                return data['value']
 
        except Exception as ex:
-           print(ex)
+           loggind.debug(ex)
            return None
 
 

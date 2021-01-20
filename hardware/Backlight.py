@@ -1,4 +1,5 @@
 import os
+import logging
 import time
 from core.DataTypes import DataType
 
@@ -40,11 +41,16 @@ class Backlight:
 
     def set_brightness(self, brightness):
 
+
+        logging.debug(f"set_brightness({brightness})")
+
         if ((len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0)):
             setbrightness = int((self.MAX_BACKLIGHT / 100) * brightness)
 
             if setbrightness == 0 and brightness > 0:
                 setbrightness = 1
+
+            logging.debug(f"hardware brightness level: {setbrightness}")
 
             with open(self.BACKLIGHT + "/brightness", "w") as bright:
                 bright.write(str(setbrightness))
@@ -57,8 +63,10 @@ class Backlight:
                 with open(self.BACKLIGHT + "/bl_power", "w") as bright:
                     if (brightness < 1):
                         bright.write("4")
+                        logging.debug(f"bl_power: 4")
                     else:
                         bright.write("0")
+                        logging.debug(f"bl_power: 0")
             bright.close()
 
     def get_brightness(self):
@@ -66,7 +74,4 @@ class Backlight:
             with open(self.BACKLIGHT + "/brightness", "r") as bright:
                 self._brightness = int((100 / self.MAX_BACKLIGHT)
                                        * int(bright.readline().rstrip()))
-                # if (self._brightness != self.blinputs['backlight/brightness']['value']):
-                #self.blinputs['backlight/brightness']['value'] = self._brightness
-                #self.blinputs['backlight/brightness']['lastupdate'] = time.time()
         return self._brightness

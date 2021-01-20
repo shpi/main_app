@@ -13,8 +13,8 @@ class ShowValue(QObject):
         self.settings = settings
         self.inputs = inputs
         self.name = name
-        self._value_path = settings.value('showvalue/' + self.name + "/path", 'alsa/PCH/recording')
-        self._value = str(self.inputs.entries[self._value_path]['value'])
+        self._value_path = settings.value('showvalue/' + self.name + "/path", '')
+        self._value = ''
         self._icon = settings.value('showvalue/' + self.name + "/icon", '')
         self._divider = settings.value('showvalue/' + self.name + "/divider", '1000')
 
@@ -25,6 +25,9 @@ class ShowValue(QObject):
 
 
     def update(self):
+        if self._value_path not in self.inputs.entries:
+            return
+
         if self._value != str(self.inputs.entries[self._value_path]['value']):
             self._value = str(self.inputs.entries[self._value_path]['value'])
             self.valueChanged.emit()
@@ -88,6 +91,7 @@ class ShowValue(QObject):
         if self.is_number(self._value) and self.is_number(self._divider):
             return str(float(self._value) / float(self._divider))
         else:
-            return "{:.1f}".format(self._value)
+            print(self._value)
+            return (self._value)
 
 

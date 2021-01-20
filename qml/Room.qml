@@ -98,7 +98,7 @@ Item {
                 }
                */
 
-                layer.enabled: true
+               /* layer.enabled: true
                             layer.effect: DropShadow {
                                 transparentBorder: true
                                 horizontalOffset: 3
@@ -106,6 +106,7 @@ Item {
                                 radius: 4.0
                                 color: Colors.white
                             }
+              */
 
             }
         }

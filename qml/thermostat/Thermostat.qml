@@ -275,10 +275,10 @@ Rectangle {
         rotation: 90
 
 
-        /* Behavior on rotation {
+        Behavior on rotation {
 
             PropertyAnimation {}
-        }*/
+        }
         Repeater {
 
             model: 120

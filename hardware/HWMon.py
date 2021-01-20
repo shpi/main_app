@@ -1,5 +1,6 @@
 import glob
 import os
+import logging
 from functools import partial
 from core.DataTypes import DataType
 
@@ -78,7 +79,7 @@ class HWMon:
             if (value['rights'] & 0o444 == 0o444):
                 hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"] = {"description": value['description'],
                                                                             #"rights": value['rights'],
-                                                                            "interval": 60,
+                                                                            "interval": 20,
                                                                             "type": value['type'], "call": partial(self.read_hwmon, value['id'], value['channel'])}
 
             if (value['rights'] == 0o644):
@@ -88,21 +89,31 @@ class HWMon:
         return hwmoninputs
 
     def read_hwmon(self, id, channel):
+        
         if os.path.isfile(f'/sys/class/hwmon/{id}/{channel}'):
-            with open(f'/sys/class/hwmon/{id}/{channel}', 'r') as rf:
-                return int(rf.read().rstrip())
-                rf.close()
+            try:
+                with open(f'/sys/class/hwmon/{id}/{channel}', 'r') as rf:
+                    value = int(rf.read().rstrip())
+                    logging.debug(f' reading channel: {channel} value: {value}')
+                    return value
+                    rf.close()
+            except Exception as e:
+               logging.debug(f'reading channel: {channel} failed with error {e}')
+
         else:
-            return False
+            return None
 
     def write_hwmon(self, id, channel, value, retries=0):
+        logging.debug(f' writing {value} to output')
         value = str(int(value))
         if os.path.isfile(f'/sys/class/hwmon/{id}/{channel}'):
             try:
                 with open(f'/sys/class/hwmon/{id}/{channel}', 'r+') as rf:
                     rf.write(value)
                     rf.seek(0)
-                    if (value == rf.read().rstrip()):
+                    newvalue = rf.read().rstrip()
+                    logging.debug(f'reading back {newvalue}')
+                    if (value == newvalue):
                         return True
                     else:
                         if retries < 5:

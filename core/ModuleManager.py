@@ -3,6 +3,7 @@
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 # import time
 # import os
+import logging
 import importlib
 # from enum import Enum for self.state later
 # import threading
@@ -22,15 +23,15 @@ class ModuleManager(QObject):
                                   'UI': ['Shutter','ShowValue','MultiShutter'],
                                   'Connections': ['HTTP']}
 
-        self._modules = dict()
-        self._instances = dict()
+        self._modules = dict() # saves names of loaded instances
+        self._instances = dict() # instances itself
 
         self._available_rooms = self.settings.value(f"available_rooms", ['Screensaver'])
 
         if isinstance(self._available_rooms, str):
             self._available_rooms = [self._available_rooms]
 
-        self._rooms = dict()
+        self._rooms = dict() # saves instance names per room / category
 
         for room in self._available_rooms:
             rom  = self.settings.value(f"room/{room}", [])
@@ -67,6 +68,7 @@ class ModuleManager(QObject):
                 tempclass = getattr(importlib.import_module(category.lower() + '.' + classname), classname)
                 if isinstance(instancenames, list):
                  for instancename in instancenames:
+                    logging.debug(f'Initiating {category}:{classname}:{instancename}')
                     self._instances[category][classname][instancename] = tempclass(instancename,inputs,settings)
 
                     try:
@@ -77,14 +79,12 @@ class ModuleManager(QObject):
 
 
 
-    # for key,value in weather.items():
-    #    inputs.add(value.get_inputs())
-
     def update(self):
         for category in self._instances:
             for classname in self._instances[category]:
                 for instance in self._instances[category][classname]:
                     try:
+                        logging.debug(f'calling update function of {category}:{classname}:{instance}')
                         self._instances[category][classname][instance].update()
                     except AttributeError:
                         pass
@@ -104,7 +104,7 @@ class ModuleManager(QObject):
 
 
 
-    @Slot(str, list)
+    """ @Slot(str, list)
     def set_rooms(self, roomname, rooms):
 
         if isinstance(rooms, str):
@@ -113,7 +113,7 @@ class ModuleManager(QObject):
         self._rooms[roomname] = rooms
         self.settings.setValue(f"room/{roomname}", rooms)
         self.roomsChanged.emit()
-
+    """
 
     @Slot(str,str)
     def add_to_room(self, roomname, room):
@@ -181,16 +181,17 @@ class ModuleManager(QObject):
 
     @Slot(str, str, str)
     def add_instance(self, category, classname, instancename):
-        self._modules[category][classname].append(instancename)
-        self.settings.setValue(category + "/" + classname, self._modules[category][classname])
-        tempclass = getattr(importlib.import_module(category.lower() + '.' + classname), classname)
+        if instancename not in self._modules[category][classname]:
+            self._modules[category][classname].append(instancename)
+            self.settings.setValue(category + "/" + classname, self._modules[category][classname])
+            tempclass = getattr(importlib.import_module(category.lower() + '.' + classname), classname)
 
-        self._instances[category][classname][instancename] = tempclass(instancename,self.inputs,self.settings)
+            self._instances[category][classname][instancename] = tempclass(instancename,self.inputs,self.settings)
 
-        try:
-            self.inputs.add(self._instances[category][classname][instancename].get_inputs())
-        except:
-            pass
+            try:
+                self.inputs.add(self._instances[category][classname][instancename].get_inputs())
+            except Exception as e:
+                logging.debug(e)
         self.modulesChanged.emit()
 
     @Slot(str, str, str)

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import logging
 import os
 import errno
 from subprocess import call, Popen, PIPE
@@ -235,7 +236,7 @@ class AlsaMixer:
 
     @staticmethod
     def change_control(card_name, num_id, channel, channelcount, settings):
-
+        logging.debug(f'{card_name},{num_id},{channel},{channelcount},{settings}')
         if channelcount != 1:
             settings = (channel * ',') + str(settings) + \
                 ((channelcount - channel - 1) * ',')

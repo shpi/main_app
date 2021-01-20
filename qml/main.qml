@@ -97,7 +97,7 @@ ApplicationWindow {
     Drawer {
         property string actual_setting
         id: drawer
-        z: 98
+        
         width: window.width
         height: parent.height
         edge: Qt.TopEdge

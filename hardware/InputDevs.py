@@ -1,3 +1,4 @@
+import logging
 import subprocess
 import threading
 import struct
@@ -42,9 +43,9 @@ class InputDevs:
 
         self.inputs['lastinput'] = dict()
         self.inputs['lastinput']['description'] = 'Last User Input'
-        self.inputs['lastinput']['value'] = time.time()
+        self.inputs['lastinput']['value'] = 'start'
         self.inputs['lastinput']['lastupdate'] = time.time()
-        self.inputs['lastinput']['type'] = DataType.TIMESTAMP
+        self.inputs['lastinput']['type'] = DataType.TIME
         self.inputs['lastinput']['interval'] = -1
 
         with open(self.FILENAME, 'r') as f:
@@ -101,7 +102,7 @@ class InputDevs:
 
         for id, subdevice in self.devs.items():
             self.inputs[f'dev/{str(id)}/thread'] = dict()
-            self.inputs[f'dev/{str(id)}/thread']['description'] = 'Reading Thread for ' + subdevice['name']
+            self.inputs[f'dev/{str(id)}/thread']['description'] = 'Thread for ' + subdevice['name']
             self.inputs[f'dev/{str(id)}/thread']['value'] = 1
             self.inputs[f'dev/{str(id)}/thread']['interval'] = -1
             self.inputs[f'dev/{str(id)}/thread']['lastupdate'] = 0
@@ -129,8 +130,10 @@ class InputDevs:
 
     def devloop(self, devpath, id):
 
+
         systembits = (struct.calcsize("P") * 8)
         try:
+            logging.debug(f'start reading: {devpath}')
             with open(devpath, 'rb') as devfile:
                 while self.inputs[f'dev/{str(id)}/thread']['value']:
                     # 16 byte for 32bit,  24 for 64bit
@@ -141,21 +144,19 @@ class InputDevs:
                     if (type == 1):
 
                         try:
-                            self.inputs['lastinput']['value'] = time.time()
+                            self.inputs['lastinput']['value'] = devpath
                             self.inputs['lastinput']['lastupdate'] = time.time()
 
                             self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['value'] = value
-                            self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = time.time(
-                            )
-                            self.inputs[f'dev/{str(id)}']['lastupdate'] = timestamp
+                            self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = time.time()
+                            self.inputs[f'dev/{str(id)}/thread']['lastupdate'] = timestamp
 
                             if 'interrupts' in self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']:
                                 for function in self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['interrupts']:
-                                    function(
-                                        f'dev/{str(id)}/keys/{str(keycode)}', value)
+                                    function(f'dev/{str(id)}/keys/{str(keycode)}', value)
 
-                            if 'interrupts' in self.inputs[f'dev/{str(id)}']:
-                                for function in self.inputs[f'dev/{str(id)}']['interrupts']:
+                            if 'interrupts' in self.inputs[f'dev/{str(id)}/thread']:
+                                for function in self.inputs[f'dev/{str(id)}/thread']['interrupts']:
                                     function(f'dev/{str(id)}', value)
 
                         except KeyError:

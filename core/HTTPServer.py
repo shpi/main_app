@@ -3,6 +3,7 @@
 from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
 import time
 import os
+import logging
 import threading
 from datetime import datetime
 from core.DataTypes import DataType
@@ -30,7 +31,9 @@ class ServerHandler(BaseHTTPRequestHandler):
 
 
                      if ('set' in query):
-                         self.inputs[query['key']]['set'](query['set'])
+                         if 'set' in self.inputs[query['key']]:
+                             logging.debug(f'SET: {key} : {query["set"]}')
+                             self.inputs[query['key']]['set'](query['set'])
 
 
                      value = self.inputs[query['key']]
@@ -93,7 +96,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.send_response(400)
             self.connection.close()
 
-        print("request finished in:  %s seconds" %
+        logging.debug("request finished in:  %s seconds" %
                           (time.time() - start_time))
         #return
 

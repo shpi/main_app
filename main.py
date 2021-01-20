@@ -24,10 +24,11 @@ import os
 
 os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
 
-# os.environ["QT_QPA_PLATFORM"] = "eglfs"
-# os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
-# os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
-# os.environ["GST_DEBUG"] = "omx:4"
+os.environ["QT_QPA_PLATFORM"] = "eglfs"
+os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
+os.environ["LD_LIBRARY_PATH"]= "/usr/local/qt5pi/lib"
+os.environ["GST_DEBUG"] = "omx:4"
+os.environ["QT_QPA_EGLFS_FORCE888"] = "1"
 # os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
 # os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
 # os.environ["XDG_RUNTIME_DIR"] = "/home/pi/qmlui"
@@ -96,21 +97,14 @@ backlight = Backlight()
 hwmon = HWMon()
 inputs = InputsDict(settings)
 httpserver = HTTPServer(inputs, settings)
-
-try:
-    iio = IIO()
-except:
-    pass
+iio = IIO()
 
 leds = Led()
 alsamixer = AlsaMixer(inputs,settings)
 wifi = Wifi(settings)
 inputs.add(wifi.get_inputs())
+inputs.add(iio.get_inputs())
 
-try:
-    inputs.add(iio.get_inputs())
-except:
-    pass
 
 inputs.add(alsamixer.get_inputs())
 inputs.add(leds.get_inputs())

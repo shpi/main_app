@@ -207,7 +207,7 @@ class InputsDict(QObject):
                             self.entries[key][subkey] = newinputs[key][subkey]
                     else:
                         self.entries[key][subkey] = newinputs[key][subkey]
-                del newinputs[key]
+                del newinputs[key] # ??
 
         self.entries.update(newinputs)
         self.completelist.updateKeys()
@@ -249,37 +249,37 @@ class InputsDict(QObject):
 
     @Slot(str, int)
     def set_interval(self, key, value):
-        print('set_interval' + key + ' ' + str(value))
+        logging.debug('set_interval ' + key + ' ' + str(value))
         try:
             self.delete_timerschedule(key, self.entries[key]['interval'])
             self.entries[key]['interval'] = int(value)
             self.register_timerschedule(key, int(value))
             self.settings.setValue(key + "/interval", value)
         except KeyError:
-            print(key + ' not in Inputdictionary')
+            logging.debug(key + ' not in Inputdictionary')
 
 
     @Slot(str, bool)
     def set_logging(self, key, value):
-        print('set_logging' + key + ' ' + str(value))
+        logging.debug('set_logging ' + key + ' ' + str(value))
         try:
             self.entries[key]['logging'] = bool(value)
             self.settings.setValue(key + "/logging", int(value))
             if value and key not in self.buffer:
                self.buffer[key] = list()
         except KeyError:
-            print(key + ' not in Inputdictionary')
+            logging.debug(key + ' not in Inputdictionary')
 
     @Slot(str, bool)
     def set_exposed(self, key, value):
-        print('set_exposed ' + key + ' ' + str(value))
+        logging.debug('set_exposed ' + key + ' ' + str(value))
         try:
             self.entries[key]['exposed'] = bool(value)
 
             self.settings.setValue(key + "/exposed", int(value))
 
         except KeyError:
-            print(key + ' not in Inputdictionary')
+            logging.debug(key + ' not in Inputdictionary')
 
 
     def update(self, lastupdate):
@@ -308,7 +308,7 @@ class InputsDict(QObject):
                     else:
                         self.update_value(key)
 
-        # self.dataChanged.emit()
+        # self.dataChanged.emit() needs too many ressources
 
     def update_value(self, key, value=None):
         if value is None:

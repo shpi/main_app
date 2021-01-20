@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
+import sys
 import time
+import logging
 import threading
 from core.Toolbox import Pre_5_15_2_fix
 
@@ -121,8 +123,15 @@ class Thermostat(QObject):
 
     def update(self):
 
+       if self._irtemp_path not in self.inputs:
+           return
+       if self._internaltemp_path not in self.inputs:
+           return
+       if self._heatingcontact_path not in self.inputs:
+           return
+
        try:
-        if (self.inputs['lastinput']['value'] + 10 < time.time()):
+        if (self.inputs['lastinput']['lastupdate'] + 10 < time.time()):
 
             objecttemp = float(self.inputs[self._irtemp_path]['value'])
             internaltemp = float(self.inputs[self._internaltemp_path]['value'])
@@ -144,7 +153,11 @@ class Thermostat(QObject):
                                self._heatingstate = False
                                self.stateChanged.emit()
        except Exception as e:
-           print(e)
+           exception_type, exception_object, exception_traceback = sys.exc_info()
+           line_number = exception_traceback.tb_lineno
+           logging.debug('error: {}'.format(e))
+           logging.debug('error in line: {}'.format(line_number))
+
 
 
 
