@@ -206,6 +206,7 @@ Rectangle {
     }
 
     Loader {
+        asynchronous: true
         property int value: 0
         id: loader
         width: parent.width

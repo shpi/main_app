@@ -100,13 +100,17 @@ backlight = Backlight()
 hwmon = HWMon()
 inputs = InputsDict(settings)
 httpserver = HTTPServer(inputs, settings)
-iio = IIO()
+try:
+    iio = IIO()
+    inputs.add(iio.get_inputs())
+except:
+    pass
 
 leds = Led()
 alsamixer = AlsaMixer(inputs,settings)
 wifi = Wifi(settings)
 inputs.add(wifi.get_inputs())
-inputs.add(iio.get_inputs())
+
 
 
 inputs.add(alsamixer.get_inputs())

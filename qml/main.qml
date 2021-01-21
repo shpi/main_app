@@ -265,12 +265,14 @@ ApplicationWindow {
 
 
         Loader {
+            asynchronous: true
             id: rooms
             property bool _isCurrentItem: SwipeView.isCurrentItem
             source: "Rooms.qml"
         }
 
         Loader {
+            asynchronous: true
             id: screensaver
             property bool _isCurrentItem: SwipeView.isCurrentItem
             source: "screensaver/Screensaver.qml"
@@ -285,6 +287,7 @@ ApplicationWindow {
             visible: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
 
             delegate: Loader {
+                asynchronous: true
                 id: thermostatslide
                 source: "thermostat/Thermostat.qml"
                 visible: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
@@ -300,6 +303,7 @@ ApplicationWindow {
             visible: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
 
             delegate: Loader {
+                asynchronous: true
                 id: weatherslide
                 source: "weather/WeatherFull.qml"
                 visible: modules.modules['Info']['Weather'].length > 0 ? 1 : 0

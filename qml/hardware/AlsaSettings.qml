@@ -56,7 +56,7 @@ Item {
                         //(output === '1' ? '' : value)
                         Loader {
                             anchors.verticalCenter: parent.verticalCenter
-
+                             asynchronous: true
                             sourceComponent: if (output === '0')
                                                  switch (type) {
                                                  case "percent_int":
@@ -108,7 +108,7 @@ Item {
 
                         Loader {
                             anchors.verticalCenter: parent.verticalCenter
-
+                            asynchronous: true
                             sourceComponent: if (output === '1')
                                                  switch (type) {
                                                  case "boolean":

@@ -99,6 +99,7 @@ Item {
         orientation: Qt.Vertical
 
         Loader {
+            asynchronous: true
             width: parent.width
             height: 480
             id: weatherdays
@@ -111,6 +112,7 @@ Item {
         }
 
         Loader {
+            asynchronous: true
             width: parent.width
             height: 480
             id: weathergraphloader

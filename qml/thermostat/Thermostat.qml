@@ -354,6 +354,7 @@ Rectangle {
         }
 
         Loader {
+            asynchronous: true
             anchors.fill: parent
             id: thermostatSchedule
             source: "../thermostat/ThermostatWeek.qml"
