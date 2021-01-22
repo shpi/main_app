@@ -52,13 +52,6 @@ class Backlight:
 
             logging.debug(f"hardware brightness level: {setbrightness}")
 
-            with open(self.BACKLIGHT + "/brightness", "w") as bright:
-                bright.write(str(setbrightness))
-                self._brightness = brightness
-                self.blinputs['backlight/brightness']['value'] = brightness
-                self.blinputs['backlight/brightness']['lastupdate'] = time.time()
-                bright.close()
-
             if (self.BL_POWER > 0):
                 with open(self.BACKLIGHT + "/bl_power", "w") as bright:
                     if (brightness < 1):
@@ -67,7 +60,14 @@ class Backlight:
                     else:
                         bright.write("0")
                         logging.debug(f"bl_power: 0")
-            bright.close()
+
+
+            with open(self.BACKLIGHT + "/brightness", "w") as bright:
+                bright.write(str(setbrightness))
+                self._brightness = brightness
+                self.blinputs['backlight/brightness']['value'] = brightness
+                self.blinputs['backlight/brightness']['lastupdate'] = time.time()
+
 
     def get_brightness(self):
         if ((len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0)):
