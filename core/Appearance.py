@@ -47,7 +47,7 @@ class Appearance(QObject):
         self._dim_timer = int(settings.value("appearance/dim_timer", 100))
         self._off_timer = int(settings.value("appearance/off_timer", 300))
         self.lastuserinput = time.time()
-        self.state = 'ACTIVE'  # Enum('ACTIVE','SLEEP','OFF')
+        self.state = 'OFF'  # Enum('ACTIVE','SLEEP','OFF')
         self._night = False
 
         self.possible_devs = dict()
@@ -301,7 +301,7 @@ class Appearance(QObject):
             self.set_backlight(0)
             self.state = 'OFF'
 
-        elif self.state in ('ACTIVE',) and self.lastuserinput + self._dim_timer < time.time():
+        elif self.state in ('ACTIVE',) and (self.lastuserinput + self._dim_timer < time.time()):
             logging.debug(f"changing nightmode to SLEEP, old state: {self.state}, lastinput: {self.lastuserinput}")
             if self._night:
                 self.set_backlight(self._min_backlight_night)
@@ -358,6 +358,7 @@ class Appearance(QObject):
         self.jump_state = 0
 
         if self.state in ('OFF', 'SLEEP'):
+            logging.debug(f"changing nightmode to ACTIVE, old state: {self.state}, lastinput: {self.lastuserinput}")
             self.state = 'ACTIVE'
 
             if self._night:

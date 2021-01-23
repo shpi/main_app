@@ -1,0 +1,10 @@
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+Unable to query physical screen size, defaulting to 100 dpi.
+To override, set QT_QPA_EGLFS_PHYSICAL_WIDTH and QT_QPA_EGLFS_PHYSICAL_HEIGHT (in millimeters).
+file:///home/pi/qmlui/qml/thermostat/ThermostatWeek.qml:158: TypeError: Cannot read property 'schedule' of undefined
+file:///home/pi/qmlui/qml/thermostat/ThermostatWeek.qml:158: TypeError: Cannot read property 'schedule' of undefined
+file:///home/pi/qmlui/qml/thermostat/ThermostatWeek.qml:158: TypeError: Cannot read property 'schedule' of undefined
+file:///home/pi/qmlui/qml/thermostat/ThermostatWeek.qml:158: TypeError: Cannot read property 'schedule' of undefined
+file:///home/pi/qmlui/qml/thermostat/ThermostatWeek.qml:158: TypeError: Cannot read property 'schedule' of undefined
+file:///home/pi/qmlui/qml/thermostat/ThermostatWeek.qml:158: TypeError: Cannot read property 'schedule' of undefined
+file:///home/pi/qmlui/qml/thermostat/ThermostatWeek.qml:158: TypeError: Cannot read property 'schedule' of undefined
