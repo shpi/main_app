@@ -4,6 +4,9 @@ import QtQuick.Controls 2.12
 import "../../fonts/"
 
 Rectangle {
+    id: root
+    property string instancename: parent.instancename != undefined ? parent.instancename : modules.modules['Logic']['Thermostat'][0]
+
 
     color: Colors.white
 
@@ -23,7 +26,7 @@ Rectangle {
             schedulelist += '\n'
         }
 
-        modules.loaded_instances['Logic']['Thermostat']['local'].save_schedule(
+        modules.loaded_instances['Logic']['Thermostat'][root.instancename].save_schedule(
                     schedulelist)
     }
 
@@ -155,10 +158,10 @@ Rectangle {
 
                         id: knobrepeater
                         property int dayindex: index
-                        model: modules.loaded_instances['Logic']['Thermostat']['local'].schedule[index] !== undefined ? modules.loaded_instances['Logic']['Thermostat']['local'].schedule[index].length : 1
+                        model: modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[index] !== undefined ? modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[index].length : 1
 
                         ThermostatWeekKnob {
-                            value: modules.loaded_instances['Logic']['Thermostat']['local'].schedule[knobrepeater.dayindex][index] !== undefined ? modules.loaded_instances['Logic']['Thermostat']['local'].schedule[knobrepeater.dayindex][index][0] : 1440
+                            value: modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex][index] !== undefined ? modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex][index][0] : 1440
                             temperature: 25
                             to: 1440
                             from: 0

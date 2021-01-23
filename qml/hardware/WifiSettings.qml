@@ -15,16 +15,7 @@ Item {
         visible: (wifi.devices.length) > 1 ? true : false
     }
 
-    Text {
 
-        anchors.horizontalCenter: parent.horizontalCenter
-        color: Colors.black
-        text: 'status: ' + (actualDevice.currentText
-                            != '' ? wifi.wpa_status(
-                                        wifi.devices[actualDevice.currentIndex])
-                                    + ' ' + wifi.signal_status(
-                                        wifi.devices[actualDevice.currentIndex]) + '%' : '')
-    }
 
     Column {
         padding: 5
@@ -40,6 +31,17 @@ Item {
             onModelChanged: {
                 busy.running = false
                 inputsview.selectednetwork = -1
+            }
+
+            header: Text {
+
+                anchors.horizontalCenter: parent.horizontalCenter
+                color: Colors.black
+                text: '<b>Status</b> ' + (actualDevice.currentText
+                                    != '' ? wifi.wpa_status(
+                                                wifi.devices[actualDevice.currentIndex])
+                                            + ' <b>Signal</b> ' + wifi.signal_status(
+                                                wifi.devices[actualDevice.currentIndex]) + '%' : '')
             }
 
             model: wifi.networks
@@ -96,7 +98,7 @@ Item {
                             anchors.verticalCenter: parent.verticalCenter
                             text: '<b>' + ssid + '</b> ,  ' + frequency
                             font.pixelSize: 24
-                            color: "white"
+                            color: Colors.black
                         }
 
                         RoundButton {

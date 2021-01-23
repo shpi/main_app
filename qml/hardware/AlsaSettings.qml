@@ -202,7 +202,8 @@ Item {
                                     to: inputs.data[path]['max']
                                     stepSize: inputs.data[path]['step']
                                               === 0 ? 1 : inputs.data[path]['step']
-                                    onMoved: inputs.set(path, this.value)
+                                    //onMoved: inputs.set(path, this.value)
+                                    onPressedChanged: if (!this.pressed) inputs.set(path,this.value)
                                 }
                             }
                         }

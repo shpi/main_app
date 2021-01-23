@@ -3,7 +3,7 @@
 import logging
 import os
 import errno
-from subprocess import call, Popen, PIPE
+from subprocess import call, Popen, PIPE, DEVNULL
 from functools import partial
 from hardware.AlsaRecord import AlsaRecord
 from core.DataTypes import DataType
@@ -243,6 +243,6 @@ class AlsaMixer:
 
         command = ['amixer', '-D', 'hw:' +
                    str(card_name), "cset", "numid=%s" % num_id, "--", str(settings)]
-        call(command)
+        call(command, stdout=DEVNULL)
         if os.geteuid() == 0:
             call(["alsactl", "store"])
