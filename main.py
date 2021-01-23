@@ -39,7 +39,7 @@ if check_output(['uname', '-m']).startswith(b'armv6'):
 
 logging.basicConfig(
     # filename='debug.log',
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
 )

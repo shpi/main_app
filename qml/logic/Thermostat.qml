@@ -32,7 +32,7 @@ Rectangle {
             radius: width / 2
             border.color: Colors.black
             border.width: dialTherm.enabled ? 2 : 1
-            antialiasing: true
+            //antialiasing: true
         }
 
         handle: Rectangle {
@@ -47,7 +47,7 @@ Rectangle {
             border.color: dialTherm.enabled ? "black" : "lightgrey"
 
             radius: 5
-            antialiasing: true
+            //antialiasing: true
 
             transform: [
                 Translate {

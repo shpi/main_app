@@ -18,6 +18,27 @@ Rectangle {
     clip: true
     color: "transparent"
 
+    ComboBox {
+        anchors.left: parent.left
+        anchors.leftMargin: 10
+        id: thermostatselect
+        anchors.top: parent.top
+        anchors.topMargin: 5
+        font.pixelSize: 40
+        height: 52
+        width: 300
+        model: modules.modules['Logic']['Thermostat']
+        onActivated: thermostatselect.model = modules.modules['Logic']['Thermostat']
+
+        onCurrentTextChanged: {
+            if (tickswindow.instancename !== this.currentText) {
+                tickswindow.instancename = this.currentText
+
+
+            }
+        }
+    }
+
     Slider {
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: 150
@@ -183,7 +204,7 @@ Rectangle {
 
         //text: temperatur.toFixed(1) + '°C'
         //text: (32 - ( (rotator.rotation / 15))).toFixed(1) + "°C"
-        text: modules.loaded_instances['Logic']['Thermostat'][instancename].set_temp.toFixed(1)  + '°C'
+        text: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp.toFixed(1)  + '°C'
         // (min_temp + (-rotator.rotation + 240) * ((max_temp - min_temp) / 240)).toFixed(1) + '°C'
 
 
@@ -234,25 +255,33 @@ Rectangle {
                 if (!tracing)
                     return
                 var currVel = (mouse.y - xPrev)
+                var calcrotation = rotator.rotation
                 velocity = (velocity + currVel) / 2.0
                 xPrev = mouse.y
-                if (velocity > 10) {
 
-                    if (rotator.rotation - (velocity / 10) * (velocity / 10) < 0)
-                        rotator.rotation = 0
+                console.log(velocity)
+
+                if (velocity > 15) {
+
+                    if (rotator.rotation - (velocity / 15) * (velocity / 15) < 0)
+                        calcrotation = 0
                     else
-                        rotator.rotation -= (velocity / 10) * (velocity / 10)
+                        calcrotation = rotator.rotation - (velocity / 15) * (velocity / 15)
                 }
 
-                if (velocity < -10) {
-                    if (rotator.rotation + (velocity / 10) * (velocity / 10) > 240)
-                        rotator.rotation = 240
+                if (velocity < -15) {
+                    if (rotator.rotation + (velocity / 15) * (velocity / 15) > 240)
+                        calcrotation = 240
                     else
-                        rotator.rotation += (velocity / 10) * (velocity / 10)
+                        calcrotation = rotator.rotation + (velocity / 15) * (velocity / 15)
+
+
                 }
 
+                modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp =  (min_temp + (-calcrotation + 240) * ((max_temp - min_temp) / 240)).toFixed(1)
+                rotator.rotation = calcrotation
 
-                modules.loaded_instances['Logic']['Thermostat'][instancename].set_temp =  (min_temp + (-rotator.rotation + 240) * ((max_temp - min_temp) / 240)).toFixed(1)
+
 
             }
             onReleased: {
@@ -300,8 +329,6 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenterOffset: rotator.width * -0.4
                     anchors.horizontalCenterOffset: -15
-                    visible: index % 5 == 0 && this.text <= max_temp
-                             && this.text >= min_temp ? true : false
                     color: Colors.black
                     rotation: 87
                     font.pixelSize: rotator.height * 0.04
@@ -315,7 +342,7 @@ Rectangle {
                     width: rotator.width * 0.01
                     height: rotator.height * 0.05
                     anchors.left: parent.left
-                    antialiasing: true
+                    //antialiasing: true
                 }
             }
         }
@@ -336,6 +363,7 @@ Rectangle {
     }
 
     Popup {
+        property string instancename: tickswindow.instancename != undefined ? tickswindow.instancename : modules.modules['Logic']['Thermostat'][0]
 
         id: thermostatPopup
         width: parent.width
@@ -354,6 +382,7 @@ Rectangle {
         }
 
         Loader {
+            property string instancename: tickswindow.instancename != undefined ? tickswindow.instancename : modules.modules['Logic']['Thermostat'][0]
             asynchronous: true
             anchors.fill: parent
             id: thermostatSchedule

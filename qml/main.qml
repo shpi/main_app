@@ -103,7 +103,7 @@ ApplicationWindow {
         edge: Qt.TopEdge
         visible: true
         interactive: settingsstackView.depth > 0 ? false : true
-        Behavior on position {
+         Behavior on position {
             PropertyAnimation {}
         }
         background: Rectangle {
@@ -181,7 +181,8 @@ ApplicationWindow {
                 font.pixelSize: settingsstackView.depth > 0 ? 50 : 80
                 onClicked: {
                     if (settingsstackView.depth === 0)
-                        drawer.position = 0
+                        //drawer.position = 0.0
+                        drawer.close()
 
                     if (settingsstackView.depth == 1)
                         settingsstackView.clear()
@@ -307,7 +308,7 @@ ApplicationWindow {
                 id: weatherslide
                 source: "weather/WeatherFull.qml"
                 visible: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
-                 active: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
+                 active: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
             }
         }
     }
