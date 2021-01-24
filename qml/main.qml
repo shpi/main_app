@@ -338,9 +338,9 @@ ApplicationWindow {
 
     Timer {
 
-        interval: 30000
+        interval: 20000
         repeat: true
-        running: true
+        running: appearance.jump_state //to make ui more fluent
         onTriggered: {
 
             mask.angle = Math.random() * 180
@@ -351,7 +351,7 @@ ApplicationWindow {
                                                            ) * mask.width) / 2
 
             if (appearance.night === 0 || appearance.background_night > 0) {
-                if (Math.random() > 0.5)
+                if (Math.random() > 0.7)
                     bg.source = folderModel.get(Math.random() * Math.floor(
                                                     folderModel.count),
                                                 "fileURL")

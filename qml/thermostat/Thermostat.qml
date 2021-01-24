@@ -255,15 +255,23 @@ Rectangle {
 
                 velocity = (velocity + mouse.y - xPrev) / 2
 
-                if (Math.abs(velocity) > 15) {
+                if (Math.abs(velocity) > 30) {
+
                 xPrev = mouse.y
+
                 calcrotation = calcrotation - (velocity / 15)
 
                 if (calcrotation   > 240)    calcrotation = 240
                 else if  (calcrotation   < 0)    calcrotation = 0
 
-                modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp =  (min_temp + (-calcrotation + 240) * ((max_temp - min_temp) / 240)).toFixed(1)
-                rotator.rotation = calcrotation
+                modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp = Math.round((min_temp + (-calcrotation + 240) * ((max_temp - min_temp) / 240)) * 2)  / 2.0
+
+
+
+
+                rotator.rotation = (Math.abs((modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp /
+                                              ((max_temp - min_temp) / 240) -480) ) )
+
 
                 }
 
@@ -288,42 +296,40 @@ Rectangle {
         rotation: 90
 
 
-        /* Behavior on rotation {
+        Behavior on rotation {
 
-            PropertyAnimation {duration:100}
-        }*/
+            PropertyAnimation {}
+
+        }
+
 
         Repeater {
 
-            model: 120
+            model: 81
 
             Rectangle {
                 anchors.centerIn: parent
                 width: 5
                 height: parent.height - 10
                 color: "transparent"
-                rotation: index * 3 - 27
-
-                //border.width: 1
-                //border.color: "white"
+                rotation: (index+20) * 3 - 30
                 Text {
-                    text: index % 5 == 0 ? (min_temp + ((index * 3) - 60)
-                                            * ((max_temp - min_temp) / 240)).toFixed(
-                                               0) : ''
+                    text: (index) % 5 == 0 ? Math.round(min_temp + (((index+20) * 3) - 60)
+                                            * ((max_temp - min_temp) / 240)) : ''
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenterOffset: rotator.width * -0.4
-                    anchors.horizontalCenterOffset: -15
+                    anchors.horizontalCenterOffset: 0
                     color: Colors.black
-                    rotation: 87
+                    rotation: 90
                     font.pixelSize: rotator.height * 0.04
                 }
 
                 Rectangle {
                     color: Qt.rgba(
-                               ((index - 20) / 80), (1 - 2 * Math.abs(
-                                                         ((index - 20) / 80) - 0.5)),
-                               1 - ((index - 20) / 80), 1)
+                               ((index) / 80), (1 - 2 * Math.abs(
+                                                         ((index) / 80) - 0.5)),
+                               1 - ((index) / 80), 1)
                     width: rotator.width * 0.01
                     height: rotator.height * 0.05
                     anchors.left: parent.left

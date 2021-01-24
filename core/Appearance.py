@@ -43,7 +43,7 @@ class Appearance(QObject):
         self._night_mode_end = settings.value("appearance/night_mode_end", '00:00')
 
         self._jump_timer = int(settings.value("appearance/jump_timer", 20))
-        self.jump_state = 0
+        self._jump_state = 0
         self._dim_timer = int(settings.value("appearance/dim_timer", 100))
         self._off_timer = int(settings.value("appearance/off_timer", 300))
         self.lastuserinput = time.time()
@@ -83,6 +83,14 @@ class Appearance(QObject):
     @Signal
     def night_mode_start_changed(self):
         pass
+
+    @Signal
+    def jumpstateChanged(self):
+        pass
+
+    @Property(int, notify=jumpstateChanged)
+    def jump_state(self):
+        return int(self._jump_state)
 
     # @Property(str, notify=night_mode_start_changed)
     def night_mode_start(self):
@@ -317,9 +325,9 @@ class Appearance(QObject):
                 self.set_backlight(self._max_backlight)
             self.state = 'ACTIVE'
 
-        if self.jump_state == 0 and self._jump_timer + self.lastuserinput < time.time():
+        if self._jump_state == 0 and self._jump_timer + self.lastuserinput < time.time():
             logging.debug(f"jump to home")
-            self.jump_state = 1
+            self._jump_state = 1
             self.jumpHome.emit()
 
     @Signal
@@ -355,7 +363,7 @@ class Appearance(QObject):
     def interrupt(self, key, value):
         logging.debug(f"key: {key}, value: {value}")
         self.lastuserinput = time.time()
-        self.jump_state = 0
+        self._jump_state = 0
 
         if self.state in ('OFF', 'SLEEP'):
             logging.debug(f"changing nightmode to ACTIVE, old state: {self.state}, lastinput: {self.lastuserinput}")
