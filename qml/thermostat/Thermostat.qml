@@ -254,8 +254,9 @@ Rectangle {
             onPositionChanged: {
 
                 velocity = (velocity + mouse.y - xPrev) / 2
-                xPrev = mouse.y
 
+                if (Math.abs(velocity) > 15) {
+                xPrev = mouse.y
                 calcrotation = calcrotation - (velocity / 15)
 
                 if (calcrotation   > 240)    calcrotation = 240
@@ -264,7 +265,7 @@ Rectangle {
                 modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp =  (min_temp + (-calcrotation + 240) * ((max_temp - min_temp) / 240)).toFixed(1)
                 rotator.rotation = calcrotation
 
-
+                }
 
 
             }
@@ -287,10 +288,10 @@ Rectangle {
         rotation: 90
 
 
-        Behavior on rotation {
+        /* Behavior on rotation {
 
             PropertyAnimation {duration:100}
-        }
+        }*/
 
         Repeater {
 
