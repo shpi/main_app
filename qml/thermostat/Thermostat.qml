@@ -242,51 +242,34 @@ Rectangle {
             anchors.fill: parent
             preventStealing: true
             property real velocity: 0.0
-            property int xStart: 0
+            property int calcrotation: rotator.rotation //needed because animation
             property int xPrev: 0
             property bool tracing: false
             onPressed: {
-                xStart = mouse.y
+
                 xPrev = mouse.y
                 velocity = 0
                 tracing = true
             }
             onPositionChanged: {
-                if (!tracing)
-                    return
-                var currVel = (mouse.y - xPrev)
-                var calcrotation = rotator.rotation
-                velocity = (velocity + currVel) / 2.0
+
+                velocity = (velocity + mouse.y - xPrev) / 2
                 xPrev = mouse.y
 
-                console.log(velocity)
+                calcrotation = calcrotation - (velocity / 15)
 
-                if (velocity > 15) {
-
-                    if (rotator.rotation - (velocity / 15) * (velocity / 15) < 0)
-                        calcrotation = 0
-                    else
-                        calcrotation = rotator.rotation - (velocity / 15) * (velocity / 15)
-                }
-
-                if (velocity < -15) {
-                    if (rotator.rotation + (velocity / 15) * (velocity / 15) > 240)
-                        calcrotation = 240
-                    else
-                        calcrotation = rotator.rotation + (velocity / 15) * (velocity / 15)
-
-
-                }
+                if (calcrotation   > 240)    calcrotation = 240
+                else if  (calcrotation   < 0)    calcrotation = 0
 
                 modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp =  (min_temp + (-calcrotation + 240) * ((max_temp - min_temp) / 240)).toFixed(1)
                 rotator.rotation = calcrotation
 
 
 
+
             }
-            onReleased: {
-                tracing = false
-            }
+
+
         }
     }
 
@@ -306,8 +289,9 @@ Rectangle {
 
         Behavior on rotation {
 
-            PropertyAnimation {}
+            PropertyAnimation {duration:100}
         }
+
         Repeater {
 
             model: 120
