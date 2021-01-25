@@ -1,5 +1,6 @@
 {
     "files": [
+    "shpi.service",
     "qml/screensaver/Screensaver.qml",
     "qml/thermostat/ThermostatWeekDay.qml",
     "qml/thermostat/Thermostat.qml",
@@ -8,6 +9,7 @@
     "fonts/Icons.qml",
     "fonts/Colors.qml",
     "qml/fingerpaint.qml",
+    "qml/core/LoggingSettings.qml",
      "qml/Graph.qml",
     "qml/ModulesClasses.qml",
     "qml/Rooms.qml",
@@ -16,6 +18,7 @@
     "qml/Clock.qml",
     "backgrounds/",
     "fonts/qmldir",
+    "core/Logger.py",
     "core/ModuleManager.py",
     "core/HTTPServer.py",
     "ui/ShowValue.py",
@@ -61,6 +64,7 @@
     "hardware/IIO.py","hardware/iio.py",
     "hardware/Wifi.py","main.py","hardware/HWMon.py",
     "hardware/System.py",
+    "hardware/System,py",
     "hardware/Alsa.py",
     "hardware/AlsaRecord.py",
     "hardware/Leds.py","hardware/Backlight.py","hardware/InputDevs.py","info/Weather.py","core/Inputs.py"

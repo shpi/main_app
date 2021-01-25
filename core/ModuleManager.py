@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
-# import time
-# import os
 import logging
 import importlib
-# from enum import Enum for self.state later
-# import threading
-# from datetime import datetime
-# from core.DataTypes import DataType
 from core.Toolbox import Pre_5_15_2_fix
 
 
@@ -18,23 +12,23 @@ class ModuleManager(QObject):
 
         self.settings = settings
         self.inputs = inputs
-        self.available_modules = {'Logic': ['Shutter','Thermostat'],
+        self.available_modules = {'Logic': ['Shutter', 'Thermostat'],
                                   'Info': ['Weather'],
-                                  'UI': ['Shutter','ShowValue','MultiShutter'],
+                                  'UI': ['Shutter', 'ShowValue', 'MultiShutter'],
                                   'Connections': ['HTTP']}
 
-        self._modules = dict() # saves names of loaded instances
-        self._instances = dict() # instances itself
+        self._modules = dict()  # saves names of loaded instances
+        self._instances = dict()  # instances itself
 
         self._available_rooms = self.settings.value(f"available_rooms", ['Screensaver'])
 
         if isinstance(self._available_rooms, str):
             self._available_rooms = [self._available_rooms]
 
-        self._rooms = dict() # saves instance names per room / category
+        self._rooms = dict()  # saves instance names per room / category
 
         for room in self._available_rooms:
-            rom  = self.settings.value(f"room/{room}", [])
+            rom = self.settings.value(f"room/{room}", [])
 
             if isinstance(rom, str):
                 rom = [rom]
@@ -44,8 +38,6 @@ class ModuleManager(QObject):
 
             self._rooms[room] = rom
 
-
-
         for category, modules in self.available_modules.items():
             cat = self._modules[category] = dict()
             for key in modules:
@@ -54,11 +46,10 @@ class ModuleManager(QObject):
                 if isinstance(data, str):
                     data = [data]
 
-                if data == None:
-                     data = []
+                if data is None:
+                    data = []
 
                 cat[key] = data
-
 
         for category, value in self._modules.items():
             self._instances[category] = dict()
@@ -67,17 +58,14 @@ class ModuleManager(QObject):
                 self._instances[category][classname] = dict()
                 tempclass = getattr(importlib.import_module(category.lower() + '.' + classname), classname)
                 if isinstance(instancenames, list):
-                 for instancename in instancenames:
-                    logging.debug(f'Initiating {category}:{classname}:{instancename}')
-                    self._instances[category][classname][instancename] = tempclass(instancename,inputs,settings)
+                    for instancename in instancenames:
+                        logging.debug(f'Initiating {category}:{classname}:{instancename}')
+                        self._instances[category][classname][instancename] = tempclass(instancename, inputs, settings)
 
-                    try:
-                        inputs.add(self._instances[category][classname][instancename].get_inputs())
-                    except:
-                        pass
-
-
-
+                        try:
+                            inputs.add(self._instances[category][classname][instancename].get_inputs())
+                        except Exception as e:
+                            logging.debug(e)
 
     def update(self):
         for category in self._instances:
@@ -97,12 +85,9 @@ class ModuleManager(QObject):
     def roomsChanged(self):
         pass
 
-
     @Property('QVariantMap', notify=roomsChanged)
     def rooms(self) -> dict:
         return self._rooms
-
-
 
     """ @Slot(str, list)
     def set_rooms(self, roomname, rooms):
@@ -115,35 +100,29 @@ class ModuleManager(QObject):
         self.roomsChanged.emit()
     """
 
-    @Slot(str,str)
+    @Slot(str, str)
     def add_to_room(self, roomname, room):
 
-                if room not in self._rooms[roomname]:
-                    self._rooms[roomname].append(room)
-                    self.settings.setValue(f"room/{roomname}", self._rooms[roomname])
-                    self.roomsChanged.emit()
+        if room not in self._rooms[roomname]:
+            self._rooms[roomname].append(room)
+            self.settings.setValue(f"room/{roomname}", self._rooms[roomname])
+            self.roomsChanged.emit()
 
-
-    @Slot(str,str)
+    @Slot(str, str)
     def del_from_room(self, roomname, room):
 
-                if room in self._rooms[roomname]:
-                    self._rooms[roomname].remove(room)
-                    self.settings.setValue(f"room/{roomname}", self._rooms[roomname])
-                    self.roomsChanged.emit()
+        if room in self._rooms[roomname]:
+            self._rooms[roomname].remove(room)
+            self.settings.setValue(f"room/{roomname}", self._rooms[roomname])
+            self.roomsChanged.emit()
 
-
-
-
-    #@Property('QVariantList', notify=modulesChanged)
+    # @Property('QVariantList', notify=modulesChanged)
     def available_rooms(self) -> list:
         return self._available_rooms
 
-
-    #@available_rooms.setter
+    # @available_rooms.setter
     @Pre_5_15_2_fix('QVariantList', available_rooms, notify=roomsChanged)
     def available_rooms(self, value):
-
 
         if isinstance(value, list):
             if 'Screensaver' not in value:
@@ -161,15 +140,13 @@ class ModuleManager(QObject):
         self.settings.setValue(f"available_rooms", self._available_rooms)
         self.roomsChanged.emit()
 
-
     @Slot(str)
     def delete_room(self, roomname):
 
-            if roomname in self._available_rooms:
-                self._available_rooms.remove(roomname)
-                self.settings.setValue("available_rooms", self._available_rooms)
-                self.roomsChanged.emit()
-
+        if roomname in self._available_rooms:
+            self._available_rooms.remove(roomname)
+            self.settings.setValue("available_rooms", self._available_rooms)
+            self.roomsChanged.emit()
 
     @Property('QVariantMap', notify=modulesChanged)
     def loaded_instances(self) -> dict:
@@ -186,7 +163,7 @@ class ModuleManager(QObject):
             self.settings.setValue(category + "/" + classname, self._modules[category][classname])
             tempclass = getattr(importlib.import_module(category.lower() + '.' + classname), classname)
 
-            self._instances[category][classname][instancename] = tempclass(instancename,self.inputs,self.settings)
+            self._instances[category][classname][instancename] = tempclass(instancename, self.inputs, self.settings)
 
             try:
                 self.inputs.add(self._instances[category][classname][instancename].get_inputs())
@@ -222,10 +199,3 @@ class ModuleManager(QObject):
                     listed.append(f'{category}/{classname}/{instance}')
 
         return listed
-
-
-
-
-
-
-

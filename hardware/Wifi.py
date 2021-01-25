@@ -79,7 +79,7 @@ class Wifi(QObject):
         super(Wifi, self).__init__(parent)
         self.settings = settings
         self.inputs = dict()
-        self.netdevs = SystemInfo.get_net_devs()
+        self.netdevs = SystemInfo.get_net_devs() #wlan0, wlan1
         self._network_hosts = dict()
 
         self._networks = WifiNetworkModel([], self.settings)
@@ -94,6 +94,7 @@ class Wifi(QObject):
 
     @Slot()
     def start_scan_hosts(self):
+
         for netdev in self.netdevs:
             if netdev != 'lo':
                 threading.Thread(target=self.scan_hosts, args=(netdev,)).start()
@@ -173,7 +174,7 @@ class Wifi(QObject):
 
     @Slot(str)
     def scan_wifi(self, device):
-
+        self.netdevs = SystemInfo.get_net_devs()
         scanthread = threading.Thread(target=self._scan_wifi, args=(device,))
         scanthread.start()
 
@@ -186,8 +187,7 @@ class Wifi(QObject):
                 if b'OK' in check_output(["wpa_cli", "-i", device, "scan"], stderr=DEVNULL):
                     retry = 0
 
-                    record_details = Popen(
-                        ["wpa_cli", "-i", device, "scan_results"], stdout=PIPE).communicate()[0].decode()
+                    record_details = Popen(["wpa_cli", "-i", device, "scan_results"], stdout=PIPE).communicate()[0].decode()
                     record_details = record_details.strip().split('\n')
                     record_details.pop(0)
 
@@ -204,7 +204,6 @@ class Wifi(QObject):
                     retry -= 1
             except Exception as e:
                 retry -= 1
-                print(["wpa_cli", "-i", device, "scan"])
                 print(e)
         self._networks = WifiNetworkModel(networks, self.settings)
         self.networksChanged.emit()

@@ -65,8 +65,6 @@ class Appearance(QObject):
                     logging.debug(f"add to dev interrupt: {key}")
                     inputs.entries[key]['interrupts'].append(self.interrupt)
 
-
-
     @Signal
     def dim_timer_changed(self):
         pass
@@ -290,11 +288,11 @@ class Appearance(QObject):
         now_time = datetime.now().time()
 
         if start_time < stop_time:
-             # 18:00 - 23:00
-             night_new = start_time < now_time < stop_time
+            # 18:00 - 23:00
+            night_new = start_time < now_time < stop_time
         else:
-             # 23:00 - 8:00
-             night_new = not(stop_time < now_time < start_time)
+            # 23:00 - 8:00
+            night_new = not(stop_time < now_time < start_time)
 
         if night_new != self._night:
             self._night = night_new
@@ -350,15 +348,16 @@ class Appearance(QObject):
                 self.blackChanged.emit()
 
             elif value <= 100:
-                self.inputs['backlight/brightness']['set'](value) # mapping happens in backlight class int(self.mapFromTo(value, 30, 100, 1, 100)))
+                self.inputs['backlight/brightness']['set'](value)
+                # mapping happens in backlight class int(self.mapFromTo(value, 30, 100, 1, 100)))
                 self._blackfilter = 0
                 self.blackChanged.emit()
 
-            self.backlightlevel = (value)
+            self.backlightlevel = value
 
-    def mapFromTo(self, x, a, b, c, d):
-        y = (x-a)/(b-a)*(d-c)+c
-        return y
+    # def mapFromTo(self, x, a, b, c, d):
+    #    y = (x-a)/(b-a)*(d-c)+c
+    #    return y
 
     def interrupt(self, key, value):
         logging.debug(f"key: {key}, value: {value}")
@@ -373,7 +372,6 @@ class Appearance(QObject):
                 self.set_backlight(self._max_backlight_night)
             else:
                 self.set_backlight(self._max_backlight)
-
 
     @Signal
     def blackChanged(self):

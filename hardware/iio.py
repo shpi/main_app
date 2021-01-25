@@ -75,11 +75,6 @@ def _check_negative(result, func, arguments):
 # Python 2 and Python 3 compatible _isstring function.
 # pylint: disable=basestring-builtin
 def _isstring(argument):
-    try:
-        # attempt to evaluate basestring (Python 2)
-        return isinstance(argument, basestring)
-    except NameError:
-        # No basestring --> Python 3
         return isinstance(argument, str)
 
 

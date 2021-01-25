@@ -6,7 +6,7 @@ import "../../fonts/"
 
 Rectangle {
 
-    property string instancename: parent.instancename != undefined ? parent.instancename : modules.modules['Info']['Weather'][0]
+    property string instancename: parent.instancename !== undefined ? parent.instancename : modules.modules['Info']['Weather'][0]
     property string weatherimage: inputs.data['weather/' + instancename + '/current_weather_icon']['value']
     property string average_temp: inputs.data['weather/' + instancename + '/current_temp']['value']
     property string day: new Date(inputs.data['weather/' + instancename + '/lastupdate']['value'] * 1000)

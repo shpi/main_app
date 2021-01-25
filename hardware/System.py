@@ -155,7 +155,7 @@ class SystemInfo:
                 if not line:
                     continue
 
-                if line[2].startswith('loop'):
+                if line[2].startswith('loop') or line[2].startswith('ram'):
                     # only physical devices
                     continue
 

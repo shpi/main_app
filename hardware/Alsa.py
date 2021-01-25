@@ -7,13 +7,12 @@ from subprocess import call, Popen, PIPE, DEVNULL
 from functools import partial
 from hardware.AlsaRecord import AlsaRecord
 from core.DataTypes import DataType
-from PySide2.QtCore import QSettings
 
 
 class AlsaMixer:
 
-    def __init__(self,inputs,
-                 settings: QSettings = None, parent=None):
+    def __init__(self, inputs,
+                 settings):
 
         super(AlsaMixer, self).__init__()
         self.settings = settings
@@ -21,7 +20,6 @@ class AlsaMixer:
         self.recorder = dict()
         self.system_cards = []
         self.cards = self.get_cards()
-
 
     def get_inputs(self) -> dict:
         return self.cards
@@ -37,9 +35,10 @@ class AlsaMixer:
             lines = control.decode().split("\n")
             pos = (lines[0][1:]).find("',")
             if pos > -1:
-                control_name = (lines[0][1:pos+1])
-            if control_name not in name:
-                continue
+                control_name = (lines[0][1:pos + 1])
+
+                if control_name not in name:
+                    continue
 
             for line in lines[1:]:
                 if name.split(" ")[-2] in line:
@@ -67,16 +66,16 @@ class AlsaMixer:
             pos1 = i.find(']:', 0, 30)
             pos0 = i.find('[', 0, 25)
             if pos0 > 0 and pos1 > 0 and pos0 < pos1:
-                card_name = i[pos0+1:pos1].strip()
+                card_name = i[pos0 + 1:pos1].strip()
                 card_number = i.split(" [")[0].strip()
-                card_desc = i[pos1+2:].strip()
-                cards['alsa/' + card_name] = { # 'id': card_number,
-                                              'description': card_desc + ' on/off',
-                                               #'name': card_name,
-                                              'value': self.settings.value("alsa/" + card_name, 1),
-                                              'interval': -1,
-                                              'set': partial(self.power_device, card_name),
-                                              'type': DataType.BOOL}
+                card_desc = i[pos1 + 2:].strip()
+                cards['alsa/' + card_name] = {  # 'id': card_number,
+                    'description': card_desc + ' on/off',
+                    # 'name': card_name,
+                    'value': self.settings.value("alsa/" + card_name, 1),
+                    'interval': -1,
+                    'set': partial(self.power_device, card_name),
+                    'type': DataType.BOOL}
                 cards.update(self.get_recording(card_name))
                 cards.update(self.get_controls(card_name))
 
@@ -85,7 +84,6 @@ class AlsaMixer:
     def power_device(self, card_name, value):
 
         if 'alsa/' + card_name in self.cards:
-
             self.cards['alsa/' + card_name]['value'] = int(value)
             self.settings.setValue("alsa/" + card_name, value)
 
@@ -94,11 +92,12 @@ class AlsaMixer:
                                 '-c', '99', "--dump-hw-params"], stderr=PIPE).communicate()[1]
         record_details = record_details.split(b'\n')
         card_rates = card_formats = card_rchannel = 0
+
         for x in record_details:
             if x.startswith(b'FORMAT:'):
                 card_formats = x[7:].strip()
                 if b'[' in card_formats and b']' in card_formats:
-                    card_formats = card_formats[1:-1].split(' ')
+                    card_formats = card_formats[1:-1].split(b' ')
                 else:
                     card_formats = [card_formats]
 
@@ -114,7 +113,7 @@ class AlsaMixer:
                 break
         if card_rchannel > 0:
 
-            self.recorder[card_name] = AlsaRecord(self.inputs,card_name)
+            self.recorder[card_name] = AlsaRecord(self.inputs, card_name)
 
             return self.recorder[card_name].get_inputs()
 
@@ -131,7 +130,7 @@ class AlsaMixer:
             amixer_chandesc = (amixer_channels.communicate()[0]).split(
                 b"Simple mixer control ")[1:]
             amixer_contents = Popen(
-                ['amixer', '-D', 'hw:'+str(card_name), "contents"], stdout=PIPE).communicate()[0]
+                ['amixer', '-D', 'hw:' + str(card_name), "contents"], stdout=PIPE).communicate()[0]
         except OSError:
             return {}
 
@@ -220,7 +219,7 @@ class AlsaMixer:
                         interface['value'] = value
                         try:
                             interface['description'] = description + \
-                                ' ' + channels[i]
+                                                       ' ' + channels[i]
 
                         except:
                             interface['description'] = description
@@ -239,7 +238,7 @@ class AlsaMixer:
         logging.debug(f'{card_name},{num_id},{channel},{channelcount},{settings}')
         if channelcount != 1:
             settings = (channel * ',') + str(settings) + \
-                ((channelcount - channel - 1) * ',')
+                       ((channelcount - channel - 1) * ',')
 
         command = ['amixer', '-D', 'hw:' +
                    str(card_name), "cset", "numid=%s" % num_id, "--", str(settings)]

@@ -73,7 +73,7 @@ Item {
                         text: 'Rescan'
                         palette.button: "darkred"
                         palette.buttonText: "white"
-                        visible:  inputsview.count > 0 ? false : true
+                        visible:  inputsview.count <= 0
                         font.pixelSize: 32
                         font.family: localFont.name
                         onClicked: wifi.start_scan_hosts()
@@ -90,7 +90,7 @@ Item {
             Column {
 
                 width: parent.width
-                visible: inputsview.count > 0 ? false : true
+                visible: inputsview.count <= 0
                 height: hostsrepeater.count * 50
 
                 Repeater {
@@ -99,7 +99,7 @@ Item {
                     id: hostsrepeater
                     model: wifi.network_hosts['list']
                     Rectangle {
-                        color: index % 2 === 0 ? Colors.white : "transparent"
+                        color: (index % 2 === 0) ? Colors.white : "transparent"
                         height: 50
                         width: parent.width
                         anchors.left: parent.left

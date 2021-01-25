@@ -249,7 +249,7 @@ Rectangle {
 
                 xPrev = mouse.y
                 velocity = 0
-                tracing = true
+
             }
             onPositionChanged: {
 
@@ -265,8 +265,6 @@ Rectangle {
                 else if  (calcrotation   < 0)    calcrotation = 0
 
                 modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp = Math.round((min_temp + (-calcrotation + 240) * ((max_temp - min_temp) / 240)) * 2)  / 2.0
-
-
 
 
                 rotator.rotation = (Math.abs((modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp /

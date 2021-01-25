@@ -87,12 +87,9 @@ class Shutter(QObject):
         return self._mode
 
     @mode.setter
-    def set_mode(self, key):
+    def mode(self, key):
         self._mode = key
         self.settings.setValue(self.path + "shutter/mode", key)
-
-
-
 
     @Property(int, notify=positionChanged)
     def desired_position(self):
@@ -100,16 +97,13 @@ class Shutter(QObject):
 
     @Property(float, notify=positionChanged)
     def actual_position(self):
-        return (self._actual_position)
-
+        return self._actual_position
 
     @actual_position.setter
-    def set_actual_position(self, key):
+    def actual_position(self, key):
         self._actual_position = int(key)
         self.settings.setValue("shutter/actual_position", int(key))
         self.positionChanged.emit()
-
-
 
     @Property(float, notify=positionChanged)
     def residue_time(self):
@@ -142,9 +136,9 @@ class Shutter(QObject):
                     self.start_position = self._actual_position
                 time.sleep(0.1)
                 self._actual_position = self.start_position + \
-                    ((100 / self.down_time) * (time.time() - self.time_start))
+                                        ((100 / self.down_time) * (time.time() - self.time_start))
                 self._residue_time = (
-                    self._desired_position - self._actual_position) * (self.down_time / 100)
+                                             self._desired_position - self._actual_position) * (self.down_time / 100)
                 if self._residue_time < 0:  # detected overshoot, so stopping
                     self._residue_time = 0
                     if self.userinput == 0:  # ignore overshoots and allow direction change only on new input
@@ -162,9 +156,9 @@ class Shutter(QObject):
                     self.start_position = self._actual_position
                 time.sleep(0.1)
                 self._actual_position = self.start_position - \
-                    (100 / self.up_time) * (time.time() - self.time_start)
+                                        (100 / self.up_time) * (time.time() - self.time_start)
                 self._residue_time = (
-                    self._actual_position - self._desired_position) * (self.up_time / 100)
+                                             self._actual_position - self._desired_position) * (self.up_time / 100)
                 if self._residue_time < 0:
                     self._residue_time = 0
                     if self.userinput == 0:

@@ -8,7 +8,6 @@ from PySide2.QtCore import QAbstractListModel, Property, Signal, Slot, QObject
 from core.DataTypes import Convert
 from core.DataTypes import DataType
 from PySide2.QtCore import QPointF
-import sys
 
 
 class InputListModel(QAbstractListModel):
@@ -81,7 +80,7 @@ class InputListModel(QAbstractListModel):
 
 
 class InputsDict(QObject):
-    def __init__(self, settings = None):
+    def __init__(self, settings):
         super(InputsDict, self).__init__()
         self.settings = settings
         self.entries = dict()
@@ -153,6 +152,7 @@ class InputsDict(QObject):
     # @Property('QVariantMap', constant=True)  # , notify=dataChanged)
     def data(self) -> dict:
         return self.entries
+
     data = Property('QVariantMap', data, constant=True)
 
     def register_timerschedule(self, key, interval):
@@ -162,12 +162,10 @@ class InputsDict(QObject):
 
         self.timerschedule[interval].append(key)
 
-
-    def delete_timerschedule(self,key, interval):
+    def delete_timerschedule(self, key, interval):
         if int(interval) in self.timerschedule:
             if key in self.timerschedule[interval]:
                 self.timerschedule[interval].remove(key)
-
 
     def add(self, newinputs=None):
         if newinputs is None:
@@ -186,11 +184,11 @@ class InputsDict(QObject):
             if 'value' not in newinputs[key]:
                 newinputs[key]['value'] = 0
             if 'call' in newinputs[key]:
-                newinputs[key]['interval'] = int(self.settings.value(key + "/interval", newinputs[key].get('interval', 60)))
+                newinputs[key]['interval'] = int(
+                    self.settings.value(key + "/interval", newinputs[key].get('interval', 60)))
 
             if newinputs[key]['interval'] != 0:
                 self.register_timerschedule(key, newinputs[key]['interval'])
-
 
             # following lines are inserted to make it possible to update values from another class
             # without removing dict memory adress of introducing class. for example:
@@ -208,7 +206,7 @@ class InputsDict(QObject):
                             self.entries[key][subkey] = newinputs[key][subkey]
                     else:
                         self.entries[key][subkey] = newinputs[key][subkey]
-                del newinputs[key] # ??
+                del newinputs[key]  # ??
 
         self.entries.update(newinputs)
         self.completelist.updateKeys()
@@ -228,9 +226,8 @@ class InputsDict(QObject):
 
     @Slot(str, result='QVariantList')
     @Slot(str, 'long', result='QVariantList')
-    def get_points(self, key, start = None):
-        #print(len(self.buffer[key]))
-        #print(sys.getsizeof(self.buffer[key]))
+    def get_points(self, key, start):
+
         if start is not None:
 
             i = 0
@@ -240,13 +237,11 @@ class InputsDict(QObject):
                     break
                 else:
                     i += 1
-            #return self.buffer[key][i:]
-            return [QPointF(*v) for v in self.buffer[key][i:]]
-            #return p = [QPointF(*v) for v in filter(lambda x: x[0] > start, self.buffer[key])]
-        else:
-            #return self.buffer[key]
-            return [QPointF(*v) for v in self.buffer[key]]
 
+            return [QPointF(*v) for v in self.buffer[key][i:]]
+            # return p = [QPointF(*v) for v in filter(lambda x: x[0] > start, self.buffer[key])]
+        else:
+            return [QPointF(*v) for v in self.buffer[key]]
 
     @Slot(str, int)
     def set_interval(self, key, value):
@@ -259,7 +254,6 @@ class InputsDict(QObject):
         except KeyError:
             logging.debug(key + ' not in Inputdictionary')
 
-
     @Slot(str, bool)
     def set_logging(self, key, value):
         logging.debug('set_logging ' + key + ' ' + str(value))
@@ -267,7 +261,7 @@ class InputsDict(QObject):
             self.entries[key]['logging'] = bool(value)
             self.settings.setValue(key + "/logging", int(value))
             if value and key not in self.buffer:
-               self.buffer[key] = list()
+                self.buffer[key] = list()
         except KeyError:
             logging.debug(key + ' not in Inputdictionary')
 
@@ -281,7 +275,6 @@ class InputsDict(QObject):
 
         except KeyError:
             logging.debug(key + ' not in Inputdictionary')
-
 
     def update(self, lastupdate):
 
@@ -304,7 +297,8 @@ class InputsDict(QObject):
 
                     if (key.startswith('http')):
                         if 'updatethread' not in self.entries[key] or not self.entries[key]['updatethread'].is_alive():
-                            self.entries[key]['updatethread'] = (threading.Thread(target=self.update_value, args=(key,)))
+                            self.entries[key]['updatethread'] = (
+                                threading.Thread(target=self.update_value, args=(key,)))
                             self.entries[key]['updatethread'].start()
                     else:
                         self.update_value(key)
@@ -328,8 +322,6 @@ class InputsDict(QObject):
                 # just for now, to avoid overflows
                 if len(self.buffer[key]) > 30000:
                     self.buffer[key] = self.buffer[key][10000:]
-
-
 
     @Slot(str, str)
     def set(self, key, value):

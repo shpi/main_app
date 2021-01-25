@@ -30,27 +30,26 @@ class Shutter(QObject):
         self.checkthread = threading.Thread(target=self.thread)
         self.checkthread.start()
 
-
     @Signal
     def position_pathChanged(self):
         pass
 
-    #@Property(str)
+    # @Property(str)
     def actual_position_path(self):
         return self._actual_position_path
 
-    #@actual_position_path.setter
+    # @actual_position_path.setter
     @Pre_5_15_2_fix(str, actual_position_path, notify=position_pathChanged)
     def actual_position_path(self, key):
         print(key)
         self._actual_position_path = key
         self.settings.setValue('shutter/' + self.name + "/actual_position", key)
 
-    #@Property(str)
+    # @Property(str)
     def desired_position_path(self):
         return self._desired_position_path
 
-    #@desired_position_path.setter
+    # @desired_position_path.setter
     @Pre_5_15_2_fix(str, desired_position_path, notify=position_pathChanged)
     def desired_position_path(self, key):
 
@@ -58,8 +57,8 @@ class Shutter(QObject):
         self.settings.setValue('shutter/' + self.name + "/desired_position", key)
 
     def update(self):
-        if self._desired_position !=  self.inputs.entries[self._desired_position_path]['value']:
-            self._desired_position =  self.inputs.entries[self._desired_position_path]['value']
+        if self._desired_position != self.inputs.entries[self._desired_position_path]['value']:
+            self._desired_position = self.inputs.entries[self._desired_position_path]['value']
             self.positionChanged.emit()
             if not self.checkthread.is_alive():
                 self.checkthread = threading.Thread(target=self.thread)

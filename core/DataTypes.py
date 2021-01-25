@@ -152,8 +152,6 @@ class Convert:
 
     _mapping_str_type = {value: key for (key, value) in _mapping_type_str.items()}
 
-
-
     _mapping_iio_shpi = {
         ChannelType.IIO_VOLTAGE: DataType.VOLTAGE,
         ChannelType.IIO_CURRENT: DataType.CURRENT,

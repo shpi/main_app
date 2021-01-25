@@ -97,7 +97,7 @@ ApplicationWindow {
     Drawer {
         property string actual_setting
         id: drawer
-        
+        dragMargin: 20
         width: window.width
         height: parent.height
         edge: Qt.TopEdge
@@ -263,6 +263,11 @@ ApplicationWindow {
         //anchors.bottom: inputPanel.top
 
 
+        Loader {
+            asynchronous: true
+            property bool _isCurrentItem: SwipeView.isCurrentItem
+            source: "core/LoggingSettings.qml"
+        }
 
 
         Loader {

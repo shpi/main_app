@@ -1,6 +1,6 @@
-#import json
+# import json
 
-#csv = open("citylist.csv", "w")
+# csv = open("citylist.csv", "w")
 # with open("city.list.json", "r") as rf:
 #        city_data = json.load(rf)
 
@@ -13,7 +13,7 @@
 
 # csv.close()
 
-#os.system('sort citylist.csv -o citylist.csv')
+# o s.system('sort citylist.csv -o citylist.csv')
 
 start = ''
 print('{')

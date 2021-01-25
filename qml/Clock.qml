@@ -21,7 +21,7 @@ Item {
         property int seconds
 
         function timeChanged() {
-            var date = new Date
+            var date = new Date()
             hours = date.getHours()
             minutes = date.getMinutes()
             seconds = date.getSeconds()

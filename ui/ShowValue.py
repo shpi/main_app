@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
-import time
-import threading
+from PySide2.QtCore import QSettings, QObject, Property, Signal
+
 from core.Toolbox import Pre_5_15_2_fix
 
 
@@ -18,11 +17,9 @@ class ShowValue(QObject):
         self._icon = settings.value('showvalue/' + self.name + "/icon", '')
         self._divider = settings.value('showvalue/' + self.name + "/divider", '1000')
 
-
     @Signal
     def valueChanged(self):
-            pass
-
+        pass
 
     def update(self):
         if self._value_path not in self.inputs.entries:
@@ -32,28 +29,25 @@ class ShowValue(QObject):
             self._value = str(self.inputs.entries[self._value_path]['value'])
             self.valueChanged.emit()
 
-
-    @Property(bool,notify=valueChanged)
+    @Property(bool, notify=valueChanged)
     def logging(self):
         return self.inputs.entries[self._value_path]['logging']
 
-
-    #@Property(str,notify=valueChanged)
+    # @Property(str,notify=valueChanged)
     def value_path(self):
         return self._value_path
 
-
-    #@value_path.setter
+    # @value_path.setter
     @Pre_5_15_2_fix(str, value_path, notify=valueChanged)
     def value_path(self, key):
         self._value_path = key
         self.settings.setValue('showvalue/' + self.name + "/path", key)
 
-    #@Property(str,notify=valueChanged)
+    # @Property(str,notify=valueChanged)
     def icon(self):
         return self._icon
 
-    #@icon.setter
+    # @icon.setter
     @Pre_5_15_2_fix(str, icon, notify=valueChanged)
     def icon(self, key):
 
@@ -61,12 +55,11 @@ class ShowValue(QObject):
         self.settings.setValue('showvalue/' + self.name + "/icon", key)
         self.valueChanged.emit()
 
-
-    #@Property(str,notify=valueChanged)
+    # @Property(str,notify=valueChanged)
     def divider(self):
         return str(self._divider)
 
-    #@divider.setter
+    # @divider.setter
     @Pre_5_15_2_fix(str, divider, notify=valueChanged)
     def divider(self, key):
 
@@ -74,24 +67,16 @@ class ShowValue(QObject):
         self.settings.setValue('showvalue/' + self.name + "/divider", key)
         self.valueChanged.emit()
 
-
-
-
     def is_number(self, string):
-            try:
-                float(string)
-                return True
-            except ValueError:
-                return False
-
-
+        try:
+            float(string)
+            return True
+        except ValueError:
+            return False
 
     @Property(str, notify=valueChanged)
     def value(self):
         if self.is_number(self._value) and self.is_number(self._divider):
             return str(float(self._value) / float(self._divider))
         else:
-            print(self._value)
-            return (self._value)
-
-
+            return self._value

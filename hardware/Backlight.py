@@ -6,7 +6,7 @@ from core.DataTypes import DataType
 
 class Backlight:
 
-    def __init__(self, parent=None):
+    def __init__(self):
 
         super(Backlight, self).__init__()
 
@@ -41,7 +41,6 @@ class Backlight:
 
     def set_brightness(self, brightness):
 
-
         logging.debug(f"set_brightness({brightness})")
 
         if ((len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0)):
@@ -52,15 +51,14 @@ class Backlight:
 
             logging.debug(f"hardware brightness level: {setbrightness}")
 
-            if (self.BL_POWER > 0):
+            if self.BL_POWER > 0:
                 with open(self.BACKLIGHT + "/bl_power", "w") as bright:
-                    if (brightness < 1):
+                    if brightness < 1:
                         bright.write("4")
                         logging.debug(f"bl_power: 4")
                     else:
                         bright.write("0")
                         logging.debug(f"bl_power: 0")
-
 
             with open(self.BACKLIGHT + "/brightness", "w") as bright:
                 bright.write(str(setbrightness))
@@ -68,9 +66,8 @@ class Backlight:
                 self.blinputs['backlight/brightness']['value'] = brightness
                 self.blinputs['backlight/brightness']['lastupdate'] = time.time()
 
-
     def get_brightness(self):
-        if ((len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0)):
+        if (len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0):
             with open(self.BACKLIGHT + "/brightness", "r") as bright:
                 self._brightness = int((100 / self.MAX_BACKLIGHT)
                                        * int(bright.readline().rstrip()))

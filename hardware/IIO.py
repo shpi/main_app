@@ -19,6 +19,7 @@ class IIO:
             self._device_info(dev)
 
     def get_inputs(self) -> dict:
+        logging.debug(self.inputs)
         return self.inputs
 
     @staticmethod

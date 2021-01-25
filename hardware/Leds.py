@@ -6,7 +6,7 @@ from core.DataTypes import DataType
 
 class Led:
 
-    def __init__(self,  parent=None):
+    def __init__(self):
 
         super(Led, self).__init__()
 
@@ -28,7 +28,7 @@ class Led:
                                       + "/max_brightness"):
                         with open(self.ledpath + file +
                                   "/max_brightness") as max_led:
-                            self.leds[file]['max'] = (int)(max_led.readline())
+                            self.leds[file]['max'] = int(max_led.readline())
                             self.inputs['leds/' + file] = {
                                 'description': 'brightness of led in %',
                                 'type': DataType.PERCENT_FLOAT,

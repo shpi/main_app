@@ -12,7 +12,7 @@ Item {
         anchors.right: parent.right
         width: 200
         model: wifi.devices
-        visible: (wifi.devices.length) > 1 ? true : false
+        visible: true
     }
 
 

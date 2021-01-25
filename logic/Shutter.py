@@ -5,7 +5,6 @@ from core.DataTypes import DataType
 from core.Toolbox import Pre_5_15_2_fix
 
 
-
 class ShutterModes:
     STOP = 0
     UP = 1
@@ -17,6 +16,7 @@ class ShutterModes:
     def is_valid(cls, number) -> bool:
         min_, max_ = cls.__valid_range
         return min_ <= number <= max_
+
 
 class Shutter(QObject):
 
@@ -30,7 +30,6 @@ class Shutter(QObject):
         self._up_time = float(settings.value('shutter/' + self.name + "/up_time", 3)) / 100
         self._down_time = float(settings.value('shutter/' + self.name + "/down_time", 3)) / 100
 
-
         self.time_start = 0
         self._residue_time = 0
 
@@ -42,7 +41,7 @@ class Shutter(QObject):
 
         self._actual_position = dict()
         self._actual_position['description'] = 'actual position of shutter'
-        self._actual_position['interval']  = -1
+        self._actual_position['interval'] = -1
         self._actual_position['type'] = DataType.PERCENT_FLOAT
         self._actual_position['lastupdate'] = time.time()
         self._actual_position['value'] = float(
@@ -50,7 +49,7 @@ class Shutter(QObject):
 
         self._desired_position = dict()
         self._desired_position['description'] = 'desired position of shutter'
-        self._desired_position['interval']  = -1
+        self._desired_position['interval'] = -1
         self._desired_position['type'] = DataType.PERCENT_INT
         self._desired_position['lastupdate'] = time.time()
         self._desired_position['value'] = self._actual_position['value']
@@ -59,14 +58,10 @@ class Shutter(QObject):
         self.movethread = threading.Thread(target=self.move)
         self._state = ShutterModes.STOP
 
-
-
     def get_inputs(self) -> dict:
 
-            return {'shutter/' + self.name + '/actual_position' : self._actual_position,
-            'shutter/' + self.name + '/desired_position' : self._desired_position }
-
-
+        return {'shutter/' + self.name + '/actual_position': self._actual_position,
+                'shutter/' + self.name + '/desired_position': self._desired_position}
 
     def set_up(self, value):
         if self._relay_up in self.inputs:
@@ -84,7 +79,6 @@ class Shutter(QObject):
         else:
             print('Error UP control ' + self._relay_up + ' not in Inputs.')
 
-
     def set_down(self, value):
         if self._relay_down in self.inputs:
             if self.inputs[self._relay_down]['type'] == DataType.BOOL:
@@ -100,10 +94,8 @@ class Shutter(QObject):
         else:
             print('Error down control ' + self._relay_down + ' not in Inputs.')
 
-
     @Slot(int)
     def set_state(self, value):
-
 
         if value == ShutterModes.UP:
 
@@ -133,12 +125,10 @@ class Shutter(QObject):
             self.set_up(0)
             self._state = ShutterModes.STOP
 
-
     def start_move(self):
         if not self.movethread.is_alive():
             self.movethread = threading.Thread(target=self.move)
             self.movethread.start()
-
 
     @Signal
     def configChanged(self):
@@ -146,111 +136,90 @@ class Shutter(QObject):
 
     @Signal
     def stateChanged(self):
-       pass
+        pass
 
     @Signal
     def positionChanged(self):
-       pass
+        pass
 
-
-    @Property(str,notify=stateChanged)
+    @Property(str, notify=stateChanged)
     def state(self):
-       return self._state
+        return self._state
 
-
-    @Property(int,notify=positionChanged)
+    @Property(int, notify=positionChanged)
     def desired_position(self):
-       return int(self._desired_position['value'])
+        return int(self._desired_position['value'])
 
     @Slot(int)
-    #@desired_position.setter
-    #@Pre_5_15_2_fix(str, desired_position, notify=positionChanged)
-    def set_desired_position(self, value): #we need special name here for SET field in dict ??
-       self.userinput = 1
-       self._desired_position['value'] = int(value)
-       self._residue_time = 0
-       self.positionChanged.emit()
-       self.start_move()
+    # @desired_position.setter
+    # @Pre_5_15_2_fix(str, desired_position, notify=positionChanged)
+    def set_desired_position(self, value):  # we need special name here for SET field in dict ??
+        self.userinput = 1
+        self._desired_position['value'] = int(value)
+        self._residue_time = 0
+        self.positionChanged.emit()
+        self.start_move()
 
-
-    #@Property(float,notify=positionChanged)
+    # @Property(float,notify=positionChanged)
     def actual_position(self):
-       return int(self._actual_position['value'])
+        return int(self._actual_position['value'])
 
-
-    #@actual_position.setter
+    # @actual_position.setter
     @Pre_5_15_2_fix(int, actual_position, notify=positionChanged)
     def actual_position(self, value):
         self._actual_position['value'] = int(value)
         self.settings.setValue('shutter/' + self.name + "/actual_position", value)
 
-
-
-
-
     @Signal
     def relayChanged(self):
-       pass
+        pass
 
-    #@Property(str,notify=relayChanged)
+    # @Property(str,notify=relayChanged)
     def relay_up(self):
-       return str(self._relay_up)
+        return str(self._relay_up)
 
-
-    #@actual_position.setter
+    # @actual_position.setter
     @Pre_5_15_2_fix(str, relay_up, notify=relayChanged)
     def relay_up(self, value):
         self._relay_up = str(value)
         self.settings.setValue('shutter/' + self.name + "/relay_up", value)
 
-
-    #@Property(str,notify=relayChanged)
+    # @Property(str,notify=relayChanged)
     def relay_down(self):
-       return str(self._relay_down)
+        return str(self._relay_down)
 
-
-    #@actual_position.setter
+    # @actual_position.setter
     @Pre_5_15_2_fix(str, relay_down, notify=relayChanged)
     def relay_down(self, value):
         self._relay_down = str(value)
         self.settings.setValue('shutter/' + self.name + "/relay_down", value)
 
-
-
-
-
-
-
-    #@Property(float,notify=configChanged)
+    # @Property(float,notify=configChanged)
     def down_time(self):
-      return (self._down_time * 100)
+        return (self._down_time * 100)
 
-
-    #@down_time.setter
+    # @down_time.setter
     @Pre_5_15_2_fix(int, down_time, notify=configChanged)
     def down_time(self, value):
 
-       self._down_time = float(value / 100)
-       self.settings.setValue('shutter/' + self.name + "/down_time", value)
-       self.configChanged.emit()
+        self._down_time = float(value / 100)
+        self.settings.setValue('shutter/' + self.name + "/down_time", value)
+        self.configChanged.emit()
 
-    #@Property(float,notify=configChanged)
+    # @Property(float,notify=configChanged)
     def up_time(self):
         return (self._up_time * 100)
 
-    #@up_time.setter
+    # @up_time.setter
     @Pre_5_15_2_fix(int, up_time, notify=configChanged)
     def up_time(self, value):
         self._up_time = float(value / 100)
         self.settings.setValue('shutter/' + self.name + "/up_time", value)
         self.configChanged.emit()
 
-
-    @Property(float,notify=positionChanged)
+    @Property(float, notify=positionChanged)
     def residue_time(self):
-       return float(self._residue_time)
-
-
+        return float(self._residue_time)
 
     def move(self):
 
@@ -271,10 +240,11 @@ class Shutter(QObject):
                     self.start_position = self._actual_position['value']
                 time.sleep(0.1)
                 self._actual_position['value'] = self.start_position + \
-                    ((100 / self._down_time) * (time.time() - self.time_start))
+                                                 ((100 / self._down_time) * (time.time() - self.time_start))
                 self.positionChanged.emit()
                 self._residue_time = (
-                    self._desired_position['value'] - self._actual_position['value']) * (self._down_time / 100)
+                                             self._desired_position['value'] - self._actual_position['value']) * (
+                                                 self._down_time / 100)
                 if self._residue_time < 0:  # detected overshoot, so stopping
                     self._residue_time = 0
                     if self.userinput == 0:  # ignore overshoots and allow direction change only on new input
@@ -292,10 +262,11 @@ class Shutter(QObject):
                     self.start_position = self._actual_position['value']
                 time.sleep(0.1)
                 self._actual_position['value'] = self.start_position - \
-                    (100 / self._up_time) * (time.time() - self.time_start)
+                                                 (100 / self._up_time) * (time.time() - self.time_start)
                 self.positionChanged.emit()
                 self._residue_time = (
-                    self._actual_position['value'] - self._desired_position['value']) * (self._up_time / 100)
+                                             self._actual_position['value'] - self._desired_position['value']) * (
+                                                 self._up_time / 100)
                 if self._residue_time < 0:
                     self._residue_time = 0
                     if self.userinput == 0:

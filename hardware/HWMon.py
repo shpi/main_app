@@ -7,7 +7,7 @@ from core.DataTypes import DataType
 
 class HWMon:
 
-    def __init__(self,  parent=None):
+    def __init__(self):
 
         super(HWMon, self).__init__()
         self._hwmon = dict()
@@ -22,13 +22,13 @@ class HWMon:
             sensors = sensors.split('/')
             sensor['id'] = sensors[-1]
 
-            for type in ('input', 'alarm', 'enable'):
-                for filename in glob.iglob(f"/sys/class/hwmon/{sensor['id']}/*_{type}"):
+            for channeltype in ('input', 'alarm', 'enable'):
+                for filename in glob.iglob(f"/sys/class/hwmon/{sensor['id']}/*_{channeltype}"):
 
                     channel = sensor.copy()
                     channel['description'] = ''
-                    if (os.path.isfile(filename[0:-len(type)] + "label")):
-                        with open(filename[0:-len(type)] + "label", 'r') as rf:
+                    if os.path.isfile(filename[0:-len(channeltype)] + "label"):
+                        with open(filename[0:-len(channeltype)] + "label", 'r') as rf:
                             channel['description'] = (rf.read().rstrip())
                     channel['type'] = DataType.UNDEFINED
                     channel['path'] = filename
@@ -37,7 +37,7 @@ class HWMon:
                     channel['channel'] = filename[-1]
                     self._hwmon[f"{channel['name']}/{filename[-1]}"] = channel
 
-                    if type == 'input':
+                    if channeltype == 'input':
                         if channel['channel'].startswith('temp'):
                             channel['type'] = DataType.TEMPERATURE
                         elif channel['channel'].startswith('curr'):
@@ -51,21 +51,20 @@ class HWMon:
                         elif channel['channel'].startswith('fan'):
                             channel['type'] = DataType.FAN
 
-                    if type == 'enable':
+                    if channeltype == 'enable':
                         channel['type'] = DataType.BOOL
-                    if type == 'alarm':
+                    if channeltype == 'alarm':
                         channel['type'] = DataType.BOOL
 
-            for type in ('pwm', 'buzzer', 'relay'):
-                for filename in glob.iglob(f"/sys/class/hwmon/{sensor['id']}/{type}[0-9]"):
+            for channeltype in ('pwm', 'buzzer', 'relay'):
+                for filename in glob.iglob(f"/sys/class/hwmon/{sensor['id']}/{channeltype}[0-9]"):
                     channel = sensor.copy()
                     channel['description'] = ''
-                    if (os.path.isfile(filename + "_label")):
-
+                    if os.path.isfile(filename + "_label"):
                         with open(filename + "_label", 'r') as rf:
                             channel['description'] = (rf.read().rstrip())
                     channel['type'] = DataType.BYTE if (
-                        type == 'pwm') else DataType.BOOL
+                            channeltype == 'pwm') else DataType.BOOL
                     channel['path'] = filename
                     channel['rights'] = (os.stat(filename).st_mode & 0o777)
                     filename = filename.split('/')
@@ -76,39 +75,43 @@ class HWMon:
         hwmoninputs = dict()
         for key, value in self._hwmon.items():
 
-            if (value['rights'] & 0o444 == 0o444):
+            if value['rights'] & 0o444 == 0o444:
                 hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"] = {"description": value['description'],
-                                                                            #"rights": value['rights'],
+                                                                            # "rights": value['rights'],
                                                                             "interval": 20,
-                                                                            "type": value['type'], "call": partial(self.read_hwmon, value['id'], value['channel'])}
+                                                                            "type": value['type'],
+                                                                            "call": partial(self.read_hwmon,
+                                                                                            value['id'],
+                                                                                            value['channel'])}
 
-            if (value['rights'] == 0o644):
+            if value['rights'] == 0o644:
                 hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"]["set"] = partial(
                     self.write_hwmon, value['id'], value['channel'])
 
         return hwmoninputs
 
-    def read_hwmon(self, id, channel):
-        
-        if os.path.isfile(f'/sys/class/hwmon/{id}/{channel}'):
+    @staticmethod
+    def read_hwmon(channelid, channel):
+
+        if os.path.isfile(f'/sys/class/hwmon/{channelid}/{channel}'):
             try:
-                with open(f'/sys/class/hwmon/{id}/{channel}', 'r') as rf:
+                with open(f'/sys/class/hwmon/{channelid}/{channel}', 'r') as rf:
                     value = int(rf.read().rstrip())
                     logging.debug(f' reading channel: {channel} value: {value}')
                     return value
-                    rf.close()
+
             except Exception as e:
-               logging.debug(f'reading channel: {channel} failed with error {e}')
+                logging.debug(f'reading channel: {channel} failed with error {e}')
 
         else:
             return None
 
-    def write_hwmon(self, id, channel, value, retries=0):
+    def write_hwmon(self, channelid, channel, value, retries=0):
         logging.debug(f' writing {value} to output')
         value = str(int(value))
-        if os.path.isfile(f'/sys/class/hwmon/{id}/{channel}'):
+        if os.path.isfile(f'/sys/class/hwmon/{channelid}/{channel}'):
             try:
-                with open(f'/sys/class/hwmon/{id}/{channel}', 'r+') as rf:
+                with open(f'/sys/class/hwmon/{channelid}/{channel}', 'r+') as rf:
                     rf.write(value)
                     rf.seek(0)
                     newvalue = rf.read().rstrip()
@@ -117,16 +120,16 @@ class HWMon:
                         return True
                     else:
                         if retries < 5:
-                             retries += 1
-                             return self.write_hwmon(id, channel, value, retries)
+                            retries += 1
+                            return self.write_hwmon(channelid, channel, value, retries)
                         else:
-                             return False
+                            return False
             except Exception as e:
                 if retries < 5:
-                     retries += 1
-                     return self.write_hwmon(id, channel, value, retries)
+                    retries += 1
+                    return self.write_hwmon(channelid, channel, value, retries)
                 else:
-                     print(e)
-                     return False
+                    logging.debug(e)
+                    return False
         else:
             return False
