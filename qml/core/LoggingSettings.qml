@@ -16,14 +16,28 @@ import "../../fonts/"
                 clip: true
 
                 model: logs
+                width: parent.width
+                height: parent.height - 50
+                anchors.bottom: parent.bottom
 
-                anchors.fill: parent
                 anchors.margins: 5
 
                 delegate: itemDelegate
 
 
-                onCountChanged:    {listView.positionViewAtEnd() }
+
+                onCountChanged:    {
+
+                    if (listView.count > 100)
+                    logs.removeRows(0)
+
+                if (listView.contentY == listView.contentHeight) {
+
+                Qt.callLater(listView.positionViewAt(listView.count - 1))
+
+                }
+
+                }
 
                 }
 
@@ -33,11 +47,19 @@ import "../../fonts/"
         Component {
             id: itemDelegate
 
+            Rectangle {
+
+                color: index % 2 === 0 ? Colors.white : "transparent"
+                height: content.height + 10
+                width: ListView.view.width
+
+
+
             MouseArea {
                 id: delegate
 
-                width: ListView.view.width
-                height: content.height + 10
+                width: parent.width
+                height: parent.height
 
                 clip: true
                 hoverEnabled: true
@@ -56,6 +78,7 @@ import "../../fonts/"
 
                     width: parent.width
                     spacing: 5
+                    leftPadding: 10
 
                     anchors.verticalCenter: parent.verticalCenter
 
@@ -65,6 +88,7 @@ import "../../fonts/"
 
                     Rectangle {
                         id: level
+
                         height: levelText.paintedHeight + 4
                         width: levelText.paintedWidth + 4
 
@@ -88,7 +112,7 @@ import "../../fonts/"
                         width: delegate.width - level.width
                         anchors.verticalCenter: parent.verticalCenter
                     }
-                }
+                } }
             }
         }
     }

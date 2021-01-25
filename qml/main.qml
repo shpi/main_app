@@ -178,7 +178,7 @@ ApplicationWindow {
                 width: height
                 palette.button: settingsstackView.depth > 0 ? "darkred" : "#11000000"
                 palette.buttonText: settingsstackView.depth > 0 ? "white" : Colors.black
-                font.pixelSize: settingsstackView.depth > 0 ? 50 : 80
+                font.pixelSize: settingsstackView.depth > 0 ? 50 : 75
                 onClicked: {
                     if (settingsstackView.depth === 0)
                         //drawer.position = 0.0
@@ -197,21 +197,30 @@ ApplicationWindow {
             ListModel {
                 id: mainsettingsModel
                 ListElement {
+                    title: "LOG" // Icons.sun
+                    size: 20
+                    page: "core/LoggingSettings.qml"
+                }
+                ListElement {
                     title: "\uE00C" // Icons.sun
+                    size: 50
                     page: "core/AppearanceSettings.qml"
                 }
                 ListElement {
                     title: "\uE016" // Icons.wifi
+                    size: 50
                     page: "hardware/WifiSettings.qml"
                 }
                 ListElement {
                     title: "\uE046" // Icons.speaker
+                    size: 50
                     page: "hardware/AlsaSettings.qml"
                 }
 
 
                 ListElement {
                     title: "\uE010" // Icons.settings
+                    size: 50
                     page: "Settings.qml"
                 }
             }
@@ -221,7 +230,8 @@ ApplicationWindow {
                 RoundButton {
                     anchors.verticalCenter: parent.verticalCenter
                     font.family: localFont.name
-                    font.pixelSize: settingsstackView.depth > 0 ?  50 : 80
+                    height:  settingsstackView.depth > 0 ? 80 : 110
+                    font.pixelSize: settingsstackView.depth > 0 ?  size : size * 1.5
                     text: title
                     onClicked: {
                         settingsstackView.clear()
@@ -263,11 +273,6 @@ ApplicationWindow {
         //anchors.bottom: inputPanel.top
 
 
-        Loader {
-            asynchronous: true
-            property bool _isCurrentItem: SwipeView.isCurrentItem
-            source: "core/LoggingSettings.qml"
-        }
 
 
         Loader {

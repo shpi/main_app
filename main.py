@@ -39,6 +39,20 @@ if check_output(['uname', '-m']).startswith(b'armv6'):
     # os.environ["XDG_RUNTIME_DIR"] = "/home/pi/qmlui"
 
 
+logs = LogModel()
+handler = MessageHandler(logs)
+
+logging.basicConfig(
+                level=logging.DEBUG,
+                format='%(asctime)s.%(msecs)03d %(module)s - %(funcName)s: %(message)s',
+                datefmt='%m-%d %H:%M:%S',
+                handlers=[
+                        logging.FileHandler("debug.log"),
+                        handler #, logging.StreamHandler()
+                    ]
+            )
+
+
 def qml_error(mode, context, message):
     if mode == QtCore.QtInfoMsg:
         logging.info("%s (%d, %s)" % (message, context.line, context.file))
@@ -103,27 +117,13 @@ def check_loop():
     modules.update()
 
 
-logs = LogModel()
-log_handler = MessageHandler(logs)
-
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s.%(msecs)03d %(module)s - %(funcName)s: %(message)s',
-    datefmt='%m-%d %H:%M:%S',
-    handlers=[
-            logging.FileHandler("debug.log"),
-            logging.StreamHandler(), log_handler
-        ]
-)
-
-
 systeminfo = SystemInfo()
 settings = QSettings("SHPI GmbH", "Main")
-backlight = Backlight()
+
 hwmon = HWMon()
 inputs = InputsDict(settings)
 httpserver = HTTPServer(inputs, settings)
+
 try:
     iio = IIO()
     inputs.add(iio.get_inputs())
@@ -134,14 +134,15 @@ leds = Led()
 alsamixer = AlsaMixer(inputs, settings)
 wifi = Wifi(settings)
 inputs.add(wifi.get_inputs())
-
 inputs.add(alsamixer.get_inputs())
 inputs.add(leds.get_inputs())
 inputs.add(hwmon.get_inputs())
 inputdevs = InputDevs()
 inputs.add(inputdevs.get_inputs())
-inputs.add(backlight.get_inputs())
 inputs.add(systeminfo.get_inputs())
+
+backlight = Backlight()
+inputs.add(backlight.get_inputs())
 
 appearance = Appearance(inputs, settings)
 modules = ModuleManager(inputs, settings)
@@ -155,45 +156,29 @@ def killThreads():
     httpserver.server.shutdown()
     httpserver.server_thread.join()
 
+app = QApplication(sys.argv)
+qInstallMessageHandler(qml_error)
+app.aboutToQuit.connect(killThreads)
+app.setApplicationName("Main")
+app.setOrganizationName("SHPI GmbH")
+app.setOrganizationDomain("shpi.de")
 
-if __name__ == "__main__":
-
-    app = QApplication(sys.argv)
-    qInstallMessageHandler(qml_error)
-    app.aboutToQuit.connect(killThreads)
-    app.setApplicationName("Main")
-    app.setOrganizationName("SHPI GmbH")
-    app.setOrganizationDomain("shpi.de")
-
-    engine = QQmlApplicationEngine()
-
-    engine.rootContext().setContextProperty("inputs", inputs)
-    engine.rootContext().setContextProperty('wifi', wifi)
-    engine.rootContext().setContextProperty("appearance", appearance)
-    engine.rootContext().setContextProperty("modules", modules)
-    engine.rootContext().setContextProperty("logs", logs)
+engine = QQmlApplicationEngine()
+engine.rootContext().setContextProperty("logs", logs)
+engine.rootContext().setContextProperty("inputs", inputs)
+engine.rootContext().setContextProperty('wifi', wifi)
+engine.rootContext().setContextProperty("appearance", appearance)
+engine.rootContext().setContextProperty("modules", modules)
 
 
-    # 'available' -> for ENUM datatype, list of option for dropdown box
-    # 'lastupdate' -> lastupdate
-    # 'call' -> for get actual sensor value
-    # 'step', 'min', 'max'  -> for integer slides
-    # 'value' -> cached sensor value
-    # 'thread' -> thread for input devices
-    # 'type' -> datatype of sensor
-    # 'description' -> description
-    # 'set' -> outputs have set function
-    # 'interrupts' -> for input devices, could be reworked to events for multipurpose
-    # 'interval'  -> #  1 =  update through class, 0 =  one time,  > 0 = update through  call function
+setup_interrupt_handling()
 
-    setup_interrupt_handling()
-
-    filename = os.path.join(os.path.dirname(
+filename = os.path.join(os.path.dirname(
         os.path.realpath(__file__)), "qml/main.qml")
 
-    engine.load(QUrl.fromLocalFile(filename))
+engine.load(QUrl.fromLocalFile(filename))
 
-    if not engine.rootObjects():
+if not engine.rootObjects():
         sys.exit(-1)
 
-    sys.exit(app.exec_())
+sys.exit(app.exec_())
