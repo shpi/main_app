@@ -44,8 +44,8 @@ class LogModel(QAbstractListModel):
         self._items.append(item) #.__dict__)
         self.endInsertRows()
 
-        #if len(self._items) > 100:
-        #    self.removeRows(0)
+        if len(self._items) > 101:
+            self.removeRows(0)
 
 
 

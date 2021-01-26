@@ -108,7 +108,7 @@ Item {
 
         Connections {
             target: weatherdays.item
-            onMessage: weathergraphloader.item.reload()
+            function onMessage() { weathergraphloader.item.reload() }
         }
 
         Loader {

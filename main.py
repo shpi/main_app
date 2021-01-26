@@ -48,7 +48,7 @@ logging.basicConfig(
                 datefmt='%m-%d %H:%M:%S',
                 handlers=[
                         logging.FileHandler("debug.log"),
-                        handler #, logging.StreamHandler()
+                        handler , logging.StreamHandler()
                     ]
             )
 

@@ -49,7 +49,7 @@ Item {
             id: screensaverconn
             target: modules
 
-            onRoomsChanged: {
+            function onRoomsChanged() {
 
                 var is
 

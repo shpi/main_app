@@ -8,6 +8,7 @@ from subprocess import check_output, call, Popen, PIPE, DEVNULL
 from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
 from core.DataTypes import DataType
 from hardware.System import SystemInfo
+import logging
 
 
 class WifiNetworkModel(QAbstractListModel):
@@ -74,21 +75,21 @@ class WifiNetworkModel(QAbstractListModel):
 
 class Wifi(QObject):
 
-    def __init__(self, settings: QSettings = None, parent: QObject = None):
+    def __init__(self, settings):
 
-        super(Wifi, self).__init__(parent)
+        super(Wifi, self).__init__()
         self.settings = settings
         self.inputs = dict()
         self.netdevs = SystemInfo.get_net_devs() #wlan0, wlan1
         self._network_hosts = dict()
-
+        self.wifi_devices = dict()
         self._networks = WifiNetworkModel([], self.settings)
-        self.found_devices = []
         self.signals = dict()
         self.read_signal()
 
-        for device in self.found_devices:
-            self.scan_wifi(device)
+        for device in self.netdevs:
+            if device.startswith('wlan'):
+                self.scan_wifi(device)
 
         self.start_scan_hosts()
 
@@ -105,7 +106,6 @@ class Wifi(QObject):
 
     def get_inputs(self) -> dict:
         return self.inputs
-
 
 
     @Signal
@@ -148,7 +148,6 @@ class Wifi(QObject):
         self.hostsChanged.emit()
 
 
-
     @Property('QVariantMap', notify=hostsChanged)
     def network_hosts(self):
         if 'list' in self._network_hosts:
@@ -162,7 +161,8 @@ class Wifi(QObject):
 
     @Property('QVariantList', notify=devicesChanged)
     def devices(self):
-        return self.found_devices
+        return self.netdevs
+
 
     @Signal
     def networksChanged(self):
@@ -173,14 +173,19 @@ class Wifi(QObject):
         return self._networks
 
     @Slot(str)
-    def scan_wifi(self, device):
-        self.netdevs = SystemInfo.get_net_devs()
+    def scan_wifi(self, device='wlan0'):
+
+        if self.netdevs == []:
+            self.netdevs = SystemInfo.get_net_devs()
+            if device == '' and len(self.netdevs) > 0:
+                device = self.netdevs[0]
+
         scanthread = threading.Thread(target=self._scan_wifi, args=(device,))
         scanthread.start()
 
     def _scan_wifi(self, device):
         networks = []
-        # for device in self.found_devices:
+
         retry = 20
         while retry > 0:
             try:
@@ -204,14 +209,14 @@ class Wifi(QObject):
                     retry -= 1
             except Exception as e:
                 retry -= 1
-                print(e)
+                logging.info(e)
         self._networks = WifiNetworkModel(networks, self.settings)
         self.networksChanged.emit()
 
     @Slot(str, result=str)
     def wpa_status(self, device):
         output = check_output(
-            ['sudo', 'wpa_cli', '-i', device, 'status']).split(b'\n')
+            ['wpa_cli', '-i', device, 'status']).split(b'\n')
         for line in output:
             if line.startswith(b'wpa_state='):
                 return line[10:].rstrip().decode()
@@ -253,8 +258,8 @@ class Wifi(QObject):
                 f.write('key_mgmt=NONE\n')
 
             f.write('}')
-            call(['sudo', 'wpa_cli', '-i', device, 'reconfigure'])
-            call(['sudo', 'dhclient', device])
+            call(['wpa_cli', '-i', device, 'reconfigure'])
+            call(['dhclient', device])
             # systemctl restart dhcpcd
 
     def read_signal(self):
@@ -266,8 +271,8 @@ class Wifi(QObject):
                     line = (rf.readline().rstrip().split())
                     if line and line[0].startswith('wlan'):
                         device = line[0].rstrip(":")
-                        if device not in self.found_devices:
-                            self.found_devices.append(device)
+                        if device not in self.wifi_devices:
+                            self.wifi_devices.append(device)
                         self.new_devices.append(device)
                         if f'wifi/{device}/link' not in self.inputs:
                             self.inputs[f'wifi/{device}/link'] = {'description': f'link quality of device {line[0].rstrip(":")}',
@@ -283,7 +288,7 @@ class Wifi(QObject):
                         self.inputs[f'wifi/{device}/link']['lastupdate'] = time.time()
 
             rf.close()
-            for device in self.found_devices:  # reset values before checking
+            for device in self.wifi_devices:  # reset values before checking
                 if device not in self.new_devices:
                     self.inputs[f'wifi/{device}/link']['value'] = 0
                     self.inputs[f'wifi/{device}/link']['status'] = 0

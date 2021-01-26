@@ -86,7 +86,7 @@ Item {
         id: weatherdaysconn
         target: modules.loaded_instances['Info']['Weather'][swipeView.instancename]
 
-        onDataChanged: {
+        function onDataChanged() {
 
             if (!weatherdaysconn.target.hasError()) {
                 reload()

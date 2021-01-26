@@ -190,7 +190,7 @@ Item {
     Connections {
         id: weatherconn
         target: modules.loaded_instances['Info']['Weather'][swipeView.instancename]
-        onDataChanged: {
+        function onDataChanged() {
             if (!weatherconn.target.hasError())
                 reload()
         }

@@ -18,6 +18,10 @@ Rectangle {
     clip: true
     color: "transparent"
 
+    Component.onCompleted: rotator.rotation = (Math.abs((modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp /
+                                                         ((max_temp - min_temp) / 240) -480) ) )
+
+
     ComboBox {
         anchors.left: parent.left
         anchors.leftMargin: 10
@@ -33,6 +37,9 @@ Rectangle {
         onCurrentTextChanged: {
             if (tickswindow.instancename !== this.currentText) {
                 tickswindow.instancename = this.currentText
+                rotator.rotation = (Math.abs((modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp /
+                                              ((max_temp - min_temp) / 240) -480) ) )
+
 
 
             }
