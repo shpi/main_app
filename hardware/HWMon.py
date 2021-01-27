@@ -101,7 +101,7 @@ class HWMon:
                     return value
 
             except Exception as e:
-                logging.debug(f'reading channel: {channel} failed with error {e}')
+                logging.error(f'reading channel: {channel} failed with error {e}')
 
         else:
             return None
@@ -129,7 +129,7 @@ class HWMon:
                     retries += 1
                     return self.write_hwmon(channelid, channel, value, retries)
                 else:
-                    logging.debug(e)
+                    logging.error(str(e))
                     return False
         else:
             return False

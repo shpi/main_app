@@ -24,6 +24,11 @@ class AlsaMixer:
     def get_inputs(self) -> dict:
         return self.cards
 
+    def delete_inputs(self):
+        for key in self.cards:
+            if key in self.inputs.entries:
+                del self.inputs.entries[key]
+
     def play(self, file='/usr/share/sounds/alsa/Front_Center.wav'):
         for key in self.system_cards:
             if self.cards[key]['value'] is True:
@@ -57,6 +62,7 @@ class AlsaMixer:
                     if ']:' in line:
                         self.system_cards.append(line.strip())
         except IOError as e:
+            logging.error(str(e))
             if e.errno != errno.ENOENT:
                 raise e
 
@@ -131,7 +137,8 @@ class AlsaMixer:
                 b"Simple mixer control ")[1:]
             amixer_contents = Popen(
                 ['amixer', '-D', 'hw:' + str(card_name), "contents"], stdout=PIPE).communicate()[0]
-        except OSError:
+        except OSError as e:
+            logging.error(str(e))
             return {}
 
         interfaces = dict()
@@ -221,7 +228,8 @@ class AlsaMixer:
                             interface['description'] = description + \
                                                        ' ' + channels[i]
 
-                        except:
+                        except Exception as e:
+                            logging.error(str(e))
                             interface['description'] = description
                         interface['set'] = partial(
                             AlsaMixer.change_control, card_name, interface['id'], i, len(values))

@@ -3,6 +3,7 @@ import time
 import threading
 from core.DataTypes import DataType
 from core.Toolbox import Pre_5_15_2_fix
+import logging
 
 
 class ShutterModes:
@@ -25,6 +26,7 @@ class Shutter(QObject):
 
         super(Shutter, self).__init__()
         self.name = name
+        self.path = 'shutter/' + name
         self.settings = settings
         self.inputs = inputs.entries
         self._up_time = float(settings.value('shutter/' + self.name + "/up_time", 3)) / 100
@@ -37,7 +39,15 @@ class Shutter(QObject):
         self._relay_up = settings.value('shutter/' + self.name + "/relay_up", '')
         self._relay_down = settings.value('shutter/' + self.name + "/relay_down", '')
 
+
+
         self.userinput = 0
+
+        self._module =                      {'description': 'Shutter Module for two binary outputs',
+                                             'value': 'NOT_INITIALIZED',
+                                             'type': DataType.MODULE,
+                                             'lastupdate': 0,
+                                             'interval': -1 }
 
         self._actual_position = dict()
         self._actual_position['description'] = 'actual position of shutter'
@@ -60,39 +70,55 @@ class Shutter(QObject):
 
     def get_inputs(self) -> dict:
 
-        return {'shutter/' + self.name + '/actual_position': self._actual_position,
+        return {'shutter/' + self.name : self._module,
+                'shutter/' + self.name + '/actual_position': self._actual_position,
                 'shutter/' + self.name + '/desired_position': self._desired_position}
 
     def set_up(self, value):
+        status = 'NOT_INITIALIZED'
         if self._relay_up in self.inputs:
             if self.inputs[self._relay_up]['type'] == DataType.BOOL:
                 if 'set' in self.inputs[self._relay_up]:
                     try:
-
                         self.inputs[self._relay_up]['set'](bool(value))
+                        status = 'OK'
                     except Exception as e:
-                        print('Error UP control:' + self._relay_up + ' error: ' + str(e))
+                        status = 'ERROR'
+                        logging.error('Error UP control:' + self._relay_up + ' error: ' + str(e))
                 else:
-                    print('Error UP control:' + self._relay_up + ' set missing.')
+                    status = 'ERROR'
+                    logging.error('Error UP control:' + self._relay_up + ' set missing.')
             else:
-                print('Error DataType UP control:' + self._relay_up + ' not BOOLEAN')
+                status = 'ERROR'
+                logging.error('Error DataType UP control:' + self._relay_up + ' not BOOLEAN')
         else:
-            print('Error UP control ' + self._relay_up + ' not in Inputs.')
+            status = 'ERROR'
+            logging.error('Error UP control ' + self._relay_up + ' not in Inputs.')
+
+        self._module['value'] = status
 
     def set_down(self, value):
+        status = 'NOT_INITIALIZED'
         if self._relay_down in self.inputs:
             if self.inputs[self._relay_down]['type'] == DataType.BOOL:
                 if 'set' in self.inputs[self._relay_down]:
                     try:
                         self.inputs[self._relay_down]['set'](bool(value))
+                        status = 'OK'
                     except Exception as e:
-                        print('Error down control:' + self._relay_down + ' error: ' + str(e))
+                        status = 'ERROR'
+                        logging.error('Error down control:' + self._relay_down + ' error: ' + str(e))
                 else:
-                    print('Error down control:' + self._relay_down + ' set missing.')
+                    status = 'ERROR'
+                    logging.error('Error down control:' + self._relay_down + ' set missing.')
             else:
-                print('Error DataType down control:' + self._relay_down + ' not BOOLEAN')
+                status = 'ERROR'
+                logging.error('Error DataType down control:' + self._relay_down + ' not BOOLEAN')
         else:
-            print('Error down control ' + self._relay_down + ' not in Inputs.')
+            status = 'ERROR'
+            logging.error('Error down control ' + self._relay_down + ' not in Inputs.')
+
+        self._module['value'] = status
 
     @Slot(int)
     def set_state(self, value):

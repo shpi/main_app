@@ -69,11 +69,10 @@ def qml_error(mode, context, message):
 def setup_interrupt_handling():
     """Setup handling of KeyboardInterrupt (Ctrl-C) for PyQt."""
     signal.signal(signal.SIGINT, _interrupt_handler)
-    """Timer"""
     safe_timer(1000, check_loop)
 
 
-def _interrupt_handler():  # signum, frame
+def _interrupt_handler(signum, frame):  # signum, frame
     """Handle KeyboardInterrupt: quit application."""
     app.quit()
     app.exit()
@@ -97,56 +96,44 @@ def safe_timer(timeout, func, *args, **kwargs):
 
 """ Loop for checking logic regularly """
 
-last_update = int(time.time())
+last_update = 0 # to initialize everything
 ready = True
 
 
 def check_loop():
     global last_update, ready
 
-    systeminfo.update()
-    appearance.update()
-
-    # wifi.update()
-
     if ready:
         ready = False
         inputs.update(last_update)
         last_update = int(time.time())
         ready = True
-    modules.update()
 
 
-systeminfo = SystemInfo()
 settings = QSettings("SHPI GmbH", "Main")
-
-hwmon = HWMon()
 inputs = InputsDict(settings)
-httpserver = HTTPServer(inputs, settings)
-
-try:
-    iio = IIO()
-    inputs.add(iio.get_inputs())
-except:
-    pass
-
+systeminfo = SystemInfo()
+iio = IIO()
 leds = Led()
-alsamixer = AlsaMixer(inputs, settings)
+hwmon = HWMon()
+inputdevs = InputDevs()
+backlight = Backlight()
 wifi = Wifi(settings)
+httpserver = HTTPServer(inputs, settings)
+alsamixer = AlsaMixer(inputs, settings)
+appearance = Appearance(inputs, settings)
+
+inputs.add(iio.get_inputs())
 inputs.add(wifi.get_inputs())
 inputs.add(alsamixer.get_inputs())
 inputs.add(leds.get_inputs())
 inputs.add(hwmon.get_inputs())
-inputdevs = InputDevs()
 inputs.add(inputdevs.get_inputs())
 inputs.add(systeminfo.get_inputs())
-
-backlight = Backlight()
 inputs.add(backlight.get_inputs())
+inputs.add(appearance.get_inputs())
 
-appearance = Appearance(inputs, settings)
 modules = ModuleManager(inputs, settings)
-
 
 def killThreads():
     for key in inputs.entries:

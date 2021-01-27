@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from PySide2.QtCore import QSettings, QObject, Property, Signal
-
 from core.Toolbox import Pre_5_15_2_fix
-
+import logging
 
 class ShowValue(QObject):
     def __init__(self, name, inputs, settings: QSettings = None):
@@ -17,17 +16,20 @@ class ShowValue(QObject):
         self._icon = settings.value('showvalue/' + self.name + "/icon", '')
         self._divider = settings.value('showvalue/' + self.name + "/divider", '1000')
 
+        if self._value_path in self.inputs.entries:
+            self.inputs.register_event(self._value_path, self.ui_event)
+
     @Signal
     def valueChanged(self):
         pass
 
-    def update(self):
-        if self._value_path not in self.inputs.entries:
-            return
-
-        if self._value != str(self.inputs.entries[self._value_path]['value']):
+    def ui_event(self):
+        try:
+         if self._value != str(self.inputs.entries[self._value_path]['value']):
             self._value = str(self.inputs.entries[self._value_path]['value'])
             self.valueChanged.emit()
+        except Exception as e:
+            logging.error(str(e))
 
     @Property(bool, notify=valueChanged)
     def logging(self):
@@ -40,7 +42,9 @@ class ShowValue(QObject):
     # @value_path.setter
     @Pre_5_15_2_fix(str, value_path, notify=valueChanged)
     def value_path(self, key):
+        self.inputs.unregister_event(self._value_path, self.event)
         self._value_path = key
+        self.inputs.register_event(self._value_path, self.event)
         self.settings.setValue('showvalue/' + self.name + "/path", key)
 
     # @Property(str,notify=valueChanged)
@@ -50,7 +54,6 @@ class ShowValue(QObject):
     # @icon.setter
     @Pre_5_15_2_fix(str, icon, notify=valueChanged)
     def icon(self, key):
-
         self._icon = key
         self.settings.setValue('showvalue/' + self.name + "/icon", key)
         self.valueChanged.emit()

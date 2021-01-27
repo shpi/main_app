@@ -24,10 +24,11 @@ Rectangle {
 
         onCountChanged: {
 
-            if (listView.count > 100)
-                logs.removeRows(0)
+            //while (listView.count > 100)   logs.removeRows(0)
 
-            //if (listView.contentY == listView.contentHeight) {Qt.callLater(listView.positionViewEnd()) }
+             Qt.callLater( listView.positionViewAtEnd )
+
+            //if (listView.contentY == listView.contentHeight) {Qt.callLater(listView.positionViewAtEnd) }
         }
     }
 

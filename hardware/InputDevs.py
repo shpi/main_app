@@ -118,8 +118,8 @@ class InputDevs:
 
         if value != self.inputs[f'dev/{str(id)}/thread']['value']:
             if value and (
-                    not self.inputs[f'dev/{str(id)}/thread']['thread'] or not self.inputs[f'dev/{str(id)}/thread'][
-                'thread'].is_alive()):
+                    not self.inputs[f'dev/{str(id)}/thread']['thread']
+                    or not self.inputs[f'dev/{str(id)}/thread']['thread'].is_alive()):
                 self.inputs[f'dev/{str(id)}/thread']['thread'] = eThread(
                     target=self.devloop, args=("/dev/input/" + self.devs[id]['event'][0], id))
                 self.inputs[f'dev/{str(id)}/thread']['thread'].start()
@@ -138,7 +138,7 @@ class InputDevs:
                     (timestamp, _id, type, keycode,
                      value) = struct.unpack('llHHI', event)
 
-                    if (type == 1):
+                    if (type == 1): # type 1 = key
 
                         try:
                             self.inputs['lastinput']['value'] = devpath
@@ -161,7 +161,8 @@ class InputDevs:
                             self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['value'] = value
                             self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = timestamp
 
-        except:
+        except Exception as e:
             self.inputs[f'dev/{str(id)}/thread']['value'] = 0
             self.inputs[f'dev/{str(id)}/thread']['lastupdate'] = time.time()
             self.inputs[f'dev/{str(id)}/thread']['description'] += ' [access error]'
+            logging.error(f'dev/{str(id)}/thread not enough rights: ' + str(e))

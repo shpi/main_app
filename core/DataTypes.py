@@ -34,6 +34,7 @@ class DataType(Enum):
     BYTE = 13  # int, 0-255
     WORD = 14  # int, 0-65535
     ENUM = 15
+    MODULE = 16 # 'ok', 'error', 'not_initialized'
 
     # Special types (from sensors)
     TEMPERATURE = 20  # float, Celsius
@@ -103,6 +104,7 @@ class Convert:
             return DataType.UNDEFINED
 
     _mapping_type_str = {DataType.UNDEFINED: 'undefined',
+                         DataType.MODULE: 'module',
                          DataType.FLOAT: 'float',
                          DataType.INT: 'integer',
                          DataType.BOOL: 'boolean',

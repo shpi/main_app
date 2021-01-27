@@ -4,6 +4,7 @@ import os
 import hardware.iio as iio
 from functools import partial
 from core.DataTypes import Convert, DataType
+import logging
 
 
 class IIO:
@@ -11,24 +12,32 @@ class IIO:
 
     def __init__(self):
         self.inputs = dict()
-        self.context = iio.Context('local:')
+
+        try:
+            self.context = iio.Context('local:')
+            for dev in self.context.devices:
+                self._device_info(dev)
+        except:
+            pass
+
         self.path = 'iio'
         # print("IIO context has %u devices:" % len(self.context.devices))
 
-        for dev in self.context.devices:
-            self._device_info(dev)
 
     def get_inputs(self) -> dict:
-        logging.debug(self.inputs)
+
         return self.inputs
 
     @staticmethod
     def read_iio(id, channel, retries=0):
+
         try:
             if os.path.isfile(f'/sys/bus/iio/devices/{id}/{channel}'):
                 with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
-                    return int(rf.read().rstrip())
-                    rf.close()
+                    value = int(rf.read().rstrip())
+                    logging.debug('reading ' + channel + ': ' + str(value))
+
+                    return value
         except:
             if (retries < 3):
                 return IIO.read_iio(id, channel, retries+1)
@@ -40,8 +49,9 @@ class IIO:
             try:
                 with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
                     value = scale * (int(rf.read().rstrip()) + offset)
+                    logging.debug('reading ' + channel + ': ' + str(value))
                     return float(value)
-                    rf.close()
+
             except:
                 if (retries < 3):
                     return IIO.read_processed(id, channel, scale, offset, retries+1)
@@ -50,7 +60,7 @@ class IIO:
 
     @staticmethod
     def write_iio(id, channel, value):
-        # in_temp_object_calibemissivity
+
         if os.path.isfile(f'/sys/bus/iio/devices/{id}/{channel}'):
             with open(f'/sys/bus/iio/devices/{id}/{channel}', 'w') as rf:
                 return (rf.write(str(value)))
@@ -178,13 +188,3 @@ class IIO:
                     except:
                         pass
 
-
-def main():
-    """Module's main method."""
-
-    information = IIO()
-    print(information.inputs)
-
-
-if __name__ == "__main__":
-    main()

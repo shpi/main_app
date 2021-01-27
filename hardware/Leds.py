@@ -52,7 +52,7 @@ class Led:
             self.leds[file]['rawvalue'] = setbrightness
             self.inputs['leds/' + file]['value'] = brightness
             self.inputs['leds/' + file]['lastupdate'] = time.time()
-            bright.close()
+
 
     def get_brightness(self, file):
         with open(self.ledpath + file + "/brightness") as bright:

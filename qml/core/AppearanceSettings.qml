@@ -372,7 +372,7 @@ Item {
                 width: 600
                 model: inputs.typeList
                 textRole: 'path'
-                onActivated: appearance.night_mode_start = this.currentText
+                onActivated: appearance.start_input_key = this.currentText
             }
 
             ComboBox {
@@ -388,7 +388,7 @@ Item {
                 width: 600
                 model: inputs.typeList
                 textRole: 'path'
-                onActivated: appearance.night_mode_end = this.currentText
+                onActivated: appearance.stop_input_key = this.currentText
             }
 
             Text {
@@ -518,9 +518,9 @@ Item {
 
         if (appearance.night_mode === 3) {
             combo_night_mode_end.currentIndex = getIndex(
-                        appearance.night_mode_end, inputs.typeList)
+                        appearance.stop_input_key, inputs.typeList)
             combo_night_mode_start.currentIndex = getIndex(
-                        appearance.night_mode_start, inputs.typeList)
+                        appearance.start_input_key, inputs.typeList)
         }
     }
 }

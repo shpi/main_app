@@ -62,10 +62,15 @@ class ModuleManager(QObject):
                         logging.debug(f'Initiating {category}:{classname}:{instancename}')
                         self._instances[category][classname][instancename] = tempclass(instancename, inputs, settings)
 
-                        try:
+                        #try:
+                        if hasattr(self._instances[category][classname][instancename], 'get_inputs'):
                             inputs.add(self._instances[category][classname][instancename].get_inputs())
-                        except Exception as e:
-                            logging.debug(e)
+                        #except Exception as e:
+                        #    logging.debug('here:' + str(e))
+    """
+
+    We use time scheduler of inputs class and register module as input vars,
+    this approach uses fewer ressources and modules should be event driven, if possible
 
     def update(self):
         for category in self._instances:
@@ -76,6 +81,8 @@ class ModuleManager(QObject):
                         self._instances[category][classname][instance].update()
                     except AttributeError:
                         pass
+    """
+
 
     @Signal
     def modulesChanged(self):

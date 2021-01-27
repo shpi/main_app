@@ -9,7 +9,7 @@ import glob
 import time
 import threading
 from typing import List, Dict
-from subprocess import check_output, call, Popen, PIPE, DEVNULL
+from subprocess import Popen, PIPE, DEVNULL
 from core.DataTypes import DataType
 from core.Toolbox import netmaskbytes_to_prefixlen, ipbytes_to_ipstr, IPEndpoint, lookup_oui
 
@@ -130,10 +130,10 @@ class SystemInfo:
 
     def __init__(self, parent=None):
         super().__init__()
-        self.diskstats = dict()
+        self.module_inputs = dict()
         self.last_diskstat = 0
         self.interval = 60
-        self.update_diskstats(init=True)
+        self.update(init=True)
 
         self.network_devices: Dict[str, InterfaceInfo] = \
             {ifname: InterfaceInfo(ifname) for ifname in SystemInfo.get_net_devs()}
@@ -141,8 +141,9 @@ class SystemInfo:
         for netdev in self.network_devices.values():
             netdev.scan()
 
-    def update_diskstats(self, stat_path='/proc/diskstats', init=False):
+    def update(self, stat_path='/proc/diskstats', init=False):
         if not os.path.isfile(stat_path):
+            logging.error(stat_path + ' does not exists.')
             return
 
         acttime = time.time()
@@ -160,45 +161,43 @@ class SystemInfo:
                     continue
 
                 if init:
-                    self.diskstats[f'system/disk_{line[2]}/read_bps'] = {'value': 0,
+                    self.module_inputs[f'system/disk_{line[2]}/read_bps'] = {'value': 0,
                                                                          'interval': -1,
                                                                          'type': DataType.INT,
                                                                          'description': 'read bytes per second'}
 
-                    self.diskstats[f'system/disk_{line[2]}/write_bps'] = {'value': 0,
+                    self.module_inputs[f'system/disk_{line[2]}/write_bps'] = {'value': 0,
                                                                           'interval': -1,
                                                                           'type': DataType.INT,
                                                                           'description': 'write bytes per second'}
-                    self.diskstats[f'system/disk_{line[2]}/read_abs'] = {'value': 0,
+                    self.module_inputs[f'system/disk_{line[2]}/read_abs'] = {'value': 0,
                                                                          'interval': -1,
                                                                          'type': DataType.INT,
                                                                          'description': 'read bytes absolute'}
-                    self.diskstats[f'system/disk_{line[2]}/write_abs'] = {'value': 0,
+                    self.module_inputs[f'system/disk_{line[2]}/write_abs'] = {'value': 0,
                                                                           'interval': -1,
                                                                           'type': DataType.INT,
                                                                           'description': 'write bytes absolute'}
 
-                self.diskstats[f'system/disk_{line[2]}/read_bps']['value'] = (int(line[3]) -
-                                                                              self.diskstats[f'system/disk_{line[2]}/read_abs']['value']) // quotient
+                self.module_inputs[f'system/disk_{line[2]}/read_bps']['value'] = (int(line[3]) -
+                                                                              self.module_inputs[f'system/disk_{line[2]}/read_abs']['value']) // quotient
 
-                self.diskstats[f'system/disk_{line[2]}/write_bps']['value'] = (int(line[7]) -
-                                                                               self.diskstats[f'system/disk_{line[2]}/write_abs']['value']) // quotient
+                self.module_inputs[f'system/disk_{line[2]}/write_bps']['value'] = (int(line[7]) -
+                                                                               self.module_inputs[f'system/disk_{line[2]}/write_abs']['value']) // quotient
 
-                self.diskstats[f'system/disk_{line[2]}/read_abs']['value'] = int(line[3])
-                self.diskstats[f'system/disk_{line[2]}/write_abs']['value'] = int(line[7])
+                self.module_inputs[f'system/disk_{line[2]}/read_abs']['value'] = int(line[3])
+                self.module_inputs[f'system/disk_{line[2]}/write_abs']['value'] = int(line[7])
 
                 for key in self._keys:
-                    self.diskstats[f'system/disk_{line[2]}/{key}']['lastupdate'] = acttime
+                    self.module_inputs[f'system/disk_{line[2]}/{key}']['lastupdate'] = acttime
 
-    def update(self):
-        if self.last_diskstat + self.interval < time.time():
-            self.update_diskstats()
+
 
     def get_discstats(self):
-        return self.diskstats
+        return self.module_inputs
 
     def get_inputs(self) -> dict:
-        inputs = self.diskstats
+        inputs = self.module_inputs
 
         inputs['system/is64bit'] = {"description": "64bit system?",
                                     # "rights":0o444,
@@ -264,7 +263,8 @@ class SystemInfo:
                 s.fileno(), SIOCGIFADDR,
                 struct.pack('256s', bytes(ifname[:15], 'ascii'))
             )[20:24])
-        except OSError:
+        except OSError as e:
+            logging.error(str(e))
             return -1
 
     @staticmethod
@@ -294,7 +294,7 @@ class SystemInfo:
     @staticmethod
     def disk_usage():
         # total used free
-        # /proc/diskstats for io rates
+        # /proc/module_inputs for io rates
         return list(shutil.disk_usage("/"))
 
     @staticmethod

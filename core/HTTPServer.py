@@ -87,13 +87,16 @@ class ServerHandler(BaseHTTPRequestHandler):
 
                 self.connection.close()
         except Exception as e:
-            print(e)
+            logging.error(str(e))
             self.send_response(400)
             self.connection.close()
 
         logging.debug("request finished in:  %s seconds" %
                       (time.time() - start_time))
         # return
+
+    def log_message(self, format, *args):
+        logging.info("%s - [%s] %s" % (self.address_string(), self.log_date_time_string(), format % args))
 
     def do_POST(self):
         self.do_GET()
@@ -103,7 +106,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             super().end_headers()
         except BrokenPipeError as e:
             self.connection.close()
-            print('httpserver error: {}'.format(e))
+            logging.error('httpserver error: {}'.format(e))
 
 
 class HTTPServer(QObject):

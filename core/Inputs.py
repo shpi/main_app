@@ -44,7 +44,7 @@ class InputListModel(QAbstractListModel):
                 if role == InputListModel.PathRole:
                     return self._keys[index.row()]
                 elif role == InputListModel.ValueRole:
-                    return item["value"]
+                    return str(item["value"])
                 elif role == InputListModel.OutputRole:
                     return '1' if ('set' in item) else '0'
                 elif role == InputListModel.TypeRole:
@@ -63,8 +63,7 @@ class InputListModel(QAbstractListModel):
                 else:
                     return 'unknown role'
             except Exception as e:
-                print(e)
-                print(item)
+                logging.error(str(e))
 
     def roleNames(self):
         roles = dict()
@@ -201,7 +200,7 @@ class InputsDict(QObject):
                         if type(self.entries[key][subkey]) is list:
                             self.entries[key][subkey].append(
                                 newinputs[key][subkey])
-                            print(f'{key} {subkey} {newinputs[key][subkey]}')
+                            logging.debug(f'{key} {subkey} {newinputs[key][subkey]}')
                         else:
                             self.entries[key][subkey] = newinputs[key][subkey]
                     else:
@@ -226,7 +225,7 @@ class InputsDict(QObject):
 
     @Slot(str, result='QVariantList')
     @Slot(str, 'long', result='QVariantList')
-    def get_points(self, key, start):
+    def get_points(self, key, start=None):
 
         if start is not None:
 
@@ -276,18 +275,37 @@ class InputsDict(QObject):
         except KeyError:
             logging.debug(key + ' not in Inputdictionary')
 
-    def update(self, lastupdate):
-
-        for key in self.timerschedule[-1]:
+    def update_remote(self, keys):  # doing eventing here
+        logging.debug('called ')
+        for key in keys:
             value = self.entries[key]
-            if value['lastupdate'] > lastupdate:
-                self.completelist.updateListView(key)
-                if value['logging'] > 0:
-                    self.buffer[key].append((value['lastupdate'], value['value']))
 
-                    # just for now, to avoid overflows
-                    if len(self.buffer[key]) > 30000:
-                        self.buffer[key] = self.buffer[key][10000:]
+            self.completelist.updateListView(key)
+
+            if 'event' in value and isinstance(value['event'], list):
+                for eventfunction in value['event']:
+                    eventfunction()
+
+            if value['logging'] > 0:
+                self.buffer[key].append((value['lastupdate'], value['value']))
+
+                # just for now, to avoid overflows
+                if len(self.buffer[key]) > 30000:
+                    self.buffer[key] = self.buffer[key][10000:]
+
+    def register_event(self, key, eventfunction):
+        logging.info(key + ' : ' + str(eventfunction))
+        if 'event' not in self.entries[key]:
+            self.entries[key]['event'] = []
+        self.entries[key]['event'].append(eventfunction)
+
+    def unregister_event(self, key, eventfunction):
+        logging.info(key + ' : ' + str(eventfunction))
+        if eventfunction in self.entries[key]['event']:
+            self.entries[key]['event'].remove(eventfunction)
+
+
+    def update(self, lastupdate):
 
         for timeinterval in self.timerschedule:
 
@@ -295,13 +313,19 @@ class InputsDict(QObject):
 
                 for key in self.timerschedule[timeinterval]:
 
-                    if (key.startswith('http')):
-                        if 'updatethread' not in self.entries[key] or not self.entries[key]['updatethread'].is_alive():
-                            self.entries[key]['updatethread'] = (
-                                threading.Thread(target=self.update_value, args=(key,)))
-                            self.entries[key]['updatethread'].start()
-                    else:
-                        self.update_value(key)
+                    try:
+
+                        if (key.startswith('http')):
+                            if 'updatethread' not in self.entries[key] or not self.entries[key][
+                                'updatethread'].is_alive():
+                                self.entries[key]['updatethread'] = (
+                                    threading.Thread(target=self.update_value, args=(key,)))
+                                self.entries[key]['updatethread'].start()
+                        else:
+                            self.update_value(key)
+                    except KeyError:
+                        logging.error('removed ' + key + ' from timer_schedule')
+                        self.timerschedule[timeinterval].remove(key)
 
         # self.dataChanged.emit() needs too many ressources
 
@@ -314,6 +338,9 @@ class InputsDict(QObject):
             if temp != value['value']:
                 self.entries[key]['value'] = temp
                 self.completelist.updateListView(key)
+                if 'event' in self.entries[key] and isinstance(self.entries[key]['event'], list):
+                    for eventfunction in self.entries[key]['event']:
+                        eventfunction()
             self.entries[key]['lastupdate'] = time.time()
 
             if self.entries[key]['logging'] > 0:
@@ -325,7 +352,7 @@ class InputsDict(QObject):
 
     @Slot(str, str)
     def set(self, key, value):
-        print('set:' + key + ':' + value)
+        logging.debug('set:' + key + ':' + value)
         if key in self.entries and 'set' in self.entries[key]:
             if self.entries[key]['type'] == DataType.PERCENT_INT:
                 self.entries[key]['set'](float(value))

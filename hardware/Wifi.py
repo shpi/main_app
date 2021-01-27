@@ -82,7 +82,7 @@ class Wifi(QObject):
         self.inputs = dict()
         self.netdevs = SystemInfo.get_net_devs() #wlan0, wlan1
         self._network_hosts = dict()
-        self.wifi_devices = dict()
+        self.wifi_devices = []
         self._networks = WifiNetworkModel([], self.settings)
         self.signals = dict()
         self.read_signal()
@@ -186,7 +186,7 @@ class Wifi(QObject):
     def _scan_wifi(self, device):
         networks = []
 
-        retry = 20
+        retry = 10
         while retry > 0:
             try:
                 if b'OK' in check_output(["wpa_cli", "-i", device, "scan"], stderr=DEVNULL):
@@ -209,19 +209,22 @@ class Wifi(QObject):
                     retry -= 1
             except Exception as e:
                 retry -= 1
-                logging.info(e)
+                logging.info(str(e))
         self._networks = WifiNetworkModel(networks, self.settings)
         self.networksChanged.emit()
 
     @Slot(str, result=str)
     def wpa_status(self, device):
-        output = check_output(
+        try:
+         output = check_output(
             ['wpa_cli', '-i', device, 'status']).split(b'\n')
-        for line in output:
+         for line in output:
             if line.startswith(b'wpa_state='):
                 return line[10:].rstrip().decode()
             if line.startswith(b'bssid='):
                 self.connected_bssid = line[6:].rstrip().decode()
+        except Exception as e:
+            loggin.error(str(e))
 
         return 'UNKNOWN'
 
@@ -263,6 +266,7 @@ class Wifi(QObject):
             # systemctl restart dhcpcd
 
     def read_signal(self):
+        logging.debug('read signal called')
         self.new_devices = list()
         if os.path.isfile('/proc/net/wireless'):
             with open('/proc/net/wireless', 'r') as rf:
@@ -276,18 +280,18 @@ class Wifi(QObject):
                         self.new_devices.append(device)
                         if f'wifi/{device}/link' not in self.inputs:
                             self.inputs[f'wifi/{device}/link'] = {'description': f'link quality of device {line[0].rstrip(":")}',
-                                                                  'interval': 60, 'lastupdate': 0, 'call': self.read_signal}
+                                                                  'interval': 1, 'lastupdate': 0, 'call': self.read_signal}
                         self.signals[device] = self.dbmtoperc[int(
                             line[3].rstrip('.'))]
-                        self.inputs[f'wifi/{device}/link']['value'] = self.dbmtoperc[int(
-                            line[3].rstrip('.'))]
+                        self.inputs[f'wifi/{device}/link']['value'] = self.signals[device]
+
                         self.inputs[f'wifi/{device}/link']['status'] = line[1]
                         self.inputs[f'wifi/{device}/link']['quality'] = line[2]
                         self.inputs[f'wifi/{device}/link']['noise'] = line[4]
                         self.inputs[f'wifi/{device}/link']['type'] = DataType.PERCENT_INT
                         self.inputs[f'wifi/{device}/link']['lastupdate'] = time.time()
 
-            rf.close()
+
             for device in self.wifi_devices:  # reset values before checking
                 if device not in self.new_devices:
                     self.inputs[f'wifi/{device}/link']['value'] = 0

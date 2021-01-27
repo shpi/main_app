@@ -5,7 +5,7 @@ import "../../fonts/"
 Item {
     id: root
     property var days: []
-    property string instancename: modules.modules['Info']['Weather'][0]
+
     signal message
 
     function reload() {
@@ -87,6 +87,8 @@ Item {
         target: modules.loaded_instances['Info']['Weather'][swipeView.instancename]
 
         function onDataChanged() {
+
+
 
             if (!weatherdaysconn.target.hasError()) {
                 reload()

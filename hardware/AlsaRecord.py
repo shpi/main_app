@@ -20,8 +20,8 @@ class AlsaRecord:
             'description': 'Microphone Thread start/stop',
             'value': 1,
             'set': partial(self.control),
-            'interval': 10,
-            'call': self.update
+            'interval': 60,
+            'call': self.check_process
         }
         self.card = card
         self.bufferpos = 0
@@ -43,10 +43,16 @@ class AlsaRecord:
         self.thread_stdout = None
         self.thread_stderr = None
 
-        self._control['value'] = self.update()
+        self._control['value'] = self.check_process()
 
     def control(self, onoff):
         self._control['value'] = onoff
+
+    def delete_inputs(self):
+        if f'alsa/{self.card}/recording' in self.inputs.entries:
+            del self.inputs.entries[f'alsa/{self.card}/recording']
+        if f'alsa/{self.card}/thread' in self.inputs.entries:
+            del self.inputs.entries[f'alsa/{self.card}/recording']
 
     def get_inputs(self) -> dict:
 
@@ -63,20 +69,25 @@ class AlsaRecord:
 
     def process_arecord_stderr(self, arecord_process):
         dat = bytearray()
+        value = -1
 
         while self._control['value'] > 0:
             buf = arecord_process.stderr.read(1)
             if buf == b'\r':
                 if dat.endswith(b'MAX'):
-                    self.input['value'] = 100
+                    value = 100
                 elif dat.endswith(b'%'):
-                    self.input['value'] = int(dat[-3:-1])
-                self.input['lastupdate'] = time.time()
+                    value = int(dat[-3:-1])
+
+                if value != self.input['value']:
+                    self.input['value'] = value
+                    self.input['lastupdate'] = time.time()
+                    self.inputs.update_remote([f'alsa/{self.card}/recording'])
                 dat = bytearray()
             else:
                 dat += buf
 
-    def update(self):
+    def check_process(self):
 
         if self._control['value'] > 0:
             if not self.arecord_process or self.arecord_process.poll() is not None:

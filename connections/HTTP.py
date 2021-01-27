@@ -10,41 +10,54 @@ import urllib.request
 import json
 from core.DataTypes import Convert
 from urllib.error import HTTPError, URLError
+from core.DataTypes import DataType
 
 
 class HTTP(QObject):
     def __init__(self, name, inputs, settings: QSettings):
         super().__init__()
 
+        self.path = 'http/' + name
         self.name = name
         self.inputs = inputs
         self.settings = settings
-        self._ip = str(settings.value("http/" + name + "/ip", '127.0.0.1'))
-        self._port = int(settings.value("http/" + name + "/port", '9000'))
-        self._vars = list(settings.value("http/" + name + "/vars", []))
+        self._ip = str(settings.value(self.path + "/ip", '127.0.0.1'))
+        self._port = int(settings.value(self.path + "/port", '9000'))
+        self._vars = list(settings.value(self.path + "/vars", []))
         self._ssl = False
-        self.http_inputs = dict()
-
-        self.update_vars()
+        self.module_inputs = dict()
         self.selected_inputs = dict()
 
-        self.inputlist = InputListModel(self.http_inputs)
+        self.selected_inputs['http/' + self.name] = {'description': 'HTTP Module ' + name + ' Status',
+                                                     'value': 'NOT_INITIALIZED',
+                                                     'type': DataType.MODULE,
+                                                     'lastupdate': 0,
+                                                     'interval': -1}
+        self.update_vars()
+        self.inputlist = InputListModel(self.module_inputs)
 
         # minimum fields: path, value, interval, type, lastupdate
 
+    def delete_inputs(self):
+        for key in self.selected_inputs:
+            if key in self.inputs:
+                del self.inputs[key]
+
     def get_inputs(self) -> dict:
 
-        for key in self.selected_inputs:
-            if key[len("http/" + self.name + "/"):] not in self._vars:
-                del self.selected_inputs[key]
+        keys = self.selected_inputs.keys()
+
+        # for key in keys:
+        #    if key[len("http/" + self.name + "/"):] not in self._vars:
+        #        del self.selected_inputs[key]
 
         for key in self._vars:
             # data[key]['interval'] = int(settings.value(f"http/{name}/{key}/interval', data[key]['interval']))
-            if key in self.http_inputs:
-                self.selected_inputs["http/" + self.name + "/" + key] = self.http_inputs[key]
+            if key in self.module_inputs:
+                self.selected_inputs["http/" + self.name + "/" + key] = self.module_inputs[key]
                 self.selected_inputs["http/" + self.name + "/" + key]["call"] = partial(self.get_value, key)
 
-                if 'set' in self.http_inputs[key] and self.http_inputs[key]['set']:
+                if 'set' in self.module_inputs[key] and self.module_inputs[key]['set']:
                     self.selected_inputs["http/" + self.name + "/" + key]["set"] = partial(self.set_value, key)
 
         return self.selected_inputs
@@ -60,7 +73,9 @@ class HTTP(QObject):
 
     @Slot()
     def update_vars(self):
-        self.http_inputs = dict()
+        self.module_inputs = dict()
+        status = 'OK'
+
         try:
             url = 'https://' if self._ssl else 'http://'
             url += self._ip + ':' + str(self._port) + '/'
@@ -69,9 +84,11 @@ class HTTP(QObject):
                 response = urllib.request.urlopen(url, timeout=5)
 
             except HTTPError as error:
+                status = 'ERROR'
                 logging.debug('Data not retrieved because %s\nURL: %s', error, url)
 
             except URLError as error:
+                status = 'ERROR'
                 if isinstance(error.reason, socket.timeout):
                     logging.debug('socket timed out - URL %s', url)
                 else:
@@ -88,18 +105,22 @@ class HTTP(QObject):
                     # -1 means updated through class on remote device,
                     # so we need to define standard interval for network vars
 
-                self.http_inputs = data
+                self.module_inputs = data
 
                 # TODO check for correctness of dict
 
         except Exception as ex:
+            status = 'ERROR'
             logging.debug(ex)
 
-        self.inputlist = InputListModel(self.http_inputs)
+        self.selected_inputs['http/' + self.name][
+            'value'] = status  # we need to update it here, because we have no interval update function
+        self.inputlist = InputListModel(self.module_inputs)
         self.vars_changed.emit()
         self.dataChanged.emit()
 
     def set_value(self, path, value):
+        status = 'OK'
         try:
             url = 'https://' if self._ssl else 'http://'
             params = {'key': path, 'set': str(value)}
@@ -109,13 +130,17 @@ class HTTP(QObject):
                 response = urllib.request.urlopen(url, timeout=5)
 
             except HTTPError as error:
+                status = 'ERROR'
+                self.selected_inputs['http/' + self.name]['value'] = status
                 logging.debug('Data not retrieved because %s\nURL: %s', error, url)
                 return None
             except URLError as error:
+                status = 'ERROR'
                 if isinstance(error.reason, socket.timeout):
                     logging.debug('socket timed out - URL %s', url)
                 else:
                     logging.debug('some other error happened')
+                self.selected_inputs['http/' + self.name]['value'] = status
                 return None
 
             else:
@@ -124,14 +149,17 @@ class HTTP(QObject):
                 data = json.loads(data)
 
                 # TODO check for correctness of dict
-
+                self.selected_inputs['http/' + self.name]['value'] = status
                 return data['value']
 
         except Exception as ex:
-            logging.debug(ex)
+            status = 'ERROR'
+            logging.debug(str(ex))
+            self.selected_inputs['http/' + self.name]['value'] = status
             return None
 
     def get_value(self, path):
+
         try:
             url = 'https://' if self._ssl else 'http://'
             params = {'key': path}
@@ -141,23 +169,29 @@ class HTTP(QObject):
                 response = urllib.request.urlopen(url, timeout=5)
 
             except HTTPError as error:
-                print('Data not retrieved because %s\nURL: %s', error, url)
+                logging.error('Data not retrieved because %s\nURL: %s', error, url)
                 return None
             except URLError as error:
                 if isinstance(error.reason, socket.timeout):
-                    print('socket timed out - URL %s', url)
+                    self.selected_inputs['http/' + self.name]['value'] = 'ERROR'
+                    logging.error('socket timed out - URL %s', url)
                 else:
-                    print('some other error happened')
+                    self.selected_inputs['http/' + self.name]['value'] = 'ERROR'
+                    logging.error('some other error happened')
                 return None
 
             else:
                 data = response.read().decode('utf-8')
                 data = json.loads(data)
                 # TODO check for correctness of dict
+
+                self.selected_inputs['http/' + self.name]['value'] = 'OK'
                 return data['value']
 
         except Exception as ex:
-            print(ex)
+
+            self.selected_inputs['http/' + self.name]['value'] = 'ERROR'
+            logging.error(str(ex))
             return None
 
     @Signal
@@ -170,13 +204,14 @@ class HTTP(QObject):
 
     @Slot(str)
     def delete_var(self, path):
-
-        if "http/" + self.name + "/" + path in self.selected_inputs:
-            del self.selected_inputs["http/" + self.name + "/" + path]
-        if "http/" + self.name + "/" + path in self.inputs.entries:
-            del self.inputs.entries["http/" + self.name + "/" + path]
-        if path in self._vars:
-            self._vars.remove(path)
+        if path != '':
+            if "http/" + self.name + "/" + path in self.selected_inputs:
+                del self.selected_inputs["http/" + self.name + "/" + path]
+            if "http/" + self.name + "/" + path in self.inputs.entries:
+                del self.inputs.entries["http/" + self.name + "/" + path]
+                # todo: remove from timer_schedule
+            if path in self._vars:
+                self._vars.remove(path)
 
         self.settings.setValue("http/" + self.name + "/vars", self._vars)
 
@@ -190,11 +225,11 @@ class HTTP(QObject):
     @Slot(str)
     def add_var(self, key):
 
-        if key in self.http_inputs:
-            self.selected_inputs["http/" + self.name + "/" + key] = self.http_inputs[key]
+        if key in self.module_inputs:
+            self.selected_inputs["http/" + self.name + "/" + key] = self.module_inputs[key]
             self.selected_inputs["http/" + self.name + "/" + key]["call"] = partial(self.get_value, key)
 
-            if 'set' in self.http_inputs[key] and self.http_inputs[key]['set']:
+            if 'set' in self.module_inputs[key] and self.module_inputs[key]['set']:
                 self.selected_inputs["http/" + self.name + "/" + key]["set"] = partial(self.set_value, key)
             self._vars.append(key)
             self.inputs.add(self.get_inputs())

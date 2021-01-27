@@ -166,7 +166,7 @@ Flickable {
 
         Connections {
             target: modules.loaded_instances['Info']['Weather'][instancename]
-            onCitiesChanged: {
+            function onCitiesChanged() {
                 cityview.update()
                 cityview.height = cityview.count * 100
                 flickable.contentHeight = 200 + cityview.count * 100
