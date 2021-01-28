@@ -81,13 +81,7 @@ Item {
 
                 }
 
-                /* Component.onCompleted: {
 
-                componentLoader.setSource( model[0].toLowerCase() + "/" + model[1] + ".qml",
-                                         { "iconview": true,
-                                           "name": model[2]
-                                      })
-                } */
 
               /*  Text {
                     id: textitem

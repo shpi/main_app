@@ -223,7 +223,7 @@ class InputsDict(QObject):
         # 'interval'  -> #  -1 =  update through class, 0 =  one time,  > 0 = update throug  call function
 
     @Slot(str, result='QVariantList')
-    @Slot(str, 'long', result='QVariantList')
+    @Slot(str, 'long long', float, result='QVariantList')
     def get_points(self, key, start=None, divider=1):
 
         logging.debug(key + ':' + str(divider) + ':' + str(start))
@@ -235,11 +235,12 @@ class InputsDict(QObject):
                 i += 1
                 if subpoint[0] > start:
                     break
-
-            return [QPointF(v[0]*1000, v[1]/divider) for v in self.buffer[key][i:]]
+            # logging.debug([QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key][i:]])
+            return [QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key][i:]]
             # return p = [QPointF(*v) for v in filter(lambda x: x[0] > start, self.buffer[key])]
         else:
-            return [QPointF(v[0]*1000, v[1]/divider) for v in self.buffer[key]]
+            # logging.debug([QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key]])
+            return [QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key]]
 
     @Slot(str, int)
     def set_interval(self, key, value):
@@ -296,15 +297,22 @@ class InputsDict(QObject):
            logging.error(key + ' does not exists yet, you can ignore this message, if it onlys happens during startup')
 
     def register_event(self, key, eventfunction):
-        logging.info(key + ' : ' + str(eventfunction))
-        if 'event' not in self.entries[key]:
+        try:
+         logging.info(key + ' : ' + str(eventfunction))
+         if 'event' not in self.entries[key]:
             self.entries[key]['event'] = []
-        self.entries[key]['event'].append(eventfunction)
+         self.entries[key]['event'].append(eventfunction)
+        except Exception as e:
+            logging.error(str(e))
+
 
     def unregister_event(self, key, eventfunction):
-        logging.info(key + ' : ' + str(eventfunction))
-        if eventfunction in self.entries[key]['event']:
+        try:
+         logging.info(key + ' : ' + str(eventfunction))
+         if eventfunction in self.entries[key]['event']:
             self.entries[key]['event'].remove(eventfunction)
+        except Exception as e:
+            logging.error(str(e))
 
 
     def update(self, lastupdate):
@@ -346,6 +354,7 @@ class InputsDict(QObject):
             self.entries[key]['lastupdate'] = time.time()
 
             if self.entries[key]['logging'] > 0:
+                # logging.debug('logging:' + key + ' value:' + str(self.entries[key]['value']))
                 self.buffer[key].append((self.entries[key]['lastupdate'], self.entries[key]['value']))
 
                 # just for now, to avoid overflows

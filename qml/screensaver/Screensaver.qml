@@ -41,74 +41,35 @@ Item {
                 height: parent.height
                 spacing: 30
                 anchors.horizontalCenter: parent.horizontalCenter
-                id: screensaverRow
-            }
-        }
 
-        Connections {
-            id: screensaverconn
-            target: modules
 
-            function onRoomsChanged() {
+                Repeater {
+                    id: screensaverRow
+                    model: modules.rooms['Screensaver']
+                    height: parent.height
 
-                var is
 
-                for (i = screensaverRow.children.length; i > 0; i--) {
+                    Rectangle {
 
-                    screensaverRow.children[i - 1].destroy()
-                }
+                        property var model: modelData.split('/')
 
-                var component
+                        border.width: 1
+                        border.color: Colors.white
+                        color: "transparent"
+                        height: parent.height
+                        width: 100
+                        radius: 10
 
-                for (var i = 0; i < modules.rooms['Screensaver'].length; i++) {
-
-                    var module
-                    module = modules.rooms['Screensaver'][i].split('/')
-
-                    component = Qt.createComponent(
-                                "../" + module[0].toLowerCase(
-                                    ) + "/" + module[1] + ".qml")
-
-                    if (component.status !== Component.Ready) {
-                        if (component.status === Component.Error)
-                            console.log("Error:" + component.errorString())
+                        Loader {
+                            id: componentLoader
+                            source: '../' + model[0].toLowerCase() + "/" + model[1] + ".qml"
+                            anchors.fill: parent
+                            asynchronous: true
+                            property var instancename: model[2]
+                            property var iconview: true
+                        }
                     }
-
-                    component.createObject(screensaverRow, {
-                                               "iconview": true,
-                                               "name": module[2]
-                                           })
                 }
-            }
-        }
-
-        Component.onCompleted: {
-
-            var component
-            var i
-
-            for (i = screensaverRow.children.length; i > 0; i--) {
-
-                screensaverRow.children[i - 1].destroy()
-            }
-
-            for (i = 0; i < modules.rooms['Screensaver'].length; i++) {
-
-                var module
-                module = modules.rooms['Screensaver'][i].split('/')
-
-                component = Qt.createComponent("../" + module[0].toLowerCase(
-                                                   ) + "/" + module[1] + ".qml")
-
-                if (component.status !== Component.Ready) {
-                    if (component.status === Component.Error)
-                        console.log("Error:" + component.errorString())
-                }
-
-                component.createObject(screensaverRow, {
-                                           "iconview": true,
-                                           "name": module[2]
-                                       })
             }
         }
     }
@@ -133,4 +94,17 @@ Item {
                         new Date(), "dddd, dd.MM.yy") //"yyMMdd")
         }
     }
-}
+
+    Connections {
+                id: screensaverconn
+                target: modules
+
+                function onRoomsChanged() {
+
+                    screensaverRow.forceLayout()
+
+                    console.log(modules.rooms['Screensaver'])
+
+                }
+
+}}

@@ -11,6 +11,7 @@ Item {
     anchors.fill: parent
 
      function reload(start) {
+
         var points;
 
          if (graph.sensorpathold !== graphLoader.sensorpath) {
@@ -18,13 +19,13 @@ Item {
              graphseries.removePoints(0, graphseries.count)
              start = 0
          }
-
+            console.log('divider:' + graphLoader.divider)
             points = inputs.get_points(graphLoader.sensorpath, start, graphLoader.divider)
 
             if (points.length > 0) {
-                console.log('adding points:' + points.length)
+
                 graphseries.visible = false
-                graphseries.useOpenGL = false
+
 
                 for (var i = 0; i < points.length; i++) {
                     graphseries.append(points[i].x,points[i].y)
@@ -33,7 +34,7 @@ Item {
                 dateAxis.min = new Date(graphseries.at(0).x)
                 dateAxis.max = new Date(graphseries.at(graphseries.count - 1).x)
 
-                graphseries.useOpenGL = true
+
                 graphseries.visible = true
 
             }
@@ -46,7 +47,9 @@ Item {
         repeat: true
         running: graphLoader.sensorpath !== '' ? true : false
         onTriggered: {
-                     if (graphseries.count > 0) {reload(graphseries.at(graphseries.count - 1).x)}
+
+                     if (graphseries.count > 0) {
+                        reload(graphseries.at(graphseries.count - 1).x)}
                      else { reload(0) }
         }
     }
@@ -97,7 +100,7 @@ Item {
             color: "red"
             axisX: dateAxis
             axisY: valueAxis
-            useOpenGL: true
+            useOpenGL: graphLoader.sensorpath !== ''
 
         }
     }
