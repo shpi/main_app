@@ -14,6 +14,14 @@ ApplicationWindow {
     visible: true
     font.family: localFont.name
 
+
+    function keyboard(object) {
+       if (object.activeFocus === true) {
+       keyboardLoader.textfield = object
+       keyboardPopup.open() }
+
+    }
+
     function getIndex(path, mmodel) {
         for (var i = 0; i < mmodel.rowCount(); i++) {
             var idx = mmodel.index(i, 0)
@@ -112,7 +120,7 @@ ApplicationWindow {
 
 
 
-        InputPanel {
+       /* InputPanel {
             id: inputPanel
             z: 99
             y: Qt.inputMethod.visible ? parent.height - inputPanel.height : parent.height
@@ -138,7 +146,7 @@ ApplicationWindow {
                 }
             }
         }
-
+       */
 
 
 
@@ -435,6 +443,38 @@ ApplicationWindow {
                          graphLoader.sensorpath = ''
                          graphLoader.divider = 0}
         }
+    }
+
+
+
+    Popup {
+
+        id: keyboardPopup
+        width: parent.width
+        height: parent.height
+        parent: Overlay.overlay
+        x: Math.round((parent.width - width) / 2)
+        y: Math.round((parent.height - height) / 2)
+        padding: 0
+        topInset: 0
+        leftInset: 0
+        rightInset: 0
+        bottomInset: 0
+
+        background: Rectangle {
+            color: Colors.white
+        }
+
+        Loader {
+            id: keyboardLoader
+            property var textfield
+            anchors.fill: parent
+            source: "keyboard/Keyboard.qml"
+
+        }
+
+
+
     }
 
 

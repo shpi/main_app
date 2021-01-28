@@ -51,6 +51,7 @@ Flickable {
             }
 
             TextField {
+                onActiveFocusChanged: keyboard(this)
                 width:400
                 font.pixelSize: 32
                 text: modules.loaded_instances['Info']['Weather'][instancename].api_key
@@ -62,6 +63,7 @@ Flickable {
             spacing: 20
 
             TextField {
+                onActiveFocusChanged: keyboard(this)
                 width: 400
                 id: city_tf
                 text: modules.loaded_instances['Info']['Weather'][instancename].city

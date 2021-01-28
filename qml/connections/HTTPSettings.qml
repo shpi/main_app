@@ -36,6 +36,7 @@ Item {
                     }
 
                     TextField {
+                        onActiveFocusChanged: keyboard(this)
                         id: ip_textfield
                         width: 350
                         text: modules.loaded_instances['Connections']['HTTP'][instancename].ip
@@ -49,6 +50,7 @@ Item {
                     }
 
                     TextField {
+                        onActiveFocusChanged: keyboard(this)
                         id: port_text
                         width: 100
                         Component.onCompleted: port_text.text = modules.loaded_instances['Connections']['HTTP'][instancename].port

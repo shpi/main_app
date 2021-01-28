@@ -26,7 +26,7 @@ from hardware.System import SystemInfo
 from hardware.Wifi import Wifi
 from core.Logger import LogModel, MessageHandler
 
-os.environ["QT_IM_MODULE"] = "qtvirtualkeyboard"
+
 
 if check_output(['uname', '-m']).startswith(b'armv6'):
     os.environ["QT_QPA_PLATFORM"] = "eglfs"

@@ -127,6 +127,7 @@ Item {
                                 id: textfield
 
                                 TextField {
+                                    onActiveFocusChanged: keyboard(this)
                                     anchors.verticalCenter: parent.verticalCenter
                                     //visible: output == '1' ? 1 : 0
                                     font.pixelSize: 24

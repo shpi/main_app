@@ -57,6 +57,7 @@ Rectangle {
         }
 
         TextField {
+            onActiveFocusChanged: keyboard(this)
             id: divider_text
             anchors.right: parent.right
             width: 550

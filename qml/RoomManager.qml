@@ -50,6 +50,9 @@ Item {
                     placeholderText: 'Add new room'
 
                     visible: root.roomname !== '' ? false : true
+
+                    onActiveFocusChanged: keyboard(this)
+
                 }
 
                 ComboBox {

@@ -101,7 +101,6 @@ Item {
 
                 function onRoomsChanged() {
 
-                    screensaverRow.forceLayout()
 
                     console.log(modules.rooms['Screensaver'])
 

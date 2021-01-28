@@ -102,6 +102,7 @@ Item {
                 height: 50
                 width: 400
                 placeholderText: 'Add new instance'
+                onActiveFocusChanged: keyboard(this)
             }
 
             RoundButton {

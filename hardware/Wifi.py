@@ -224,7 +224,7 @@ class Wifi(QObject):
             if line.startswith(b'bssid='):
                 self.connected_bssid = line[6:].rstrip().decode()
         except Exception as e:
-            loggin.error(str(e))
+            logging.error(str(e))
 
         return 'UNKNOWN'
 

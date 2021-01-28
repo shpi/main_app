@@ -19,7 +19,7 @@ Item {
              graphseries.removePoints(0, graphseries.count)
              start = 0
          }
-            console.log('divider:' + graphLoader.divider)
+
             points = inputs.get_points(graphLoader.sensorpath, start, graphLoader.divider)
 
             if (points.length > 0) {

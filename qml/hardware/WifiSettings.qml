@@ -126,6 +126,7 @@ Item {
                             height: parent.height
 
                             TextField {
+                                onActiveFocusChanged: keyboard(this)
                                 id: wifipasswd
                                 width: 300
                                 font.pixelSize: 32
