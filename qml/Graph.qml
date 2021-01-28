@@ -14,31 +14,24 @@ Item {
         var points;
 
          if (graph.sensorpathold !== graphLoader.sensorpath) {
-
              graph.sensorpathold = graphLoader.sensorpath
              graphseries.removePoints(0, graphseries.count)
-
              start = 0
-
          }
 
-            if (start > 0)
-                points = inputs.get_points(graphLoader.sensorpath, start)
-            else
-                points = inputs.get_points(graphLoader.sensorpath)
+            points = inputs.get_points(graphLoader.sensorpath, start, graphLoader.divider)
 
             if (points.length > 0) {
-                for (var i = 0; i < points.length; i++) {
+                graphseries.visible = false
 
-                    if (graphLoader.divider === 0)
-                    graphseries.append(new Date(points[i].x * 1000),
-                                       points[i].y)
-                    else graphseries.append(new Date(points[i].x * 1000),
-                                           points[i].y / graphLoader.divider)
+                for (var i = 0; i < points.length; i++) {
+                    graphseries.append(points[i].x,points[i].y)
                 }
 
                 dateAxis.min = new Date(graphseries.at(0).x)
                 dateAxis.max = new Date(graphseries.at(graphseries.count - 1).x)
+                graphseries.visible = true
+
             }
 
     }
@@ -50,17 +43,17 @@ Item {
         running: graphLoader.sensorpath !== '' ? true : false
         onTriggered: {
                      if (graphseries.count > 0) {
-                reload(graphseries.at(graphseries.count - 1).x / 1000)
+                reload(graphseries.at(graphseries.count - 1).x,graphLoader.divider)
             } else {
-                reload(0)
+                reload(0,graphLoader.divider)
 
              }
         }
     }
 
     ChartView {
-        property date mindate
-        property date maxdate
+        property double mindate
+        property double maxdate
         anchors.fill: parent
         id: chart
         margins.bottom: 0
@@ -105,7 +98,7 @@ Item {
             axisX: dateAxis
             axisY: valueAxis
             useOpenGL: graphLoader.sensorpath !== ''
-            visible: graphLoader.sensorpath !== ''
+
         }
     }
 }
