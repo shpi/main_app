@@ -2,13 +2,12 @@
 
 import time
 import threading
-import logging
 from PySide2.QtCore import Qt, QModelIndex, QSortFilterProxyModel
 from PySide2.QtCore import QAbstractListModel, Property, Signal, Slot, QObject
 from core.DataTypes import Convert
 from core.DataTypes import DataType
 from PySide2.QtCore import QPointF
-
+import logging
 
 class InputListModel(QAbstractListModel):
     PathRole = Qt.UserRole + 1000
@@ -276,7 +275,6 @@ class InputsDict(QObject):
             logging.debug(key + ' not in Inputdictionary')
 
     def update_remote(self, keys):  # doing eventing here
-       logging.debug('called ')
        try:
         for key in keys:
             value = self.entries[key]

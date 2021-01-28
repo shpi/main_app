@@ -125,23 +125,6 @@ class Appearance(QObject):
         self.settings.setValue("appearance/stop_input_key", time_)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     @Signal
     def night_mode_start_changed(self):
         pass

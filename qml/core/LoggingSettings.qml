@@ -20,13 +20,14 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.margins: 5
         delegate: itemDelegate
+        
         verticalLayoutDirection: ListView.BottomToTop
 
         onCountChanged: {
 
             //while (listView.count > 100)   logs.removeRows(0)
 
-             Qt.callLater( listView.positionViewAtEnd )
+            Qt.callLater( listView.positionViewAtEnd )
 
             //if (listView.contentY == listView.contentHeight) {Qt.callLater(listView.positionViewAtEnd) }
         }
@@ -34,10 +35,13 @@ Rectangle {
 
     Component {
         id: itemDelegate
+        property color red: Qt.tint(Colors.white, "#44aa4444")
+        property color blue: Qt.tint(Colors.white, "#444444aa")
+
 
         Rectangle {
             id: delegate
-            color: index % 2 ? Qt.tint(Colors.white, levelno < 30 ? "#444444aa" : "#44aa4444")  : Colors.white
+            color: index % 2 ? levelno < 30 ? blu : red  : Colors.white
             height: content.height + 10
             width: ListView.view.width
 

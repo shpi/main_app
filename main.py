@@ -43,12 +43,13 @@ logs = LogModel()
 handler = MessageHandler(logs)
 
 logging.basicConfig(
-                level=logging.INFO,
+                level=logging.DEBUG,
                 format='%(asctime)s.%(msecs)03d %(module)s - %(funcName)s: %(message)s',
                 datefmt='%m-%d %H:%M:%S',
                 handlers=[
+                        #logging.StreamHandler(),
                         logging.FileHandler("debug.log"),
-                        handler , logging.StreamHandler()
+                        handler
                     ]
             )
 

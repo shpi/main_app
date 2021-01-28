@@ -1,6 +1,5 @@
-import logging
 from PySide2.QtCore import Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
-
+import logging
 
 
 
@@ -44,16 +43,15 @@ class LogModel(QAbstractListModel):
         self._items.append(item) #.__dict__)
         self.endInsertRows()
 
-        while len(self._items) > 100:
-            self.removeRows(0)
-
-
+        #while len(self._items) > 10:
+        #    self.removeRows(0)
 
 
     def rowCount(self, parent=QModelIndex()):
         if parent.isValid():
             return 0
         return len(self._items)
+
 
     @Slot(int)
     def removeRows(self, row, parent=QModelIndex()):
@@ -63,12 +61,10 @@ class LogModel(QAbstractListModel):
 
 
     def data(self, index, role=Qt.DisplayRole):
+
         if 0 <= index.row() < self.rowCount() and index.isValid():
 
-            item = self._items[index.row()]
-
-            if role in self.roles:
-                return item.get(self.roles[role], '')
+           return self._items[index.row()].get(self.roles[role], '')
 
         return ''
 
