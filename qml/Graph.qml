@@ -23,6 +23,7 @@ Item {
 
             if (points.length > 0) {
                 graphseries.visible = false
+                graphseries.useOpenGL = false
 
                 for (var i = 0; i < points.length; i++) {
                     graphseries.append(points[i].x,points[i].y)
@@ -30,6 +31,7 @@ Item {
 
                 dateAxis.min = new Date(graphseries.at(0).x)
                 dateAxis.max = new Date(graphseries.at(graphseries.count - 1).x)
+                graphseries.useOpenGL = true
                 graphseries.visible = true
 
             }
@@ -38,7 +40,7 @@ Item {
 
     Timer {
 
-        interval: 100
+        interval: 500
         repeat: true
         running: graphLoader.sensorpath !== '' ? true : false
         onTriggered: {
@@ -97,7 +99,7 @@ Item {
             color: "red"
             axisX: dateAxis
             axisY: valueAxis
-            useOpenGL: graphLoader.sensorpath !== ''
+            useOpenGL: false
 
         }
     }

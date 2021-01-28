@@ -12,6 +12,8 @@ Rectangle {
         cacheBuffer: 200
         id: listView
         boundsBehavior: Flickable.StopAtBounds
+        property color red: Qt.tint(Colors.white, "#44aa4444")
+        property color blue: Qt.tint(Colors.white, "#444444aa")
 
         //clip: true
         model: logs
@@ -35,13 +37,12 @@ Rectangle {
 
     Component {
         id: itemDelegate
-        property color red: Qt.tint(Colors.white, "#44aa4444")
-        property color blue: Qt.tint(Colors.white, "#444444aa")
+
 
 
         Rectangle {
             id: delegate
-            color: index % 2 ? levelno < 30 ? blu : red  : Colors.white
+            color: index % 2 ? levelno < 30 ? listView.blue : listView.red  : Colors.white
             height: content.height + 10
             width: ListView.view.width
 

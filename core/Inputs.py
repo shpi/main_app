@@ -224,17 +224,15 @@ class InputsDict(QObject):
 
     @Slot(str, result='QVariantList')
     @Slot(str, 'long', result='QVariantList')
-    def get_points(self, key, start=None,divider=1):
+    def get_points(self, key, start=None, divider=1):
 
         if start is not None:
             start = start / 1000
             i = 0
             for subpoint in self.buffer[key]:
-
+                i += 1
                 if subpoint[0] > start:
                     break
-                else:
-                    i += 1
 
             return [QPointF(v[0]*1000, v[1]/divider) for v in self.buffer[key][i:]]
             # return p = [QPointF(*v) for v in filter(lambda x: x[0] > start, self.buffer[key])]
