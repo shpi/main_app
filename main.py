@@ -54,7 +54,7 @@ logging.basicConfig(
             )
 
 
-def qml_error(mode, context, message):
+def qml_log(mode, context, message):
     if mode == QtCore.QtInfoMsg:
         logging.info("%s (%d, %s)" % (message, context.line, context.file))
     elif mode == QtCore.QtWarningMsg:
@@ -144,7 +144,7 @@ def killThreads():
     httpserver.server_thread.join()
 
 app = QApplication(sys.argv)
-qInstallMessageHandler(qml_error)
+qInstallMessageHandler(qml_log)
 app.aboutToQuit.connect(killThreads)
 app.setApplicationName("Main")
 app.setOrganizationName("SHPI GmbH")

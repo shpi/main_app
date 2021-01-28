@@ -226,6 +226,8 @@ class InputsDict(QObject):
     @Slot(str, 'long', result='QVariantList')
     def get_points(self, key, start=None, divider=1):
 
+        logging.debug(key + ':' + str(divider) + ':' + str(start))
+
         if start is not None:
             start = start / 1000
             i = 0
@@ -273,6 +275,7 @@ class InputsDict(QObject):
             logging.debug(key + ' not in Inputdictionary')
 
     def update_remote(self, keys):  # doing eventing here
+
        try:
         for key in keys:
             value = self.entries[key]

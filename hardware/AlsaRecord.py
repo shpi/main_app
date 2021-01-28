@@ -30,7 +30,7 @@ class AlsaRecord:
         self.rate = 44100
         self.input['interval'] = -1
         self.input['type'] = DataType.PERCENT_INT
-        self.input['lastupdate'] = 0
+        self.input['lastupdate'] = time.time()
         self.input['description'] = card + ' mic volume'
         self.input['value'] = 0
         self.format = 'S16_LE'

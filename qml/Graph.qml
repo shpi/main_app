@@ -22,6 +22,7 @@ Item {
             points = inputs.get_points(graphLoader.sensorpath, start, graphLoader.divider)
 
             if (points.length > 0) {
+                console.log('adding points:' + points.length)
                 graphseries.visible = false
                 graphseries.useOpenGL = false
 
@@ -31,6 +32,7 @@ Item {
 
                 dateAxis.min = new Date(graphseries.at(0).x)
                 dateAxis.max = new Date(graphseries.at(graphseries.count - 1).x)
+
                 graphseries.useOpenGL = true
                 graphseries.visible = true
 
@@ -44,12 +46,8 @@ Item {
         repeat: true
         running: graphLoader.sensorpath !== '' ? true : false
         onTriggered: {
-                     if (graphseries.count > 0) {
-                reload(graphseries.at(graphseries.count - 1).x)
-            } else {
-                reload(0)
-
-             }
+                     if (graphseries.count > 0) {reload(graphseries.at(graphseries.count - 1).x)}
+                     else { reload(0) }
         }
     }
 
@@ -99,7 +97,7 @@ Item {
             color: "red"
             axisX: dateAxis
             axisY: valueAxis
-            useOpenGL: false
+            useOpenGL: true
 
         }
     }
