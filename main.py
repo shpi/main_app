@@ -43,7 +43,7 @@ logs = LogModel()
 handler = MessageHandler(logs)
 
 logging.basicConfig(
-                level=logging.DEBUG,
+                level=logging.INFO,
                 format='%(asctime)s.%(msecs)03d %(module)s - %(funcName)s: %(message)s',
                 datefmt='%m-%d %H:%M:%S',
                 handlers=[
@@ -121,16 +121,15 @@ backlight = Backlight()
 wifi = Wifi(settings)
 httpserver = HTTPServer(inputs, settings)
 alsamixer = AlsaMixer(inputs, settings)
-appearance = Appearance(inputs, settings)
-
 inputs.add(iio.get_inputs())
 inputs.add(wifi.get_inputs())
-inputs.add(alsamixer.get_inputs())
 inputs.add(leds.get_inputs())
 inputs.add(hwmon.get_inputs())
 inputs.add(inputdevs.get_inputs())
 inputs.add(systeminfo.get_inputs())
 inputs.add(backlight.get_inputs())
+
+appearance = Appearance(inputs, settings)
 inputs.add(appearance.get_inputs())
 
 modules = ModuleManager(inputs, settings)

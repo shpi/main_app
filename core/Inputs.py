@@ -276,7 +276,8 @@ class InputsDict(QObject):
             logging.debug(key + ' not in Inputdictionary')
 
     def update_remote(self, keys):  # doing eventing here
-        logging.debug('called ')
+       logging.debug('called ')
+       try:
         for key in keys:
             value = self.entries[key]
 
@@ -292,6 +293,8 @@ class InputsDict(QObject):
                 # just for now, to avoid overflows
                 if len(self.buffer[key]) > 30000:
                     self.buffer[key] = self.buffer[key][10000:]
+       except KeyError as e:
+           logging.error(key + ' does not exists yet, you can ignore this message, if it onlys happens during startup')
 
     def register_event(self, key, eventfunction):
         logging.info(key + ' : ' + str(eventfunction))

@@ -85,8 +85,7 @@ Rectangle {
                             inputs.inputList)
             }
 
-            onActivated: modules.loaded_instances['UI']['ShowValue'][instancename].value_path
-                         = this.currentText
+            onActivated: modules.loaded_instances['UI']['ShowValue'][instancename].value_path  = combo_value_path.currentText
 
             Label {
                 anchors.right: parent.left

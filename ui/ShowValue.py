@@ -20,6 +20,10 @@ class ShowValue(QObject):
             self.inputs.register_event(self._value_path, self.ui_event)
 
     @Signal
+    def settingsChanged(self):
+        pass
+
+    @Signal
     def valueChanged(self):
         pass
 
@@ -31,7 +35,7 @@ class ShowValue(QObject):
         except Exception as e:
             logging.error(str(e))
 
-    @Property(bool, notify=valueChanged)
+    @Property(bool, notify=settingsChanged)
     def logging(self):
         return self.inputs.entries[self._value_path]['logging']
 
@@ -40,19 +44,21 @@ class ShowValue(QObject):
         return self._value_path
 
     # @value_path.setter
-    @Pre_5_15_2_fix(str, value_path, notify=valueChanged)
+    @Pre_5_15_2_fix(str, value_path, notify=settingsChanged)
     def value_path(self, key):
-        self.inputs.unregister_event(self._value_path, self.event)
-        self._value_path = key
-        self.inputs.register_event(self._value_path, self.event)
+        logging.info('setter ' + key)
         self.settings.setValue('showvalue/' + self.name + "/path", key)
+        logging.info(self.settings.value('showvalue/' + self.name + "/path", ''))
+        self.inputs.register_event(key, self.ui_event)
+        self.inputs.unregister_event(self._value_path, self.ui_event)
+        self._value_path = key
 
     # @Property(str,notify=valueChanged)
     def icon(self):
         return self._icon
 
     # @icon.setter
-    @Pre_5_15_2_fix(str, icon, notify=valueChanged)
+    @Pre_5_15_2_fix(str, icon, notify=settingsChanged)
     def icon(self, key):
         self._icon = key
         self.settings.setValue('showvalue/' + self.name + "/icon", key)
@@ -63,7 +69,7 @@ class ShowValue(QObject):
         return str(self._divider)
 
     # @divider.setter
-    @Pre_5_15_2_fix(str, divider, notify=valueChanged)
+    @Pre_5_15_2_fix(str, divider, notify=settingsChanged)
     def divider(self, key):
 
         self._divider = float(key)

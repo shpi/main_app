@@ -12,6 +12,7 @@ from typing import List, Dict
 from subprocess import Popen, PIPE, DEVNULL
 from core.DataTypes import DataType
 from core.Toolbox import netmaskbytes_to_prefixlen, ipbytes_to_ipstr, IPEndpoint, lookup_oui
+import logging
 
 _re_ifname = re.compile(r'\s*(\S+):')
 _re_ifname_w_stats = re.compile(r'\s*(\S+):' + (r'\s+(\d+)' * 16))  # 16 stat columns
