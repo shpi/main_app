@@ -45,9 +45,9 @@ Item {
         running: graphLoader.sensorpath !== '' ? true : false
         onTriggered: {
                      if (graphseries.count > 0) {
-                reload(graphseries.at(graphseries.count - 1).x,graphLoader.divider)
+                reload(graphseries.at(graphseries.count - 1).x)
             } else {
-                reload(0,graphLoader.divider)
+                reload(0)
 
              }
         }
