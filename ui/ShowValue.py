@@ -39,6 +39,12 @@ class ShowValue(QObject):
     def logging(self):
         return self.inputs.entries[self._value_path]['logging']
 
+
+    @Property(int, notify=settingsChanged)
+    def interval(self):
+        return self.inputs.entries[self._value_path]['interval']
+
+
     # @Property(str,notify=valueChanged)
     def value_path(self):
         return self._value_path

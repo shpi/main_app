@@ -43,6 +43,14 @@ Rectangle {
     onClicked: {
     graphLoader.sensorpath = modules.loaded_instances['UI']['ShowValue'][instancename].value_path
     graphLoader.divider = modules.loaded_instances['UI']['ShowValue'][instancename].divider
+    graphLoader.interval = modules.loaded_instances['UI']['ShowValue'][instancename].interval
+
+        if (graphLoader.sensorpath !== graphLoader.item.sensorpathold)
+        {
+        graphLoader.item.reload(0)
+
+        }
+
     graphPopup.open()
     }
 

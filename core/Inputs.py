@@ -226,7 +226,7 @@ class InputsDict(QObject):
     @Slot(str, 'long long', float, result='QVariantList')
     def get_points(self, key, start=None, divider=1):
 
-        logging.debug(key + ':' + str(divider) + ':' + str(start))
+        # logging.debug(key + ':' + str(divider) + ':' + str(start))
         lo = 0
         hi = len(self.buffer[key])
 

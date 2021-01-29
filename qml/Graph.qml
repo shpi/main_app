@@ -7,6 +7,8 @@ import "../fonts/"
 Item {
 
     property string sensorpathold: ''
+
+    property bool timerallowed: true
     id: graph
     anchors.fill: parent
 
@@ -24,6 +26,8 @@ Item {
 
             if (points.length > 0) {
 
+                timerallowed = false
+
                 graphseries.visible = false
 
 
@@ -36,6 +40,7 @@ Item {
 
 
                 graphseries.visible = true
+                timerallowed = true
 
             }
 
@@ -43,9 +48,9 @@ Item {
 
     Timer {
 
-        interval: 500
+        interval: graphLoader.interval > 0 ? (graphLoader.interval * 1000) : 100
         repeat: true
-        running: graphLoader.sensorpath !== '' ? true : false
+        running: graphLoader.sensorpath !== '' && timerallowed ? true : false
         onTriggered: {
 
                      if (graphseries.count > 0) {

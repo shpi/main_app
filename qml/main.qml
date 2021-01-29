@@ -420,6 +420,7 @@ ApplicationWindow {
         Loader {
             property string sensorpath: ''
             property real divider: 0
+            property int interval: 0
 
             anchors.fill: parent
             id: graphLoader
@@ -441,7 +442,10 @@ ApplicationWindow {
             font.family: localFont.name
             onClicked:  {graphPopup.close()
                          graphLoader.sensorpath = ''
-                         graphLoader.divider = 0}
+                         graphLoader.divider = 0
+
+
+            }
         }
     }
 
