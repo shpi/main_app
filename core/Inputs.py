@@ -6,7 +6,7 @@ from PySide2.QtCore import Qt, QModelIndex, QSortFilterProxyModel
 from PySide2.QtCore import QAbstractListModel, Property, Signal, Slot, QObject
 from core.DataTypes import Convert
 from core.DataTypes import DataType
-from PySide2.QtCore import QPointF
+from PySide2.QtCore import QPointF, QPoint
 import logging
 
 class InputListModel(QAbstractListModel):
@@ -241,11 +241,26 @@ class InputsDict(QObject):
 
 
             # logging.debug([QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key][i:]])
-            return [QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key][lo:(lo+100)]]
+            return [QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key][lo:(lo+1000)]]
             # return p = [QPointF(*v) for v in filter(lambda x: x[0] > start, self.buffer[key])]
         else:
             # logging.debug([QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key]])
-            return [QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key][:100]]
+            return [QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key][:1000]]
+
+
+
+
+    @Slot(str, int, int, int, result='QVariantList')
+
+    def get_calc_points(self, key, width = 800, height = 480, divider=1, start=None):
+
+                startx = self.buffer[key][0][0]
+                endx = self.buffer[key][-1][0]
+                scalex = width / (endx - startx)
+
+                return [ QPoint(     int(   (v[0] - startx) * scalex), height - int(v[1]/divider * 4))     for v in self.buffer[key]]
+
+
 
     @Slot(str, int)
     def set_interval(self, key, value):
