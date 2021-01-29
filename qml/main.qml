@@ -17,7 +17,7 @@ ApplicationWindow {
 
     function keyboard(object) {
        if (object.activeFocus === true) {
-       keyboardLoader.textfield = object
+       keyboardLoader.item.textfield = object
        keyboardPopup.open() }
 
     }
@@ -467,7 +467,6 @@ ApplicationWindow {
 
         Loader {
             id: keyboardLoader
-            property var textfield
             anchors.fill: parent
             source: "keyboard/Keyboard.qml"
 

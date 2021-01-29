@@ -5,18 +5,13 @@ Item {
 
     property alias mainLabel: mainLabelItem.text
     property alias secondaryLabels: secondaryLabelsItem.text
-    property alias iconSource: icon.source
-
     property bool isChekable: false
     property bool isChecked: false
-
     property int bounds: 2
-
     property alias mainFont: mainLabelItem.font
     property alias secondaryFont: secondaryLabelsItem.font
     property alias mainFontColor: mainLabelItem.color
     property alias secondaryFontColor: secondaryLabelsItem.color
-
     property color keyColor: "gray"
     property color keyPressedColor: "black"
 
@@ -29,31 +24,28 @@ Item {
         anchors.fill: parent
         anchors.margins: root.bounds
         color: isChecked || mouseArea.pressed ? keyPressedColor : keyColor
-    }
-
-    Column {
-        anchors.centerIn: backgroundItem
 
         Text {
             id: secondaryLabelsItem
-
-            anchors.right: parent.right
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.top: parent.top
+            color: "white"
+            font.pixelSize: 19
+            font.capitalization: allUpperCase ? Font.AllUppercase : Font.MixedCase
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: Text.AlignHCenter
         }
 
-        Row {
+        Text {
+            id: mainLabelItem
             anchors.horizontalCenter: parent.horizontalCenter
-
-            Image {
-                id: icon
-
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Text {
-                id: mainLabelItem
-
-                anchors.verticalCenter: parent.verticalCenter
-            }
+            anchors.verticalCenter: parent.verticalCenter
+            color: "white"
+            font.pixelSize: 50
+            font.weight: Font.Light
+            font.capitalization: allUpperCase ? Font.AllUppercase : Font.MixedCase
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: Text.AlignHCenter
         }
     }
 
@@ -63,15 +55,15 @@ Item {
         visible: false
         anchors.bottom: backgroundItem.top
 
-        anchors.right: index > root.repcount / 2 ? parent.right : undefined
-        anchors.left: index < root.repcount / 2 ? parent.left : undefined
+        anchors.right: root.repindex > 5 ? parent.right : undefined
+        anchors.left: root.repindex < 5 ? parent.left : undefined
+        layoutDirection: root.repindex > 5 ? Qt.RightToLeft : Qt.LeftToRight
 
         Repeater {
             model: secondaryLabels.length
 
             Rectangle {
-                property bool isSelected: alternatesRow.selectedIndex == index
-                color: isSelected ? mainLabelItem.color : keyPressedColor
+                color: alternatesRow.selectedIndex == index ? mainLabelItem.color : keyPressedColor
                 height: backgroundItem.height
                 width: backgroundItem.width
                 radius: 5
@@ -80,7 +72,7 @@ Item {
                     anchors.centerIn: parent
                     text: secondaryLabels[index]
                     font: mainLabelItem.font
-                    color: isSelected ? keyPressedColor : mainLabelItem.color
+                    color: alternatesRow.selectedIndex == index ? keyPressedColor : mainLabelItem.color
                 }
             }
         }
@@ -90,6 +82,7 @@ Item {
         id: mouseArea
         anchors.fill: parent
         onPressAndHold: alternatesRow.visible = true
+
         onClicked: {
             if (isChekable)
                 isChecked = !isChecked
@@ -103,11 +96,27 @@ Item {
                             secondaryLabels[alternatesRow.selectedIndex])
         }
 
+        onMouseYChanged: {
+
+            if (mouseY < 10)
+                alternatesRow.visible = true
+        }
+
         onMouseXChanged: {
-            alternatesRow.selectedIndex
-                    = (mouseY < 0 && mouseX > 0
-                       && mouseY < alternatesRow.width) ? Math.floor(
-                                                              mouseX / backgroundItem.width) : -1
+
+            if (root.repindex > 5) {
+
+                alternatesRow.selectedIndex
+                        = (mouseY < 0 && (-mouseX + keyWidth)
+                           > 0) ? Math.floor(
+                                      (-mouseX + keyWidth) / backgroundItem.width) : -1
+            } else {
+
+                alternatesRow.selectedIndex
+                        = (mouseY < 0
+                           && mouseX > 0) ? Math.floor(
+                                                mouseX / backgroundItem.width) : -1
+            }
         }
     }
 }

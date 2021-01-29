@@ -227,20 +227,25 @@ class InputsDict(QObject):
     def get_points(self, key, start=None, divider=1):
 
         logging.debug(key + ':' + str(divider) + ':' + str(start))
+        lo = 0
+        hi = len(self.buffer[key])
 
         if start is not None:
-            start = start / 1000
-            i = 0
-            for subpoint in self.buffer[key]:
-                i += 1
-                if subpoint[0] > start:
-                    break
+
+            start = start / 1000            
+
+            while lo < hi:
+                    mid = (lo+hi)//2
+                    if start < self.buffer[key][mid][0]: hi = mid
+                    else: lo = mid+1
+
+
             # logging.debug([QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key][i:]])
-            return [QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key][i:]]
+            return [QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key][lo:(lo+100)]]
             # return p = [QPointF(*v) for v in filter(lambda x: x[0] > start, self.buffer[key])]
         else:
             # logging.debug([QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key]])
-            return [QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key]]
+            return [QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key][:100]]
 
     @Slot(str, int)
     def set_interval(self, key, value):
