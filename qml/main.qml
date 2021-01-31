@@ -442,6 +442,7 @@ ApplicationWindow {
             font.family: localFont.name
             onClicked:  {graphPopup.close()
                          graphLoader.sensorpath = ''
+
                          graphLoader.divider = 0
 
 
