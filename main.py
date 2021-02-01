@@ -5,6 +5,7 @@ import signal
 import sys
 import time
 from subprocess import check_output
+from PySide2.QtQml import QQmlDebuggingEnabler
 
 from PySide2 import QtCore
 from PySide2.QtCore import QSettings, qInstallMessageHandler
@@ -25,7 +26,6 @@ from hardware.Leds import Led
 from hardware.System import SystemInfo
 from hardware.Wifi import Wifi
 from core.Logger import LogModel, MessageHandler
-
 
 
 if check_output(['uname', '-m']).startswith(b'armv6'):
@@ -143,8 +143,15 @@ def killThreads():
     httpserver.server.shutdown()
     httpserver.server_thread.join()
 
+
+
+debug = QQmlDebuggingEnabler()
+
+
 app = QApplication(sys.argv)
-qInstallMessageHandler(qml_log)
+
+#qInstallMessageHandler(qml_log)
+
 app.aboutToQuit.connect(killThreads)
 app.setApplicationName("Main")
 app.setOrganizationName("SHPI GmbH")

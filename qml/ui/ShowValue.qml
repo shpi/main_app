@@ -8,6 +8,9 @@ import "../../fonts/"
 Rectangle {
 
     property string instancename: parent.instancename != undefined ? parent.instancename : modules.modules['UI']['ShowValue'][0]
+    property var instance: modules.loaded_instances['UI']['ShowValue'][instancename]
+
+
 
     height: parent.height
     width: height * 0.7
@@ -17,7 +20,7 @@ Rectangle {
 
     Text {
         id: icontext
-        text: modules.loaded_instances['UI']['ShowValue'][instancename].icon
+        text: instance.icon
         color: Colors.black
         anchors.top: parent.top
         anchors.topMargin: 5
@@ -28,7 +31,7 @@ Rectangle {
 
     Text {
         id: valuetext
-        text: modules.loaded_instances['UI']['ShowValue'][instancename].value
+        text: instance.value
         color: Colors.black
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 5
@@ -39,11 +42,11 @@ Rectangle {
 
     MouseArea {
     anchors.fill: parent
-    enabled: modules.loaded_instances['UI']['ShowValue'][instancename].logging
+    enabled: instance.logging
     onClicked: {
-    graphLoader.sensorpath = modules.loaded_instances['UI']['ShowValue'][instancename].value_path
-    graphLoader.divider = modules.loaded_instances['UI']['ShowValue'][instancename].divider
-    graphLoader.interval = modules.loaded_instances['UI']['ShowValue'][instancename].interval
+    graphLoader.sensorpath = instance.value_path
+    graphLoader.divider = instance.divider
+    graphLoader.interval = instance.interval
 
         if (graphLoader.sensorpath !== graphLoader.item.sensorpathold)
         {

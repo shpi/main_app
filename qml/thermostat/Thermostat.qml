@@ -218,7 +218,6 @@ Rectangle {
         color: Colors.black
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter
-
         font.pixelSize: tickswindow.width * 0.10
     }
 
@@ -246,12 +245,14 @@ Rectangle {
         color: "transparent"
 
         MouseArea {
+
+            property int velocity;
             anchors.fill: parent
             preventStealing: true
-            property real velocity: 0.0
+            //property int velocity: 0.0
             property int calcrotation: rotator.rotation //needed because animation
             property int xPrev: 0
-            property bool tracing: false
+
             onPressed: {
 
                 xPrev = mouse.y
@@ -262,20 +263,21 @@ Rectangle {
 
                 velocity = (velocity + mouse.y - xPrev) / 2
 
-                if (Math.abs(velocity) > 30) {
-
+                if (Math.abs(velocity) > 20) {
                 xPrev = mouse.y
 
-                calcrotation = calcrotation - (velocity / 15)
+                calcrotation -= (velocity / 12)
 
                 if (calcrotation   > 240)    calcrotation = 240
                 else if  (calcrotation   < 0)    calcrotation = 0
 
-                modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp = Math.round((min_temp + (-calcrotation + 240) * ((max_temp - min_temp) / 240)) * 2)  / 2.0
+                let step = ((max_temp - min_temp) / 240)
 
+                let settemp = Math.round((min_temp + (-calcrotation + 240) * step) * 2)  / 2
 
-                rotator.rotation = (Math.abs((modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp /
-                                              ((max_temp - min_temp) / 240) -480) ) )
+                rotator.rotation = Math.abs(settemp / step - 480)
+
+                modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp = settemp
 
 
                 }
@@ -288,6 +290,8 @@ Rectangle {
     }
 
     Rectangle {
+        property int fontheight: rotator.height * 0.04
+
         id: rotator
         height: tickswindow.height * 1.5
         width: height
@@ -310,11 +314,13 @@ Rectangle {
 
         Repeater {
 
+
             model: 81
 
             Rectangle {
+
                 anchors.centerIn: parent
-                width: 5
+                //width: 5
                 height: parent.height - 10
                 color: "transparent"
                 rotation: (index+20) * 3 - 30
@@ -327,14 +333,13 @@ Rectangle {
                     anchors.horizontalCenterOffset: 0
                     color: Colors.black
                     rotation: 90
-                    font.pixelSize: rotator.height * 0.04
+                    font.pixelSize: rotator.fontheight
                 }
 
                 Rectangle {
-                    color: Qt.rgba(
-                               ((index) / 80), (1 - 2 * Math.abs(
-                                                         ((index) / 80) - 0.5)),
-                               1 - ((index) / 80), 1)
+                    layer.enabled: true
+                    layer.smooth: true
+                    color: Qt.rgba(((index) / 80), (1 - 2 * Math.abs(((index) / 80) - 0.5)),1 - ((index) / 80), 1)
                     width: rotator.width * 0.01
                     height: rotator.height * 0.05
                     anchors.left: parent.left

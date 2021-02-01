@@ -14,6 +14,7 @@ import shiboken2
 import ctypes
 import logging
 import numpy as np
+import sys
 
 class InputListModel(QAbstractListModel):
     PathRole = Qt.UserRole + 1000
@@ -179,7 +180,7 @@ class InputsDict(QObject):
 
             newinputs[key]['logging'] = bool(int(self.settings.value(key + "/logging", 0)))
             if newinputs[key]['logging']:
-                self.buffer[key] = {'time': np.empty(10000, dtype='datetime64[ms]'),'data': np.empty(10000),'index':0}
+                self.buffer[key] = {'time': np.empty(50000, dtype='datetime64[ms]'),'data': np.empty(50000),'index':0}
 
             newinputs[key]['exposed'] = bool(int(self.settings.value(key + "/exposed", 0)))
 
@@ -266,18 +267,23 @@ class InputsDict(QObject):
                 startx = self.buffer[key]['time'].item(0)
                 endx = self.buffer[key]['time'].item(size -1 )
                 scalex = width / ((endx - startx).total_seconds() * 1000)
-                scaley = height / 100 / divider
+
+                max = np.max(self.buffer[key]['data'][:size])
+                min = np.min(self.buffer[key]['data'][:size])
+
+
+                scaley = height / (abs(min - max))
+
 
                 polyline = QPolygonF(size)
-                address = shiboken2.getCppPointer(polyline.data())[0]
-                buffer = (ctypes.c_double * 2 * size).from_address(address)
+                buffer = (ctypes.c_double * 2 * size).from_address(shiboken2.getCppPointer(polyline.data())[0])
                 memory = np.frombuffer(buffer, np.float)
                 memory[: (size - 1) * 2 + 1 : 2] = (self.buffer[key]['time'][:size] - np.datetime64(startx,'ms')).astype(float) * scalex
-                memory[1 : (size - 1) * 2 + 2 : 2] = (self.buffer[key]['data'][:size]) * scaley
+                memory[1 : (size - 1) * 2 + 2 : 2] = ((self.buffer[key]['data'][:size]) - min) * (scaley)
 
-                #[ QPoint(     int(   (v[0] - startx) * scalex), height - int(v[1]/divider * scaley))     for v in self.buffer[key]]
-                return {'start' : QDateTime(startx), 'end': QDateTime(endx) ,'points' : polyline, 'count': size}
 
+                #[ QPoint(     int(   (v[0] - startx) * scalex), height - int(v[1]/divider * scaley))     for v in self.buffer[key]]s
+                return {'startDate' : QDateTime(startx), 'endDate': QDateTime(endx) ,'polyline' : polyline, 'count': size, 'minValue': float(min / divider), 'maxValue': float(max / divider)}
 
 
 
@@ -300,7 +306,7 @@ class InputsDict(QObject):
             self.entries[key]['logging'] = bool(value)
             self.settings.setValue(key + "/logging", int(value))
             if value and key not in self.buffer:
-                self.buffer[key] = {'time': np.empty(0, dtype='datetime64[ms]'),'data': np.empty(0),'index':0}
+                self.buffer[key] = {'time': np.empty(50000, dtype='datetime64[ms]'),'data': np.empty(50000),'index':0}
         except KeyError:
             logging.debug(key + ' not in Inputdictionary')
 

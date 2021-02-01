@@ -5,15 +5,19 @@ import QtQuick.Shapes 1.15
 import "../fonts/"
 
 Item {
+    property variant graphmap: {'startDate':new Date(),
+                         'endDate': new Date(),
+                         'polyline': [],
+                         'count': 0,
+                         'minValue': 0,
+                         'maxValue': 100}
 
     property string sensorpathold: ''
-    property var points
     property bool allowedtimer
     property int xAxiscount: 5
+    property int yAxiscount: 5
     property real xAxisDiff
-    property date startDate
-    property date endDate
-    property int pointsCount: 0
+    property real yAxisDiff
 
     id: graph
     anchors.fill: parent
@@ -21,16 +25,13 @@ Item {
     function reload(start) {
 
         allowedtimer = false
-        points = inputs.get_calc_points(graphLoader.sensorpath,
+        graphmap = inputs.get_calc_points(graphLoader.sensorpath,
                                         graphShape.width, graphShape.height,
                                         graphLoader.divider)
-        ppl.path = points['points']
-        pointsCount = points['count']
-        allowedtimer = true
 
-        startDate = points['start']
-        endDate = points['end']
-        xAxisDiff = (endDate - startDate) / xAxiscount
+        allowedtimer = true
+        yAxisDiff = (graphmap.maxValue - graphmap.minValue) / yAxiscount
+        xAxisDiff = (graphmap.endDate - graphmap.startDate) / xAxiscount
     }
 
     Shape {
@@ -40,15 +41,19 @@ Item {
         anchors.centerIn: parent
         asynchronous: true
         ShapePath {
+            //scale.height: -1
             //scale.width
             fillColor: "transparent"
+            capStyle: ShapePath.FlatCap
             strokeWidth: 1
+
             strokeColor: "red"
-            startX: 0
-            startY: 0
+
 
             PathPolyline {
+
                 id: ppl
+                path: graph.graphmap.polyline
             }
         }
 
@@ -57,13 +62,14 @@ Item {
             anchors.bottom: parent.top
             anchors.topMargin: 10
             anchors.right: parent.right
-            text: pointsCount.toString() + ' Elements'
+            text: graph.graphmap.count // + ' Elements '
             color: Colors.black
             font.pixelSize: 20
 
         }
 
         Repeater {
+            id: xAxis
             anchors.fill: parent
             model: xAxiscount
 
@@ -76,9 +82,7 @@ Item {
 
                 Text {
 
-                    text: new Date(startDate.getTime(
-                                       ) + (xAxisDiff * (index + 0.5))).toLocaleTimeString(
-                              Qt.locale("de_DE"), "h:mm:ss")
+                    text: new Date(graph.graphmap.startDate.getTime() + (xAxisDiff * (index + 0.5))).toLocaleTimeString([], "h:mm:ss")
                     color: Colors.black
                     font.pixelSize: 20
                     anchors.top: parent.bottom
@@ -86,16 +90,39 @@ Item {
                 }
             }
         }
+
+
+        Repeater {
+            id: yAxis
+            anchors.fill: parent
+            model: yAxiscount
+
+            Rectangle {
+                anchors.right: parent.right
+                height: 1
+                width: parent.width - scaleText.width
+                color: Colors.black
+                y: (index + 0.5) * (graphShape.height / yAxiscount)
+
+                Text {
+                    id: scaleText
+                    text: graph.graphmap.minValue + (yAxisDiff * (index + 0.5))
+                    color: Colors.black
+                    font.pixelSize: 20
+                    anchors.right: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+        }
+
+
     }
 
     Timer {
 
         interval: graphLoader.interval > 0 ? (graphLoader.interval * 1000) : 100
         repeat: true
-        running: graphLoader.sensorpath !== '' && allowedtimer ? true : false
-        onTriggered: {
-
-            reload(0)
-        }
+        running: graphLoader.sensorpath !== '' && allowedtimer
+        onTriggered: { reload(0)  }
     }
 }
