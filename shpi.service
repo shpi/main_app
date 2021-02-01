@@ -1,8 +1,8 @@
 [Unit]
 Description=SHPI
-#After=network.target
-#Wants=network-online.target
-After=network.target network-online.target usb.target
+After=multi-user.target
+
+#graphical.target
 
 [Service]
 Environment=QT_QPA_PLATFORM=eglfs
@@ -17,4 +17,7 @@ User=root
 
 [Install]
 WantedBy=multi-user.target
+
+
+
 
