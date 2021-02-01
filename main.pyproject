@@ -10,6 +10,7 @@
     "fonts/Colors.qml",
     "qml/fingerpaint.qml",
     "qml/keyboard/Keyboard.qml",
+    "qml/FpsItem.qml",
     "qml/keyboard/Key.qml",
     "qml/keyboard/KeyboardItem.qml",
     "qml/core/LoggingSettings.qml",

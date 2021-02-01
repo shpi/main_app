@@ -125,4 +125,10 @@ Item {
         running: graphLoader.sensorpath !== '' && allowedtimer
         onTriggered: { reload(0)  }
     }
+
+
+    FpsItem {
+           id: fpsItem
+           anchors.centerIn: parent
+       }
 }
