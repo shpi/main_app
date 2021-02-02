@@ -30,9 +30,8 @@ class Schedule:
         return now.hour * 3600 + now.minute * 60 + now.second
 
     @staticmethod
-    def minutes_since_midnight():
-        now = datetime.datetime.now()
-        return now.hour * 60 + now.minute
+    def minutes_since_midnight(day = datetime.datetime.now()):
+        return day.hour * 60 + day.minute
 
     @staticmethod
     def weekday(day=datetime.datetime.today()):
@@ -41,7 +40,7 @@ class Schedule:
         # 0 Sunday .. 1 Monday ...
 
     @staticmethod
-    def get_desired_temp(schedule_map, mode, day, minutes_since_midnight):
+    def get_desired_temp(schedule_map, mode, day):
 
         # schedule  [week:  [day [seconds,temp], ], ]
         # mode: 7 week,   2 workday weekend,  1 day, 0 none
@@ -49,22 +48,23 @@ class Schedule:
         # minutes_since_midnight
 
         weekday = Schedule.weekday(day)
+        minutes_since_midnight = Schedule.minutes_since_midnight(day)
 
-        if mode == 7:
-            pass
+
+
+        if mode == 7:  pass
 
         # reduce week to workday / weekend
-        if mode == 2:  # mon - friDAY 1..5 -> 1
+        elif mode == 2:  # mon - friDAY 1..5 -> 1
             if weekday in (1, 2, 3, 4, 5):
                 weekday = 1
             else:
                 weekday = 0
-
         # reduce week to day
         elif mode == 1:
             weekday = 0
 
-        # no offsets at all
+            # no offsets at all
         elif mode == 0:
             return 0, 0
 
@@ -72,7 +72,7 @@ class Schedule:
             return 0,0
 
         if len(schedule_map[weekday]) == 0:
-            return Schedule.get_desired_temp(schedule_map, mode, (day - datetime.timedelta(1)), 1440)
+            return Schedule.get_desired_temp(schedule_map, mode, (day.replace(hour = 23, minute = 59, second = 59) - datetime.timedelta(1)), 1440)
 
         else:
             temp = None
@@ -85,7 +85,7 @@ class Schedule:
                 i += 1
 
             if temp is None:
-                return Schedule.get_desired_temp(schedule_map, mode, (day - datetime.timedelta(1)), 1440)
+                return Schedule.get_desired_temp(schedule_map, mode, (day.replace(hour = 23, minute = 59, second = 59) - datetime.timedelta(1)), 1440)
             else:
                 return temp, since
 
@@ -102,8 +102,7 @@ class Thermostat(QObject):
         self._schedule = self.convert_schedule(settings.value("thermostat/" + self.name + '/schedule', ''))
         # 0 off, 1 day, 2 workday/weekend,  7 week
 
-        self._mode = int(settings.value("thermostat/" + self.name + '/mode', 3))
-
+        self._thermostat_mode = int(settings.value("thermostat/" + self.name + '/mode', 3))
         self._heatingcontact_path = settings.value("thermostat/" + self.name + '/heatingcontact', '')
         self._irtemp_path = settings.value("thermostat/" + self.name + '/irtemp', '')
         self._internaltemp_path = settings.value("thermostat/" + self.name + '/internaltemp', '')
@@ -240,8 +239,7 @@ class Thermostat(QObject):
 
 
 
-        a = Schedule.get_desired_temp(value, self._schedule_mode, datetime.datetime.today(),
-                                      Schedule.minutes_since_midnight())
+        a = Schedule.get_desired_temp(value, self._schedule_mode, datetime.datetime.today())
         logging.error(a)
         return value
 
