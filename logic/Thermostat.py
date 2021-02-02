@@ -30,7 +30,7 @@ class Schedule:
         return now.hour * 3600 + now.minute * 60 + now.second
 
     @staticmethod
-    def minutes_since_midnight(day = datetime.datetime.now()):
+    def minutes_since_midnight(day):
         return day.hour * 60 + day.minute
 
     @staticmethod
@@ -72,7 +72,7 @@ class Schedule:
             return 0,0
 
         if len(schedule_map[weekday]) == 0:
-            return Schedule.get_desired_temp(schedule_map, mode, (day.replace(hour = 23, minute = 59, second = 59) - datetime.timedelta(1)), 1440)
+            return Schedule.get_desired_temp(schedule_map, mode, (day.replace(hour = 23, minute = 59, second = 59) - datetime.timedelta(1)))
 
         else:
             temp = None
@@ -85,7 +85,7 @@ class Schedule:
                 i += 1
 
             if temp is None:
-                return Schedule.get_desired_temp(schedule_map, mode, (day.replace(hour = 23, minute = 59, second = 59) - datetime.timedelta(1)), 1440)
+                return Schedule.get_desired_temp(schedule_map, mode, (day.replace(hour = 23, minute = 59, second = 59) - datetime.timedelta(1)))
             else:
                 return temp, since
 
