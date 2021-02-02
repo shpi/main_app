@@ -5,6 +5,7 @@ import sys
 import time
 import logging
 from core.Toolbox import Pre_5_15_2_fix
+import datetime
 
 
 class ThermostatModes:
@@ -21,15 +22,84 @@ class ThermostatModes:
         return min_ <= number <= max_
 
 
+class Schedule:
+
+    @staticmethod
+    def seconds_since_midnight():
+        now = datetime.datetime.now()
+        return now.hour * 3600 + now.minute * 60 + now.second
+
+    @staticmethod
+    def minutes_since_midnight():
+        now = datetime.datetime.now()
+        return now.hour * 60 + now.minute
+
+    @staticmethod
+    def weekday(day=datetime.datetime.today()):
+        return int(day.strftime('%w'))
+
+        # 0 Sunday .. 1 Monday ...
+
+    @staticmethod
+    def get_desired_temp(schedule_map, mode, day, minutes_since_midnight):
+
+        # schedule  [week:  [day [seconds,temp], ], ]
+        # mode: 7 week,   2 workday weekend,  1 day, 0 none
+        # day: datetime object
+        # minutes_since_midnight
+
+        weekday = Schedule.weekday(day)
+
+        if mode == 7:
+            pass
+
+        # reduce week to workday / weekend
+        if mode == 2:  # mon - friDAY 1..5 -> 1
+            if weekday in (1, 2, 3, 4, 5):
+                weekday = 1
+            else:
+                weekday = 0
+
+        # reduce week to day
+        elif mode == 1:
+            weekday = 0
+
+        # no offsets at all
+        elif mode == 0:
+            return 0, 0
+
+        if len(schedule_map) <= weekday:
+            return 0,0
+
+        if len(schedule_map[weekday]) == 0:
+            return Schedule.get_desired_temp(schedule_map, mode, (day - datetime.timedelta(1)), 1440)
+
+        else:
+            temp = None
+            since = None
+            i = 0
+
+            while len(schedule_map[weekday]) > i and minutes_since_midnight >= int(schedule_map[weekday][i][0]):
+                temp = schedule_map[weekday][i][1]
+                since = schedule_map[weekday][i][0]
+                i += 1
+
+            if temp is None:
+                return Schedule.get_desired_temp(schedule_map, mode, (day - datetime.timedelta(1)), 1440)
+            else:
+                return temp, since
+
+
 class Thermostat(QObject):
+
     def __init__(self, name, inputs, settings: QSettings):
         super().__init__()
         self.name = name
         self.settings = settings
         self.inputs = inputs.entries
-        self._schedule = self.convert_schedule(settings.value("thermostat/" + self.name + '/schedule', ''))
 
-        self._schedulemode = int(settings.value("thermostat/" + self.name + '/schedulemode', 7))
+        self._schedule_mode = int(settings.value("thermostat/" + self.name + '/schedule_mode', 7))
+        self._schedule = self.convert_schedule(settings.value("thermostat/" + self.name + '/schedule', ''))
         # 0 off, 1 day, 2 workday/weekend,  7 week
 
         self._mode = int(settings.value("thermostat/" + self.name + '/mode', 3))
@@ -71,6 +141,24 @@ class Thermostat(QObject):
         self.settings.setValue("thermostat/" + self.name + '/set_temp', value)
         self.settingsChanged.emit()
 
+
+    @Signal
+    def scheduleModeChanged(self):
+        pass
+
+    #@Property(int, notify=scheduleChanged)
+    def schedule_mode(self):
+        return int(self._schedule_mode)
+
+    #@schedule_mode.setter
+    @Pre_5_15_2_fix(int, schedule_mode, notify=scheduleModeChanged)
+    def schedule_mode(self, value):
+            logging.debug('setting schedule mode:' + str(value))
+            self._schedule_mode = int(value)
+            self.settings.setValue("thermostat/" + self.name + '/schedule_mode', value)
+            self.scheduleModeChanged.emit()
+
+
     def heatingcontact_path(self):
         return int(self._heatingcontact_path)
 
@@ -81,7 +169,7 @@ class Thermostat(QObject):
         self.settingsChanged.emit()
 
     def irtemp_path(self):
-        return int(self._heatingcontact_path)
+        return str(self._irtemp_path)
 
     @Pre_5_15_2_fix(str, irtemp_path, notify=settingsChanged)
     def irtemp_path(self, value):
@@ -90,7 +178,7 @@ class Thermostat(QObject):
         self.settingsChanged.emit()
 
     def internaltemp_path(self):
-        return int(self._internaltemp_path)
+        return str(self._internaltemp_path)
 
     @Pre_5_15_2_fix(str, internaltemp_path, notify=settingsChanged)
     def internaltemp_path(self, value):
@@ -108,7 +196,7 @@ class Thermostat(QObject):
             return
 
         try:
-            if (self.inputs['lastinput']['lastupdate'] + 10 < time.time()):
+            if self.inputs['lastinput']['lastupdate'] + 10 < time.time():
 
                 objecttemp = float(self.inputs[self._irtemp_path]['value'])
                 internaltemp = float(self.inputs[self._internaltemp_path]['value'])
@@ -129,6 +217,7 @@ class Thermostat(QObject):
                     self.inputs[self._heatingcontact_path]['set'](False)
                     self._heatingstate = False
                     self.stateChanged.emit()
+
         except Exception as e:
             exception_type, exception_object, exception_traceback = sys.exc_info()
             line_number = exception_traceback.tb_lineno
@@ -149,6 +238,11 @@ class Thermostat(QObject):
                 except IndexError:
                     pass
 
+
+
+        a = Schedule.get_desired_temp(value, self._schedule_mode, datetime.datetime.today(),
+                                      Schedule.minutes_since_midnight())
+        logging.error(a)
         return value
 
     @Slot(str)

@@ -358,7 +358,7 @@ ApplicationWindow {
 
         interval: 20000
         repeat: true
-        running: appearance.jump_state //to make ui more fluent
+        running: appearance.jump_state > 0 //to make ui more fluent
         onTriggered: {
 
             mask.angle = Math.random() * 180

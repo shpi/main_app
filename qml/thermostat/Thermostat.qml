@@ -221,7 +221,10 @@ Rectangle {
         font.pixelSize: tickswindow.width * 0.10
     }
 
-    RoundButton {
+    RoundButton
+    {
+
+        visible: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].schedule_mode > 0
         anchors.right: temptext.left
         anchors.rightMargin: 30
         anchors.verticalCenter: temptext.verticalCenter

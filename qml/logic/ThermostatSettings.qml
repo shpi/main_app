@@ -165,12 +165,18 @@ Item {
 
             Frame {
                 id: scheduleframe
+                property int currentScheduleMode: modules.loaded_instances['Logic']['Thermostat'][instancename].schedule_mode
+
+                onCurrentScheduleModeChanged: modules.loaded_instances['Logic']['Thermostat'][instancename].schedule_mode = currentScheduleMode
+
 
                 Grid {
                     columns: 2
                     spacing: 2
                     RadioButton {
-                        enabled: false
+                        id: scheduleMode0
+                        checked: scheduleframe.currentScheduleMode == 0
+                        onClicked: scheduleframe.currentScheduleMode = 0
                         text: qsTr("No schedule")
 
                             contentItem: Text {
@@ -181,7 +187,9 @@ Item {
                             }
                     }
                     RadioButton {
-                        enabled: false
+                        id: scheduleMode1
+                        checked: scheduleframe.currentScheduleMode ==  1
+                        onClicked: scheduleframe.currentScheduleMode = 1
                         text: qsTr("Daily")
                         contentItem: Text {
                             text: parent.text
@@ -192,7 +200,9 @@ Item {
                     }
 
                     RadioButton {
-                        enabled: false
+                        id: scheduleMode2
+                        checked: scheduleframe.currentScheduleMode == 2
+                        onClicked: scheduleframe.currentScheduleMode = 2
                         text: qsTr("Workday / Weekend")
                         contentItem: Text {
                             text: parent.text
@@ -202,7 +212,9 @@ Item {
                         }
                     }
                     RadioButton {
-                        checked: true
+                        id: scheduleMode7
+                        checked: scheduleframe.currentScheduleMode == 7
+                        onClicked: scheduleframe.currentScheduleMode = 7
                         text: qsTr("Weekly")
                         contentItem: Text {
                             text: parent.text

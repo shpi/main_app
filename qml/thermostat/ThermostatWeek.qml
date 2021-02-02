@@ -17,10 +17,10 @@ Rectangle {
         for (var i = 0; i < dayrepeater.count; i++) {
 
             for (var a = 0; a < dayrepeater.itemAt(i).children.length; a++) {
-                if (dayrepeater.itemAt(i).children[a].temperature !== undefined)
+                if (dayrepeater.itemAt(i).children[a].offset !== undefined)
                     schedulelist += dayrepeater.itemAt(
                                 i).children[a].value + ':' + dayrepeater.itemAt(
-                                i).children[a].temperature + ';'
+                                i).children[a].offset + ';'
             }
 
             schedulelist += '\n'
@@ -140,6 +140,8 @@ Rectangle {
 
         Column {
             property var weekday: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+            property int schedulemode: modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule_mode
+
             id: weekdays
             width: parent.width
             height: dayrepeater.count * 100 + 200
@@ -148,21 +150,30 @@ Rectangle {
             Repeater {
                 id: dayrepeater
 
-                model: 7
+                model: weekdays.schedulemode
 
                 ThermostatWeekDay {
-                    dayname:  parent.weekday[(index % 7)] //(Math.floor(index / 7) + 1) + "." +
+                    dayname:  weekdays.schedulemode == 7 ? parent.weekday[(index % 7)] :
+
+                              weekdays.schedulemode == 1 ? '' :
+
+                              weekdays.schedulemode == 2 ? 'Weekend' : 'Workday'
+
+
                     even: index % 2 ? true : false
 
                     Repeater {
 
                         id: knobrepeater
+                        property real settemp: modules.loaded_instances['Logic']['Thermostat'][root.instancename].set_temp
                         property int dayindex: index
                         model: modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[index] !== undefined ? modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[index].length : 1
 
                         ThermostatWeekKnob {
-                            value: modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex][index] !== undefined ? modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex][index][0] : 1440
-                            temperature: 25
+                            value:  modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex][index] !== undefined ? modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex][index][0] : 1440
+                            offset: modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex][index] !== undefined ? modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex][index][1] : 0
+
+
                             to: 1440
                             from: 0
                         }

@@ -9,13 +9,13 @@ Rectangle {
     property int value: 0
     property string time: (value - minutes) / 60 + ":" + (minutes < 10 ? "0" : "") + minutes
     property int minutes: value % 60
-    property int temperature: 25
+    property int offset: 0
     property int to: 1440
     property int from: 0
     property int width2: parent.width
     property int cold: 15
     property int warm: 32
-    property real colortemp: ((temperature - cold) / (warm - cold))
+    property real colortemp: ((knobrepeater.settemp + offset - cold) / (warm - cold))
     color: parent.active ? "transparent" : Qt.lighter(
                                Qt.rgba(colortemp,
                                        (1 - 2 * Math.abs(colortemp - 0.5)),
@@ -29,8 +29,8 @@ Rectangle {
 
     Label {
         anchors.centerIn: parent
-        text: parent.temperature
-        font.pixelSize:  50
+        text: knobrepeater.settemp + weekdayknob.offset
+        font.pixelSize:  30
         visible: parent.parent.active ? false : true
     }
 
@@ -94,7 +94,7 @@ Rectangle {
 
             parent.parent.active = true
             parent.parent.selected = true
-            loader.value = parent.temperature
+            loader.value = parent.offset
             loader.visible = true
             loader.z = parent.z + 1
             loader.parent = parent

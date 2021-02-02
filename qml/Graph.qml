@@ -36,6 +36,8 @@ Item {
 
     Shape {
         id: graphShape
+        layer.enabled: true
+               layer.samples: 4
         width: graph.width
         height: graph.height * 0.8
         anchors.centerIn: parent
@@ -45,7 +47,7 @@ Item {
             //scale.width
             fillColor: "transparent"
             capStyle: ShapePath.FlatCap
-            strokeWidth: 1
+            strokeWidth: 2
 
             strokeColor: "red"
 
@@ -127,8 +129,5 @@ Item {
     }
 
 
-    FpsItem {
-           id: fpsItem
-           anchors.centerIn: parent
-       }
+
 }

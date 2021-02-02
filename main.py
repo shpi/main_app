@@ -5,7 +5,7 @@ import signal
 import sys
 import time
 from subprocess import check_output
-from PySide2.QtQml import QQmlDebuggingEnabler
+#from PySide2.QtQml import QQmlDebuggingEnabler
 
 from PySide2 import QtCore
 from PySide2.QtCore import QSettings, qInstallMessageHandler
@@ -145,7 +145,7 @@ def killThreads():
 
 
 
-debug = QQmlDebuggingEnabler()
+#debug = QQmlDebuggingEnabler()
 
 
 app = QApplication(sys.argv)
