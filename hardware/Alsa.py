@@ -22,7 +22,6 @@ class AlsaMixer:
         self.cards = self.get_cards()
         self.inputs.add(self.get_inputs())
 
-
     def get_inputs(self) -> dict:
         return self.cards
 
@@ -73,7 +72,7 @@ class AlsaMixer:
         for i in self.system_cards:
             pos1 = i.find(']:', 0, 30)
             pos0 = i.find('[', 0, 25)
-            if pos0 > 0 and pos1 > 0 and pos0 < pos1:
+            if 0 < pos0 < pos1 and pos1 > 0:
                 card_name = i[pos0 + 1:pos1].strip()
                 card_number = i.split(" [")[0].strip()
                 card_desc = i[pos1 + 2:].strip()
@@ -226,13 +225,12 @@ class AlsaMixer:
                     description = interface['description']
                     for value in values:
                         interface['value'] = value
-                        try:
-                            interface['description'] = description + \
-                                                       ' ' + channels[i]
+                        interface['description'] = description
 
-                        except Exception as e:
-                            logging.error(str(e))
-                            interface['description'] = description
+                        if len(channels) > i:
+                            interface['description']  +=  ' ' + channels[i]
+
+
                         interface['set'] = partial(
                             AlsaMixer.change_control, card_name, interface['id'], i, len(values))
 

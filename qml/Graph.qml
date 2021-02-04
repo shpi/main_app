@@ -54,12 +54,9 @@ Item {
             fillColor: "transparent"
             capStyle: ShapePath.FlatCap
             strokeWidth: 1
-
             strokeColor: "red"
 
-
             PathPolyline {
-
                 id: ppl
                 path: graph.graphmap.polyline
             }

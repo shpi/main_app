@@ -35,12 +35,11 @@ class Appearance(QObject):
         self.settings = settings
         self._module_inputs = dict()
         self._module_inputs['appearance'] = {'description': 'Appearance Module for Backlight / Nightmode etc.',
-                                                    'value': 'NOT_INITIALIZED',
-                                                    'type': DataType.MODULE,
-                                                    'lastupdate': 0,
-                                                    'call': self.update,
-                                                    'interval': int(settings.value("appearance/interval", 5))}
-
+                                             'value': 'NOT_INITIALIZED',
+                                             'type': DataType.MODULE,
+                                             'lastupdate': 0,
+                                             'call': self.update,
+                                             'interval': int(settings.value("appearance/interval", 5))}
 
         self._background_night = int(settings.value("appearance/background_night", 1))
         self._min_backlight = int(settings.value("appearance/min", 60))
@@ -94,7 +93,6 @@ class Appearance(QObject):
         self._dim_timer = int(seconds)
         self.settings.setValue("appearance/dim_timer", seconds)
 
-
     @Signal
     def start_input_changed(self):
         pass
@@ -109,7 +107,6 @@ class Appearance(QObject):
         self._start_input_key = time_
         self.settings.setValue("appearance/start_input_key", time_)
 
-
     @Signal
     def stop_input_changed(self):
         pass
@@ -123,7 +120,6 @@ class Appearance(QObject):
     def stop_input_key(self, time_):
         self._stop_input_key = time_
         self.settings.setValue("appearance/stop_input_key", time_)
-
 
     @Signal
     def night_mode_start_changed(self):
@@ -323,7 +319,6 @@ class Appearance(QObject):
             stop_time = datetime.strptime("00:00", '%H:%M').time()
             status = 'ERROR'
 
-
         if start_time == stop_time:
             # Invalid config. Do nothing.
             return 'ERROR'
@@ -335,7 +330,7 @@ class Appearance(QObject):
             night_new = start_time < now_time < stop_time
         else:
             # 23:00 - 8:00
-            night_new = not(stop_time < now_time < start_time)
+            night_new = not (stop_time < now_time < start_time)
 
         if night_new != self._night:
             self._night = night_new
@@ -386,7 +381,6 @@ class Appearance(QObject):
     def jump_state(self):
         return int(self._jump_state)
 
-
     def set_backlight(self, value):
         setthread = threading.Thread(target=self._set_backlight, args=(value,))
         setthread.start()
@@ -417,26 +411,28 @@ class Appearance(QObject):
     def interrupt(self, key, value, ismouse=0):
         logging.debug(f"key: {key}, value: {value}")
         if value > 0:
-          if ismouse:
-            self.lastuserinput = time.time()
-            self._jump_state = 0
-            if self.state in ('OFF', 'SLEEP'):
-                logging.debug(f"changing nightmode to ACTIVE, old state: {self.state}, lastinput: {self.lastuserinput}")
-                self.state = 'ACTIVE'
-            if self._night:
-                self.set_backlight(self._max_backlight_night)
+            if ismouse:
+                self.lastuserinput = time.time()
+                self._jump_state = 0
+                if self.state in ('OFF', 'SLEEP'):
+                    logging.debug(
+                        f"changing nightmode to ACTIVE, old state: {self.state}, lastinput: {self.lastuserinput}")
+                    self.state = 'ACTIVE'
+                if self._night:
+                    self.set_backlight(self._max_backlight_night)
+                else:
+                    self.set_backlight(self._max_backlight)
             else:
-                self.set_backlight(self._max_backlight)
-          else:
 
-              self.lastuserinput = time.time() - self._dim_timer
-              if self.state == 'OFF':
-                  logging.debug(f"changing nightmode to SLEEP, old state: {self.state}, lastinput: {self.lastuserinput}")
-                  self.state = 'SLEEP'
-                  if self._night:
-                      self.set_backlight(self._min_backlight_night)
-                  else:
-                      self.set_backlight(self._min_backlight)
+                self.lastuserinput = time.time() - self._dim_timer
+                if self.state == 'OFF':
+                    logging.debug(
+                        f"changing nightmode to SLEEP, old state: {self.state}, lastinput: {self.lastuserinput}")
+                    self.state = 'SLEEP'
+                    if self._night:
+                        self.set_backlight(self._min_backlight_night)
+                    else:
+                        self.set_backlight(self._min_backlight)
 
     @Signal
     def blackChanged(self):
@@ -467,4 +463,5 @@ class Appearance(QObject):
     # @Property("QVariantMap", constant=True)
     def devices(self) -> dict:
         return dict(self.possible_devs)
+
     devices = Property("QVariantMap", devices, constant=True)

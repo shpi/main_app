@@ -33,28 +33,28 @@ class WifiNetworkModel(QAbstractListModel):
         if 0 <= index.row() < self.rowCount() and index.isValid():
             item = self._entries[index.row()]
             if role == WifiNetworkModel.BSSIDRole:
-                return item["bssid"]
+                return item[b"bssid"]
             elif role == WifiNetworkModel.SSIDRole:
-                return item["ssid"]
+                return item[b"ssid"]
             elif role == WifiNetworkModel.SignalRole:
-                return Wifi.dbmtoperc[int(item["signal"])]
+                return Wifi.dbmtoperc[int(item[b"signal"])]
             elif role == WifiNetworkModel.FlagsRole:
-                if 'WPA2' in item['flags']:
+                if 'WPA2' in item[b'flags']:
                     return 'WPA2'
-                elif 'WPA' in item['flags']:
+                elif 'WPA' in item[b'flags']:
                     return 'WPA'
-                elif 'WEP' in item['flags']:
+                elif 'WEP' in item[b'flags']:
                     return 'WEP'
                 else:
                     return 'OPEN'
             elif role == WifiNetworkModel.PasswordRole:
-                return self.settings.value("wifi/password/" + item["bssid"], "")
+                return self.settings.value("wifi/password/" + item[b"bssid"], "")
 
             elif role == WifiNetworkModel.FrequencyRole:
-                if int(item["frequency"]) in Wifi.freqtochn:
-                    return Wifi.freqtochn[int(item["frequency"])]
+                if int(item[b"frequency"]) in Wifi.freqtochn:
+                    return Wifi.freqtochn[int(item[b"frequency"])]
                 else:
-                    return item["frequency"]
+                    return item[b"frequency"]
 
     def roleNames(self):
 

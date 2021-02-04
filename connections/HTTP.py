@@ -38,15 +38,9 @@ class HTTP(QObject):
 
         # minimum fields: path, value, interval, type, lastupdate
 
-    def delete_inputs(self):
-        for key in self.selected_inputs:
-            if key in self.inputs:
-                del self.inputs[key]
-
     def get_inputs(self) -> dict:
 
-        keys = self.selected_inputs.keys()
-
+        # keys = self.selected_inputs.keys()
         # for key in keys:
         #    if key[len("http/" + self.name + "/"):] not in self._vars:
         #        del self.selected_inputs[key]
@@ -220,7 +214,8 @@ class HTTP(QObject):
 
     def delete_inputs(self):
         for key in self.selected_inputs:
-            del self.inputs.entries[key]
+            if key in self.inputs.entries:
+                del self.inputs.entries[key]
 
     @Slot(str)
     def add_var(self, key):

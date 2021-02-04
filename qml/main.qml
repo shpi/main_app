@@ -342,7 +342,7 @@ ApplicationWindow {
 
     Rectangle {
         id: backlighthelper
-        visible: false
+        visible: appearance.blackfilter > 0
         anchors.fill: parent
         color: Qt.rgba(0, 0, 0, appearance.blackfilter)
     }
@@ -430,6 +430,7 @@ ApplicationWindow {
 
 
         RoundButton {
+            opacity: 0.5
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.topMargin: 10

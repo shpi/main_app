@@ -62,11 +62,12 @@ class ModuleManager(QObject):
                         logging.debug(f'Initiating {category}:{classname}:{instancename}')
                         self._instances[category][classname][instancename] = tempclass(instancename, inputs, settings)
 
-                        #try:
+                        # try:
                         if hasattr(self._instances[category][classname][instancename], 'get_inputs'):
                             inputs.add(self._instances[category][classname][instancename].get_inputs())
-                        #except Exception as e:
+                        # except Exception as e:
                         #    logging.debug('here:' + str(e))
+
     """
 
     We use time scheduler of inputs class and register module as input vars,
@@ -82,7 +83,6 @@ class ModuleManager(QObject):
                     except AttributeError:
                         pass
     """
-
 
     @Signal
     def modulesChanged(self):

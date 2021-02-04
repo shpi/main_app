@@ -9,7 +9,7 @@ import glob
 import time
 import threading
 from typing import List, Dict
-from subprocess import Popen, PIPE, DEVNULL
+from subprocess import Popen, PIPE
 from core.DataTypes import DataType
 from core.Toolbox import netmaskbytes_to_prefixlen, ipbytes_to_ipstr, IPEndpoint, lookup_oui
 import logging
@@ -23,7 +23,6 @@ _re_scanreport = re.compile(r'Host: (\S+) \((.*)\)')
 # "192.168.51.5     0x1         0x2         9c:1c:12:ca:de:27     *        enp4s0"
 _re_arp = re.compile(r'(\S+).*(\S{2}:\S{2}:\S{2}:\S{2}:\S{2}:\S{2})')
 
-
 SIOCGIFNETMASK = 0x891b
 SIOCGIFHWADDR = 0x8927
 SIOCGIFADDR = 0x8915
@@ -33,7 +32,7 @@ class InterfaceInfo:
     def __init__(self, interface: str):
         self._name = interface
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, bytes(self._name, encoding="ascii"))
+        # self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, bytes(self._name, encoding="ascii"))
         self._endpoints = []
         self._scanthread = threading.Thread(target=self._scan_thread_func)
 
@@ -47,7 +46,8 @@ class InterfaceInfo:
 
     @property
     def mask(self) -> bytes:
-        raw = fcntl.ioctl(self._sock.fileno(), SIOCGIFNETMASK, struct.pack("16s16x", bytes(self._name, encoding="ascii")))
+        raw = fcntl.ioctl(self._sock.fileno(), SIOCGIFNETMASK,
+                          struct.pack("16s16x", bytes(self._name, encoding="ascii")))
         subnet_bytes = raw[20:24]
         return subnet_bytes
 
@@ -71,7 +71,7 @@ class InterfaceInfo:
 
     @property
     def mac_address(self) -> bytes:
-        ifreq = struct.pack('16sH14s', bytes(self._name, encoding="ascii"), socket.AF_UNIX, b'\x00'*14)
+        ifreq = struct.pack('16sH14s', bytes(self._name, encoding="ascii"), socket.AF_UNIX, b'\x00' * 14)
         raw = fcntl.ioctl(self._sock.fileno(), SIOCGIFHWADDR, ifreq)
 
         mac_bytes = raw[18:24]
@@ -85,7 +85,8 @@ class InterfaceInfo:
         return f"{self.ip_human}/{self.mask_prefix_length}"
 
     def endpoint(self) -> IPEndpoint:
-        return IPEndpoint(self.ip_human, socket.gethostname(), self.mac_address_human, lookup_oui(self.mac_address), self._name)
+        return IPEndpoint(self.ip_human, socket.gethostname(), self.mac_address_human, lookup_oui(self.mac_address),
+                          self._name)
 
     def scan(self):
         if self._scanthread.is_alive():
@@ -96,7 +97,8 @@ class InterfaceInfo:
     def _scan_thread_func(self):
         ip_list: Dict[str, List[str, str, str]] = {}
 
-        p = Popen(['nmap', '-sn', self.cidr(), '--unprivileged', '-oG', '-'], stdout=PIPE, stdin=PIPE, stderr=PIPE, encoding="utf8")
+        p = Popen(['nmap', '-sn', self.cidr(), '--unprivileged', '-oG', '-'], stdout=PIPE, stdin=PIPE, stderr=PIPE,
+                  encoding="utf8")
         stdout_data = p.communicate()[0]
 
         for line in stdout_data.splitlines(False):
@@ -129,7 +131,7 @@ class InterfaceInfo:
 class SystemInfo:
     _keys = 'read_bps', 'write_bps', 'read_abs', 'write_abs'
 
-    def __init__(self, parent=None):
+    def __init__(self):
         super().__init__()
         self.module_inputs = dict()
         self.last_diskstat = 0
@@ -163,36 +165,38 @@ class SystemInfo:
 
                 if init:
                     self.module_inputs[f'system/disk_{line[2]}/read_bps'] = {'value': 0,
-                                                                         'interval': -1,
-                                                                         'type': DataType.INT,
-                                                                         'description': 'read bytes per second'}
+                                                                             'interval': -1,
+                                                                             'type': DataType.INT,
+                                                                             'description': 'read bytes per second'}
 
                     self.module_inputs[f'system/disk_{line[2]}/write_bps'] = {'value': 0,
-                                                                          'interval': -1,
-                                                                          'type': DataType.INT,
-                                                                          'description': 'write bytes per second'}
+                                                                              'interval': -1,
+                                                                              'type': DataType.INT,
+                                                                              'description': 'write bytes per second'}
                     self.module_inputs[f'system/disk_{line[2]}/read_abs'] = {'value': 0,
-                                                                         'interval': -1,
-                                                                         'type': DataType.INT,
-                                                                         'description': 'read bytes absolute'}
+                                                                             'interval': -1,
+                                                                             'type': DataType.INT,
+                                                                             'description': 'read bytes absolute'}
                     self.module_inputs[f'system/disk_{line[2]}/write_abs'] = {'value': 0,
-                                                                          'interval': -1,
-                                                                          'type': DataType.INT,
-                                                                          'description': 'write bytes absolute'}
+                                                                              'interval': -1,
+                                                                              'type': DataType.INT,
+                                                                              'description': 'write bytes absolute'}
 
                 self.module_inputs[f'system/disk_{line[2]}/read_bps']['value'] = (int(line[3]) -
-                                                                              self.module_inputs[f'system/disk_{line[2]}/read_abs']['value']) // quotient
+                                                                                  self.module_inputs[
+                                                                                      f'system/disk_{line[2]}/read_abs'][
+                                                                                      'value']) // quotient
 
                 self.module_inputs[f'system/disk_{line[2]}/write_bps']['value'] = (int(line[7]) -
-                                                                               self.module_inputs[f'system/disk_{line[2]}/write_abs']['value']) // quotient
+                                                                                   self.module_inputs[
+                                                                                       f'system/disk_{line[2]}/write_abs'][
+                                                                                       'value']) // quotient
 
                 self.module_inputs[f'system/disk_{line[2]}/read_abs']['value'] = int(line[3])
                 self.module_inputs[f'system/disk_{line[2]}/write_abs']['value'] = int(line[7])
 
                 for key in self._keys:
                     self.module_inputs[f'system/disk_{line[2]}/{key}']['lastupdate'] = acttime
-
-
 
     def get_discstats(self):
         return self.module_inputs
@@ -254,7 +258,7 @@ class SystemInfo:
 
     @staticmethod
     def is64bit():
-        return int(sys.maxsize > 2**32)  # is 64bits
+        return int(sys.maxsize > 2 ** 32)  # is 64bits
 
     @staticmethod
     def get_ip4_address(ifname):
@@ -337,5 +341,3 @@ class SystemInfo:
                     if with_lo or ifname != "lo":
                         netdevs.append(ifname)
         return netdevs
-
-

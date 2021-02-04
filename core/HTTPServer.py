@@ -16,14 +16,14 @@ class ServerHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         start_time = time.time()
         try:
-            succ = True
+            success = True
 
             if "?" in self.path:
                 query = dict(urlparse.parse_qsl(self.path.split("?")[1], True))
             else:
-                succ = False
+                success = False
 
-            if succ and ('key' in query) and (query['key'] in self.inputs) and self.inputs[query['key']].get('exposed',
+            if success and ('key' in query) and (query['key'] in self.inputs) and self.inputs[query['key']].get('exposed',
                                                                                                              False):
 
                 if 'set' in query:
@@ -49,9 +49,9 @@ class ServerHandler(BaseHTTPRequestHandler):
                 self.connection.close()
 
             else:
-                succ = False
+                success = False
 
-            if not succ:
+            if not success:
                 self.send_response(200)
                 self.send_header('Content-type', 'text')
                 self.end_headers()

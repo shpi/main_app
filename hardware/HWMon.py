@@ -116,7 +116,7 @@ class HWMon:
                     rf.seek(0)
                     newvalue = rf.read().rstrip()
                     logging.debug(f'reading back {newvalue}')
-                    if (value == newvalue):
+                    if value == newvalue:
                         return True
                     else:
                         if retries < 5:

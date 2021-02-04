@@ -1,4 +1,4 @@
-﻿
+﻿from PySide2.QtCore import QSettings
 from core.DataTypes import DataType
 from core.Toolbox import Pre_5_15_2_fix
 import logging
@@ -29,10 +29,7 @@ class BaseModule:
                                              'lastupdate': 0,
                                              'interval': -1 }
 
-
     def get_inputs(self) -> dict:
-
-
         raise NameError('Please provide a function that export module properties.')
 
         return {}
@@ -44,4 +41,3 @@ class BaseModule:
 
         return []
 
-    def

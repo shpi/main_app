@@ -4,6 +4,7 @@ from PySide2.QtCore import QSettings, QObject, Property, Signal
 from core.Toolbox import Pre_5_15_2_fix
 import logging
 
+
 class ShowValue(QObject):
     def __init__(self, name, inputs, settings: QSettings = None):
 
@@ -29,9 +30,9 @@ class ShowValue(QObject):
 
     def ui_event(self):
         try:
-         if self._value != str(self.inputs.entries[self._value_path]['value']):
-            self._value = str(self.inputs.entries[self._value_path]['value'])
-            self.valueChanged.emit()
+            if self._value != str(self.inputs.entries[self._value_path]['value']):
+                self._value = str(self.inputs.entries[self._value_path]['value'])
+                self.valueChanged.emit()
         except Exception as e:
             logging.error(str(e))
 
@@ -39,11 +40,9 @@ class ShowValue(QObject):
     def logging(self):
         return self.inputs.entries[self._value_path]['logging']
 
-
     @Property(int, notify=settingsChanged)
     def interval(self):
         return self.inputs.entries[self._value_path]['interval']
-
 
     # @Property(str,notify=valueChanged)
     def value_path(self):

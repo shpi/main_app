@@ -25,7 +25,7 @@ class Backlight:
                                       + "/max_brightness"):
                         with open(backlightpath + file +
                                   "/max_brightness") as max_backlight:
-                            self.MAX_BACKLIGHT = (int)(
+                            self.MAX_BACKLIGHT = int(
                                 max_backlight.readline())
                     if os.path.exists(backlightpath + file + "/bl_power"):
                         self.BL_POWER = 1
@@ -47,7 +47,7 @@ class Backlight:
 
         # logging.debug("set_brightness({brightness})")
 
-        if ((len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0)):
+        if (len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0):
             setbrightness = int((self.MAX_BACKLIGHT / 100) * brightness)
 
             if setbrightness == 0 and brightness > 0:

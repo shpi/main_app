@@ -19,15 +19,14 @@ class IIO:
             self.context = iio.Context('local:')
             for dev in self.context.devices:
                 try:
-                 self._device_info(dev)
+                    self._device_info(dev)
                 except Exception as e:
-                 logging.error(str(dev) + str(e))
+                    logging.error(str(dev) + str(e))
 
         except Exception as e:
             logging.error(str(e))
 
         # print("IIO context has %u devices:" % len(self.context.devices))
-
 
     def get_inputs(self) -> dict:
 
@@ -45,7 +44,7 @@ class IIO:
                     return value
         except:
             if (retries < 3):
-                return IIO.read_iio(id, channel, retries+1)
+                return IIO.read_iio(id, channel, retries + 1)
             else:
                 return None
 
@@ -59,7 +58,7 @@ class IIO:
 
             except:
                 if (retries < 3):
-                    return IIO.read_processed(id, channel, scale, offset, retries+1)
+                    return IIO.read_processed(id, channel, scale, offset, retries + 1)
                 else:
                     return None
 
@@ -69,7 +68,6 @@ class IIO:
         if os.path.isfile(f'/sys/bus/iio/devices/{id}/{channel}'):
             with open(f'/sys/bus/iio/devices/{id}/{channel}', 'w') as rf:
                 return (rf.write(str(value)))
-                rf.close()
 
     def _device_info(self, dev):
         # print("\t" + dev.id + ": " + dev.name)
@@ -85,18 +83,19 @@ class IIO:
                 self.inputs[f'{self.path}/{dev.name}/{channel.id}']['type'] = Convert.iio_to_shpi(
                     channel.type)
 
-                #print("\t\t\t%u channel-specific attributes found: " % len(channel.attrs))
+                # print("\t\t\t%u channel-specific attributes found: " % len(channel.attrs))
                 for channel_attr in channel.attrs:
                     path = channel.attrs[channel_attr].filename
 
                     # print(path)
-                    #print("\t\t\t\t" + channel_attr + ", value: " + channel.attrs[channel_attr].value)
+                    # print("\t\t\t\t" + channel_attr + ", value: " + channel.attrs[channel_attr].value)
 
                     if channel_attr == 'scale':
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}']['scale'] = channel.attrs[channel_attr].value
 
                     elif channel_attr == 'offset':
-                        self.inputs[f'{self.path}/{dev.name}/{channel.id}']['offset'] = channel.attrs[channel_attr].value
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}']['offset'] = channel.attrs[
+                            channel_attr].value
 
                     elif channel_attr == 'input':
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}']['value'] = channel.attrs[channel_attr].value
@@ -111,17 +110,20 @@ class IIO:
 
                         if f'{self.path}/{dev.name}/{channel.id}/{channel_attr[:-10]}' not in self.inputs:
                             self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr[:-10]}'] = {}
-                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr[:-10]}']['available'] = channel.attrs[channel_attr].value.split()
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr[:-10]}']['available'] = \
+                        channel.attrs[channel_attr].value.split()
 
                     else:
                         if f'{self.path}/{dev.name}/{channel.id}/{channel_attr}' not in self.inputs:
                             self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}'] = {}
-                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['value'] = channel.attrs[channel_attr].value.rstrip()
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['value'] = channel.attrs[
+                            channel_attr].value.rstrip()
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['call'] = partial(
                             IIO.read_iio, dev.id, path)
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['interval'] = 60
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['type'] = DataType.FLOAT
-                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['description'] = channel.id + ' ' + channel_attr
+                        self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}'][
+                            'description'] = channel.id + ' ' + channel_attr
                         # print(f'/sys/bus/iio/devices/{dev.id}/{path}')
 
                         try:
@@ -152,9 +154,9 @@ class IIO:
                     self.inputs[f'{self.path}/{dev.name}/{channel.id}']['interval'] = 60
 
         if len(dev.attrs) > 0:
-            #print("\t\t%u device-specific attributes found: " % len(dev.attrs))
+            # print("\t\t%u device-specific attributes found: " % len(dev.attrs))
             for device_attr in dev.attrs:
-                #print("\t\t\t" + device_attr + ", value: " + dev.attrs[device_attr].value)
+                # print("\t\t\t" + device_attr + ", value: " + dev.attrs[device_attr].value)
 
                 if device_attr == 'scale':
                     self.inputs[f'{self.path}/{dev.name}/{channel.id}']['scale'] = dev.attrs[device_attr].value
@@ -166,7 +168,8 @@ class IIO:
 
                     if f'{self.path}/{dev.name}/{channel.id}/{device_attr[:-10]}' not in self.inputs:
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr[:-10]}'] = {}
-                    self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr[:-10]}']['available'] = dev.attrs[device_attr].value.split()
+                    self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr[:-10]}']['available'] = dev.attrs[
+                        device_attr].value.split()
                     self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr[:-10]}']['interval'] = 0
 
                 else:
@@ -174,8 +177,10 @@ class IIO:
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}'] = {}
 
                     self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['type'] = DataType.UNDEFINED
-                    self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['description'] = channel.id + ' ' + device_attr
-                    self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['value'] = dev.attrs[device_attr].value.rstrip()
+                    self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}'][
+                        'description'] = channel.id + ' ' + device_attr
+                    self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['value'] = dev.attrs[
+                        device_attr].value.rstrip()
 
                     path = dev.attrs[device_attr].filename
 
@@ -192,4 +197,3 @@ class IIO:
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['interval'] = -1
                     except:
                         pass
-

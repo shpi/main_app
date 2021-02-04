@@ -2,20 +2,19 @@
 
 import time
 import threading
-from PySide2.QtCore import Qt, QModelIndex, QSortFilterProxyModel
+from PySide2.QtCore import QModelIndex, QSortFilterProxyModel
 from PySide2.QtCore import QAbstractListModel, Property, Signal, Slot, QObject
 from core.DataTypes import Convert
 from core.DataTypes import DataType
 from core.CircularBuffer import CircularBuffer
-from PySide2.QtCore import QPointF, QPoint
-from PySide2.QtGui import QPen, QBrush, QPainter, QPolygonF, QColor
-from PySide2.QtCore import QSize, Qt, QRectF, QPointF
-from PySide2.QtCore import QDate, QTime, QDateTime, Qt
+from PySide2.QtGui import QPolygonF
+from PySide2.QtCore import QPointF
+from PySide2.QtCore import QDateTime, Qt
 import shiboken2
 import ctypes
 import logging
-import sys
 import numpy as np
+
 
 class InputListModel(QAbstractListModel):
     PathRole = Qt.UserRole + 1000
@@ -183,8 +182,6 @@ class InputsDict(QObject):
             if newinputs[key]['logging']:
                 self.buffer[key] = CircularBuffer(10000)
 
-
-
             newinputs[key]['exposed'] = bool(int(self.settings.value(key + "/exposed", 0)))
 
             if 'lastupdate' not in newinputs[key]:
@@ -256,48 +253,39 @@ class InputsDict(QObject):
             # return p = [QPointF(*v) for v in filter(lambda x: x[0] > start, self.buffer[key])]
 
         else:"""
-            # logging.debug([QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key]])
-        return [QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key][:1000]]
-
-
-
+        # logging.debug([QPointF((v[0]*1000), v[1]/divider) for v in self.buffer[key]])
+        return [QPointF((v[0] * 1000), v[1] / divider) for v in self.buffer[key][:1000]]
 
     @Slot(str, int, int, int, result='QVariantMap')
+    def get_calc_points(self, key, width=800, height=480, divider=1, start=None):
 
-    def get_calc_points(self, key, width = 800, height = 480, divider=1, start=None):
+        startx = self.buffer[key].min_time()
+        endx = self.buffer[key].max_time()
 
-                size = self.buffer[key].length()
-                startx = self.buffer[key].min_time()
+        scalex = 1
 
-                endx = self.buffer[key].max_time()
+        if (startx != endx):
+            scalex = width / ((endx - startx).total_seconds() * 1000)
 
-                scalex = 1
+        max = self.buffer[key].max_data()
+        min = self.buffer[key].min_data()
 
-                if (startx != endx):
-                    scalex = width / ((endx - startx).total_seconds() * 1000)
+        scaley = 1
 
-                max = self.buffer[key].max_data()
-                min = self.buffer[key].min_data()
+        if (min != max):
+            scaley = height / (abs(min - max))
 
-                scaley = 1
+        size = self.buffer[key].length()
+        polyline = QPolygonF(size)
+        buffer = (ctypes.c_double * 2 * size).from_address(shiboken2.getCppPointer(polyline.data())[0])
+        memory = np.frombuffer(buffer, np.float)
+        memory[: (size - 1) * 2 + 1: 2] = (self.buffer[key].time(size) - np.datetime64(startx, 'ms')).astype(
+            float) * scalex
+        memory[1: (size - 1) * 2 + 2: 2] = (self.buffer[key].data(size) - min) * scaley
 
-                if (min != max):
-                    scaley = height / (abs(min - max))
-
-
-                polyline = QPolygonF(size)
-                buffer = (ctypes.c_double * 2 * size).from_address(shiboken2.getCppPointer(polyline.data())[0])
-                memory = np.frombuffer(buffer, np.float)
-                memory[: (size - 1) * 2 + 1 : 2] = (self.buffer[key].time() - np.datetime64(startx,'ms')).astype(float) * scalex
-                memory[1 : (size - 1) * 2 + 2 : 2] = (self.buffer[key].data() - min) * scaley
-
-
-
-                #[ QPoint(     int(   (v[0] - startx) * scalex), height - int(v[1]/divider * scaley))     for v in self.buffer[key]]s
-                return {'startDate' : QDateTime(startx), 'endDate': QDateTime(endx) ,'polyline' : polyline, 'count': size, 'minValue': float(min / divider), 'maxValue': float(max / divider)}
-
-
-
+        # [ QPoint(     int(   (v[0] - startx) * scalex), height - int(v[1]/divider * scaley))     for v in self.buffer[key]]s
+        return {'startDate': QDateTime(startx), 'endDate': QDateTime(endx), 'polyline': polyline, 'count': size,
+                'minValue': float(min / divider), 'maxValue': float(max / divider)}
 
     @Slot(str, int)
     def set_interval(self, key, value):
@@ -333,42 +321,40 @@ class InputsDict(QObject):
             logging.debug(key + ' not in Inputdictionary')
 
     def update_remote(self, keys):  # doing eventing here
+        key = ''
+        try:
+            for key in keys:
+                value = self.entries[key]
 
-       try:
-        for key in keys:
-            value = self.entries[key]
+                self.completelist.updateListView(key)
 
-            self.completelist.updateListView(key)
+                if 'event' in value and isinstance(value['event'], list):
+                    for eventfunction in value['event']:
+                        eventfunction()
 
-            if 'event' in value and isinstance(value['event'], list):
-                for eventfunction in value['event']:
-                    eventfunction()
-
-            if value['logging'] > 0:
-                self.buffer[key].append(float(value['value']), value['lastupdate'])
+                if value['logging'] > 0:
+                    self.buffer[key].append(float(value['value']), value['lastupdate'])
 
 
-       except KeyError as e:
-           logging.error(key + ' does not exists yet, you can ignore this message, if it onlys happens during startup')
+        except KeyError as e:
+            logging.error(key + ' does not exists yet, you can ignore this message, if it onlys happens during startup')
 
     def register_event(self, key, eventfunction):
         try:
-         logging.info(key + ' : ' + str(eventfunction))
-         if 'event' not in self.entries[key]:
-            self.entries[key]['event'] = []
-         self.entries[key]['event'].append(eventfunction)
+            logging.info(key + ' : ' + str(eventfunction))
+            if 'event' not in self.entries[key]:
+                self.entries[key]['event'] = []
+            self.entries[key]['event'].append(eventfunction)
         except Exception as e:
             logging.error(str(e))
-
 
     def unregister_event(self, key, eventfunction):
         try:
-         logging.info(key + ' : ' + str(eventfunction))
-         if eventfunction in self.entries[key]['event']:
-            self.entries[key]['event'].remove(eventfunction)
+            logging.info(key + ' : ' + str(eventfunction))
+            if eventfunction in self.entries[key]['event']:
+                self.entries[key]['event'].remove(eventfunction)
         except Exception as e:
             logging.error(str(e))
-
 
     def update(self, lastupdate):
 
@@ -381,8 +367,7 @@ class InputsDict(QObject):
                     try:
 
                         if (key.startswith('http')):
-                            if 'updatethread' not in self.entries[key] or not self.entries[key][
-                                'updatethread'].is_alive():
+                            if 'updatethread' not in self.entries[key] or not self.entries[key]['updatethread'].is_alive():
                                 self.entries[key]['updatethread'] = (
                                     threading.Thread(target=self.update_value, args=(key,)))
                                 self.entries[key]['updatethread'].start()
@@ -411,8 +396,6 @@ class InputsDict(QObject):
             if self.entries[key]['logging'] > 0:
                 # logging.debug('logging:' + key + ' value:' + str(self.entries[key]['value']))
                 self.buffer[key].append(float(self.entries[key]['value']), self.entries[key]['lastupdate'])
-
-
 
     @Slot(str, str)
     def set(self, key, value):
