@@ -44,7 +44,7 @@ logs = LogModel()
 handler = MessageHandler(logs)
 
 logging.basicConfig(
-                level=logging.DEBUG,
+                level=logging.INFO,
                 format='%(asctime)s.%(msecs)03d %(module)s - %(funcName)s: %(message)s',
                 datefmt='%m-%d %H:%M:%S',
                 handlers=[
@@ -152,7 +152,7 @@ def killThreads():
 
 app = QApplication(sys.argv)
 
-#qInstallMessageHandler(qml_log)
+qInstallMessageHandler(qml_log)
 
 app.aboutToQuit.connect(killThreads)
 app.setApplicationName("Main")

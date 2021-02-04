@@ -42,8 +42,8 @@ Item {
     Shape {
         id: graphShape
         smooth: true
-        layer.enabled: true
-        layer.samples: 4
+        //layer.enabled: true
+        //layer.samples: 4
         width: graph.width
         height: graph.height * 0.85
         anchors.centerIn: parent
@@ -53,7 +53,7 @@ Item {
             //scale.width
             fillColor: "transparent"
             capStyle: ShapePath.FlatCap
-            strokeWidth: 2
+            strokeWidth: 1
 
             strokeColor: "red"
 

@@ -427,14 +427,16 @@ class Appearance(QObject):
                 self.set_backlight(self._max_backlight_night)
             else:
                 self.set_backlight(self._max_backlight)
-          elif self.state == 'OFF':
+          else:
+
               self.lastuserinput = time.time() - self._dim_timer
-              logging.debug(f"changing nightmode to SLEEP, old state: {self.state}, lastinput: {self.lastuserinput}")
-              self.state = 'SLEEP'
-              if self._night:
-                  self.set_backlight(self._min_backlight_night)
-              else:
-                  self.set_backlight(self._min_backlight)
+              if self.state == 'OFF':
+                  logging.debug(f"changing nightmode to SLEEP, old state: {self.state}, lastinput: {self.lastuserinput}")
+                  self.state = 'SLEEP'
+                  if self._night:
+                      self.set_backlight(self._min_backlight_night)
+                  else:
+                      self.set_backlight(self._min_backlight)
 
     @Signal
     def blackChanged(self):

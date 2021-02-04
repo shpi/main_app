@@ -207,7 +207,7 @@ class InputDevs:
 
                             if 'interrupts' in self.inputs[f'dev/{str(id)}/thread']:
                                 for function in self.inputs[f'dev/{str(id)}/thread']['interrupts']:
-                                    function(f'dev/{str(id)}', value)
+                                    function(f'dev/{str(id)}', value, self.inputs[f'dev/{str(id)}/thread']['ismouse'])
 
                         except KeyError:
                             self.inputs[f'dev/{str(id)}/keys/{str(keycode)}'] = dict()

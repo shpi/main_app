@@ -239,8 +239,8 @@ class Thermostat(QObject):
 
 
 
-        a = Schedule.get_desired_temp(value, self._schedule_mode, datetime.datetime.today())
-        logging.error(a)
+        # a = Schedule.get_desired_temp(value, self._schedule_mode, datetime.datetime.today())
+
         return value
 
     @Slot(str)

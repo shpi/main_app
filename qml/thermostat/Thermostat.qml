@@ -293,6 +293,12 @@ Rectangle {
     }
 
     Rectangle {
+
+        layer.enabled: true
+        layer.smooth: true
+        antialiasing: true
+        layer.samples: 4
+
         property int fontheight: rotator.height * 0.04
 
         id: rotator
@@ -340,8 +346,7 @@ Rectangle {
                 }
 
                 Rectangle {
-                    layer.enabled: true
-                    layer.smooth: true
+
                     color: Qt.rgba(((index) / 80), (1 - 2 * Math.abs(((index) / 80) - 0.5)),1 - ((index) / 80), 1)
                     width: rotator.width * 0.01
                     height: rotator.height * 0.05
