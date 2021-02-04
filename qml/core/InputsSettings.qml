@@ -23,6 +23,7 @@ Item {
             }
         }
 
+        cacheBuffer: 200
         height: parent.height
         width: parent.width
         clip: true

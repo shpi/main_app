@@ -200,9 +200,9 @@ class Wifi(QObject):
                         record = record.split('\t')
                         if len(record) < 5:
                             record.append('')
-                        networks.append({'device': device, 'bssid': record[0],
-                                         'frequency': record[1], 'signal': record[2].rstrip('.'),
-                                         'flags': record[3], 'ssid': record[4]})
+                        networks.append({b'device': device, b'bssid': record[0],
+                                         b'frequency': record[1], b'signal': record[2].rstrip('.'),
+                                         b'flags': record[3], b'ssid': record[4]})
 
                 else:
                     time.sleep(0.3)

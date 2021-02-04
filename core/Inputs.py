@@ -192,6 +192,8 @@ class InputsDict(QObject):
                 newinputs[key]['interval'] = int(
                     self.settings.value(key + "/interval", newinputs[key].get('interval', 60)))
 
+
+
             if newinputs[key]['interval'] != 0:
                 self.register_timerschedule(key, newinputs[key]['interval'])
 
@@ -373,8 +375,8 @@ class InputsDict(QObject):
                                 self.entries[key]['updatethread'].start()
                         else:
                             self.update_value(key)
-                    except KeyError:
-                        logging.error('removed ' + key + ' from timer_schedule')
+                    except Exception as e:
+                        logging.error(str(e) + ', removed ' + key + ' from timer_schedule')
                         self.timerschedule[timeinterval].remove(key)
 
         # self.dataChanged.emit() needs too many ressources

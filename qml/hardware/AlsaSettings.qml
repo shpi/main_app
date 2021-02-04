@@ -19,6 +19,7 @@ Item {
         }
 
         ListView {
+            cacheBuffer: 200
 
             height: parent.height - audioheader.height
             width: parent.width

@@ -26,6 +26,7 @@ Item {
             height: parent.height - 80
             width: parent.width
             clip: true
+            //cacheBuffer: 100
             orientation: Qt.Vertical
             id: inputsview
             onModelChanged: {

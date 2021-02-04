@@ -218,6 +218,7 @@ Rectangle {
                         id: keyRepeater
                         anchors.fill: parent
 
+
                         model: keyboard_de
 
                         Key {
@@ -239,9 +240,9 @@ Rectangle {
                                     switch (command) {
                                     case "source":
                                         if (source == 'keyboard_num') keyRepeater.model = keyboard_num
-                                        if (source == 'keyboard_us') keyRepeater.model = keyboard_us
-                                        if (source == 'keyboard_ru') keyRepeater.model = keyboard_ru
-                                        if (source == 'keyboard_de') keyRepeater.model = keyboard_de
+                                        else if (source == 'keyboard_us') keyRepeater.model = keyboard_us
+                                        else if (source == 'keyboard_ru') keyRepeater.model = keyboard_ru
+                                        else if (source == 'keyboard_de') keyRepeater.model = keyboard_de
                                         return
                                     case "shift":
                                         root.allUpperCase = !root.allUpperCase

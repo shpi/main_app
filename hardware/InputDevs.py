@@ -151,21 +151,35 @@ class InputDevs:
             self.inputs[f'dev/{str(id)}/thread'] = dict()
             self.inputs[f'dev/{str(id)}/thread']['description'] = 'Thread for ' + subdevice['name']
             self.inputs[f'dev/{str(id)}/thread']['value'] = 1
-            self.inputs[f'dev/{str(id)}/thread']['interval'] = -1
+            self.inputs[f'dev/{str(id)}/thread']['interval'] = 30
             self.inputs[f'dev/{str(id)}/thread']['lastupdate'] = 0
-            self.inputs[f'dev/{str(id)}/thread']['ismouse'] = 1 if (
-                        'EV_ABS' in subdevice['EV'] or 'EV_REL' in subdevice['EV']) else 0
+            self.inputs[f'dev/{str(id)}/thread']['ismouse'] = 1 if ('EV_ABS' in subdevice['EV'] or 'EV_REL' in subdevice['EV']) else 0
             self.inputs[f'dev/{str(id)}/thread']['interrupts'] = []
-            self.inputs[f'dev/{str(id)}/thread']['thread'] = eThread(
-                target=self.devloop, args=(f"/dev/input/{subdevice['event'][0]}", id))
 
+            self.inputs[f'dev/{str(id)}/thread']['thread'] = eThread(target=self.devloop, args=(f"/dev/input/{subdevice['event'][0]}", id))
             self.inputs[f'dev/{str(id)}/thread']['type'] = DataType.BOOL
+            self.inputs[f'dev/{str(id)}/thread']['call'] = partial(self.update, id)
             self.inputs[f'dev/{str(id)}/thread']['set'] = partial(self.control_thread, id)
-            self.inputs[f'dev/{str(id)}/thread']['thread'].start()
+            #self.inputs[f'dev/{str(id)}/thread']['thread'].start()
 
     def get_inputs(self) -> dict:
 
+
         return self.inputs
+
+    def update(self, id):
+
+        if self.inputs[f'dev/{str(id)}/thread']['value'] and (not self.inputs[f'dev/{str(id)}/thread']['thread'] or not self.inputs[f'dev/{str(id)}/thread']['thread'].is_alive()):
+            self.inputs[f'dev/{str(id)}/thread']['thread'] = eThread(target=self.devloop, args=("/dev/input/" + self.devs[id]['event'][0], id))
+            self.inputs[f'dev/{str(id)}/thread']['thread'].start()
+            logging.error('Restarted Thread for Input Device: ' + id)
+
+        elif not self.inputs[f'dev/{str(id)}/thread']['value'] and self.inputs[f'dev/{str(id)}/thread']['thread'].is_alive():
+            self.inputs[f'dev/{str(id)}/thread']['thread'].raise_exception()
+            logging.error('Stopped Thread for Input Device: ' + id)
+
+        return self.inputs[f'dev/{str(id)}/thread']['value']
+
 
     def control_thread(self, id, value):
 
@@ -178,6 +192,8 @@ class InputDevs:
                 self.inputs[f'dev/{str(id)}/thread']['thread'].start()
             elif not value and self.inputs[f'dev/{str(id)}/thread']['thread'].is_alive():
                 self.inputs[f'dev/{str(id)}/thread']['thread'].raise_exception()
+
+            self.inputs[f'dev/{str(id)}/thread']['value'] = value
 
     def devloop(self, devpath, id):
 
@@ -214,7 +230,7 @@ class InputDevs:
                             self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = timestamp
 
         except Exception as e:
-            self.inputs[f'dev/{str(id)}/thread']['value'] = 0
+            #self.inputs[f'dev/{str(id)}/thread']['value'] = 0
             self.inputs[f'dev/{str(id)}/thread']['lastupdate'] = time.time()
             self.inputs[f'dev/{str(id)}/thread']['description'] += ' [access error]'
             logging.error(f'dev/{str(id)}/thread failed: ' + str(e))
