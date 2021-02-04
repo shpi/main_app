@@ -1,4 +1,5 @@
 # This Python file uses the following encoding: utf-8
+
 import logging
 import os
 import signal
@@ -70,8 +71,7 @@ def qml_log(mode, context, message):
 def setup_interrupt_handling():
     """Setup handling of KeyboardInterrupt (Ctrl-C) for PyQt."""
     signal.signal(signal.SIGINT, _interrupt_handler)
-    safe_timer(1000, check_loop)
-
+    safe_timer(1000, check_loop) # not below 1000, because timeschedule in input class works with integers
 
 def _interrupt_handler(signum, frame):  # signum, frame
     """Handle KeyboardInterrupt: quit application."""
@@ -109,6 +109,8 @@ def check_loop():
         inputs.update(last_update)
         last_update = int(time.time())
         ready = True
+
+
 
 
 settings = QSettings("SHPI GmbH", "Main")
@@ -173,6 +175,7 @@ filename = os.path.join(os.path.dirname(
 engine.load(QUrl.fromLocalFile(filename))
 
 if not engine.rootObjects():
+
         sys.exit(-1)
 
 sys.exit(app.exec_())

@@ -6,6 +6,7 @@ from PySide2.QtCore import Qt, QModelIndex, QSortFilterProxyModel
 from PySide2.QtCore import QAbstractListModel, Property, Signal, Slot, QObject
 from core.DataTypes import Convert
 from core.DataTypes import DataType
+from core.CircularBuffer import CircularBuffer
 from PySide2.QtCore import QPointF, QPoint
 from PySide2.QtGui import QPen, QBrush, QPainter, QPolygonF, QColor
 from PySide2.QtCore import QSize, Qt, QRectF, QPointF
@@ -13,8 +14,8 @@ from PySide2.QtCore import QDate, QTime, QDateTime, Qt
 import shiboken2
 import ctypes
 import logging
-import numpy as np
 import sys
+import numpy as np
 
 class InputListModel(QAbstractListModel):
     PathRole = Qt.UserRole + 1000
@@ -180,7 +181,9 @@ class InputsDict(QObject):
 
             newinputs[key]['logging'] = bool(int(self.settings.value(key + "/logging", 0)))
             if newinputs[key]['logging']:
-                self.buffer[key] = {'time': np.empty(50000, dtype='datetime64[ms]'),'data': np.empty(50000),'index':0}
+                self.buffer[key] = CircularBuffer(10000)
+
+
 
             newinputs[key]['exposed'] = bool(int(self.settings.value(key + "/exposed", 0)))
 
@@ -263,23 +266,31 @@ class InputsDict(QObject):
 
     def get_calc_points(self, key, width = 800, height = 480, divider=1, start=None):
 
-                size = self.buffer[key]['index']
-                startx = self.buffer[key]['time'].item(0)
-                endx = self.buffer[key]['time'].item(size -1 )
-                scalex = width / ((endx - startx).total_seconds() * 1000)
+                size = self.buffer[key].length()
+                startx = self.buffer[key].min_time()
 
-                max = np.max(self.buffer[key]['data'][:size])
-                min = np.min(self.buffer[key]['data'][:size])
+                endx = self.buffer[key].max_time()
 
+                scalex = 1
 
-                scaley = height / (abs(min - max))
+                if (startx != endx):
+                    scalex = width / ((endx - startx).total_seconds() * 1000)
+
+                max = self.buffer[key].max_data()
+                min = self.buffer[key].min_data()
+
+                scaley = 1
+
+                if (min != max):
+                    scaley = height / (abs(min - max))
 
 
                 polyline = QPolygonF(size)
                 buffer = (ctypes.c_double * 2 * size).from_address(shiboken2.getCppPointer(polyline.data())[0])
                 memory = np.frombuffer(buffer, np.float)
-                memory[: (size - 1) * 2 + 1 : 2] = (self.buffer[key]['time'][:size] - np.datetime64(startx,'ms')).astype(float) * scalex
-                memory[1 : (size - 1) * 2 + 2 : 2] = ((self.buffer[key]['data'][:size]) - min) * (scaley)
+                memory[: (size - 1) * 2 + 1 : 2] = (self.buffer[key].time() - np.datetime64(startx,'ms')).astype(float) * scalex
+                memory[1 : (size - 1) * 2 + 2 : 2] = (self.buffer[key].data() - min) * scaley
+
 
 
                 #[ QPoint(     int(   (v[0] - startx) * scalex), height - int(v[1]/divider * scaley))     for v in self.buffer[key]]s
@@ -306,7 +317,7 @@ class InputsDict(QObject):
             self.entries[key]['logging'] = bool(value)
             self.settings.setValue(key + "/logging", int(value))
             if value and key not in self.buffer:
-                self.buffer[key] = {'time': np.empty(50000, dtype='datetime64[ms]'),'data': np.empty(50000),'index':0}
+                self.buffer[key] = CircularBuffer(10000)
         except KeyError:
             logging.debug(key + ' not in Inputdictionary')
 
@@ -334,9 +345,8 @@ class InputsDict(QObject):
                     eventfunction()
 
             if value['logging'] > 0:
-                self.buffer[key]['data'][self.buffer[key]['index']] = float(value['value'])
-                self.buffer[key]['time'][self.buffer[key]['index']] = np.datetime64(int(value['lastupdate']*1000),'ms')
-                self.buffer[key]['index'] += 1
+                self.buffer[key].append(float(value['value']), value['lastupdate'])
+
 
        except KeyError as e:
            logging.error(key + ' does not exists yet, you can ignore this message, if it onlys happens during startup')
@@ -400,10 +410,7 @@ class InputsDict(QObject):
 
             if self.entries[key]['logging'] > 0:
                 # logging.debug('logging:' + key + ' value:' + str(self.entries[key]['value']))
-                self.buffer[key]['data'][self.buffer[key]['index']] = float(self.entries[key]['value'])
-
-                self.buffer[key]['time'][self.buffer[key]['index']] = np.datetime64(int(self.entries[key]['lastupdate']*1000),'ms')
-                self.buffer[key]['index'] += 1
+                self.buffer[key].append(float(self.entries[key]['value']), self.entries[key]['lastupdate'])
 
 
 

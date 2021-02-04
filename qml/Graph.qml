@@ -30,16 +30,22 @@ Item {
                                         graphLoader.divider)
 
         allowedtimer = true
+
+
+
         yAxisDiff = (graphmap.maxValue - graphmap.minValue) / yAxiscount
         xAxisDiff = (graphmap.endDate - graphmap.startDate) / xAxiscount
+
+
     }
 
     Shape {
         id: graphShape
+        smooth: true
         layer.enabled: true
-               layer.samples: 4
+        layer.samples: 4
         width: graph.width
-        height: graph.height * 0.8
+        height: graph.height * 0.85
         anchors.centerIn: parent
         asynchronous: true
         ShapePath {
@@ -72,31 +78,32 @@ Item {
 
         Repeater {
             id: xAxis
-            anchors.fill: parent
+            anchors.fill: graphShape
             model: xAxiscount
 
             Rectangle {
                 anchors.top: parent.top
                 width: 1
-                height: parent.height
+                height: parent.height - dateText.height
+
                 color: Colors.black
                 x: (index + 0.5) * (graphShape.width / xAxiscount)
 
                 Text {
-
+                    id: dateText
                     text: new Date(graph.graphmap.startDate.getTime() + (xAxisDiff * (index + 0.5))).toLocaleTimeString([], "h:mm:ss")
                     color: Colors.black
                     font.pixelSize: 20
                     anchors.top: parent.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
-                }
+                 }
             }
         }
 
 
         Repeater {
             id: yAxis
-            anchors.fill: parent
+            anchors.fill: graphShape
             model: yAxiscount
 
             Rectangle {
@@ -108,7 +115,7 @@ Item {
 
                 Text {
                     id: scaleText
-                    text: graph.graphmap.minValue + (yAxisDiff * (index + 0.5))
+                    text: (graph.graphmap.minValue + (yAxisDiff * (index + 0.5))).toFixed(2)
                     color: Colors.black
                     font.pixelSize: 20
                     anchors.right: parent.left

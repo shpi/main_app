@@ -8,6 +8,53 @@ from core.DataTypes import DataType
 from functools import partial
 
 
+EV_SYN = 0x00
+EV_KEY = 0x01
+EV_REL = 0x02
+EV_ABS = 0x03
+EV_MSC = 0x04
+EV_SW = 0x05
+EV_LED = 0x11
+EV_SND = 0x12
+EV_REP = 0x14
+EV_FF = 0x15
+EV_PWR = 0x16
+EV_FF_STATUS = 0x17
+
+
+def test_bit(eventlist, b):
+  index = b // 32
+  bit = b % 32
+  if len(eventlist) <= index:
+    return False
+  if eventlist[index] & (1 << bit):
+    return True
+  else:
+    return False
+
+
+def EvHexToStr(events):
+  s = []
+  if test_bit(events, EV_SYN):       s.append("EV_SYN")
+  if test_bit(events, EV_KEY):       s.append("EV_KEY")
+  if test_bit(events, EV_REL):       s.append("EV_REL")
+  if test_bit(events, EV_ABS):       s.append("EV_ABS")
+  if test_bit(events, EV_MSC):       s.append("EV_MSC")
+  if test_bit(events, EV_LED):       s.append("EV_LED")
+  if test_bit(events, EV_SND):       s.append("EV_SND")
+  if test_bit(events, EV_REP):       s.append("EV_REP")
+  if test_bit(events, EV_FF):        s.append("EV_FF" )
+  if test_bit(events, EV_PWR):       s.append("EV_PWR")
+  if test_bit(events, EV_FF_STATUS): s.append("EV_FF_STATUS")
+
+  return s
+
+
+def createId(x):
+    if x in ('1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'):
+        return True
+    return False
+
 class eThread(threading.Thread):
 
     def get_id(self):
@@ -55,10 +102,17 @@ class InputDevs:
 
                 if line.startswith('I: Bus='):
                     device = dict()
-                    id = int(''.join(filter(str.isdigit, line)))
+
+                    id = (''.join(filter(createId, line)))
 
                 if line.startswith('N: Name='):
                     device['name'] = line[len('N: Name='):].strip('"\n')
+
+                if line.startswith('B: EV'):
+                    eventsHex = [int(x,base=16) for x in line[6:].split()]
+                    eventsHex.reverse()
+                    device['EV'] = EvHexToStr(eventsHex)
+
 
                 if line.startswith('H: Handlers='):
                     events = list(
@@ -90,10 +144,9 @@ class InputDevs:
                         except IndexError:
                             pass
 
-                if line.startswith('B: EV='):
-                    device['EV'] = line[len('B: EV='):].strip('"\n')
 
                 self.devs[id] = device
+
 
         f.close()
 
@@ -103,6 +156,7 @@ class InputDevs:
             self.inputs[f'dev/{str(id)}/thread']['value'] = 1
             self.inputs[f'dev/{str(id)}/thread']['interval'] = -1
             self.inputs[f'dev/{str(id)}/thread']['lastupdate'] = 0
+            self.inputs[f'dev/{str(id)}/thread']['ismouse'] = 1 if ('EV_ABS' in subdevice['EV'] or 'EV_REL' in subdevice['EV'] ) else 0
             self.inputs[f'dev/{str(id)}/thread']['interrupts'] = []
             self.inputs[f'dev/{str(id)}/thread']['thread'] = eThread(
                 target=self.devloop, args=(f"/dev/input/{subdevice['event'][0]}", id))
@@ -112,6 +166,7 @@ class InputDevs:
             self.inputs[f'dev/{str(id)}/thread']['thread'].start()
 
     def get_inputs(self) -> dict:
+
         return self.inputs
 
     def control_thread(self, id, value):
@@ -135,11 +190,9 @@ class InputDevs:
                 while self.inputs[f'dev/{str(id)}/thread']['value']:
                     # 16 byte for 32bit,  24 for 64bit
                     event = devfile.read(16 if systembits == 32 else 24)
-                    (timestamp, _id, type, keycode,
-                     value) = struct.unpack('llHHI', event)
+                    (timestamp, _id, type, keycode, value) = struct.unpack('llHHI', event)
 
                     if (type == 1): # type 1 = key
-
                         try:
                             self.inputs['lastinput']['value'] = devpath
                             self.inputs['lastinput']['lastupdate'] = time.time()
@@ -150,7 +203,7 @@ class InputDevs:
 
                             if 'interrupts' in self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']:
                                 for function in self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['interrupts']:
-                                    function(f'dev/{str(id)}/keys/{str(keycode)}', value)
+                                    function(f'dev/{str(id)}/keys/{str(keycode)}', value, self.inputs[f'dev/{str(id)}/thread']['ismouse'])
 
                             if 'interrupts' in self.inputs[f'dev/{str(id)}/thread']:
                                 for function in self.inputs[f'dev/{str(id)}/thread']['interrupts']:
@@ -165,4 +218,4 @@ class InputDevs:
             self.inputs[f'dev/{str(id)}/thread']['value'] = 0
             self.inputs[f'dev/{str(id)}/thread']['lastupdate'] = time.time()
             self.inputs[f'dev/{str(id)}/thread']['description'] += ' [access error]'
-            logging.error(f'dev/{str(id)}/thread not enough rights: ' + str(e))
+            logging.error(f'dev/{str(id)}/thread failed: ' + str(e))

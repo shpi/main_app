@@ -23,6 +23,8 @@
     "backgrounds/",
     "fonts/qmldir",
     "core/Logger.py",
+    "core/BaseModule.py",
+    "core/CircularBuffer.py",
     "core/ModuleManager.py",
     "core/HTTPServer.py",
     "ui/ShowValue.py",

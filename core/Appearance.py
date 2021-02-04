@@ -414,20 +414,27 @@ class Appearance(QObject):
     #    y = (x-a)/(b-a)*(d-c)+c
     #    return y
 
-    def interrupt(self, key, value):
+    def interrupt(self, key, value, ismouse=0):
         logging.debug(f"key: {key}, value: {value}")
         if value > 0:
+          if ismouse:
             self.lastuserinput = time.time()
             self._jump_state = 0
-
             if self.state in ('OFF', 'SLEEP'):
                 logging.debug(f"changing nightmode to ACTIVE, old state: {self.state}, lastinput: {self.lastuserinput}")
                 self.state = 'ACTIVE'
-
             if self._night:
                 self.set_backlight(self._max_backlight_night)
             else:
                 self.set_backlight(self._max_backlight)
+          elif self.state == 'OFF':
+              self.lastuserinput = time.time() - self._dim_timer
+              logging.debug(f"changing nightmode to SLEEP, old state: {self.state}, lastinput: {self.lastuserinput}")
+              self.state = 'SLEEP'
+              if self._night:
+                  self.set_backlight(self._min_backlight_night)
+              else:
+                  self.set_backlight(self._min_backlight)
 
     @Signal
     def blackChanged(self):
