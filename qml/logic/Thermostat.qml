@@ -1,4 +1,4 @@
-import QtQuick 2.12
+﻿import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtGraphicalEffects 1.12
 import QtQuick.Shapes 1.12
@@ -79,12 +79,15 @@ Rectangle {
 
         Text {
             id: actualSetTemperature
-            text: parent.value.toFixed(1) + "°"
+            text: (modules.loaded_instances['Logic']['Thermostat'][instancename].actual_temp + modules.loaded_instances['Logic']['Thermostat'][instancename].offset).toFixed(1) + "°"
             anchors.verticalCenter: parent.verticalCenter
             anchors.verticalCenterOffset: -5
             anchors.horizontalCenter: parent.horizontalCenter
             font.pixelSize: 40
             color: Colors.black
+
+
+
         }
 
 
@@ -95,7 +98,7 @@ Rectangle {
             font.pixelSize: 40
             font.family: localFont.name
             text: Icons.fire
-            color: modules.loaded_instances['Logic']['Thermostat'][instancename].heatingstate ? "yellow" : "grey"
+            color: modules.loaded_instances['Logic']['Thermostat'][instancename].heating_state > 0 ? "orange" : "grey"
 
 
         }

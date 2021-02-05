@@ -23,7 +23,7 @@ Rectangle {
         text: instance.icon
         color: Colors.black
         anchors.top: parent.top
-        anchors.topMargin: 5
+        anchors.topMargin: 3
         anchors.horizontalCenter: parent.horizontalCenter
         font.pixelSize: 90
         font.family: localFont.name
@@ -34,7 +34,7 @@ Rectangle {
         text: instance.value
         color: Colors.black
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 5
+        anchors.bottomMargin: 3
         anchors.horizontalCenter: parent.horizontalCenter
         font.pixelSize: 40
     }

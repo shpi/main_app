@@ -45,40 +45,17 @@ Item {
             width: 550
             model: inputs.typeList
             textRole: 'path'
-            onActivated:  modules.loaded_instances['Logic']['Thermostat'][instancename].irtemp_path = this.currentText
+            onActivated:  modules.loaded_instances['Logic']['Thermostat'][instancename].temp_path = this.currentText
 
             Component.onCompleted: {
 
-                combo_temperature1.currentIndex = getIndex(modules.loaded_instances['Logic']['Thermostat'][instancename].irtemp_path, inputs.typeList)
+                combo_temperature1.currentIndex = getIndex(modules.loaded_instances['Logic']['Thermostat'][instancename].temp_path, inputs.typeList)
             }
 
             Label {
                 anchors.right: parent.left
                 anchors.rightMargin: 10
                 text: "Room Temp."
-
-                font.family: localFont.name
-                color: Colors.black
-            }
-        }
-
-        ComboBox {
-            id: combo_temperature2
-            anchors.right: parent.right
-            width: 550
-            model: inputs.typeList
-            textRole: 'path'
-            onActivated:  modules.loaded_instances['Logic']['Thermostat'][instancename].internaltemp_path = this.currentText
-
-            Component.onCompleted: {
-
-                combo_temperature2.currentIndex = getIndex(modules.loaded_instances['Logic']['Thermostat'][instancename].internaltemp_path, inputs.typeList)
-            }
-
-            Label {
-                anchors.right: parent.left
-                anchors.rightMargin: 10
-                text: "Int. Temp."
 
                 font.family: localFont.name
                 color: Colors.black
@@ -96,7 +73,7 @@ Item {
 
             Component.onCompleted: {
 
-                combo_temperature2.currentIndex = getIndex(modules.loaded_instances['Logic']['Thermostat'][instancename].heating_contact_path, inputs.outputList)
+                combo_heatingcontact.currentIndex = getIndex(modules.loaded_instances['Logic']['Thermostat'][instancename].heating_contact_path, inputs.outputList)
             }
 
             Label {
@@ -167,8 +144,6 @@ Item {
                 id: scheduleframe
                 property int currentScheduleMode: modules.loaded_instances['Logic']['Thermostat'][instancename].schedule_mode
 
-                onCurrentScheduleModeChanged: modules.loaded_instances['Logic']['Thermostat'][instancename].schedule_mode = currentScheduleMode
-
 
                 Grid {
                     columns: 2
@@ -176,7 +151,7 @@ Item {
                     RadioButton {
                         id: scheduleMode0
                         checked: scheduleframe.currentScheduleMode == 0
-                        onClicked: scheduleframe.currentScheduleMode = 0
+                        onClicked: modules.loaded_instances['Logic']['Thermostat'][instancename].schedule_mode = 0
                         text: qsTr("No schedule")
 
                             contentItem: Text {
@@ -189,7 +164,7 @@ Item {
                     RadioButton {
                         id: scheduleMode1
                         checked: scheduleframe.currentScheduleMode ==  1
-                        onClicked: scheduleframe.currentScheduleMode = 1
+                        onClicked: modules.loaded_instances['Logic']['Thermostat'][instancename].schedule_mode = 1
                         text: qsTr("Daily")
                         contentItem: Text {
                             text: parent.text
@@ -202,7 +177,7 @@ Item {
                     RadioButton {
                         id: scheduleMode2
                         checked: scheduleframe.currentScheduleMode == 2
-                        onClicked: scheduleframe.currentScheduleMode = 2
+                        onClicked: modules.loaded_instances['Logic']['Thermostat'][instancename].schedule_mode =  2
                         text: qsTr("Workday / Weekend")
                         contentItem: Text {
                             text: parent.text
@@ -214,7 +189,7 @@ Item {
                     RadioButton {
                         id: scheduleMode7
                         checked: scheduleframe.currentScheduleMode == 7
-                        onClicked: scheduleframe.currentScheduleMode = 7
+                        onClicked: modules.loaded_instances['Logic']['Thermostat'][instancename].schedule_mode =  7
                         text: qsTr("Weekly")
                         contentItem: Text {
                             text: parent.text

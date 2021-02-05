@@ -11,6 +11,25 @@ Rectangle {
     property real max_temp: 32
     property real min_temp: 16
 
+
+
+    function setRotation() {
+
+
+        if (modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode !== 0) {
+      rotator.rotation = (Math.abs((modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp /
+                                               ((max_temp - min_temp) / 240) -480) ) )
+
+
+        temptext.text = modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp.toFixed(1)  + '°C'
+        }
+        if (modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode === 0)
+         temptext.text = 'OFF'
+
+    }
+
+
+
     id: tickswindow
     height: parent.height
     width: height
@@ -18,8 +37,7 @@ Rectangle {
     clip: true
     color: "transparent"
 
-    Component.onCompleted: rotator.rotation = (Math.abs((modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp /
-                                                         ((max_temp - min_temp) / 240) -480) ) )
+    Component.onCompleted: setRotation()
 
 
     ComboBox {
@@ -37,9 +55,7 @@ Rectangle {
         onCurrentTextChanged: {
             if (tickswindow.instancename !== this.currentText) {
                 tickswindow.instancename = this.currentText
-                rotator.rotation = (Math.abs((modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp /
-                                              ((max_temp - min_temp) / 240) -480) ) )
-
+                setRotation()
 
 
             }
@@ -56,8 +72,11 @@ Rectangle {
         from: 0 // 0 off, 1 away, 2 eco , 3 normal, 4 party
         to: 4
         stepSize: 1
-        value: 3
+        value: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode
         snapMode: Slider.SnapAlways
+
+        onMoved: { modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode = value
+                   setRotation() }
 
         width: 500
         height: radius * 2
@@ -207,24 +226,64 @@ Rectangle {
 
     Text {
         id: temptext
-        property real temperatur: 20
-
-        //text: temperatur.toFixed(1) + '°C'
-        //text: (32 - ( (rotator.rotation / 15))).toFixed(1) + "°C"
-        text: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp.toFixed(1)  + '°C'
-        // (min_temp + (-rotator.rotation + 240) * ((max_temp - min_temp) / 240)).toFixed(1) + '°C'
-
-
+        text: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode > 0 ? modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp.toFixed(1)  + '°C' : 'OFF'
         color: Colors.black
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter
         font.pixelSize: tickswindow.width * 0.10
+
+        onTextChanged: { opacity = 1
+                         animation.start()
+
+                        }
+
+        NumberAnimation {id: animation; target: temptext; property: "opacity"; to: 0; duration: 2000 }
+    }
+
+
+    Text {
+        id: actualtemp
+        text: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].actual_temp.toFixed(1)  + '°C'
+        color: Colors.black
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.horizontalCenter: parent.horizontalCenter
+        font.pixelSize: tickswindow.width * 0.10
+
+        opacity: temptext.opacity == 0 ? 1 : 0
+
+        Text {
+            id: offsetTemperature
+            visible: modules.loaded_instances['Logic']['Thermostat'][instancename].offset !== 0
+            text: modules.loaded_instances['Logic']['Thermostat'][instancename].offset > 0 ? '+' + modules.loaded_instances['Logic']['Thermostat'][instancename].offset : modules.loaded_instances['Logic']['Thermostat'][instancename].offset
+            anchors.top: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            font.pixelSize: 25
+            color: Colors.black
+        }
+
+    }
+
+    Text{
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.right: parent.right
+        anchors.leftMargin: 30
+        anchors.verticalCenterOffset: 30
+        font.pixelSize: 120
+        font.family: localFont.name
+        text: Icons.fire
+        color: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].heating_state > 0 ? "orange" : "grey"
+
+
     }
 
     RoundButton
     {
 
-        visible: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].schedule_mode > 0
+        visible: (modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode == 2 ||
+                 modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode == 3) &&
+                 modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].schedule_mode > 0
+                 ? true : false
+
         anchors.right: temptext.left
         anchors.rightMargin: 30
         anchors.verticalCenter: temptext.verticalCenter
@@ -281,6 +340,9 @@ Rectangle {
                 rotator.rotation = Math.abs(settemp / step - 480)
 
                 modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp = settemp
+                temptext.text = modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp.toFixed(1)  + '°C'
+
+
 
 
                 }
@@ -300,6 +362,7 @@ Rectangle {
         layer.samples: 4
 
         property int fontheight: rotator.height * 0.04
+        visible: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode > 0
 
         id: rotator
         height: tickswindow.height * 1.5
@@ -358,6 +421,8 @@ Rectangle {
     }
 
     Rectangle {
+
+        visible: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode > 0
 
         anchors.verticalCenter: tickswindow.verticalCenter
         anchors.right: tickswindow.right
