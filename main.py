@@ -13,7 +13,7 @@ from PySide2.QtCore import QSettings, qInstallMessageHandler
 from PySide2.QtCore import QTimer, QUrl
 from PySide2.QtQml import QQmlApplicationEngine
 from PySide2.QtWidgets import QApplication
-
+from PySide2.QtGui import QFont, QFontDatabase
 from core.Appearance import Appearance
 from core.HTTPServer import HTTPServer
 from core.Inputs import InputsDict
@@ -152,12 +152,17 @@ def killThreads():
 
 app = QApplication(sys.argv)
 
+QFontDatabase.addApplicationFont("./fonts/orkney-custom.ttf")
+
+
 qInstallMessageHandler(qml_log)
 
 app.aboutToQuit.connect(killThreads)
 app.setApplicationName("Main")
 app.setOrganizationName("SHPI GmbH")
 app.setOrganizationDomain("shpi.de")
+
+app.setFont(QFont('Orkney Regular', 10))
 
 engine = QQmlApplicationEngine()
 engine.rootContext().setContextProperty("logs", logs)
