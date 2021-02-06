@@ -415,7 +415,7 @@ class InputsDict(QObject):
            exception_type, exception_object, exception_traceback = sys.exc_info()
            line_number = exception_traceback.tb_lineno
            logging.error('error: {}'.format(e))
-           logging.error('error in line: {}'.format(line_number))
+           logging.error('key: ' + key + ' error in line: {}'.format(line_number))
 
     @Slot(str, str)
     def set(self, key, value):

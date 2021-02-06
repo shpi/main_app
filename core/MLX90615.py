@@ -56,7 +56,7 @@ class MLX90615:
 
                      #self.load = os.getloadavg()[2]
                      self.cpu_temp_mean = self.get_cpu_temp()
-                     self.fan_speed_mean = self.get_input_value(self._fan_path)
+                     self.fan_speed_mean = 1900
                      self.backlight_level_mean = self.get_input_value(self._backlight_path)
 
                      #self.current_consumption_mean = 0
@@ -83,6 +83,19 @@ class MLX90615:
                                      'call': self.calc_temp}
 
 
+                     self._thread = {'description': 'Thread for MLX90615',
+                                     'value': 1,
+                                     'type': DataType.BOOL,
+                                     'lastupdate': 0,
+                                     'interval': -1,
+                                     'interrupts' : [],
+                                     'thread': threading.Thread(target=self.mlx_thread)
+                                      }
+
+                     self._thread['thread'].start()
+
+
+
 
                      break
 
@@ -94,7 +107,8 @@ class MLX90615:
     def get_inputs(self) -> dict:
 
         return {'roomtemp/module' : self._module,
-                'roomtemp/temp' : self._temp
+                'roomtemp/temp' : self._temp,
+                'dev/mlx90615/thread' : self._thread
                }
 
 
@@ -110,7 +124,7 @@ class MLX90615:
 
 
                 if (sensor_temp > object_temp):
-                    temp = object_temp - ((object_temp - sensor_temp) / 6)
+                    temp = object_temp - ((sensor_temp - object_temp) / 6)
                     logging.info('raumtemperatur einfach korrigiert: ' + str(temp))
 
                 else:
@@ -147,19 +161,13 @@ class MLX90615:
 
     def update(self):
 
-        self.cpu_temp_mean *= 0.95
-        self.cpu_temp_mean += self.get_cpu_temp() // 20
+        self.cpu_temp_mean = (self.cpu_temp_mean * 9 + self.get_cpu_temp()) / 10
+        self.sensor_temp_mean = (self.sensor_temp_mean * 9 + (self.single_shot('in_temp_ambient_raw') or self.sensor_temp_mean)) / 10
+        self.fan_speed_mean = (self.fan_speed_mean * 9  + self.get_input_value(self._fan_path)) / 10
 
-        self.sensor_temp_mean *= 0.95
-        self.sensor_temp_mean += self.single_shot('in_temp_ambient_raw') // 20
-
-
-        self.fan_speed_mean *= 0.95
-        self.fan_speed_mean += self.get_input_value(self._fan_path) // 20
-
-
-        self.backlight_level_mean *= 0.95
-        self.backlight_level_mean += self.get_input_value(self._backlight_path) // 20
+        self.backlight_level_mean *= 9
+        self.backlight_level_mean += self.get_input_value(self._backlight_path) 
+        self.backlight_level_mean /= 10
 
         return 'OK'
 
@@ -170,7 +178,7 @@ class MLX90615:
         if path not in self.inputs.entries:
             return 0
         else:
-            return self.inputs[path]['value']
+            return self.inputs.entries[path]['value']
 
 
     def buffer_enable(self,value):
@@ -197,12 +205,11 @@ class MLX90615:
 
 
     def single_shot(self, channel ='/in_temp_object_raw'):
-        if os.path.isfile(self.ospath + channel):
-        #print(sensor + '/in_temp_object_raw')
-            with open(self.ospath + '/in_temp_object_raw', 'r') as rf:
+        if os.path.isfile(self.ospath + '/' + channel):
+            with open(self.ospath + '/' + channel, 'r') as rf:
                 return int(rf.read().rstrip())
 
-        return 0
+        return None
 
 
     def get_cpu_temp(self): # only for now
@@ -219,10 +226,11 @@ class MLX90615:
 
     def mlx_thread(self):
 
+        logging.info('starting MLX90615 thread')
 
         if os.path.exists('/dev/' + self.id):
             with open('/dev/' + self.id, 'rb') as devfile:
-                while True:
+                while self._thread['value']:
 
                     line = devfile.read(16)
                     (tempobj, tempamb, _, timestamp) = struct.unpack('<HHiq', line)
@@ -239,23 +247,34 @@ class MLX90615:
                     if (self.object_mean - tempobj) < -self.delta:
                              print('SCHNELLE ABKÜHLUNG: ' + str((self.object_mean - tempobj)))
                              self.last_movement = time.time()
+                             if 'interrupts' in self.inputs.entries[f'dev/mlx90615/thread']:
+                                for function in self.inputs[f'dev/mlx90615/thread']['interrupts']:
+                                    function(f'dev/mlx90615', self.object_mean - tempobj, 0)
+
 
                     if (self.object_mean - tempobj) > self.delta:
                              print('SCHNELLE AUFWÄRMUNG: ' + str((self.object_mean - tempobj)))
                              self.last_movement = time.time()
-
-                    self.object_mean *= 0.95
-                    self.object_mean += tempobj // 20
-
-
+                             if 'interrupts' in self.inputs.entries[f'dev/mlx90615/thread']:
+                                for function in self.inputs[f'dev/mlx90615/thread']['interrupts']:
+                                    function(f'dev/mlx90615', self.object_mean - tempobj, 0)
 
 
-                    #while (time.time() - lastuserinput) < 2:
 
-                    #         buffer_enable(0)
-                    #         time.sleep(2)
+                    self.object_mean = (self.object_mean * 9 + tempobj) // 10
 
-                    #buffer_enable(1)
+
+
+                    try:
+                     while (time.time() - self.inputs.entries['lasttouch']['lastupdate']) < 3:
+                            logging.info('halted mlx90615 thread due touch inputs')
+                            buffer_enable(0)
+                            time.sleep(4)
+
+                     buffer_enable(1)
+                    except Exception as e:
+                        #logging.error(str(e))
+                        pass
 
 
 
