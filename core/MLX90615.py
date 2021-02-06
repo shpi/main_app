@@ -115,25 +115,32 @@ class MLX90615:
     def calc_temp(self):
 
 
-        if self.last_movement + 60 < time.time():
+            if self.last_movement + 60 > time.time():
+                logging.info('skipping room temp calculation due to movement')
+                return self._temp['value']
+
+            if 'lastinput' in self.inputs.entries and self.inputs.entries['lastinput']['lastupdate'] + 60 > time.time():
+                logging.info('skipping room temp calculation due to input')
+                return self._temp['value']
+
 
             object_temp = (self.object_mean - 13657.5) * 20
             sensor_temp = (self.sensor_temp_mean - 13657.5) * 20
 
-            logging.info('objekt temperatur gemittelt: ' + str(object_temp))
-            logging.info('sensor temperatur gemittelt: ' + str(sensor_temp))
+            logging.info('object temperature mean: ' + str(object_temp))
+            logging.info('sensor temperature mean: ' + str(sensor_temp))
 
             if sensor_temp > object_temp:
                 temp = object_temp - ((sensor_temp - object_temp) / 6)
-                logging.info('raumtemperatur einfach korrigiert: ' + str(temp))
+                logging.info('raumtemperatur simple correction: ' + str(temp))
 
             else:
                 temp = object_temp
-                logging.info('raumptemperatur ohne korrektur: ' + str(temp))
+                logging.info('raumptemperatur no correction: ' + str(temp))
 
             if self.cpu_temp_mean > sensor_temp:
                 temp -= (self.cpu_temp_mean - sensor_temp) / 60
-                logging.info('raumtemperatur korrigiert cpu: ' + str(temp))
+                logging.info('raumtemperatur correction cpu: ' + str(temp))
 
             if self.fan_speed_mean < 1800:
                 temp -= 1000
@@ -147,10 +154,8 @@ class MLX90615:
 
             self.last_roomtemp = time.time()
 
-        else:
-            logging.info('skipping room temp calculation due to movement')
 
-        return self._temp['value']
+            return self._temp['value']
 
     def update(self):
 

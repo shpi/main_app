@@ -205,7 +205,7 @@ class Thermostat(QObject):
             self._party_temp = value
 
         self.settingsChanged.emit()
-        self.update()
+        
 
 
     # @Property(int, notify=scheduleChanged)
@@ -233,7 +233,7 @@ class Thermostat(QObject):
             self.settings.setValue("thermostat/" + self.name + '/thermostat_mode', value)
             self.thermostatModeChanged.emit()
             self.settingsChanged.emit()
-            self.update()
+            
         else:
             logging.error('Requested thermostat mode not valid')
 
@@ -245,7 +245,7 @@ class Thermostat(QObject):
         self._heating_contact_path = str(value)
         self.settings.setValue("thermostat/" + self.name + '/heating_contact_path', self._heating_contact_path)
         self.pathChanged.emit()
-        self.update()
+        
 
     def temp_path(self):
         return str(self._temp_path)
@@ -255,7 +255,7 @@ class Thermostat(QObject):
         self._temp_path = str(value)
         self.settings.setValue("thermostat/" + self.name + '/temp_path', self._temp_path)
         self.settingsChanged.emit()
-        self.update()
+        
 
     def heating_state(self):
         return str(self._heating_state)
