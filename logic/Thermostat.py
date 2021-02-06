@@ -167,7 +167,7 @@ class Thermostat(QObject):
 
     @Property(float, notify=tempChanged)
     def actual_temp(self):
-        return float(self._actual_temp)
+        return float(self._actual_temp / 1000)  
 
     def set_temp(self):
         if self.thermostat_mode == ThermostatModes.OFF:
@@ -205,6 +205,8 @@ class Thermostat(QObject):
             self._party_temp = value
 
         self.settingsChanged.emit()
+        self.update()
+
 
     # @Property(int, notify=scheduleChanged)
     def schedule_mode(self):
@@ -283,9 +285,7 @@ class Thermostat(QObject):
 
         try:
 
-            if self._actual_temp != self.inputs[self._temp_path]['value']:  # in millicelsius
-
-                self._actual_temp = self.inputs[self._temp_path]['value'] / 1000
+                self._actual_temp = self.inputs[self._temp_path]['value']
                 self.tempChanged.emit()
 
                 if self._thermostat_mode == ThermostatModes.OFF:  # totally off
@@ -326,13 +326,14 @@ class Thermostat(QObject):
                     return 'ERROR'
 
 
-
                 if (self._actual_temp + self._hysteresis) < set_temp:
-
+                    logging.info('set temp: ' + str(set_temp))
+                    logging.info('act temp: ' + str(self._actual_temp))
                     self.set_state(1)
 
                 elif (self._actual_temp + self._hysteresis) > set_temp:
-
+                    logging.info('set temp: ' + str(set_temp))
+                    logging.info('act temp: ' + str(self._actual_temp))
                     self.set_state(0)
 
                 return 'OK'

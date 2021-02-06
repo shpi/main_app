@@ -41,9 +41,10 @@ class MLX90615:
 
                         self.cpu_temp_mean = self.get_cpu_temp()
                         self.fan_speed_mean = 1900
+                        self._backlight_path = settings.value('mlx/backlight_path', 'backlight/brightness')
+
                         self.backlight_level_mean = self.get_input_value(self._backlight_path)
                         self._fan_path = settings.value('mlx/fan_path', 'hwmon/shpi/fan1_input')
-                        self._backlight_path = settings.value('mlx/backlight_path', 'backlight/brightness')
 
                         # self._backup_sensor_path = settings.value("mlx/" + self.name + '/backup_sensor_path', '')
                         # self._current_sensor_path = settings.value("mlx/" + self.name + '/current_path', '')
@@ -58,7 +59,7 @@ class MLX90615:
 
                         # self.load = os.getloadavg()[2]
                         self.cpu_temp_mean = self.get_cpu_temp()
-                        self.fan_speed_mean = self.get_input_value(self._fan_path)
+                        self.fan_speed_mean = 1900
                         self.backlight_level_mean = self.get_input_value(self._backlight_path)
 
                         # self.current_consumption_mean = 0
@@ -114,7 +115,7 @@ class MLX90615:
     def calc_temp(self):
 
 
-        if self.last_movement + 30 < time.time():
+        if self.last_movement + 60 < time.time():
 
             object_temp = (self.object_mean - 13657.5) * 20
             sensor_temp = (self.sensor_temp_mean - 13657.5) * 20
@@ -231,18 +232,18 @@ class MLX90615:
                     # if (a[1] - a[0]) > self.delta:
 
                     if (self.object_mean - tempobj) < -self.delta:
-                             print('SCHNELLE ABKÜHLUNG: ' + str((self.object_mean - tempobj)))
+                             logging.info('fast temp change: ' + str((self.object_mean - tempobj)))
                              self.last_movement = time.time()
                              if 'interrupts' in self.inputs.entries[f'dev/mlx90615/thread']:
-                                for function in self.inputs[f'dev/mlx90615/thread']['interrupts']:
+                                for function in self.inputs.entries[f'dev/mlx90615/thread']['interrupts']:
                                     function(f'dev/mlx90615', self.object_mean - tempobj, 0)
 
 
                     if (self.object_mean - tempobj) > self.delta:
-                             print('SCHNELLE AUFWÄRMUNG: ' + str((self.object_mean - tempobj)))
+                             logging.info('fast temp change: ' + str((self.object_mean - tempobj)))
                              self.last_movement = time.time()
                              if 'interrupts' in self.inputs.entries[f'dev/mlx90615/thread']:
-                                for function in self.inputs[f'dev/mlx90615/thread']['interrupts']:
+                                for function in self.inputs.entries[f'dev/mlx90615/thread']['interrupts']:
                                     function(f'dev/mlx90615', self.object_mean - tempobj, 0)
 
                     self.object_mean = (self.object_mean * 9 + tempobj) // 10
@@ -250,12 +251,12 @@ class MLX90615:
 
 
                     try:
-                     while (time.time() - self.inputs.entries['lasttouch']['lastupdate']) < 3:
+                     while (time.time() - self.inputs.entries['lasttouch']['lastupdate']) < 5:
                             logging.info('halted mlx90615 thread due touch inputs')
-                            buffer_enable(0)
-                            time.sleep(4)
+                            self.buffer_enable(0)
+                            time.sleep(6)
 
-                     buffer_enable(1)
+                     self.buffer_enable(1)
                     except Exception as e:
                         #logging.error(str(e))
                         pass

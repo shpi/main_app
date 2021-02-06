@@ -93,6 +93,14 @@ class InputDevs:
         self.inputs['lastinput']['type'] = DataType.TIME
         self.inputs['lastinput']['interval'] = -1
 
+
+        self.inputs['lasttouch'] = dict()
+        self.inputs['lasttouch']['description'] = 'Last Mouse Input'
+        self.inputs['lasttouch']['value'] = 'start'
+        self.inputs['lasttouch']['lastupdate'] = time.time()
+        self.inputs['lasttouch']['type'] = DataType.TIME
+        self.inputs['lasttouch']['interval'] = -1
+
         with open(self.FILENAME, 'r') as f:
 
             while True:
@@ -210,7 +218,11 @@ class InputDevs:
                     if (type == 1):  # type 1 = key
                         try:
                             self.inputs['lastinput']['value'] = devpath
-                            self.inputs['lastinput']['lastupdate'] = time.time()
+                            self.inputs['lastinput']['lastupdate'] = timestamp
+
+                            if self.inputs[f'dev/{str(id)}/thread']['ismouse']:
+                                self.inputs['lasttouch']['value'] = devpath
+                                self.inputs['lasttouch']['lastupdate'] = timestamp
 
                             self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['value'] = value
                             self.inputs[f'dev/{str(id)}/keys/{str(keycode)}']['lastupdate'] = time.time()
