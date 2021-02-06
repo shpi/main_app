@@ -28,6 +28,7 @@ from hardware.System import SystemInfo
 from hardware.Wifi import Wifi
 from core.Logger import LogModel, MessageHandler
 
+from core.MLX90615 import MLX90615
 
 if check_output(['uname', '-m']).startswith(b'armv6'):
     os.environ["QT_QPA_PLATFORM"] = "eglfs"
@@ -123,6 +124,7 @@ inputdevs = InputDevs()
 backlight = Backlight()
 wifi = Wifi(settings)
 httpserver = HTTPServer(inputs, settings)
+mlx90615 = MLX90615(inputs,settings)
 alsamixer = AlsaMixer(inputs, settings)
 inputs.add(iio.get_inputs())
 inputs.add(wifi.get_inputs())
@@ -131,7 +133,7 @@ inputs.add(hwmon.get_inputs())
 inputs.add(inputdevs.get_inputs())
 inputs.add(systeminfo.get_inputs())
 inputs.add(backlight.get_inputs())
-
+inputs.add(mlx90615.get_inputs())
 appearance = Appearance(inputs, settings)
 inputs.add(appearance.get_inputs())
 

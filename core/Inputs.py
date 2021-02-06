@@ -14,7 +14,7 @@ import shiboken2
 import ctypes
 import logging
 import numpy as np
-
+import sys
 
 class InputListModel(QAbstractListModel):
     PathRole = Qt.UserRole + 1000
