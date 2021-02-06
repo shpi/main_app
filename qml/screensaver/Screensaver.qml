@@ -77,7 +77,7 @@ Item {
     Timer {
         property bool direction: true
         property int speed: 3
-        interval: 10000
+        interval: 20000
         repeat: true
         running: parent.parent._isCurrentItem
         onTriggered: {

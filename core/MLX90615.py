@@ -116,39 +116,39 @@ class MLX90615:
 
 
             if self.last_movement + 60 > time.time():
-                logging.info('skipping room temp calculation due to movement')
+                logging.debug('skipping room temp calculation due to movement')
                 return self._temp['value']
 
             if 'lastinput' in self.inputs.entries and self.inputs.entries['lastinput']['lastupdate'] + 60 > time.time():
-                logging.info('skipping room temp calculation due to input')
+                logging.debug('skipping room temp calculation due to input')
                 return self._temp['value']
 
 
             object_temp = (self.object_mean - 13657.5) * 20
             sensor_temp = (self.sensor_temp_mean - 13657.5) * 20
 
-            logging.info('object temperature mean: ' + str(object_temp))
-            logging.info('sensor temperature mean: ' + str(sensor_temp))
+            logging.debug('object temperature mean: ' + str(object_temp))
+            logging.debug('sensor temperature mean: ' + str(sensor_temp))
 
             if sensor_temp > object_temp:
                 temp = object_temp - ((sensor_temp - object_temp) / 6)
-                logging.info('raumtemperatur simple correction: ' + str(temp))
+                logging.debug('raumtemperatur simple correction: ' + str(temp))
 
             else:
                 temp = object_temp
-                logging.info('raumptemperatur no correction: ' + str(temp))
+                logging.debug('raumptemperatur no correction: ' + str(temp))
 
             if self.cpu_temp_mean > sensor_temp:
                 temp -= (self.cpu_temp_mean - sensor_temp) / 60
-                logging.info('raumtemperatur correction cpu: ' + str(temp))
+                logging.debug('raumtemperatur correction cpu: ' + str(temp))
 
             if self.fan_speed_mean < 1800:
                 temp -= 1000
-                logging.info('vent off, temp corrected: ' + str(temp))
+                logging.debug('vent off, temp corrected: ' + str(temp))
 
             if self.backlight_level_mean > 0:
                 temp -= self.backlight_level_mean * 3
-                logging.info('raumptemperatur corrected backlight: ' + str(temp))
+                logging.debug('raumptemperatur corrected backlight: ' + str(temp))
 
             self._temp['value'] = temp
 
@@ -237,7 +237,7 @@ class MLX90615:
                     # if (a[1] - a[0]) > self.delta:
 
                     if (self.object_mean - tempobj) < -self.delta:
-                             logging.info('fast temp change: ' + str((self.object_mean - tempobj)))
+                             logging.debug('fast temp change: ' + str((self.object_mean - tempobj)))
                              self.last_movement = time.time()
                              if 'interrupts' in self.inputs.entries[f'dev/mlx90615/thread']:
                                 for function in self.inputs.entries[f'dev/mlx90615/thread']['interrupts']:
@@ -245,7 +245,7 @@ class MLX90615:
 
 
                     if (self.object_mean - tempobj) > self.delta:
-                             logging.info('fast temp change: ' + str((self.object_mean - tempobj)))
+                             logging.debug('fast temp change: ' + str((self.object_mean - tempobj)))
                              self.last_movement = time.time()
                              if 'interrupts' in self.inputs.entries[f'dev/mlx90615/thread']:
                                 for function in self.inputs.entries[f'dev/mlx90615/thread']['interrupts']:
@@ -257,7 +257,7 @@ class MLX90615:
 
                     try:
                      while (time.time() - self.inputs.entries['lasttouch']['lastupdate']) < 5:
-                            logging.info('halted mlx90615 thread due touch inputs')
+                            logging.debug('halted mlx90615 thread due touch inputs')
                             self.buffer_enable(0)
                             time.sleep(6)
 

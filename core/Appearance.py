@@ -31,7 +31,7 @@ class Appearance(QObject):
 
         self.path = 'appearance'
         self.inputs = inputs.entries
-        self.backlightlevel = 0
+        self._backlightlevel = 0
         self._blackfilter = 0
         self.settings = settings
         self._module_inputs = dict()
@@ -81,6 +81,11 @@ class Appearance(QObject):
     @Signal
     def dim_timer_changed(self):
         pass
+
+    @Signal
+    def blackChanged(self):
+        pass
+
 
     def get_inputs(self):
         return self._module_inputs
@@ -378,9 +383,15 @@ class Appearance(QObject):
     def jumpHome(self):
         pass
 
-    @Property(int, notify=jumpHome)
+
+    @Property(int, notify=blackChanged)
+    def backlightlevel(self):
+        return int(self._backlightlevel)
+
+
+    @Property(bool, notify=jumpHome)
     def jump_state(self):
-        return int(self._jump_state)
+        return bool(self._jump_state)
 
     def set_backlight(self, value):
         setthread = threading.Thread(target=self._set_backlight, args=(value,))
@@ -388,22 +399,21 @@ class Appearance(QObject):
 
     def _set_backlight(self, value):
         value = int(value)
-        if value != self.backlightlevel:
+        if value != self._backlightlevel:
             if value < 1:
                 self.inputs['backlight/brightness']['set'](0)
 
             elif value < 30:
                 self.inputs['backlight/brightness']['set'](1)
                 self._blackfilter = ((100 - (value * 3.3)) / 100)
-                self.blackChanged.emit()
 
             elif value <= 100:
                 self.inputs['backlight/brightness']['set'](value)
                 # mapping happens in backlight class int(self.mapFromTo(value, 30, 100, 1, 100)))
                 self._blackfilter = 0
-                self.blackChanged.emit()
 
-            self.backlightlevel = value
+            self.blackChanged.emit()
+            self._backlightlevel = value
 
     # def mapFromTo(self, x, a, b, c, d):
     #    y = (x-a)/(b-a)*(d-c)+c
@@ -415,6 +425,8 @@ class Appearance(QObject):
             if ismouse:
                 self.lastuserinput = time.time()
                 self._jump_state = 0
+                self.jumpHome.emit()
+
                 if self.state in ('OFF', 'SLEEP'):
                     logging.debug(
                         f"changing nightmode to ACTIVE, old state: {self.state}, lastinput: {self.lastuserinput}")
@@ -435,9 +447,6 @@ class Appearance(QObject):
                     else:
                         self.set_backlight(self._min_backlight)
 
-    @Signal
-    def blackChanged(self):
-        pass
 
     @Slot(str, int)
     def setDeviceTrack(self, path, value):

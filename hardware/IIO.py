@@ -53,9 +53,10 @@ class IIO:
             if (retries < 3):
                 return IIO.read_iio(id, channel, retries + 1)
             else:
+
                 exception_type, exception_object, exception_traceback = sys.exc_info()
                 line_number = exception_traceback.tb_lineno
-                logging.error('error: {}'.format(e))
+                logging.error('channel' + channel + ' error: {}'.format(e))
                 logging.error('error in line: {}'.format(line_number))
                 return None
 

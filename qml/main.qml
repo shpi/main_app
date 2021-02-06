@@ -1,4 +1,4 @@
-import QtQuick 2.12
+wimport QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.VirtualKeyboard 2.1
 import Qt.labs.folderlistmodel 2.12
@@ -350,17 +350,18 @@ ApplicationWindow {
     Connections {
         target: appearance
         function onJumpHome() {
-            view.currentIndex = 1
+            if (appearance.jump_state > 0)  { view.currentIndex = 1}
         }
     }
 
     Timer {
 
-        interval: 20000
+        interval: 30000
         repeat: true
-        running: appearance.jump_state > 0 //to make ui more fluent
+        running: (appearance.jump_state && appearance.backlightlevel > 0) //to make ui more fluent
         onTriggered: {
 
+            console.log('Jump State ' + appearance.jump_state.toString())
             mask.angle = Math.random() * 180
 
             mask.verticalOffset = -mask.height / 4 + (Math.random(
