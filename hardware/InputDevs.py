@@ -4,6 +4,7 @@ import threading
 import struct
 import ctypes
 import time
+import sys
 from core.DataTypes import DataType
 from functools import partial
 
@@ -234,3 +235,7 @@ class InputDevs:
             self.inputs[f'dev/{str(id)}/thread']['lastupdate'] = time.time()
             self.inputs[f'dev/{str(id)}/thread']['description'] += ' [access error]'
             logging.error(f'dev/{str(id)}/thread failed: ' + str(e))
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            line_number = exception_traceback.tb_lineno
+            logging.error('error: {}'.format(e))
+            logging.error('error in line: {}'.format(line_number))

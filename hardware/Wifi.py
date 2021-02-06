@@ -9,6 +9,7 @@ from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Prope
 from core.DataTypes import DataType
 from hardware.System import SystemInfo
 import logging
+import sys
 
 
 class WifiNetworkModel(QAbstractListModel):
@@ -209,7 +210,10 @@ class Wifi(QObject):
                     retry -= 1
             except Exception as e:
                 retry -= 1
-                logging.info(str(e))
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                line_number = exception_traceback.tb_lineno
+                logging.error('error: {}'.format(e))
+                logging.error('error in line: {}'.format(line_number))
         self._networks = WifiNetworkModel(networks, self.settings)
         self.networksChanged.emit()
 
@@ -224,7 +228,10 @@ class Wifi(QObject):
             if line.startswith(b'bssid='):
                 self.connected_bssid = line[6:].rstrip().decode()
         except Exception as e:
-            logging.error(str(e))
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            line_number = exception_traceback.tb_lineno
+            logging.error('error: {}'.format(e))
+            logging.error('error in line: {}'.format(line_number))
 
         return 'UNKNOWN'
 

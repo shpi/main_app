@@ -69,7 +69,11 @@ class InputListModel(QAbstractListModel):
                 else:
                     return 'unknown role'
             except Exception as e:
-                logging.error(str(e))
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                line_number = exception_traceback.tb_lineno
+                logging.error('error: {}'.format(e))
+                logging.error('error in line: {}'.format(line_number))
+
 
     def roleNames(self):
         roles = dict()
@@ -348,7 +352,10 @@ class InputsDict(QObject):
                 self.entries[key]['event'] = []
             self.entries[key]['event'].append(eventfunction)
         except Exception as e:
-            logging.error(str(e))
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            line_number = exception_traceback.tb_lineno
+            logging.error('error: {}'.format(e))
+            logging.error('error in line: {}'.format(line_number))
 
     def unregister_event(self, key, eventfunction):
         try:
@@ -376,12 +383,17 @@ class InputsDict(QObject):
                         else:
                             self.update_value(key)
                     except Exception as e:
+                        exception_type, exception_object, exception_traceback = sys.exc_info()
+                        line_number = exception_traceback.tb_lineno
+
+                        logging.error('error in line: {}'.format(line_number))
                         logging.error(str(e) + ', removed ' + key + ' from timer_schedule')
                         self.timerschedule[timeinterval].remove(key)
 
         # self.dataChanged.emit() needs too many ressources
 
     def update_value(self, key, value=None):
+       try:
         if value is None:
             value = self.entries[key]
 
@@ -398,6 +410,12 @@ class InputsDict(QObject):
             if self.entries[key]['logging'] > 0:
                 # logging.debug('logging:' + key + ' value:' + str(self.entries[key]['value']))
                 self.buffer[key].append(float(self.entries[key]['value']), self.entries[key]['lastupdate'])
+
+       except Exception as e:
+           exception_type, exception_object, exception_traceback = sys.exc_info()
+           line_number = exception_traceback.tb_lineno
+           logging.error('error: {}'.format(e))
+           logging.error('error in line: {}'.format(line_number))
 
     @Slot(str, str)
     def set(self, key, value):

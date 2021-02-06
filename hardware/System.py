@@ -124,7 +124,11 @@ class InterfaceInfo:
     def __del__(self):
         try:
             self._sock.close()
-        except Exception:
+        except Exception as e:
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            line_number = exception_traceback.tb_lineno
+            logging.error('error: {}'.format(e))
+            logging.error('error in line: {}'.format(line_number))
             pass
 
 

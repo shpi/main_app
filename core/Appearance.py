@@ -4,6 +4,7 @@ from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
 import time
 import os
 import logging
+import sys
 import threading
 from datetime import datetime
 from core.DataTypes import DataType

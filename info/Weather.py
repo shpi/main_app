@@ -346,7 +346,10 @@ class Weather(QObject):
                 reply.finished.connect(self._handle_reply)
         except Exception as e:
             status = 'ERROR'
-            logging.error(str(e))
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            line_number = exception_traceback.tb_lineno
+            logging.error('error: {}'.format(e))
+            logging.error('error in line: {}'.format(line_number))
 
         return status
 

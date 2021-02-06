@@ -83,7 +83,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             anchors.verticalCenterOffset: -5
             anchors.horizontalCenter: parent.horizontalCenter
-            font.pixelSize: 40
+            font.pixelSize: 30
             color: Colors.black
 
 

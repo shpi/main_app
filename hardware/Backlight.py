@@ -1,6 +1,7 @@
 import os
 import logging
 import time
+import sys
 from core.DataTypes import DataType
 
 
@@ -65,7 +66,10 @@ class Backlight:
                             bright.write("0")
                             # logging.debug(f"bl_power: 0")
                 except Exception as e:
-                    logging.error(str(e))
+                    exception_type, exception_object, exception_traceback = sys.exc_info()
+                    line_number = exception_traceback.tb_lineno
+                    logging.error('error: {}'.format(e))
+                    logging.error('error in line: {}'.format(line_number))
 
             try:
                 with open(self.BACKLIGHT + "/brightness", "w") as bright:
@@ -74,7 +78,10 @@ class Backlight:
                     self.module_inputs['backlight/brightness']['value'] = brightness
                     self.module_inputs['backlight/brightness']['lastupdate'] = time.time()
             except Exception as e:
-                logging.error(str(e))
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                line_number = exception_traceback.tb_lineno
+                logging.error('error: {}'.format(e))
+                logging.error('error in line: {}'.format(line_number))
 
     def get_brightness(self):
         if (len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0):

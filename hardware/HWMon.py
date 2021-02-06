@@ -101,6 +101,10 @@ class HWMon:
                     return value
 
             except Exception as e:
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                line_number = exception_traceback.tb_lineno
+                logging.error('error: {}'.format(e))
+                logging.error('error in line: {}'.format(line_number))
                 logging.error(f'reading channel: {channel} failed with error {e}')
 
         else:
@@ -129,7 +133,10 @@ class HWMon:
                     retries += 1
                     return self.write_hwmon(channelid, channel, value, retries)
                 else:
-                    logging.error(str(e))
+                    exception_type, exception_object, exception_traceback = sys.exc_info()
+                    line_number = exception_traceback.tb_lineno
+                    logging.error('error: {}'.format(e))
+                    logging.error('error in line: {}'.format(line_number))
                     return False
         else:
             return False

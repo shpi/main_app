@@ -44,7 +44,7 @@ Rectangle {
             ListElement {label: "m"; alternate: ">"; ratio: "1"}
             ListElement {label: "⌫"; command:"backspace"; ratio: "1.5"}
             ListElement {label: "123"; command:"source"; source:"keyboard_num"; ratio: "1.5"}
-            ListElement {label: "De"; command:"source"; source:"keyboard_us"; ratio: "1"}
+            ListElement {label: "Us"; command:"source"; source:"keyboard_us"; ratio: "1"}
             ListElement {label: " "; alternate: ""; ratio: "5"}
             ListElement {label: "."; alternate: ","; ratio: "1"}
             ListElement {label: "↵"; command:"enter"; ratio: "1.5"}
@@ -84,7 +84,7 @@ Rectangle {
             ListElement {label: "m"; alternate: ">"; ratio: "1"}
             ListElement {label: "⌫"; command:"backspace"; ratio: "1.5"}
             ListElement {label: "123"; command:"source"; source:"keyboard_num"; ratio: "1.5"}
-            ListElement {label: "Us"; command:"source"; source:"keyboard_ru"; ratio: "1"}
+            ListElement {label: "Ru"; command:"source"; source:"keyboard_ru"; ratio: "1"}
             ListElement {label: " "; alternate: ""; ratio: "5"}
             ListElement {label: "."; alternate: ","; ratio: "1"}
             ListElement {label: "↵"; command:"enter"; ratio: "1.5"}
@@ -124,7 +124,7 @@ Rectangle {
             ListElement {label:  "\""; ratio: "1"}
             ListElement {label:  "⌫"; command:"backspace"; ratio: "1"}
             ListElement {label:  "Us"; command:"source"; source:"keyboard_us"; ratio: "1.25"}
-            ListElement {label:  "Ru"; command:"source"; source: "keyboard_de"; ratio: "1.25"}
+            ListElement {label:  "De"; command:"source"; source: "keyboard_de"; ratio: "1.25"}
 
             ListElement {label:  " "; ratio: "5"}
             ListElement {label:  "."; alternate: ",!?@"; ratio: "1"}
@@ -230,6 +230,7 @@ Rectangle {
                             bounds: root.bounds
                             isChekable: checkable !== undefined ? checkable : false
                             isChecked: isChekable && command === "shift" && root.allUpperCase
+
 
                             mainLabel: label
                             secondaryLabels: alternate !== undefined ? alternate : ''

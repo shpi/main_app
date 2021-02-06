@@ -5,6 +5,7 @@ import hardware.iio as iio
 from functools import partial
 from core.DataTypes import Convert, DataType
 import logging
+import sys
 
 
 class IIO:
@@ -21,10 +22,16 @@ class IIO:
                 try:
                     self._device_info(dev)
                 except Exception as e:
-                    logging.error(str(dev) + str(e))
+                    exception_type, exception_object, exception_traceback = sys.exc_info()
+                    line_number = exception_traceback.tb_lineno
+                    logging.error('error: {}'.format(e))
+                    logging.error('error in line: {}'.format(line_number))
 
         except Exception as e:
-            logging.error(str(e))
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            line_number = exception_traceback.tb_lineno
+            logging.error('error: {}'.format(e))
+            logging.error('error in line: {}'.format(line_number))
 
         # print("IIO context has %u devices:" % len(self.context.devices))
 
@@ -42,10 +49,14 @@ class IIO:
                     logging.debug('reading ' + channel + ': ' + str(value))
 
                     return value
-        except:
+        except Exception as e:
             if (retries < 3):
                 return IIO.read_iio(id, channel, retries + 1)
             else:
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                line_number = exception_traceback.tb_lineno
+                logging.error('error: {}'.format(e))
+                logging.error('error in line: {}'.format(line_number))
                 return None
 
     def read_processed(id, channel, scale=1, offset=0, retries=0):
@@ -56,10 +67,14 @@ class IIO:
                     logging.debug('reading ' + channel + ': ' + str(value))
                     return float(value)
 
-            except:
+            except Exception as e:
                 if (retries < 3):
                     return IIO.read_processed(id, channel, scale, offset, retries + 1)
                 else:
+                    exception_type, exception_object, exception_traceback = sys.exc_info()
+                    line_number = exception_traceback.tb_lineno
+                    logging.error('error: {}'.format(e))
+                    logging.error('error in line: {}'.format(line_number))
                     return None
 
     @staticmethod
@@ -132,7 +147,7 @@ class IIO:
                             self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['set'] = partial(
                                 IIO.write_iio, dev.id, path)
                             self.inputs[f'{self.path}/{dev.name}/{channel.id}/{channel_attr}']['interval'] = -1
-                        except:
+                        except Exception as e:
                             pass
                 if 'raw' in self.inputs[f'{self.path}/{dev.name}/{channel.id}']:
                     scale = 1
@@ -195,5 +210,5 @@ class IIO:
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['set'] = partial(
                             IIO.write_iio, dev.id, path)
                         self.inputs[f'{self.path}/{dev.name}/{channel.id}/{device_attr}']['interval'] = -1
-                    except:
+                    except Exception as e:
                         pass

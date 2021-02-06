@@ -31,6 +31,7 @@ Item {
             anchors.top: parent.top
             color: "white"
             font.pixelSize: 19
+            font.family: localFont.name
             font.capitalization: allUpperCase ? Font.AllUppercase : Font.MixedCase
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: Text.AlignHCenter
@@ -42,7 +43,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             color: "white"
             font.pixelSize: 50
-            font.weight: Font.Light
+            font.family: localFont.name
             font.capitalization: allUpperCase ? Font.AllUppercase : Font.MixedCase
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: Text.AlignHCenter
@@ -72,6 +73,7 @@ Item {
                     anchors.centerIn: parent
                     text: secondaryLabels[index]
                     font: mainLabelItem.font
+
                     color: alternatesRow.selectedIndex == index ? keyPressedColor : mainLabelItem.color
                 }
             }

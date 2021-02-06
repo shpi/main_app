@@ -1017,7 +1017,11 @@ class Buffer(object):
         try:
             self._buffer = _create_buffer(
                 device._device, samples_count, cyclic)
-        except Exception:
+        except Exception as e:
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            line_number = exception_traceback.tb_lineno
+            logging.error('error: {}'.format(e))
+            logging.error('error in line: {}'.format(line_number))
             self._buffer = None
             raise
         self._length = samples_count * device.sample_size

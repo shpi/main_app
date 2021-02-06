@@ -87,7 +87,10 @@ class ServerHandler(BaseHTTPRequestHandler):
 
                 self.connection.close()
         except Exception as e:
-            logging.error(str(e))
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            line_number = exception_traceback.tb_lineno
+            logging.error('error: {}'.format(e))
+            logging.error('error in line: {}'.format(line_number))
             self.send_response(400)
             self.connection.close()
 

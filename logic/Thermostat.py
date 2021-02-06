@@ -325,10 +325,7 @@ class Thermostat(QObject):
                     logging.error('no thermostat mode detected, heating off')
                     return 'ERROR'
 
-                # if (internaltemp > objecttemp):
-                #    correctedtemp = objecttemp - ((correctedtemp - internaltemp) / 6)
-                #    self._actual_temp = correctedtemp
-                #    self.tempChanged.emit()
+
 
                 if (self._actual_temp + self._hysteresis) < set_temp:
 

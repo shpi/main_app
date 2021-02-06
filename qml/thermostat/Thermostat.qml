@@ -267,7 +267,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
         anchors.leftMargin: 30
-        anchors.verticalCenterOffset: 30
+
         font.pixelSize: 120
         font.family: localFont.name
         text: Icons.fire
