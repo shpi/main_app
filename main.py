@@ -157,7 +157,7 @@ app = QApplication(sys.argv)
 QFontDatabase.addApplicationFont("./fonts/orkney-custom.ttf")
 
 
-qInstallMessageHandler(qml_log)
+#qInstallMessageHandler(qml_log)
 
 app.aboutToQuit.connect(killThreads)
 app.setApplicationName("Main")

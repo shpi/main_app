@@ -232,7 +232,9 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         font.pixelSize: tickswindow.width * 0.10
 
-        onTextChanged: { opacity = 1
+        onTextChanged: {
+                         animation.stop()
+                         opacity = 1
                          animation.start()
 
                         }

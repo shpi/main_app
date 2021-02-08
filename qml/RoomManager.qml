@@ -32,18 +32,19 @@ Item {
 
         footer: Column {
 
-            anchors.horizontalCenter: parent.horizontalCenter
             spacing: 20
-            height: 100
+            width: parent.width
 
             Row {
                 anchors.bottomMargin: 20
-
-                anchors.verticalCenter: parent.verticalCenter
                 spacing: 20
+                height: 100
                 anchors.horizontalCenter: parent.horizontalCenter
 
+
                 TextField {
+
+                    anchors.verticalCenter: parent.verticalCenter
 
                     id: roomname_text
                     font.pixelSize: 32
@@ -58,6 +59,8 @@ Item {
                 }
 
                 ComboBox {
+                    anchors.verticalCenter: parent.verticalCenter
+
                     id: combo_value_path
                     height: 50
                     width: 600
@@ -99,6 +102,8 @@ Item {
                 palette.buttonText: "white"
                 font.pixelSize: 32
                 font.family: localFont.name
+                anchors.horizontalCenter: parent.horizontalCenter
+
                 onClicked: {
                     modules.delete_room(roomname)
                     settingsstackView.pop()
@@ -107,7 +112,10 @@ Item {
                 visible: root.roomname !== ''
                          && roomview.count == 0 ? true : false
             }
+
         }
+
+
 
         Component {
             id: listDelegate
@@ -177,4 +185,7 @@ Item {
             }
         }
     }
+
+
+
 }

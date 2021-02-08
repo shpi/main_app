@@ -15,7 +15,6 @@ Rectangle {
         property color red: Qt.tint(Colors.white, "#44aa4444")
         property color blue: Qt.tint(Colors.white, "#444444aa")
 
-        //clip: true
         model: logs
         width: parent.width
         height: parent.height - 50
@@ -27,11 +26,10 @@ Rectangle {
 
         onCountChanged: {
 
-            //while (listView.count > 100)   logs.removeRows(0)
 
-            Qt.callLater( listView.positionViewAtEnd )
+           if (listView.atYBeginning)
 
-            //if (listView.contentY == listView.contentHeight) {Qt.callLater(listView.positionViewAtEnd) }
+             Qt.callLater( listView.positionViewAtEnd )
         }
     }
 
@@ -43,10 +41,11 @@ Rectangle {
         Rectangle {
             id: delegate
             color: index % 2 ? levelno < 30 ? listView.blue : listView.red  : Colors.white
-            height: content.height + 10
             width: ListView.view.width
+            height: 50
 
             Text {
+
                 id: level
                 font.pixelSize: 25
                 text: levelname + ' '
@@ -56,6 +55,7 @@ Rectangle {
             }
 
             Text {
+
                 id: content
                 wrapMode: Text.Wrap
                 text: asctime + ' ' + msg
