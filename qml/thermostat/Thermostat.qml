@@ -371,7 +371,7 @@ Rectangle {
         width: height
         anchors.verticalCenter: tickswindow.verticalCenter
         anchors.horizontalCenter: tickswindow.right
-        anchors.horizontalCenterOffset: rotator.width * 0.15
+        anchors.horizontalCenterOffset: rotator.width * 0.22
         color: "transparent"
         border.width: 1
         border.color: Colors.black
@@ -427,14 +427,13 @@ Rectangle {
         visible: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode > 0
 
         anchors.verticalCenter: tickswindow.verticalCenter
-        anchors.right: tickswindow.right
-        anchors.rightMargin: rotator.width * 0.21
+        anchors.left: rotator.left
+        anchors.rightMargin: 10
         width: 100
         height: 34
         radius: height / 4
         color: "transparent"
         border.width: 5
-
         border.color: Colors.black
     }
 

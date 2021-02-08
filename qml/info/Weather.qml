@@ -29,7 +29,7 @@ Rectangle {
     }
 
     Text {
-        text: average_temp
+        text: average_temp.toFixed(1)
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 5
         anchors.horizontalCenter: parent.horizontalCenter

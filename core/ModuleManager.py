@@ -150,7 +150,7 @@ class ModuleManager(QObject):
     @Slot(str)
     def delete_room(self, roomname):
 
-        if roomname in self._available_rooms:
+        if roomname != 'Screensaver' and roomname in self._available_rooms:
             self._available_rooms.remove(roomname)
             self.settings.setValue("available_rooms", self._available_rooms)
             self.roomsChanged.emit()

@@ -43,7 +43,7 @@ Rectangle {
     }
 
     Text {
-        text: average_temp + "°C"
+        text: average_temp.toFixed(1) + "°C"
         anchors.centerIn: parent
         font.pixelSize: 32
         color: Colors.black
