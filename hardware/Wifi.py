@@ -179,7 +179,7 @@ class Wifi(QObject):
     @Slot()
     @Slot(str)
     def scan_wifi(self, ignore=None): #fix later
-
+        logging.info('scan wifi status: '  + str(ignore))
         self.netdevs = SystemInfo.get_net_devs()
         self.devicesChanged.emit()
 
@@ -193,7 +193,7 @@ class Wifi(QObject):
     def _scan_wifi(self, device):
         networks = []
 
-        retry = 10
+        retry = 3
         while retry > 0:
             try:
                 if b'OK' in check_output(["wpa_cli", "-i", device, "scan"], stderr=DEVNULL):
@@ -225,9 +225,13 @@ class Wifi(QObject):
 
     @Slot(str, result=str)
     def wpa_status(self, device):
+        if not self.wpa_running:
+            return 'WPA reinit'
+
         try:
          output = check_output(
             ['wpa_cli', '-i', device, 'status']).split(b'\n')
+         logging.error(str(output))
          for line in output:
             if line.startswith(b'wpa_state='):
                 return line[10:].rstrip().decode()
@@ -243,11 +247,14 @@ class Wifi(QObject):
 
     @Slot(str, result=str)
     def signal_status(self, device):
+
         return str(self.signals[device])
 
     @Slot(str, str, str, str, str, bool)
     def write_settings(self, device='', flags='', bssid='', ssid='', passwd='', fixbssid=False):
        try:
+        self.wpa_running = False
+        os.system('systemctl stop wpa_supplicant.service')
         self.settings.setValue("wifi/password/" + bssid, passwd)
         with open('/etc/wpa_supplicant/wpa_supplicant.conf', 'w') as f:
             f.write('country=US\n')
@@ -278,7 +285,9 @@ class Wifi(QObject):
             #       'systemctl', 'restart', 'wpa_supplicant.service', '&&',
             #       'systemctl', 'restart', 'dhcpcd.service'], shell=True, stdin=None, stdout=None, stderr=None)
 
-            os.system('systemctl restart wpa_supplicant.service && systemctl restart dhcpcd.service')
+            logging.error(check_output(['systemctl', 'start', 'wpa_supplicant.service'], encoding='UTF-8'))
+            logging.error(check_output(['systemctl', 'restart', 'dhcpcd.service'], encoding='UTF-8'))
+            self.wpa_running = True
 
        except Exception as e:
              logging.error(str(e))
