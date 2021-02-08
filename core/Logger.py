@@ -74,6 +74,7 @@ class MessageHandler(logging.Handler):
         self.model = model
 
     def emit(self, record):
+        self.format(record)
         self.model.appendRow({b'levelno': record.levelno,
                               b'msg': record.msg,
                               b'levelname': record.levelname,

@@ -61,9 +61,13 @@ class InterfaceInfo:
 
     @property
     def ip(self) -> bytes:
+       try:
         raw = fcntl.ioctl(self._sock.fileno(), SIOCGIFADDR, struct.pack('256s', bytes(self._name, encoding="ascii")))
         ip_bytes = raw[20:24]
         return ip_bytes
+       except Exception as e:
+           logging.error(str(e))
+           return None
 
     @property
     def ip_human(self) -> str:

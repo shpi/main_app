@@ -115,6 +115,7 @@ class Wifi(QObject):
 
 
     def scan_hosts(self, device):
+      try:
 
         p = Popen(['nmap', '-sn', str(SystemInfo.get_ip4_address(device))+'/24'], stdout=PIPE, stdin=PIPE, stderr=PIPE)
         #'sudo', '-S',
@@ -147,6 +148,8 @@ class Wifi(QObject):
                 self._network_hosts[ip]['mac'] = output.group(1).decode()
                 self._network_hosts[ip]['manufacturer'] = output.group(2).decode()
         self.hostsChanged.emit()
+      except Exception as e:
+          logging.error(str(e))
 
 
     @Property('QVariantMap', notify=hostsChanged)
@@ -173,16 +176,19 @@ class Wifi(QObject):
     def networks(self):
         return self._networks
 
+    @Slot()
     @Slot(str)
-    def scan_wifi(self, device='wlan0'):
+    def scan_wifi(self, ignore=None): #fix later
 
-        if self.netdevs == []:
-            self.netdevs = SystemInfo.get_net_devs()
-            if device == '' and len(self.netdevs) > 0:
-                device = self.netdevs[0]
+        self.netdevs = SystemInfo.get_net_devs()
+        self.devicesChanged.emit()
 
-        scanthread = threading.Thread(target=self._scan_wifi, args=(device,))
-        scanthread.start()
+        if len(self.netdevs) > 0:
+
+          for device in self.netdevs:
+              if device.startswith('wlan'):
+                  scanthread = threading.Thread(target=self._scan_wifi, args=(device,))
+                  scanthread.start()
 
     def _scan_wifi(self, device):
         networks = []
@@ -240,8 +246,8 @@ class Wifi(QObject):
         return str(self.signals[device])
 
     @Slot(str, str, str, str, str, bool)
-    def write_settings(self, device='wlan0', flags='', bssid='', ssid='', passwd='', fixbssid=False):
-
+    def write_settings(self, device='', flags='', bssid='', ssid='', passwd='', fixbssid=False):
+       try:
         self.settings.setValue("wifi/password/" + bssid, passwd)
         with open('/etc/wpa_supplicant/wpa_supplicant.conf', 'w') as f:
             f.write('country=US\n')
@@ -268,9 +274,14 @@ class Wifi(QObject):
                 f.write('key_mgmt=NONE\n')
 
             f.write('}')
-            call(['wpa_cli', '-i', device, 'reconfigure'])
-            call(['dhclient', device])
-            # systemctl restart dhcpcd
+            #Popen(['wpa_cli', '-i', device, 'reconfigure', '&&',
+            #       'systemctl', 'restart', 'wpa_supplicant.service', '&&',
+            #       'systemctl', 'restart', 'dhcpcd.service'], shell=True, stdin=None, stdout=None, stderr=None)
+
+            os.system('systemctl restart wpa_supplicant.service && systemctl restart dhcpcd.service')
+
+       except Exception as e:
+             logging.error(str(e))
 
     def read_signal(self):
         logging.debug('read signal called')

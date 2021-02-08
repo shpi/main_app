@@ -148,10 +148,14 @@ Item {
                             text: "Connect"
                             font.pixelSize: 50
                             radius: 10
-                            onClicked: wifi.write_settings(
+                            onClicked: {   inputsview.selectednetwork = -1
+                                           wifi.write_settings(
                                            actualDevice.currentText, flags,
                                            bssid, ssid, wifipasswd.text,
-                                           bssidcheck.checked)
+                                           bssidcheck.checked) 
+                                         }
+
+
                         }
                     }
 
