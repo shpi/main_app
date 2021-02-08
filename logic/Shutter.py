@@ -29,8 +29,8 @@ class Shutter(QObject):
         self.path = 'shutter/' + name
         self.settings = settings
         self.inputs = inputs.entries
-        self._up_time = float(settings.value('shutter/' + self.name + "/up_time", 3)) / 100
-        self._down_time = float(settings.value('shutter/' + self.name + "/down_time", 3)) / 100
+        self._up_time = float(settings.value('shutter/' + self.name + "/up_time", 3000)) / 100
+        self._down_time = float(settings.value('shutter/' + self.name + "/down_time", 3000)) / 100
 
         self.time_start = 0
         self._residue_time = 0

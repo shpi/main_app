@@ -92,7 +92,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Temperature offset"
+                text: "Temperature hysteresis"
                 color: Colors.black
             }
 
@@ -105,7 +105,12 @@ Item {
                 stepSize: 10
                 font.pixelSize: 32
                 property int decimals: 2
-                property real realValue: value / 100
+                property real realValue: value / 1000
+
+                Component.onCompleted: tempoffset.value = modules.loaded_instances['Logic']['Thermostat'][instancename].hysteresis
+
+                onValueChanged: modules.loaded_instances['Logic']['Thermostat'][instancename].hysteresis
+                                = this.value
 
                 validator: DoubleValidator {
                     bottom: Math.min(tempoffset.from, tempoffset.to)
@@ -118,7 +123,7 @@ Item {
                 }
 
                 valueFromText: function (text, locale) {
-                    return Number.fromLocaleString(locale, text) * 100
+                    return Number.fromLocaleString(locale, text) * 1000
                 }
             }
         }

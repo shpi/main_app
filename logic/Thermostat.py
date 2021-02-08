@@ -111,7 +111,7 @@ class Thermostat(QObject):
         self._eco_temp = float(settings.value("thermostat/" + self.name + '/eco_temp', 18))
         self._away_temp = float(settings.value("thermostat/" + self.name + '/away_temp', 15))
 
-        self._hysteresis = 0.25 * 1000  # millicelsisus!
+        self._hysteresis = int(settings.value("thermostat/" + self.name + '/hysteresis', 100))
         self._heating_state = 0
         self._actual_temp = 99
         self._offset = 0
@@ -219,6 +219,21 @@ class Thermostat(QObject):
         self._schedule_mode = int(value)
         self.settings.setValue("thermostat/" + self.name + '/schedule_mode', value)
         self.scheduleModeChanged.emit()
+
+
+
+    def hysteresis(self):
+         return int(self._hysteresis)
+
+
+    @Pre_5_15_2_fix(int, hysteresis, notify=settingsChanged)
+    def hysteresis(self, value):
+             logging.debug('setting hysteresis:' + str(value))
+             self._hysteresis = int(value)
+             self.settings.setValue("thermostat/" + self.name + '/hysteresis', value)
+             self.settingsChanged.emit()
+
+
 
     # @Property(int, notify=thermostatModeChanged)
     def thermostat_mode(self):

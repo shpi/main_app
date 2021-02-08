@@ -33,12 +33,14 @@ Item {
         footer: Column {
 
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 10
+            spacing: 20
+            height: 100
 
             Row {
+                anchors.bottomMargin: 20
 
-                height: 50
-                spacing: 10
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 20
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 TextField {
@@ -141,6 +143,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     anchors.rightMargin: 20
+                    font.pixelSize: 30
                     text: root.roomname === '' ? Icons.arrow : Icons.trash
                     rotation: root.roomname === '' ? 270 : 0
                     font.family: localFont.name

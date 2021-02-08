@@ -40,7 +40,7 @@ Rectangle {
 
     property string instancename: modules.modules['UI']['ShowValue'][0]
 
-    color: Colors.white
+    color: "transparent"
 
     Column {
         width: parent.width * 0.9

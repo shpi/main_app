@@ -23,35 +23,107 @@ Item {
             }
         }
 
-        cacheBuffer: 200
+        cacheBuffer: 50
         height: parent.height
         width: parent.width
-        clip: true
+        //clip: true
         orientation: Qt.Vertical
         id: inputsview
 
         model: inputs.inputList
         delegate: inputDelegate
 
+
+        Component {
+        id: expandedDelegate
+
+
+
+        Row {
+
+            anchors.fill:parent
+            spacing: 150
+            CheckBox {
+                checked: parent.parent.plogging
+                onClicked: inputs.set_logging(parent.parent.ppath, this.checked)
+
+                Text {
+                    text: "logging"
+                    color: Colors.black
+                    anchors.left: parent.right
+                    anchors.leftMargin: 15
+                }
+            }
+
+            CheckBox {
+                checked: parent.parent.pexposed
+                onClicked: inputs.set_exposed(parent.parent.ppath, this.checked)
+                Text {
+                    text: "exposed"
+                    color: Colors.black
+                    anchors.left: parent.right
+                    anchors.leftMargin: 15
+                }
+            }
+
+            SpinBox {
+                id: spinbox
+                visible: parent.parent.pinterval > 0 ? true : false
+                value: parent.parent.pinterval
+                stepSize: 5
+
+                onValueModified:  inputs.set_interval(parent.parent.ppath, value)
+                Text {
+                    text: "Interval"
+                    color: Colors.black
+                    anchors.left: parent.right
+                    anchors.leftMargin: 15
+                }
+
+                from: 1
+                to: 600
+                font.pixelSize: 32
+
+                contentItem: TextInput {
+                    z: 2
+                    text: spinbox.textFromValue(
+                              spinbox.value, spinbox.locale) + 's'
+                    color: "#000"
+                    selectionColor: "#000"
+                    selectedTextColor: "#ffffff"
+                    horizontalAlignment: Qt.AlignHCenter
+                    verticalAlignment: Qt.AlignVCenter
+                    readOnly: !spinbox.editable
+                    validator: spinbox.validator
+                    inputMethodHints: Qt.ImhFormattedNumbersOnly
+                }
+            }
+        }
+
+
+
+        }
+
+
+
         Component {
             id: inputDelegate
 
             Rectangle {
-                property int delindex: index
+
                 id: wrapper
                 height: inputsview.currentIndex == index ? 150 : 80
-                Behavior on height {
-                    PropertyAnimation {}
-                }
+                Behavior on height { PropertyAnimation {}  }
                 width: inputsview.width
                 color: index % 2 === 0 ? Colors.white : "transparent"
+
 
                 Text {
                     padding: 5
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     text: value
-                    font.pixelSize: 32
+                    font.pixelSize: 24
                     color: Colors.black
                 }
 
@@ -74,66 +146,6 @@ Item {
                         color: Colors.black
                     }
 
-                    Row {
-
-                        visible: inputsview.currentIndex == index ? true : false
-                        spacing: 150
-                        CheckBox {
-                            checked: logging
-                            onClicked: inputs.set_logging(path, this.checked)
-
-                            Text {
-                                text: "logging"
-                                color: Colors.black
-                                anchors.left: parent.right
-                                anchors.leftMargin: 15
-                            }
-                        }
-
-                        CheckBox {
-                            checked: exposed
-                            onClicked: inputs.set_exposed(path, this.checked)
-                            Text {
-                                text: "exposed"
-                                color: Colors.black
-                                anchors.left: parent.right
-                                anchors.leftMargin: 15
-                            }
-                        }
-
-                        SpinBox {
-                            id: spinbox
-                            visible: interval > 0 ? true : false
-                            value: interval
-                            stepSize: 5
-
-                            onValueModified:  inputs.set_interval(path, value)
-                            Text {
-                                text: "Interval"
-                                color: Colors.black
-                                anchors.left: parent.right
-                                anchors.leftMargin: 15
-                            }
-
-                            from: 1
-                            to: 600
-                            font.pixelSize: 32
-
-                            contentItem: TextInput {
-                                z: 2
-                                text: spinbox.textFromValue(
-                                          spinbox.value, spinbox.locale) + 's'
-                                color: "#000"
-                                selectionColor: "#000"
-                                selectedTextColor: "#ffffff"
-                                horizontalAlignment: Qt.AlignHCenter
-                                verticalAlignment: Qt.AlignVCenter
-                                readOnly: !spinbox.editable
-                                validator: spinbox.validator
-                                inputMethodHints: Qt.ImhFormattedNumbersOnly
-                            }
-                        }
-                    }
 
 
                     /* TextField {
@@ -145,12 +157,24 @@ Item {
                          onEditingFinished: inputs.set(path,this.text)
                          }
                          */
+                    Loader {
+                    height: 70
+                    width: inputsview.width
+                    property int plogging: logging
+                    property int pexposed: exposed
+                    property int pinterval: interval
+                    property string ppath: path
+                    active: inputsview.currentIndex == index
+                    asynchronous: true
+                    sourceComponent:  expandedDelegate
+
+                    }
+
                 }
 
                 MouseArea {
-
                     anchors.fill: parent
-                    onClicked: inputsview.currentIndex = index
+                    onClicked: {inputsview.currentIndex = index}
                     enabled: inputsview.currentIndex != index ? true : false
                 }
             }

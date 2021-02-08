@@ -306,7 +306,7 @@ class InputsDict(QObject):
 
     @Slot(str, bool)
     def set_logging(self, key, value):
-        logging.debug('set_logging ' + key + ' ' + str(value))
+        logging.info('set_logging ' + key + ' ' + str(value))
         try:
             self.entries[key]['logging'] = bool(value)
             self.settings.setValue(key + "/logging", int(value))
