@@ -42,7 +42,7 @@ Rectangle {
             id: delegate
             color: index % 2 ? levelno < 30 ? listView.blue : listView.red  : Colors.white
             width: ListView.view.width
-            height: 50
+
 
             Text {
 
