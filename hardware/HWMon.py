@@ -103,9 +103,7 @@ class HWMon:
             except Exception as e:
                 exception_type, exception_object, exception_traceback = sys.exc_info()
                 line_number = exception_traceback.tb_lineno
-                logging.error('error: {}'.format(e))
-                logging.error('error in line: {}'.format(line_number))
-                logging.error(f'reading channel: {channel} failed with error {e}')
+                logging.error(f'channel: {channel} error: {e} in line {line_number}')
 
         else:
             return None
@@ -135,8 +133,7 @@ class HWMon:
                 else:
                     exception_type, exception_object, exception_traceback = sys.exc_info()
                     line_number = exception_traceback.tb_lineno
-                    logging.error('error: {}'.format(e))
-                    logging.error('error in line: {}'.format(line_number))
+                    logging.error(f'channel: {channel} error: {e} in line {line_number}')
                     return False
         else:
             return False

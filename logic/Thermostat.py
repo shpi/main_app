@@ -356,8 +356,7 @@ class Thermostat(QObject):
         except Exception as e:
             exception_type, exception_object, exception_traceback = sys.exc_info()
             line_number = exception_traceback.tb_lineno
-            logging.error('error: {}'.format(e))
-            logging.error('error in line: {}'.format(line_number))
+            logging.error(f'error: {e} in line: {line_number}')
             return 'ERROR'
 
     def convert_schedule(self, value):

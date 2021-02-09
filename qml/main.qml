@@ -217,7 +217,7 @@ ApplicationWindow {
                 ListElement {
                     title: "\uE016" // Icons.wifi
                     size: 50
-                    page: "hardware/WifiSettings.qml"
+                    page: "core/WifiSettings.qml"
                 }
                 ListElement {
                     title: "\uE046" // Icons.speaker

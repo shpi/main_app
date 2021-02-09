@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import sys
 import os
 import time
 import re
@@ -7,9 +7,7 @@ import threading
 from subprocess import check_output, call, Popen, PIPE, DEVNULL
 from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
 from core.DataTypes import DataType
-from hardware.System import SystemInfo
 import logging
-import sys
 
 
 class WifiNetworkModel(QAbstractListModel):
@@ -76,130 +74,110 @@ class WifiNetworkModel(QAbstractListModel):
 
 class Wifi(QObject):
 
+    version = "1.0"
+    required_packages = None
+    allow_instances = False
+    allow_maininstance = True
+    description = "Wifi Module for managing WPA supplicant"
+
     def __init__(self, settings):
 
         super(Wifi, self).__init__()
         self.settings = settings
-        self.wpa_running = True
-        self.inputs = dict()
-        self.netdevs = SystemInfo.get_net_devs() #wlan0, wlan1
-        self._network_hosts = dict()
-        self.wifi_devices = []
+        self.changing_wpa = True
+        self.module_inputs = dict()
+        self.wifi_devices = Wifi.get_wifi_devs()
+
         self._networks = WifiNetworkModel([], self.settings)
         self.signals = dict()
+
+        self._wpa_state = ''
+        self._wpa_bssid = ''
+        self._wpa_ssid = ''
+        self._wpa_ip = ''
+        self._wpa_type = ''
+
+        self.module_inputs['wifi/module'] =  {'description': 'WIFI WPA supplicant module',
+                                             'value': 'NOT_INITIALIZED',
+                                             'type': DataType.MODULE,
+                                             'lastupdate': 0,
+                                             'interval': 10,
+                                             'call': self.read_signal}
         self.read_signal()
 
-        for device in self.netdevs:
-            if device.startswith('wlan'):
-                self.scan_wifi(device)
-
-        self.start_scan_hosts()
-
-    @Slot()
-    def start_scan_hosts(self):
-
-        for netdev in self.netdevs:
-            if netdev != 'lo':
-                threading.Thread(target=self.scan_hosts, args=(netdev,)).start()
+        if len(self.wifi_devices):
+            self.wpa_device = self.wifi_devices[0] # initial value
+            self.wpa_status(self.wpa_device)
 
 
-    #def update(self):
-        #self.read_signal()
+    @staticmethod
+    def get_wifi_devs(stat_path='/proc/net/dev'):
+            wifidevs = []
+            if not os.path.isfile(stat_path):
+                return
+
+            with open(stat_path) as net_file:
+                for line in net_file:
+                    a = line.find(':')
+                    if a > -1:
+                        netdev =  line[:a].strip()
+                        if netdev.startswith('wlan'):
+                            wifidevs.append(netdev)
+            return wifidevs
+
 
     def get_inputs(self) -> dict:
-        return self.inputs
-
-
-    @Signal
-    def hostsChanged(self):
-        pass
-
-
-    def scan_hosts(self, device):
-      try:
-
-        p = Popen(['nmap', '-sn', str(SystemInfo.get_ip4_address(device))+'/24'], stdout=PIPE, stdin=PIPE, stderr=PIPE)
-        #'sudo', '-S',
-        #stdout_data = p.communicate(input=b'password')[0].split(b'\n')
-        stdout_data = p.communicate()[0].split(b'\n')
-
-        found_hosts =  list(self._network_hosts.keys())
-
-        for key in found_hosts:
-
-            if 'dev' in self._network_hosts[key]: # because helper list in dictionary for qml
-                if self._network_hosts[key]['dev'] == device:
-                    del self._network_hosts[key]
-
-        for line in stdout_data:
-            output = re.search(b'Nmap scan report for ([^ ]*) \(([^\)]*)\)', line)
-            if output:
-                    ip = output.group(2).decode()
-                    self._network_hosts[ip] = {'ip':ip, 'hostname':output.group(1).decode(), 'dev' : device}
-            else:
-                output = re.search(b'Nmap scan report for ([^\n]*)', line)
-                if output:
-                    ip = output.group(1).decode()
-                    self._network_hosts[ip] = {'ip': ip, 'dev' : device}
-            output = re.search(b'Host is up \(([^ ]*) latency\)', line)
-            if output:
-                self._network_hosts[ip]['latency'] = output.group(1).decode()
-            output = re.search(b'MAC Address: ([^ ]*) \(([^\)]*)\)', line)
-            if output:
-                self._network_hosts[ip]['mac'] = output.group(1).decode()
-                self._network_hosts[ip]['manufacturer'] = output.group(2).decode()
-        self.hostsChanged.emit()
-      except Exception as e:
-          logging.error(str(e))
-
-
-    @Property('QVariantMap', notify=hostsChanged)
-    def network_hosts(self):
-        if 'list' in self._network_hosts:
-            del self._network_hosts['list']
-        self._network_hosts['list'] = list(self._network_hosts.keys())
-        return (self._network_hosts)
-
-    @Signal
-    def devicesChanged(self):
-        pass
-
-    @Property('QVariantList', notify=devicesChanged)
-    def devices(self):
-        return self.netdevs
+        return self.module_inputs
 
 
     @Signal
     def networksChanged(self):
+        # for updating list after wifi scan
         pass
 
-    @Property(QObject, notify=networksChanged)
-    def networks(self):
-        return self._networks
+
+    @Signal
+    def wifi_devicesChanged(self):
+        # for updating device list before scan
+        pass
+
+
+    @Signal
+    def wpa_statusChanged(self):
+        # for wpa status of selected device
+        pass
+
+
+    @Signal
+    def signalsChanged(self):
+        # signal for frequently signal read of all devices
+        pass
+
+
+    @Property('QVariantList', notify=wifi_devicesChanged)
+    def devices(self):
+        return self.wifi_devices
+
+
 
     @Slot()
     @Slot(str)
-    def scan_wifi(self, ignore=None): #fix later
-        logging.info('scan wifi status: '  + str(ignore))
-        self.netdevs = SystemInfo.get_net_devs()
-        self.devicesChanged.emit()
+    def scan_wifi(self, device='wlan0'):
+        self.wifi_devices = Wifi.get_wifi_devs()
+        self.wifi_devicesChanged.emit()
 
-        if len(self.netdevs) > 0:
-
-          for device in self.netdevs:
-              if device.startswith('wlan'):
+        if len(self.wifi_devices) > 0 and device in self.wifi_devices: # and device.startswith('wlan'):
                   scanthread = threading.Thread(target=self._scan_wifi, args=(device,))
                   scanthread.start()
 
+
     def _scan_wifi(self, device):
         networks = []
-
         retry = 3
         while retry > 0:
             try:
                 if b'OK' in check_output(["wpa_cli", "-i", device, "scan"], stderr=DEVNULL):
                     retry = 0
-
                     record_details = Popen(["wpa_cli", "-i", device, "scan_results"], stdout=PIPE).communicate()[0].decode()
                     record_details = record_details.strip().split('\n')
                     record_details.pop(0)
@@ -213,43 +191,82 @@ class Wifi(QObject):
                                          b'flags': record[3], b'ssid': record[4]})
 
                 else:
-                    time.sleep(0.3)
+                    time.sleep(0.2)
                     retry -= 1
             except Exception as e:
                 retry -= 1
                 exception_type, exception_object, exception_traceback = sys.exc_info()
                 line_number = exception_traceback.tb_lineno
-                logging.error('error: {}'.format(e))
-                logging.error('error in line: {}'.format(line_number))
+                logging.error(f'{e} in line {line_number}')
         self._networks = WifiNetworkModel(networks, self.settings)
         self.networksChanged.emit()
 
-    @Slot(str, result=str)
+    @Slot(str)
     def wpa_status(self, device):
-        if not self.wpa_running:
-            return 'WPA reinit'
+        if not self.changing_wpa:
+            self.wpa_state = 'WPA reinit'
 
         try:
          output = check_output(
             ['wpa_cli', '-i', device, 'status']).split(b'\n')
-         logging.error(str(output))
+
          for line in output:
             if line.startswith(b'wpa_state='):
-                return line[10:].rstrip().decode()
+                self._wpa_state = line[10:].rstrip().decode()
             if line.startswith(b'bssid='):
-                self.connected_bssid = line[6:].rstrip().decode()
+                self._wpa_bssid = line[6:].rstrip().decode()
+            if line.startswith(b'ssid='):
+                    self._wpa_ssid = line[5:].rstrip().decode()
+            if line.startswith(b'ip_address='):
+                self._wpa_ip = line[11:].rstrip().decode()
+            if line.startswith(b'key_mgmt='):
+                self._wpa_type = line[9:].rstrip().decode()
+
+            self.wpa_device = device
+
         except Exception as e:
             exception_type, exception_object, exception_traceback = sys.exc_info()
             line_number = exception_traceback.tb_lineno
-            logging.error('error: {}'.format(e))
-            logging.error('error in line: {}'.format(line_number))
+            logging.error(f'{e} in line {line_number}')
+            self._wpa_state = 'ERROR'
 
-        return 'UNKNOWN'
+        self.wpa_statusChanged.emit()
 
-    @Slot(str, result=str)
-    def signal_status(self, device):
 
-        return str(self.signals[device])
+    @Property(str, notify=wpa_statusChanged)
+    def wpa_state(self):
+            return self._wpa_state
+
+    @Property(str, notify=wpa_statusChanged)
+    def wpa_bssid(self):
+            return self._wpa_bssid
+
+    @Property(str, notify=wpa_statusChanged)
+    def wpa_ssid(self):
+                return self._wpa_ssid
+
+    @Property(str, notify=wpa_statusChanged)
+    def wpa_ip(self):
+                return self._wpa_ip
+
+
+    @Property(str, notify=wpa_statusChanged)
+    def wpa_type(self):
+                return self._wpa_type
+
+
+    @Property(QObject, notify=networksChanged)
+    def networks(self):
+                return self._networks
+
+
+
+    @Property(int, notify=signalsChanged)
+    def signal(self):
+        if self.wpa_device in self.signals:
+            return self.signals[self.wpa_device]
+        else:
+            return 0
 
 
 
@@ -259,10 +276,10 @@ class Wifi(QObject):
                   scanthread.start()
 
 
-    #@Slot(str, str, str, str, str, bool)
+    # Thread
     def _write_settings(self, device='', flags='', bssid='', ssid='', passwd='', fixbssid=False):
        try:
-        self.wpa_running = False
+        self.changing_wpa = False
 
         self.settings.setValue("wifi/password/" + bssid, passwd)
         with open('/etc/wpa_supplicant/wpa_supplicant.conf', 'w') as f:
@@ -291,20 +308,19 @@ class Wifi(QObject):
                 f.write('key_mgmt=NONE\n')
 
             f.write('}')
-            #Popen(['wpa_cli', '-i', device, 'reconfigure', '&&',
-            #       'systemctl', 'restart', 'wpa_supplicant.service', '&&',
-            #       'systemctl', 'restart', 'dhcpcd.service'], shell=True, stdin=None, stdout=None, stderr=None)
 
-            logging.error(check_output(['systemctl', 'restart', 'wpa_supplicant@wlan0.service'], encoding='UTF-8'))
-            logging.error(check_output(['systemctl', 'restart', 'dhcpcd.service'], encoding='UTF-8'))
-            self.wpa_running = True
+        Popen(['wpa_cli', '-i', device, 'reconfigure'], shell=False, stdin=None, stdout=None, stderr=None)
+        #logging.error(check_output(['systemctl', 'restart', 'dhcpcd.service'], encoding='UTF-8'))
+        self.changing_wpa = True
+        self.wpa_status(device)
 
        except Exception as e:
-             logging.error(str(e))
+           exception_type, exception_object, exception_traceback = sys.exc_info()
+           line_number = exception_traceback.tb_lineno
+           logging.error(f'{e} in line {line_number}')
 
     def read_signal(self):
-        logging.debug('read signal called')
-        self.new_devices = list()
+        new_devices = list()
         if os.path.isfile('/proc/net/wireless'):
             with open('/proc/net/wireless', 'r') as rf:
                 line = rf.readline()
@@ -314,30 +330,34 @@ class Wifi(QObject):
                         device = line[0].rstrip(":")
                         if device not in self.wifi_devices:
                             self.wifi_devices.append(device)
-                        self.new_devices.append(device)
-                        if f'wifi/{device}/link' not in self.inputs:
-                            self.inputs[f'wifi/{device}/link'] = {'description': f'link quality of device {line[0].rstrip(":")}',
-                                                                  'interval': 1, 'lastupdate': 0, 'call': self.read_signal}
-                        self.signals[device] = self.dbmtoperc[int(
-                            line[3].rstrip('.'))]
-                        self.inputs[f'wifi/{device}/link']['value'] = self.signals[device]
-
-                        self.inputs[f'wifi/{device}/link']['status'] = line[1]
-                        self.inputs[f'wifi/{device}/link']['quality'] = line[2]
-                        self.inputs[f'wifi/{device}/link']['noise'] = line[4]
-                        self.inputs[f'wifi/{device}/link']['type'] = DataType.PERCENT_INT
-                        self.inputs[f'wifi/{device}/link']['lastupdate'] = time.time()
+                        new_devices.append(device)
+                        if f'wifi/{device}/link' not in self.module_inputs:
+                            self.module_inputs[f'wifi/{device}/link'] = {'description': f'link quality of device {line[0].rstrip(":")}',
+                                                                  'interval': -1, 'lastupdate': 0}
+                        self.signals[device] = self.dbmtoperc[int(line[3].rstrip('.'))]
+                        self.module_inputs[f'wifi/{device}/link']['value'] = self.signals[device]
+                        self.module_inputs[f'wifi/{device}/link']['status'] = line[1]
+                        self.module_inputs[f'wifi/{device}/link']['quality'] = line[2]
+                        self.module_inputs[f'wifi/{device}/link']['noise'] = line[4]
+                        self.module_inputs[f'wifi/{device}/link']['type'] = DataType.PERCENT_INT
+                        self.module_inputs[f'wifi/{device}/link']['lastupdate'] = time.time()
 
 
             for device in self.wifi_devices:  # reset values before checking
-                if device not in self.new_devices:
-                    self.inputs[f'wifi/{device}/link']['value'] = 0
-                    self.inputs[f'wifi/{device}/link']['status'] = 0
-                    self.inputs[f'wifi/{device}/link']['level'] = 0
-                    self.inputs[f'wifi/{device}/link']['noise'] = 0
-                    self.inputs[f'wifi/{device}/link']['lastupdate'] = time.time()
+                if device not in new_devices:
+                    if f'wifi/{device}/link' not in self.module_inputs:
+                        self.module_inputs[f'wifi/{device}/link'] = {'description': f'link quality of {device}',
+                                                              'interval': -1}
+                    logging.info('wifi signal lost? device: ' + device)
+                    self.module_inputs[f'wifi/{device}/link']['value'] = 0
+                    self.module_inputs[f'wifi/{device}/link']['status'] = 0
+                    self.module_inputs[f'wifi/{device}/link']['level'] = 0
+                    self.module_inputs[f'wifi/{device}/link']['noise'] = 0
+                    self.module_inputs[f'wifi/{device}/link']['lastupdate'] = time.time()
 
-            self.devicesChanged.emit()
+            self.signalsChanged.emit()
+            return 'OK'
+        return 'ERROR'
 
     dbmtoperc = {-1: 100,  -26: 98, -51: 78, -76: 38,
                  -2: 100,  -27: 97, -52: 76, -77: 36,

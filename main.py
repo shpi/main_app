@@ -25,7 +25,7 @@ from hardware.IIO import IIO
 from hardware.InputDevs import InputDevs
 from hardware.Leds import Led
 from hardware.System import SystemInfo
-from hardware.Wifi import Wifi
+from core.Wifi import Wifi
 from core.Logger import LogModel, MessageHandler
 
 from core.MLX90615 import MLX90615

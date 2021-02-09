@@ -71,8 +71,7 @@ class InputListModel(QAbstractListModel):
             except Exception as e:
                 exception_type, exception_object, exception_traceback = sys.exc_info()
                 line_number = exception_traceback.tb_lineno
-                logging.error('error: {}'.format(e))
-                logging.error('error in line: {}'.format(line_number))
+                logging.error(f'error: {e} in line {line_number}')
 
 
     def roleNames(self):
@@ -354,8 +353,7 @@ class InputsDict(QObject):
         except Exception as e:
             exception_type, exception_object, exception_traceback = sys.exc_info()
             line_number = exception_traceback.tb_lineno
-            logging.error('error: {}'.format(e))
-            logging.error('error in line: {}'.format(line_number))
+            logging.error(f'error: {e} in line {line_number}')
 
     def unregister_event(self, key, eventfunction):
         try:
@@ -385,9 +383,7 @@ class InputsDict(QObject):
                     except Exception as e:
                         exception_type, exception_object, exception_traceback = sys.exc_info()
                         line_number = exception_traceback.tb_lineno
-
-                        logging.error('error in line: {}'.format(line_number))
-                        logging.error(str(e) + ', removed ' + key + ' from timer_schedule')
+                        logging.error(f'{e}, removed ' + key + ' from timer_schedule, in line: {line_number}')
                         self.timerschedule[timeinterval].remove(key)
 
         # self.dataChanged.emit() needs too many ressources
@@ -414,8 +410,7 @@ class InputsDict(QObject):
        except Exception as e:
            exception_type, exception_object, exception_traceback = sys.exc_info()
            line_number = exception_traceback.tb_lineno
-           logging.error('error: {}'.format(e))
-           logging.error('key: ' + key + ' error in line: {}'.format(line_number))
+           logging.error(f'{e} key: {key} error in line: {line_number}')
 
     @Slot(str, str)
     def set(self, key, value):

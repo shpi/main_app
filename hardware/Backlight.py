@@ -68,8 +68,7 @@ class Backlight:
                 except Exception as e:
                     exception_type, exception_object, exception_traceback = sys.exc_info()
                     line_number = exception_traceback.tb_lineno
-                    logging.error('error: {}'.format(e))
-                    logging.error('error in line: {}'.format(line_number))
+                    logging.error(f'error: {e} in line {line_number}')
 
             try:
                 with open(self.BACKLIGHT + "/brightness", "w") as bright:
@@ -80,8 +79,7 @@ class Backlight:
             except Exception as e:
                 exception_type, exception_object, exception_traceback = sys.exc_info()
                 line_number = exception_traceback.tb_lineno
-                logging.error('error: {}'.format(e))
-                logging.error('error in line: {}'.format(line_number))
+                logging.error(f'error: {e} in line {line_number}')
 
     def get_brightness(self):
         if (len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0):

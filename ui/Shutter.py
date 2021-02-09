@@ -21,12 +21,14 @@ class Shutter(QObject):
             self.inputs.register_event(self._actual_position_path, self.ui_event)
             self._actual_position = int(self.inputs.entries[self._actual_position_path]['value'])
         else:
+            self._actual_position = None
             logging.error(self.name + ' no valid actual position value')
 
         if self._desired_position_path in self.inputs.entries:
             self.inputs.register_event(self._desired_position_path, self.ui_event)
             self._desired_position = int(self.inputs.entries[self._desired_position_path]['value'])
         else:
+            self._desired_position = None
             logging.error(self.name + ' no valid desired position value')
 
         self.checkthread = threading.Thread(target=self.thread)

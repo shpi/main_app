@@ -9,7 +9,7 @@ Rectangle {
     anchors.fill: parent
 
     ListView {
-        cacheBuffer: 200
+        cacheBuffer: 100
         id: listView
         boundsBehavior: Flickable.StopAtBounds
         property color red: Qt.tint(Colors.white, "#44aa4444")
@@ -18,31 +18,28 @@ Rectangle {
         model: logs
         width: parent.width
         height: parent.height - 50
-        anchors.bottom: parent.bottom
+        anchors.centerIn: parent
         anchors.margins: 5
         delegate: itemDelegate
-        
+
         verticalLayoutDirection: ListView.BottomToTop
 
         onCountChanged: {
 
+            if (listView.atYBeginning)
 
-           if (listView.atYBeginning)
-
-             Qt.callLater( listView.positionViewAtEnd )
+                Qt.callLater(listView.positionViewAtEnd)
         }
     }
 
     Component {
         id: itemDelegate
 
-
-
         Rectangle {
             id: delegate
-            color: index % 2 ? levelno < 30 ? listView.blue : listView.red  : Colors.white
+            color: index % 2 ? levelno < 30 ? listView.blue : listView.red : Colors.white
             width: ListView.view.width
-
+            height: content.height + 5
 
             Text {
 
