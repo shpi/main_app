@@ -61,7 +61,7 @@ Rectangle {
 
         height: control.height / 2.1
         width: 70
-        onClicked:  modules.loaded_instances['Logic']['Shutter'][instancename].set_desired_position(100)
+        onClicked:  modules.loaded_instances['UI']['MultiShutter'][instancename].set_desired_position(100)
         text:  Icons.arrow
         visible: shutterObject.iconview2 ? false : true
         anchors.top: control.top
@@ -79,7 +79,7 @@ Rectangle {
 
         height: control.height / 2.1
         width: 70
-        onClicked:  modules.loaded_instances['Logic']['Shutter'][instancename].set_desired_position(0)
+        onClicked:  modules.loaded_instances['UI']['MultiShutter'][instancename].set_desired_position(0)
         text:  Icons.arrow
         visible: shutterObject.iconview2 ? false : true
         anchors.bottom: control.bottom
