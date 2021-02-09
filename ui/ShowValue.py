@@ -91,6 +91,6 @@ class ShowValue(QObject):
     @Property(str, notify=valueChanged)
     def value(self):
         if self.is_number(self._value) and self.is_number(self._divider):
-            return str(float(self._value) / float(self._divider))
+            return "{:.1f}".format(float(self._value) / float(self._divider))
         else:
             return self._value
