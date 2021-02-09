@@ -56,6 +56,39 @@ Rectangle {
         }
 
 
+        RoundButton {
+
+
+        height: control.height / 2.1
+        width: 70
+        onClicked:  modules.loaded_instances['Logic']['Shutter'][instancename].set_desired_position(100)
+        text:  Icons.arrow
+        visible: shutterObject.iconview2 ? false : true
+        anchors.top: control.top
+        anchors.left: control.right
+        anchors.leftMargin: 20
+        font.pixelSize: 60
+        rotation: 180
+
+
+        }
+
+
+        RoundButton {
+
+
+        height: control.height / 2.1
+        width: 70
+        onClicked:  modules.loaded_instances['Logic']['Shutter'][instancename].set_desired_position(0)
+        text:  Icons.arrow
+        visible: shutterObject.iconview2 ? false : true
+        anchors.bottom: control.bottom
+        anchors.left: control.right
+        anchors.leftMargin: 20
+        font.pixelSize: 60
+        }
+
+
         Slider {
 
             enabled: shutterObject.iconview2 ? false : true
