@@ -13,9 +13,9 @@ Rectangle {
     radius: 10
     color: Colors.whitetrans
     //clip: true
-    property bool iconview: false
+    property bool iconview: parent.iconview != undefined ? parent.iconview : false
+    property string instancename: parent.instancename != undefined ? parent.instancename : modules.modules['Logic']['Shutter'][0]
 
-    property string name: modules.modules['UI']['MultiShutter'][0]
 
 
 
@@ -38,7 +38,7 @@ Rectangle {
         Text {
         anchors.top: parent.top
         anchors.right: parent.left
-        text: modules.loaded_instances['UI']['MultiShutter'][name].success.toString()
+        text: modules.loaded_instances['UI']['MultiShutter'][instancename].success.toString()
         color: "green"
         anchors.rightMargin: 2
         font.pixelSize: shutterObject.iconview2 ? 30 : 50
@@ -50,7 +50,7 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.right: parent.left
         anchors.rightMargin: 2
-        text: modules.loaded_instances['UI']['MultiShutter'][name].failed.toString()
+        text: modules.loaded_instances['UI']['MultiShutter'][instancename].failed.toString()
         color: "red"
         font.pixelSize:  shutterObject.iconview2 ? 30 : 50
         }
@@ -63,7 +63,7 @@ Rectangle {
             id: control
             from: 0
             to: 100
-            value: modules.loaded_instances['UI']['MultiShutter'][name].desired_position
+            value: modules.loaded_instances['UI']['MultiShutter'][instancename].desired_position
             orientation: Qt.Vertical
             height: parent.height - 2
             width: parent.width - 2
@@ -71,11 +71,11 @@ Rectangle {
 
             stepSize: 5
             onPressedChanged: if (this.pressed === false)
-                                  modules.loaded_instances['UI']['MultiShutter'][name].set_position(
+                                  modules.loaded_instances['UI']['MultiShutter'][instancename].set_position(
                                               this.value)
 
             Text {
-                text: modules.loaded_instances['UI']['MultiShutter'][name].desired_position
+                text: modules.loaded_instances['UI']['MultiShutter'][instancename].desired_position
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.horizontalCenterOffset: -parent.width * 0.07

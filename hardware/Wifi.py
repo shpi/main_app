@@ -263,7 +263,7 @@ class Wifi(QObject):
     def _write_settings(self, device='', flags='', bssid='', ssid='', passwd='', fixbssid=False):
        try:
         self.wpa_running = False
-        os.system('systemctl stop wpa_supplicant@wlan0.service')
+
         self.settings.setValue("wifi/password/" + bssid, passwd)
         with open('/etc/wpa_supplicant/wpa_supplicant.conf', 'w') as f:
 
@@ -295,7 +295,7 @@ class Wifi(QObject):
             #       'systemctl', 'restart', 'wpa_supplicant.service', '&&',
             #       'systemctl', 'restart', 'dhcpcd.service'], shell=True, stdin=None, stdout=None, stderr=None)
 
-            logging.error(check_output(['systemctl', 'start', 'wpa_supplicant@wlan0.service'], encoding='UTF-8'))
+            logging.error(check_output(['systemctl', 'restart', 'wpa_supplicant@wlan0.service'], encoding='UTF-8'))
             logging.error(check_output(['systemctl', 'restart', 'dhcpcd.service'], encoding='UTF-8'))
             self.wpa_running = True
 

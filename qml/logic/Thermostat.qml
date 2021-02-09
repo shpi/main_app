@@ -171,4 +171,10 @@ Rectangle {
             view.interactive = false
         }
     } */
+
+    MouseArea {
+        anchors.fill: parent
+        onClicked: view.currentIndex = (view.count - 2)
+        //onClicked: popupWeather.open()
+    }
 }
