@@ -92,7 +92,7 @@ class MultiShutter(QObject):
             self.inputs.entries[path]['set'](int(value))
             self._success += 1
         except Exception as e:
-            print(e)
+            logging.error(str(e))
             self._failed += 1
 
         self.statusChanged.emit()

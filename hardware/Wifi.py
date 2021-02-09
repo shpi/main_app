@@ -80,6 +80,7 @@ class Wifi(QObject):
 
         super(Wifi, self).__init__()
         self.settings = settings
+        self.wpa_running = True
         self.inputs = dict()
         self.netdevs = SystemInfo.get_net_devs() #wlan0, wlan1
         self._network_hosts = dict()
@@ -250,16 +251,25 @@ class Wifi(QObject):
 
         return str(self.signals[device])
 
+
+
     @Slot(str, str, str, str, str, bool)
     def write_settings(self, device='', flags='', bssid='', ssid='', passwd='', fixbssid=False):
+                  scanthread = threading.Thread(target=self._write_settings, args=(device,flags,bssid,ssid,passwd,fixbssid))
+                  scanthread.start()
+
+
+    #@Slot(str, str, str, str, str, bool)
+    def _write_settings(self, device='', flags='', bssid='', ssid='', passwd='', fixbssid=False):
        try:
         self.wpa_running = False
-        os.system('systemctl stop wpa_supplicant.service')
+        os.system('systemctl stop wpa_supplicant@wlan0.service')
         self.settings.setValue("wifi/password/" + bssid, passwd)
         with open('/etc/wpa_supplicant/wpa_supplicant.conf', 'w') as f:
-            f.write('country=US\n')
+
             f.write('ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\n')
             f.write('update_config=1\n')
+            f.write('country=US\n')
             f.write('network={\n')
             f.write('ssid="' + ssid + '"\n')
             if fixbssid:
@@ -285,7 +295,7 @@ class Wifi(QObject):
             #       'systemctl', 'restart', 'wpa_supplicant.service', '&&',
             #       'systemctl', 'restart', 'dhcpcd.service'], shell=True, stdin=None, stdout=None, stderr=None)
 
-            logging.error(check_output(['systemctl', 'start', 'wpa_supplicant.service'], encoding='UTF-8'))
+            logging.error(check_output(['systemctl', 'start', 'wpa_supplicant@wlan0.service'], encoding='UTF-8'))
             logging.error(check_output(['systemctl', 'restart', 'dhcpcd.service'], encoding='UTF-8'))
             self.wpa_running = True
 
