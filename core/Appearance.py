@@ -345,7 +345,6 @@ class Appearance(QObject):
         return status
 
     def update(self):
-        logging.debug('check')
 
         status = 'OK'
 
@@ -373,14 +372,14 @@ class Appearance(QObject):
             self.state = 'ACTIVE'
 
         if self._jump_state == 0 and self._jump_timer + self.lastuserinput < time.time():
-            logging.debug(f"jump to home")
+            logging.debug(f"jump to home, timer: {self._jump_timer}, lastuserinput: {self.lastuserinput}")
             self._jump_state = 1
-            self.jumpHome.emit()
+            self.jump_stateChanged.emit()
 
         return status
 
     @Signal
-    def jumpHome(self):
+    def jump_stateChanged(self):
         pass
 
 
@@ -389,7 +388,7 @@ class Appearance(QObject):
         return int(self._backlightlevel)
 
 
-    @Property(bool, notify=jumpHome)
+    @Property(bool, notify=jump_stateChanged)
     def jump_state(self):
         return bool(self._jump_state)
 
@@ -425,7 +424,7 @@ class Appearance(QObject):
             if ismouse:
                 self.lastuserinput = time.time()
                 self._jump_state = 0
-                self.jumpHome.emit()
+                self.jump_stateChanged.emit()
 
                 if self.state in ('OFF', 'SLEEP'):
                     logging.debug(
@@ -437,8 +436,9 @@ class Appearance(QObject):
                     self.set_backlight(self._max_backlight)
             else:
 
-                self.lastuserinput = time.time() - self._dim_timer
+
                 if self.state == 'OFF':
+                    self.lastuserinput = time.time() - self._dim_timer
                     logging.debug(
                         f"changing nightmode to SLEEP, old state: {self.state}, lastinput: {self.lastuserinput}")
                     self.state = 'SLEEP'

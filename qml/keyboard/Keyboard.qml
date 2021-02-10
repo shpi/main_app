@@ -34,15 +34,15 @@ Rectangle {
             ListElement {label: "k"; alternate: "()"; ratio: "1"}
             ListElement {label: "l"; alternate: "'\""; ratio: "1"}
             ListElement {label: "/"; alternate: "?"; ratio: "1"}
-            ListElement {label: "⇑"; command:"shift"; ratio: "1.5"; checkable:"true"}
-            ListElement {label: "z"; alternate: "@"; ratio: "1"}
+            ListElement {label: "\u2191"; command:"shift"; ratio: "1.5"; checkable:"true"}
+            ListElement {label: "y"; alternate: "@"; ratio: "1"}
             ListElement {label: "x"; alternate: "$"; ratio: "1"}
             ListElement {label: "c"; alternate: "!"; ratio: "1"}
             ListElement {label: "v"; alternate: ";"; ratio: "1"}
             ListElement {label: "b"; alternate: ":"; ratio: "1"}
             ListElement {label: "n"; alternate: "<"; ratio: "1"}
             ListElement {label: "m"; alternate: ">"; ratio: "1"}
-            ListElement {label: "⌫"; command:"backspace"; ratio: "1.5"}
+            ListElement {label: "\u2190"; command:"backspace"; ratio: "1.5"}
             ListElement {label: "123"; command:"source"; source:"keyboard_num"; ratio: "1.5"}
             ListElement {label: "Us"; command:"source"; source:"keyboard_us"; ratio: "1"}
             ListElement {label: " "; alternate: ""; ratio: "5"}
@@ -74,7 +74,7 @@ Rectangle {
             ListElement {label: "k"; alternate: "()"; ratio: "1"}
             ListElement {label: "l"; alternate: "'\""; ratio: "1"}
             ListElement {label: "/"; alternate: "?"; ratio: "1"}
-            ListElement {label: "⇑"; command:"shift"; ratio: "1.5"; checkable:"true"}
+            ListElement {label: "\u2191"; command:"shift"; ratio: "1.5"; checkable:"true"}
             ListElement {label: "z"; alternate: "@"; ratio: "1"}
             ListElement {label: "x"; alternate: "$"; ratio: "1"}
             ListElement {label: "c"; alternate: "!"; ratio: "1"}
@@ -82,7 +82,7 @@ Rectangle {
             ListElement {label: "b"; alternate: ":"; ratio: "1"}
             ListElement {label: "n"; alternate: "<"; ratio: "1"}
             ListElement {label: "m"; alternate: ">"; ratio: "1"}
-            ListElement {label: "⌫"; command:"backspace"; ratio: "1.5"}
+            ListElement {label: "\u2190"; command:"backspace"; ratio: "1.5"}
             ListElement {label: "123"; command:"source"; source:"keyboard_num"; ratio: "1.5"}
             ListElement {label: "Ru"; command:"source"; source:"keyboard_ru"; ratio: "1"}
             ListElement {label: " "; alternate: ""; ratio: "5"}
@@ -122,7 +122,7 @@ Rectangle {
             ListElement {label:  ":"; ratio: "1"}
             ListElement {label:  ";"; ratio: "1"}
             ListElement {label:  "\""; ratio: "1"}
-            ListElement {label:  "⌫"; command:"backspace"; ratio: "1"}
+            ListElement {label:  "\u2190"; command:"backspace"; ratio: "1"}
             ListElement {label:  "Us"; command:"source"; source:"keyboard_us"; ratio: "1.25"}
             ListElement {label:  "De"; command:"source"; source: "keyboard_de"; ratio: "1.25"}
 
@@ -158,7 +158,7 @@ Rectangle {
     ListElement {label:  "д"; alternate: "'\""; ratio: "0.9"}
     ListElement {label:  "ж"; alternate: "/"; ratio: "0.9"}
     ListElement {label:  "э"; alternate: "?"; ratio: "0.9"}
-    ListElement {label:  "⇑"; command:"shift"; ratio: "0.9"; checkable: "true"}
+    ListElement {label:  "\u2191"; command:"shift"; ratio: "0.9"; checkable: "true"}
     ListElement {label:  "я"; alternate: "@"; ratio: "0.9"}
     ListElement {label:  "ч"; alternate: "$"; ratio: "0.9"}
     ListElement {label:  "с"; alternate: "!"; ratio: "0.9"}
@@ -168,7 +168,7 @@ Rectangle {
     ListElement {label:  "ь"; alternate: "ъ"; ratio: "0.9"}
     ListElement {label:  "б"; alternate: "<"; ratio: "0.9"}
     ListElement {label:  "ю"; alternate: ">"; ratio: "0.9"}
-    ListElement {label:  "⌫"; command:"backspace"; ratio: "0.9"}
+    ListElement {label:  "\u2190"; command:"backspace"; ratio: "0.9"}
     ListElement {label:  "123"; command:"source"; source: "keyboard_num"; ratio: "1.5"}
     ListElement {label:  "De"; command:"source"; source:"keyboard_de"; ratio: "1"}
     ListElement {label:  " "; ratio: "5"}

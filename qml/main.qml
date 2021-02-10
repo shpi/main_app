@@ -349,8 +349,10 @@ ApplicationWindow {
 
     Connections {
         target: appearance
-        function onJumpHome() {
-            if (appearance.jump_state > 0)  { view.currentIndex = 1}
+        function onJump_stateChanged() {
+            if (appearance.jump_state)  { view.currentIndex = 1
+                                          console.log('JumpState: ' + appearance.jump_state)
+                                          }
         }
     }
 

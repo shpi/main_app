@@ -13,12 +13,14 @@ from PySide2.QtCore import QSettings
 
 
 class MLX90615:
+
     TEMP_RANGE_MIN = 0.1
     TEMP_RANGE_MAX = 45
 
     def __init__(self, inputs, settings):
 
         super(MLX90615, self).__init__()
+
         self.ospath = None
 
         for sensor in glob.iglob('/sys/bus/iio/devices/*', recursive=False):
@@ -236,20 +238,13 @@ class MLX90615:
                     # a = minmax(data)
                     # if (a[1] - a[0]) > self.delta:
 
-                    if (self.object_mean - tempobj) < -self.delta:
+                    if abs(self.object_mean - tempobj) > self.delta:
                              logging.debug('fast temp change: ' + str((self.object_mean - tempobj)))
                              self.last_movement = time.time()
                              if 'interrupts' in self.inputs.entries[f'dev/mlx90615/thread']:
                                 for function in self.inputs.entries[f'dev/mlx90615/thread']['interrupts']:
                                     function(f'dev/mlx90615', self.object_mean - tempobj, 0)
 
-
-                    if (self.object_mean - tempobj) > self.delta:
-                             logging.debug('fast temp change: ' + str((self.object_mean - tempobj)))
-                             self.last_movement = time.time()
-                             if 'interrupts' in self.inputs.entries[f'dev/mlx90615/thread']:
-                                for function in self.inputs.entries[f'dev/mlx90615/thread']['interrupts']:
-                                    function(f'dev/mlx90615', self.object_mean - tempobj, 0)
 
                     self.object_mean = (self.object_mean * 9 + tempobj) // 10
 

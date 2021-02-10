@@ -23,6 +23,7 @@
     "backgrounds/",
     "fonts/qmldir",
     "core/Logger.py",
+    "core/MLX90615.py",
     "core/BaseModule.py",
     "core/Wifi.py",
     "core/CircularBuffer.py",
