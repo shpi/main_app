@@ -38,7 +38,7 @@ Item {
                 width: 200
                 model: wifi.devices
 
-                onCurrentTextChanged: wifi.wpa_status(actualDevice.currentText)
+                onPressedChanged: wifi.wpa_status(actualDevice.currentText)
 
             }
 

@@ -151,4 +151,14 @@ Item {
             }
         }
     }
+
+    BusyIndicator {
+            width: parent.width / 3
+            height: width
+
+            palette.dark: "#1E90FF"
+            anchors.centerIn: parent
+            id: busy
+            running: true
+        }
 }

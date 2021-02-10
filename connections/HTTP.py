@@ -36,7 +36,6 @@ class HTTP(QObject):
         self.update_vars()
         self.inputlist = InputListModel(self.module_inputs)
 
-        # minimum fields: path, value, interval, type, lastupdate
 
     def get_inputs(self) -> dict:
 
