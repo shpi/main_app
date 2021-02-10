@@ -37,6 +37,9 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 200
                 model: wifi.devices
+
+                onCurrentTextChanged: wifi.wpa_status(actualDevice.currentText)
+
             }
 
 
@@ -175,8 +178,7 @@ Item {
             onClicked: {
                 wifi.scan_wifi(actualDevice.currentText)
 
-                settingsstackView.push(
-                                                   Qt.resolvedUrl('WifiSettingsList.qml'), {
+                settingsstackView.push(   Qt.resolvedUrl('WifiSettingsList.qml'), {
                                                        "device": actualDevice.currentText
                                                    })
 

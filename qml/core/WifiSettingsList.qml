@@ -7,6 +7,8 @@ Item {
 
     id: root
 
+    property string device
+
     ListView {
         property int selectednetwork: -1
         height: parent.height
@@ -21,6 +23,8 @@ Item {
         }
 
         model: wifi.networks
+
+
 
         delegate: inputDelegate
 
