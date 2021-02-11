@@ -65,9 +65,9 @@ class IIO:
         if os.path.isfile(f'/sys/bus/iio/devices/{id}/{channel}'):
             try:
                 with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
-                    value = scale * (int(rf.read().rstrip()) + offset)
+                    value = scale * (float(rf.read().rstrip()) + offset)
                     logging.debug('reading ' + channel + ': ' + str(value))
-                    return Convert.str_to_tight_datatype(value)
+                    return (value)
 
 
             except Exception as e:

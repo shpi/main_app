@@ -160,8 +160,8 @@ class Convert:
                          DataType.PRESSURE: 'pressure',
                          DataType.HUMIDITY: 'humidity',
                          DataType.PRESENCE: 'presence',
-                         DataType.ONOFF: 'on_off',
-                         DataType.COUNT: 'count',
+                         #DataType.ONOFF: 'on_off',
+                         #DataType.COUNT: 'count',
                          DataType.FAN: 'fan',
                          DataType.ACCELERATION: 'acceleration',
                          DataType.VELOCITY: 'velocity',
@@ -181,7 +181,7 @@ class Convert:
                          DataType.WORK: 'work',
                          DataType.ENERGY: 'energy',
                          DataType.CONDUCTIVITY: 'conductivity',
-                         DataType.BYTES: 'bytes',
+                         #DataType.BYTES: 'bytes',
                          DataType.GPS_COORDS: 'gps_coordinates',
                          DataType.LATITUDE: 'latitude',
                          DataType.LONGITUDE: 'longitude',
@@ -205,7 +205,7 @@ class Convert:
         ChannelType.IIO_CAPACITANCE: DataType.CAPACITANCE,
         ChannelType.IIO_PRESSURE: DataType.PRESSURE,
         ChannelType.IIO_HUMIDITYRELATIVE: DataType.HUMIDITY,
-        ChannelType.IIO_STEPS: DataType.COUNT,
+        ChannelType.IIO_STEPS: DataType.INT,
         ChannelType.IIO_ENERGY: DataType.ENERGY,
         ChannelType.IIO_DISTANCE: DataType.PROXIMITY,  # ??
         ChannelType.IIO_VELOCITY: DataType.VELOCITY,
@@ -214,6 +214,6 @@ class Convert:
         ChannelType.IIO_PH: DataType.PHINDEX,
         ChannelType.IIO_UVINDEX: DataType.UVINDEX,
         ChannelType.IIO_ELECTRICALCONDUCTIVITY: DataType.CONDUCTIVITY,
-        ChannelType.IIO_COUNT: DataType.COUNT,
+        ChannelType.IIO_COUNT: DataType.INT,
         ChannelType.IIO_GRAVITY: DataType.GRAVITY
     }
