@@ -238,12 +238,12 @@ class MLX90615:
                     # a = minmax(data)
                     # if (a[1] - a[0]) > self.delta:
 
-                    if abs(self.object_mean - tempobj) > self.delta:
-                             logging.debug('fast temp change: ' + str((self.object_mean - tempobj)))
+                    if abs(tempobj - self.object_mean) > self.delta:
+                             logging.debug('fast temp change: ' + str((self.object_mean - tempobj) * 50 / 1000))
                              self.last_movement = time.time()
                              if 'interrupts' in self.inputs.entries[f'dev/mlx90615/thread']:
                                 for function in self.inputs.entries[f'dev/mlx90615/thread']['interrupts']:
-                                    function(f'dev/mlx90615', self.object_mean - tempobj, 0)
+                                    function(f'dev/mlx90615', abs(self.object_mean - tempobj), 0)
 
 
                     self.object_mean = (self.object_mean * 9 + tempobj) // 10

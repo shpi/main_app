@@ -1,8 +1,9 @@
 import glob
 import os
+import sys
 import logging
 from functools import partial
-from core.DataTypes import DataType
+from core.DataTypes import Convert, DataType
 
 
 class HWMon:
@@ -96,9 +97,10 @@ class HWMon:
         if os.path.isfile(f'/sys/class/hwmon/{channelid}/{channel}'):
             try:
                 with open(f'/sys/class/hwmon/{channelid}/{channel}', 'r') as rf:
-                    value = int(rf.read().rstrip())
+                    value = rf.read().strip()
                     logging.debug(f' reading channel: {channel} value: {value}')
-                    return value
+                    return Convert.str_to_tight_datatype(value)
+
 
             except Exception as e:
                 exception_type, exception_object, exception_traceback = sys.exc_info()

@@ -82,6 +82,41 @@ class DataType(Enum):
 
 class Convert:
     @staticmethod
+    def str_to_tight_datatype(value_str):
+        # Convert a number stored as a string to a <float> or an <int>, <str> as fallback
+
+        try:
+            value = float(value_str)
+            #isfloat = True
+        except:
+            return str(value_str)
+
+        number = value_str.split(".")
+
+        if len(number) > 1:
+            integer = number[0]
+            mantissa = number[1]
+            if integer.isdecimal() and mantissa.isdecimal():
+
+                if int(mantissa) == 0:
+                    # value is an integer; mantissa is 0
+                    #isfloat = False
+                    value = int(integer)
+
+                elif integer.isdecimal():
+                    # value is an integer because a value is only
+                    # returned for 'integer' variable by .split(),
+                    # the returned mantissa value is null.
+                    #isfloat = False
+                    value = int(integer)
+            else:
+                #isfloat = False
+                value = int(value_str)
+
+        return value
+
+
+    @staticmethod
     def iio_to_shpi(iio: ChannelType):
         if iio in Convert._mapping_iio_shpi:
             return Convert._mapping_iio_shpi[iio]

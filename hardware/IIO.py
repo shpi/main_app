@@ -45,10 +45,11 @@ class IIO:
         try:
             if os.path.isfile(f'/sys/bus/iio/devices/{id}/{channel}'):
                 with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
-                    value = int(rf.read().rstrip())
+                    value = rf.read().rstrip()
                     logging.debug('reading ' + channel + ': ' + str(value))
 
-                    return value
+                    return Convert.str_to_tight_datatype(value)
+
         except Exception as e:
             if (retries < 3):
                 return IIO.read_iio(id, channel, retries + 1)
@@ -66,7 +67,8 @@ class IIO:
                 with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
                     value = scale * (int(rf.read().rstrip()) + offset)
                     logging.debug('reading ' + channel + ': ' + str(value))
-                    return float(value)
+                    return Convert.str_to_tight_datatype(value)
+
 
             except Exception as e:
                 if (retries < 3):
