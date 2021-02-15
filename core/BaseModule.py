@@ -26,7 +26,6 @@ class BaseModule:
         self._module =                      {'description': 'Shutter Module for two binary outputs',
                                              'value': 'NOT_INITIALIZED',
                                              'type': DataType.MODULE,
-                                             'lastupdate': 0,
                                              'interval': -1 }
 
     def get_inputs(self) -> dict:

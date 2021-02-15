@@ -1,111 +1,173 @@
 #!/usr/bin/env python3
 import sys
 import os
-import time
+import socket
+import fcntl
+import struct
+import shutil
 import re
+import glob
+import time
 import threading
-from subprocess import check_output, call, Popen, PIPE, DEVNULL
-from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
+from typing import List, Dict
+from subprocess import Popen, PIPE
 from core.DataTypes import DataType
+from core.Toolbox import netmaskbytes_to_prefixlen, ipbytes_to_ipstr, IPEndpoint, lookup_oui
 import logging
+from core.Property import EntityProperty
+
+_re_ifname = re.compile(r'\s*(\S+):')
+_re_ifname_w_stats = re.compile(r'\s*(\S+):' + (r'\s+(\d+)' * 16))  # 16 stat columns
+
+# "Host: 192.168.51.31 (DVS-605-Series-0D-27-D6.fritz.box)"
+_re_scanreport = re.compile(r'Host: (\S+) \((.*)\)')
+
+# "192.168.51.5     0x1         0x2         9c:1c:12:ca:de:27     *        enp4s0"
+_re_arp = re.compile(r'(\S+).*(\S{2}:\S{2}:\S{2}:\S{2}:\S{2}:\S{2})')
+
+SIOCGIFNETMASK = 0x891b
+SIOCGIFHWADDR = 0x8927
+SIOCGIFADDR = 0x8915
 
 
-class WifiNetworkModel(QAbstractListModel):
-    BSSIDRole = Qt.UserRole + 1000
-    SSIDRole = Qt.UserRole + 1001
-    SignalRole = Qt.UserRole + 1002
-    FlagsRole = Qt.UserRole + 1003
-    FrequencyRole = Qt.UserRole + 1004
-    PasswordRole = Qt.UserRole + 1005
+class InterfaceInfo:
+    def __init__(self, interface: str):
+        self._name = interface
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, bytes(self._name, encoding="ascii"))
+        self._endpoints = []
+        self._scanthread = threading.Thread(target=self._scan_thread_func)
 
-    def __init__(self, entries=[], settings: QSettings = None, active='', parent=None):
-        super(WifiNetworkModel, self).__init__(parent)
-        self._entries = entries
-        self.settings = settings
+    @property
+    def endpoints(self) -> List[IPEndpoint]:
+        return self._endpoints
 
-    def rowCount(self, parent=QModelIndex()):
-        if parent.isValid():
-            return 0
-        return len(self._entries)
+    @property
+    def name(self):
+        return self._name
 
-    def data(self, index, role=Qt.DisplayRole):
-        if 0 <= index.row() < self.rowCount() and index.isValid():
-            item = self._entries[index.row()]
-            if role == WifiNetworkModel.BSSIDRole:
-                return item[b"bssid"]
-            elif role == WifiNetworkModel.SSIDRole:
-                return item[b"ssid"]
-            elif role == WifiNetworkModel.SignalRole:
-                return Wifi.dbmtoperc[int(item[b"signal"])]
-            elif role == WifiNetworkModel.FlagsRole:
-                if 'WPA2' in item[b'flags']:
-                    return 'WPA2'
-                elif 'WPA' in item[b'flags']:
-                    return 'WPA'
-                elif 'WEP' in item[b'flags']:
-                    return 'WEP'
-                else:
-                    return 'OPEN'
-            elif role == WifiNetworkModel.PasswordRole:
-                return self.settings.value("wifi/password/" + item[b"bssid"], "")
+    @property
+    def mask(self) -> bytes:
+        raw = fcntl.ioctl(self._sock.fileno(), SIOCGIFNETMASK,
+                          struct.pack("16s16x", bytes(self._name, encoding="ascii")))
+        subnet_bytes = raw[20:24]
+        return subnet_bytes
 
-            elif role == WifiNetworkModel.FrequencyRole:
-                if int(item[b"frequency"]) in Wifi.freqtochn:
-                    return Wifi.freqtochn[int(item[b"frequency"])]
-                else:
-                    return item[b"frequency"]
+    @property
+    def mask_human(self) -> str:
+        return ipbytes_to_ipstr(self.mask)
 
-    def roleNames(self):
+    @property
+    def mask_prefix_length(self) -> int:
+        return netmaskbytes_to_prefixlen(self.mask)
 
-        roles = {WifiNetworkModel.BSSIDRole: b"bssid",
-                 WifiNetworkModel.SSIDRole: b"ssid",
-                 WifiNetworkModel.FlagsRole: b"flags",
-                 WifiNetworkModel.SignalRole: b"signal",
-                 WifiNetworkModel.PasswordRole: b"password",
-                 WifiNetworkModel.FrequencyRole: b"frequency"}
+    @property
+    def ip(self) -> bytes:
+       try:
+        raw = fcntl.ioctl(self._sock.fileno(), SIOCGIFADDR, struct.pack('256s', bytes(self._name, encoding="ascii")))
+        ip_bytes = raw[20:24]
+        return ip_bytes
+       except Exception as e:
+           logging.error(str(e))
+           return None
 
-        return roles
+    @property
+    def ip_human(self) -> str:
+        return ipbytes_to_ipstr(self.ip)
 
-    def appendRow(self, n):
-        self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
-        self._entries.append(n)
-        self.endInsertRows()
+    @property
+    def mac_address(self) -> bytes:
+        ifreq = struct.pack('16sH14s', bytes(self._name, encoding="ascii"), socket.AF_UNIX, b'\x00' * 14)
+        raw = fcntl.ioctl(self._sock.fileno(), SIOCGIFHWADDR, ifreq)
+
+        mac_bytes = raw[18:24]
+        return mac_bytes
+
+    @property
+    def mac_address_human(self) -> str:
+        return ":".join(['%02X' % byte for byte in self.mac_address])
+
+    def cidr(self) -> str:
+        return f"{self.ip_human}/{self.mask_prefix_length}"
+
+    def endpoint(self) -> IPEndpoint:
+        return IPEndpoint(self.ip_human, socket.gethostname(), self.mac_address_human, lookup_oui(self.mac_address),
+                          self._name)
+
+    def scan(self):
+        if self._scanthread.is_alive():
+            return
+
+        self._scanthread.start()
+
+    def _scan_thread_func(self):
+        ip_list: Dict[str, List[str, str, str]] = {}
+
+        p = Popen(['nmap', '-sn', self.cidr(), '--unprivileged', '-oG', '-'], stdout=PIPE, stdin=PIPE, stderr=PIPE,
+                  encoding="utf8")
+        stdout_data = p.communicate()[0]
+
+        for line in stdout_data.splitlines(False):
+            m = _re_scanreport.match(line)
+            if m:
+                ip_list[m.group(1)] = [m.group(2), "", ""]
+
+        with open("/proc/net/arp") as arps:
+            for arp in arps:
+                m = _re_arp.match(arp)
+                if m:
+                    ip = m.group(1)
+                    if ip in ip_list:
+                        mac = m.group(2)
+                        sublist = ip_list[ip]
+                        sublist[1] = mac
+                        sublist[2] = lookup_oui(mac)
+
+        self._endpoints.clear()
+        for ip, data in ip_list.items():
+            self._endpoints.append(IPEndpoint(ip, *data, self._name))
+
+    def __del__(self):
+        try:
+            self._sock.close()
+        except Exception as e:
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            line_number = exception_traceback.tb_lineno
+            logging.error(f'error: {e} in line: {line_number}')
+
+            pass
 
 
-class Wifi(QObject):
+class Network(QObject):
 
     version = "1.0"
     required_packages = None
     allow_instances = False
     allow_maininstance = True
-    description = "Wifi Module for managing WPA supplicant"
+    description = "Network Module"
 
     def __init__(self, settings):
 
-        super(Wifi, self).__init__()
-        self.settings = settings
-        self.changing_wpa = True
-        self.module_inputs = dict()
-        self._network_hosts = dict()
-        self.wifi_devices = Wifi.get_wifi_devs()
-        self._networks = WifiNetworkModel([], self.settings)
-        self.signals = dict()
+
+        self.network_devices: Dict[str, InterfaceInfo] = {ifname: InterfaceInfo(ifname) for ifname in SystemInfo.get_net_devs()}
+
+        for netdev in self.network_devices.values():
+            netdev.scan()
 
 
     @staticmethod
-    def get_wifi_devs(stat_path='/proc/net/dev'):
-            wifidevs = []
-            if not os.path.isfile(stat_path):
-                return
+    def get_ip4_address(ifname):
+                try:
+                    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    return ipbytes_to_ipstr(fcntl.ioctl(
+                        s.fileno(), SIOCGIFADDR,
+                        struct.pack('256s', bytes(ifname[:15], 'ascii'))
+                    )[20:24])
+                except OSError as e:
+                    logging.error(str(e))
+                    return -1
 
-            with open(stat_path) as net_file:
-                for line in net_file:
-                    a = line.find(':')
-                    if a > -1:
-                        netdev =  line[:a].strip()
-                        if netdev.startswith('wlan'):
-                            wifidevs.append(netdev)
-            return wifidevs
+
 
     @Slot()
     def start_scan_hosts(self):
@@ -113,8 +175,6 @@ class Wifi(QObject):
                 threading.Thread(target=self.scan_hosts, args=(netdev,)).start()
 
 
-    #def update(self):
-        #self.read_signal()
 
     def get_inputs(self) -> dict:
         return self.module_inputs
@@ -187,215 +247,32 @@ class Wifi(QObject):
     def networks(self):
         return self._networks
 
-    @Slot()
-    @Slot(str)
-    def scan_wifi(self, device='wlan0'):
-        self.wifi_devices = Wifi.get_wifi_devs()
-        self.devicesChanged.emit()
+    @staticmethod
+    def get_net_devs(stat_path='/proc/net/dev', with_lo=False):
+        netdevs = []
+        if not os.path.isfile(stat_path):
+            return
 
-        if len(self.wifi_devices) > 0 and device in self.wifi_devices and device.startswith('wlan'):
-                  scanthread = threading.Thread(target=self._scan_wifi, args=(device,))
-                  scanthread.start()
+        with open(stat_path) as net_file:
+            # ['name',
+            # 'received', 'packets', 'errs', 'drop', 'fifo', 'frame', 'compressed', 'multicast',
+            # 'transmit, 'packets', 'errs', 'drop', 'fifo', 'colls', 'carrier', 'compressed']
+            """
+            Inter-|   Receive                                                |  Transmit
+             face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+                lo:   84522     961    0    0    0     0     0         0    84522     961    0    0    0     0       0          0
+            enp4s0: 402485511 4188225    0    0    0     0    0      1891 232774205 4096081    0    0    0     0       0          0
+            wlp5s0u4u2u2:  605332    8593    0    0    0     0    0   0    94686     462    0    0    0     0       0          0
+            """
+            for line in net_file:
+                # match = _re_ifname_w_stats.match(line)
+                match = _re_ifname.match(line)
 
-
-    def _scan_wifi(self, device):
-        networks = []
-        retry = 3
-        while retry > 0:
-            try:
-                if b'OK' in check_output(["wpa_cli", "-i", device, "scan"], stderr=DEVNULL):
-                    retry = 0
-                    record_details = Popen(["wpa_cli", "-i", device, "scan_results"], stdout=PIPE).communicate()[0].decode()
-                    record_details = record_details.strip().split('\n')
-                    record_details.pop(0)
-
-                    for record in record_details:
-                        record = record.split('\t')
-                        if len(record) < 5:
-                            record.append('')
-                        networks.append({b'device': device, b'bssid': record[0],
-                                         b'frequency': record[1], b'signal': record[2].rstrip('.'),
-                                         b'flags': record[3], b'ssid': record[4]})
-
-                else:
-                    time.sleep(0.2)
-                    retry -= 1
-            except Exception as e:
-                retry -= 1
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                line_number = exception_traceback.tb_lineno
-                logging.error(f'{e} in line {line_number}')
-        self._networks = WifiNetworkModel(networks, self.settings)
-        self.networksChanged.emit()
-
-    @Slot(str, result=str)
-    def wpa_status(self, device):
-        if not self.changing_wpa:
-            return 'WPA reinit'
-
-        try:
-         output = check_output(
-            ['wpa_cli', '-i', device, 'status']).split(b'\n')
-
-         for line in output:
-            if line.startswith(b'wpa_state='):
-                return line[10:].rstrip().decode()
-            if line.startswith(b'bssid='):
-                self.connected_bssid = line[6:].rstrip().decode()
-        except Exception as e:
-            exception_type, exception_object, exception_traceback = sys.exc_info()
-            line_number = exception_traceback.tb_lineno
-            logging.error(f'{e} in line {line_number}')
-
-        return 'UNKNOWN'
-
-    @Slot(str, result=str)
-    def signal_status(self, device):
-        return str(self.signals[device])
-
-    @Slot(str, str, str, str, str, bool)
-    def write_settings(self, device='', flags='', bssid='', ssid='', passwd='', fixbssid=False):
-                  scanthread = threading.Thread(target=self._write_settings, args=(device,flags,bssid,ssid,passwd,fixbssid))
-                  scanthread.start()
+                if match:
+                    # print(match.groups())
+                    ifname = match.group(1)
+                    if with_lo or ifname != "lo":
+                        netdevs.append(ifname)
+        return netdevs
 
 
-    # Thread
-    def _write_settings(self, device='', flags='', bssid='', ssid='', passwd='', fixbssid=False):
-       try:
-        self.changing_wpa = False
-
-        self.settings.setValue("wifi/password/" + bssid, passwd)
-        with open('/etc/wpa_supplicant/wpa_supplicant.conf', 'w') as f:
-
-            f.write('ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\n')
-            f.write('update_config=1\n')
-            f.write('country=US\n')
-            f.write('network={\n')
-            f.write('ssid="' + ssid + '"\n')
-            if fixbssid:
-                f.write('bssid=' + bssid + '\n')
-            if 'ssid' == '':
-                f.write('scan_ssid=1\n')
-
-            if 'WPA2' in flags:
-                f.write('psk="' + passwd + '"\n')
-            elif 'WEP' in flags:
-                f.write('wep_tx_keyidx=0\n')
-                f.write('wep_key0="' + passwd + '"\n')
-                f.write('key_mgmt=NONE\n')
-            elif 'WPA' in flags:
-                f.write('psk="' + passwd + '"\n')
-                f.write('pairwise=CCMP\n')
-                f.write('group=TKIP\n')
-            else:
-                f.write('key_mgmt=NONE\n')
-
-            f.write('}')
-
-        Popen(['wpa_cli', '-i', device, 'reconfigure'], shell=False, stdin=None, stdout=None, stderr=None)
-        #logging.error(check_output(['systemctl', 'restart', 'dhcpcd.service'], encoding='UTF-8'))
-        self.changing_wpa = True
-
-       except Exception as e:
-             logging.error(str(e))
-
-    def read_signal(self):
-        new_devices = list()
-        if os.path.isfile('/proc/net/wireless'):
-            with open('/proc/net/wireless', 'r') as rf:
-                line = rf.readline()
-                while line:
-                    line = (rf.readline().rstrip().split())
-                    if line and line[0].startswith('wlan'):
-                        device = line[0].rstrip(":")
-                        if device not in self.wifi_devices:
-                            self.wifi_devices.append(device)
-                        new_devices.append(device)
-                        if f'wifi/{device}/link' not in self.module_inputs:
-                            self.module_inputs[f'wifi/{device}/link'] = {'description': f'link quality of device {line[0].rstrip(":")}',
-                                                                  'interval': 1, 'lastupdate': 0, 'call': self.read_signal}
-                        self.signals[device] = self.dbmtoperc[int(line[3].rstrip('.'))]
-                        self.module_inputs[f'wifi/{device}/link']['value'] = self.signals[device]
-                        self.module_inputs[f'wifi/{device}/link']['status'] = line[1]
-                        self.module_inputs[f'wifi/{device}/link']['quality'] = line[2]
-                        self.module_inputs[f'wifi/{device}/link']['noise'] = line[4]
-                        self.module_inputs[f'wifi/{device}/link']['type'] = DataType.PERCENT_INT
-                        self.module_inputs[f'wifi/{device}/link']['lastupdate'] = time.time()
-
-
-            for device in self.wifi_devices:  # reset values before checking
-                if device not in new_devices:
-                    self.module_inputs[f'wifi/{device}/link']['value'] = 0
-                    self.module_inputs[f'wifi/{device}/link']['status'] = 0
-                    self.module_inputs[f'wifi/{device}/link']['level'] = 0
-                    self.module_inputs[f'wifi/{device}/link']['noise'] = 0
-                    self.module_inputs[f'wifi/{device}/link']['lastupdate'] = time.time()
-
-            self.devicesChanged.emit()
-
-    dbmtoperc = {-1: 100,  -26: 98, -51: 78, -76: 38,
-                 -2: 100,  -27: 97, -52: 76, -77: 36,
-                 -3: 100,  -28: 97, -53: 75, -78: 34,
-                 -4: 100,  -29: 96, -54: 74, -79: 32,
-                 -5: 100,  -30: 96, -55: 73, -80: 30,
-                 -6: 100,  -31: 95, -56: 71, -81: 28,
-                 -7: 100,  -32: 95, -57: 70, -82: 26,
-                 -8: 100,  -33: 94, -58: 69, -83: 24,
-                 -9: 100,  -34: 93, -59: 67, -84: 22,
-                 -10: 100, -35: 93, -60: 66, -85: 20,
-                 -11: 100, -36: 92, -61: 64, -86: 17,
-                 -12: 100, -37: 91, -62: 63, -87: 15,
-                 -13: 100, -38: 90, -63: 61, -88: 13,
-                 -14: 100, -39: 90, -64: 60, -89: 10,
-                 -15: 100, -40: 89, -65: 58, -90: 8,
-                 -16: 100, -41: 88, -66: 56, -91: 6,
-                 -17: 100, -42: 87, -67: 55, -92: 3,
-                 -18: 100, -43: 86, -68: 53, -93: 1,
-                 -19: 100, -44: 85, -69: 51, -94: 1,
-                 -20: 100, -45: 84, -70: 50, -95: 1,
-                 -21: 99,  -46: 83, -71: 48, -96: 1,
-                 -22: 99,  -47: 82, -72: 46, -97: 1,
-                 -23: 99,  -48: 81, -73: 44, -98: 1,
-                 -24: 98,  -49: 80, -74: 42, -99: 1,
-                 -25: 98,  -50: 79, -75: 40, -100: 1}
-
-    freqtochn = {2412: '2.4GHz 1', 2417: '2.4GHz 2',
-                 2422: '2.4GHz 3', 2427: '2.4GHz 4',
-                 2432: '2.4GHz 5', 2437: '2.4GHz 6',
-                 2442: '2.4GHz 7', 2447: '2.4GHz 8',
-                 2452: '2.4GHz 9', 2457: '2.4GHz 10',
-                 2462: '2.4GHz 11', 2467: '2.4GHz 12',
-                 2472: '2.4GHz 13', 2484: '2.4GHz 14',
-                 5035: '5GHz 7', 5040: '5GHz 8',
-                 5045: '5GHz 9', 5055: '5GHz 11',
-                 5060: '5GHz 12', 5080: '5GHz 16',
-                 5160: '5GHz 32', 5170: '5GHz 34',
-                 5180: '5GHz 36', 5190: '5GHz 38',
-                 5200: '5GHz 40', 5210: '5GHz 42',
-                 5220: '5GHz 44', 5230: '5GHz 46',
-                 5240: '5GHz 48', 5250: '5GHz 50',
-                 5260: '5GHz 52', 5270: '5GHz 54',
-                 5280: '5GHz 56', 5290: '5GHz 58',
-                 5300: '5GHz 60', 5310: '5GHz 62',
-                 5320: '5GHz 64', 5340: '5GHz 68',
-                 5480: '5GHz 96', 5500: '5GHz 100',
-                 5510: '5GHz 102', 5520: '5GHz 104',
-                 5530: '5GHz 106', 5540: '5GHz 108',
-                 5550: '5GHz 110', 5560: '5GHz 112',
-                 5570: '5GHz 114', 5580: '5GHz 116',
-                 5590: '5GHz 118', 5600: '5GHz 120',
-                 5610: '5GHz 122', 5620: '5GHz 124',
-                 5630: '5GHz 126', 5640: '5GHz 128',
-                 5660: '5GHz 132', 5670: '5GHz 134',
-                 5680: '5GHz 136', 5690: '5GHz 138',
-                 5700: '5GHz 140', 5710: '5GHz 142',
-                 5720: '5GHz 144', 5745: '5GHz 149',
-                 5755: '5GHz 151', 5765: '5GHz 153',
-                 5775: '5GHz 155', 5785: '5GHz 157',
-                 5795: '5GHz 159', 5805: '5GHz 161',
-                 5825: '5GHz 165', 5845: '5GHz 169',
-                 5865: '5GHz 173', 4915: '5GHz 183',
-                 4920: '5GHz 184', 4925: '5GHz 185',
-                 4935: '5GHz 187', 4940: '5GHz 188',
-                 4945: '5GHz 189', 4960: '5GHz 192',
-                 4980: '5GHz 196'}

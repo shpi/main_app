@@ -4,6 +4,7 @@ import sys
 import logging
 from functools import partial
 from core.DataTypes import Convert, DataType
+from core.Property import EntityProperty
 
 
 class HWMon:
@@ -11,85 +12,85 @@ class HWMon:
     def __init__(self):
 
         super(HWMon, self).__init__()
-        self._hwmon = dict()
+        self._hwmon = list()
 
         for sensors in glob.iglob('/sys/class/hwmon/hwmon*', recursive=False):
-            sensor = dict()
 
             if os.path.isfile(sensors + '/name'):
                 with open(sensors + '/name', 'r') as rf:
-                    sensor['name'] = (rf.read().rstrip())
+                    sensor_name = (rf.read().rstrip())
+            else:
+                break
 
             sensors = sensors.split('/')
-            sensor['id'] = sensors[-1]
+            sensor_id = sensors[-1]
 
             for channeltype in ('input', 'alarm', 'enable'):
-                for filename in glob.iglob(f"/sys/class/hwmon/{sensor['id']}/*_{channeltype}"):
+                for filename in glob.iglob(f"/sys/class/hwmon/{sensor_id}/*_{channeltype}"):
 
-                    channel = sensor.copy()
-                    channel['description'] = ''
+                    channel_desc = ''
                     if os.path.isfile(filename[0:-len(channeltype)] + "label"):
                         with open(filename[0:-len(channeltype)] + "label", 'r') as rf:
-                            channel['description'] = (rf.read().rstrip())
-                    channel['type'] = DataType.UNDEFINED
-                    channel['path'] = filename
-                    channel['rights'] = (os.stat(filename).st_mode & 0o777)
+                            channel_desc = (rf.read().rstrip())
+                    channel_type = DataType.UNDEFINED
+                    channel_is_output = (os.stat(filename).st_mode & 0o444 == 0o444)
+
                     filename = filename.split('/')
-                    channel['channel'] = filename[-1]
-                    self._hwmon[f"{channel['name']}/{filename[-1]}"] = channel
+                    channel_channel = filename[-1]
 
                     if channeltype == 'input':
-                        if channel['channel'].startswith('temp'):
-                            channel['type'] = DataType.TEMPERATURE
-                        elif channel['channel'].startswith('curr'):
-                            channel['type'] = DataType.CURRENT
-                        elif channel['channel'].startswith('in'):
-                            channel['type'] = DataType.VOLTAGE
-                        elif channel['channel'].startswith('power'):
-                            channel['type'] = DataType.POWER
-                        elif channel['channel'].startswith('humidity'):
-                            channel['type'] = DataType.HUMIDITY
-                        elif channel['channel'].startswith('fan'):
-                            channel['type'] = DataType.FAN
+                        if channel_channel.startswith('temp'):
+                            channel_type = DataType.TEMPERATURE
+                        elif channel_channel.startswith('curr'):
+                            channel_type = DataType.CURRENT
+                        elif channel_channel.startswith('in'):
+                            channel_type = DataType.VOLTAGE
+                        elif channel_channel.startswith('power'):
+                            channel_type = DataType.POWER
+                        elif channel_channel.startswith('humidity'):
+                            channel_type = DataType.HUMIDITY
+                        elif channel_channel.startswith('fan'):
+                            channel_type = DataType.FAN
 
                     if channeltype == 'enable':
-                        channel['type'] = DataType.BOOL
+                        channel_type = DataType.BOOL
                     if channeltype == 'alarm':
-                        channel['type'] = DataType.BOOL
+                        channel_type = DataType.BOOL
+
+                    self._hwmon.append(EntityProperty(parent=self,
+                                                      category='sensor',
+                                                      entity=sensor_name,
+                                                      name=channel_channel,
+                                                      description=channel_desc,
+                                                      type=channel_type,
+                                                      set=partial(self.write_hwmon, sensor_id,
+                                                                  channel_channel) if channel_is_output else None,
+                                                      call=partial(self.read_hwmon, sensor_id, channel_channel),
+                                                      interval=20))
 
             for channeltype in ('pwm', 'buzzer', 'relay'):
-                for filename in glob.iglob(f"/sys/class/hwmon/{sensor['id']}/{channeltype}[0-9]"):
-                    channel = sensor.copy()
-                    channel['description'] = ''
+                for filename in glob.iglob(f"/sys/class/hwmon/{sensor_id}/{channeltype}[0-9]"):
+                    channel_desc = ''
                     if os.path.isfile(filename + "_label"):
                         with open(filename + "_label", 'r') as rf:
-                            channel['description'] = (rf.read().rstrip())
-                    channel['type'] = DataType.BYTE if (
-                            channeltype == 'pwm') else DataType.BOOL
-                    channel['path'] = filename
-                    channel['rights'] = (os.stat(filename).st_mode & 0o777)
+                            channel_desc = (rf.read().rstrip())
+                    channel_type = DataType.BYTE if (channeltype == 'pwm') else DataType.BOOL
+                    channel_is_output = (os.stat(filename).st_mode & 0o444 == 0o444)
                     filename = filename.split('/')
-                    channel['channel'] = filename[-1]
-                    self._hwmon[f"{channel['name']}/{filename[-1]}"] = channel
+                    channel_channel = filename[-1]
+                    self._hwmon.append(EntityProperty(parent=self,
+                                                      category='output',
+                                                      entity=sensor_name,
+                                                      name=channel_channel,
+                                                      description=channel_desc,
+                                                      type=channel_type,
+                                                      set=partial(self.write_hwmon, sensor_id,
+                                                                  channel_channel) if channel_is_output else None,
+                                                      call=partial(self.read_hwmon, sensor_id, channel_channel),
+                                                      interval=20))
 
-    def get_inputs(self) -> dict:
-        hwmoninputs = dict()
-        for key, value in self._hwmon.items():
-
-            if value['rights'] & 0o444 == 0o444:
-                hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"] = {"description": value['description'],
-                                                                            # "rights": value['rights'],
-                                                                            "interval": 20,
-                                                                            "type": value['type'],
-                                                                            "call": partial(self.read_hwmon,
-                                                                                            value['id'],
-                                                                                            value['channel'])}
-
-            if value['rights'] == 0o644:
-                hwmoninputs[f"hwmon/{value['name']}/{value['channel']}"]["set"] = partial(
-                    self.write_hwmon, value['id'], value['channel'])
-
-        return hwmoninputs
+    def get_inputs(self) -> list:
+        return self._hwmon
 
     @staticmethod
     def read_hwmon(channelid, channel):

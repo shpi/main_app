@@ -5,7 +5,7 @@ import "../../fonts/"
 
 Item {
 
-    Component.onCompleted: inputs.set_searchList('alsa')
+    Component.onCompleted: inputs.set_searchList('sound')
 
     Column {
         anchors.fill: parent
@@ -19,7 +19,7 @@ Item {
         }
 
         ListView {
-            cacheBuffer: 200
+            cacheBuffer: 20
 
             height: parent.height - audioheader.height
             width: parent.width
@@ -36,6 +36,7 @@ Item {
                 Rectangle {
                     property int delindex: index
                     property int sensorvalue: value
+
                     id: wrapper
                     height: 70
 
@@ -56,9 +57,10 @@ Item {
 
                         //(output === '1' ? '' : value)
                         Loader {
+                            //Component.onCompleted: console.log(type)
                             anchors.verticalCenter: parent.verticalCenter
-                             asynchronous: true
-                            sourceComponent: if (output === '0')
+                            //asynchronous: true
+                            sourceComponent: if (output === false)
                                                  switch (type) {
                                                  case "percent_int":
                                                      return gaugebar
@@ -110,9 +112,11 @@ Item {
                         Loader {
                             anchors.verticalCenter: parent.verticalCenter
                             asynchronous: true
-                            sourceComponent: if (output === '1')
+                            sourceComponent: if (output)
                                                  switch (type) {
                                                  case "boolean":
+                                                     return boolswitch
+                                                 case "thread":
                                                      return boolswitch
                                                  case "enum":
                                                      return enumcombo
@@ -143,6 +147,7 @@ Item {
 
                             Component {
                                 id: boolswitch
+
                                 Switch {
 
                                     id: switchcontrol
@@ -185,11 +190,11 @@ Item {
                             Component {
                                 id: enumcombo
                                 ComboBox {
-                                    currentIndex: parseInt(value)
+                                    currentIndex: parseInt(sensorvalue)
                                     //visible: output == '1' ? 1 : 0
                                     width: 300
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                    model: inputs.data[path]['available']
+                                    model: available
                                     onActivated: inputs.set(path,
                                                             this.currentIndex)
                                 }
@@ -197,15 +202,16 @@ Item {
 
                             Component {
                                 id: intslider
+
                                 Slider {
-                                    from: inputs.data[path]['min']
+                                    from: min
                                     value: sensorvalue
                                     width: 300
-                                    to: inputs.data[path]['max']
-                                    stepSize: inputs.data[path]['step']
-                                              === 0 ? 1 : inputs.data[path]['step']
+                                    to: max
+                                    stepSize: step === 0 ? 1 : step
                                     //onMoved: inputs.set(path, this.value)
-                                    onPressedChanged: if (!this.pressed) inputs.set(path,this.value)
+                                    onPressedChanged: if (!this.pressed)
+                                                          inputs.set(path,this.value)
                                 }
                             }
                         }

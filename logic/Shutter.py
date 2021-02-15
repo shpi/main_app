@@ -4,6 +4,7 @@ import threading
 from core.DataTypes import DataType
 from core.Toolbox import Pre_5_15_2_fix
 import logging
+from core.Property import EntityProperty
 
 
 class ShutterModes:
@@ -39,45 +40,44 @@ class Shutter(QObject):
         self._relay_up = settings.value('shutter/' + self.name + "/relay_up", '')
         self._relay_down = settings.value('shutter/' + self.name + "/relay_down", '')
 
-
-
         self.userinput = 0
 
-        self._module =                      {'description': 'Shutter Module for two binary outputs',
-                                             'value': 'NOT_INITIALIZED',
-                                             'type': DataType.MODULE,
-                                             'lastupdate': 0,
-                                             'interval': -1 }
+        self._module = EntityProperty(parent=self,
+                                      category='module/logic',
+                                      entity='shutter',
+                                      name=name,
+                                      value='NOT_INITIALIZED',
+                                      description='Shutter Module for two binary outputs',
+                                      type=DataType.MODULE,
+                                      interval=-1)
 
-        self._actual_position = dict()
-        self._actual_position['description'] = 'actual position of shutter'
-        self._actual_position['interval'] = -1
-        self._actual_position['type'] = DataType.PERCENT_FLOAT
-        self._actual_position['lastupdate'] = time.time()
-        self._actual_position['value'] = float(
-            settings.value('shutter/' + self.name + "/actual_position", 100))
+        self._actual_position = EntityProperty(parent=self,
+                                               category='logic/shutter',
+                                               entity=name,
+                                               name='actual_position',
+                                               description='actual position',
+                                               type=DataType.PERCENT_FLOAT,
+                                               interval=-1)
 
-        self._desired_position = dict()
-        self._desired_position['description'] = 'desired position of shutter'
-        self._desired_position['interval'] = -1
-        self._desired_position['type'] = DataType.PERCENT_INT
-        self._desired_position['lastupdate'] = time.time()
-        self._desired_position['value'] = self._actual_position['value']
-        self._desired_position['set'] = self.set_desired_position
+        self._desired_position = EntityProperty(parent=self,
+                                                category='logic/shutter',
+                                                entity=name,
+                                                name='desired_position',
+                                                description='desired position',
+                                                type=DataType.PERCENT_INT,
+                                                set=self.set_desired_position,
+                                                interval=-1)
 
         self.movethread = threading.Thread(target=self.move)
         self._state = ShutterModes.STOP
 
-    def get_inputs(self) -> dict:
-
-        return {'shutter/' + self.name : self._module,
-                'shutter/' + self.name + '/actual_position': self._actual_position,
-                'shutter/' + self.name + '/desired_position': self._desired_position}
+    def get_inputs(self) -> list:
+        return self._module, self._actual_position, self._desired_position
 
     def set_up(self, value):
         status = 'NOT_INITIALIZED'
         if self._relay_up in self.inputs:
-            if self.inputs[self._relay_up]['type'] == DataType.BOOL:
+            if self.inputs[self._relay_up].type == DataType.BOOL:
                 if 'set' in self.inputs[self._relay_up]:
                     try:
                         self.inputs[self._relay_up]['set'](bool(value))
@@ -95,12 +95,12 @@ class Shutter(QObject):
             status = 'ERROR'
             logging.error('Error UP control ' + self._relay_up + ' not in Inputs.')
 
-        self._module['value'] = status
+        self._module.value = status
 
     def set_down(self, value):
         status = 'NOT_INITIALIZED'
         if self._relay_down in self.inputs:
-            if self.inputs[self._relay_down]['type'] == DataType.BOOL:
+            if self.inputs[self._relay_down].type == DataType.BOOL:
                 if 'set' in self.inputs[self._relay_down]:
                     try:
                         self.inputs[self._relay_down]['set'](bool(value))
@@ -118,7 +118,7 @@ class Shutter(QObject):
             status = 'ERROR'
             logging.error('Error down control ' + self._relay_down + ' not in Inputs.')
 
-        self._module['value'] = status
+        self._module.value = status
 
     @Slot(int)
     def set_state(self, value):
@@ -174,26 +174,26 @@ class Shutter(QObject):
 
     @Property(int, notify=positionChanged)
     def desired_position(self):
-        return int(self._desired_position['value'])
+        return int(self._desired_position.value)
 
     @Slot(int)
     # @desired_position.setter
     # @Pre_5_15_2_fix(str, desired_position, notify=positionChanged)
     def set_desired_position(self, value):  # we need special name here for SET field in dict ??
         self.userinput = 1
-        self._desired_position['value'] = int(value)
+        self._desired_position.value = int(value)
         self._residue_time = 0
         self.positionChanged.emit()
         self.start_move()
 
     # @Property(float,notify=positionChanged)
     def actual_position(self):
-        return int(self._actual_position['value'])
+        return int(self._actual_position.value)
 
     # @actual_position.setter
     @Pre_5_15_2_fix(int, actual_position, notify=positionChanged)
     def actual_position(self, value):
-        self._actual_position['value'] = int(value)
+        self._actual_position.value = int(value)
         self.settings.setValue('shutter/' + self.name + "/actual_position", value)
 
     @Signal
@@ -251,60 +251,58 @@ class Shutter(QObject):
 
         was_in_loop = False
 
-        while (self._actual_position['value'] < self._desired_position['value']) or (
-                self._actual_position['value'] > self._desired_position['value']):
+        while (self._actual_position.value < self._desired_position.value) or (
+                self._actual_position.value > self._desired_position.value):
 
             was_in_loop = True
 
-            if self._actual_position['value'] < self._desired_position['value']:
+            if self._actual_position.value < self._desired_position.value:
 
                 # need to move down, to close
                 if self.userinput == 1 and self._state != ShutterModes.UP:
                     self.set_state(ShutterModes.UP)
                     self.userinput = 0
                     self.time_start = time.time()
-                    self.start_position = self._actual_position['value']
+                    self.start_position = self._actual_position.value
                 time.sleep(0.1)
-                self._actual_position['value'] = self.start_position + \
-                                                 ((100 / self._down_time) * (time.time() - self.time_start))
+                self._actual_position.value = self.start_position + \
+                                              ((100 / self._down_time) * (time.time() - self.time_start))
                 self.positionChanged.emit()
                 self._residue_time = (
-                                             self._desired_position['value'] - self._actual_position['value']) * (
-                                                 self._down_time / 100)
+                                             self._desired_position.value - self._actual_position.value) * (
+                                             self._down_time / 100)
                 if self._residue_time < 0:  # detected overshoot, so stopping
                     self._residue_time = 0
                     if self.userinput == 0:  # ignore overshoots and allow direction change only on new input
-                        self._actual_position['value'] = self._desired_position['value']
+                        self._actual_position.value = self._desired_position.value
                         self.positionChanged.emit()
 
 
-            elif self._actual_position['value'] > self._desired_position['value']:
+            elif self._actual_position.value > self._desired_position.value:
 
                 # need to move up, to open
                 if self.userinput == 1 and self._state != ShutterModes.DOWN:
                     self.set_state(ShutterModes.DOWN)
                     self.userinput = 0
                     self.time_start = time.time()
-                    self.start_position = self._actual_position['value']
+                    self.start_position = self._actual_position.value
                 time.sleep(0.1)
-                self._actual_position['value'] = self.start_position - \
-                                                 (100 / self._up_time) * (time.time() - self.time_start)
+                self._actual_position.value = self.start_position - \
+                                              (100 / self._up_time) * (time.time() - self.time_start)
                 self.positionChanged.emit()
                 self._residue_time = (
-                                             self._actual_position['value'] - self._desired_position['value']) * (
-                                                 self._up_time / 100)
+                                             self._actual_position.value - self._desired_position.value) * (
+                                             self._up_time / 100)
                 if self._residue_time < 0:
                     self._residue_time = 0
                     if self.userinput == 0:
-                        self._actual_position['value'] = self._desired_position['value']
+                        self._actual_position.value = self._desired_position.value
                         self.positionChanged.emit()
-            self._actual_position['lastupdate'] = time.time()
 
         self._residue_time = 0
 
-        if was_in_loop and self._desired_position['value'] == 100 or self._desired_position['value'] == 0:
-            self._actual_position['value'] = self._desired_position['value']
-            self._actual_position['lastupdate'] = time.time()
+        if was_in_loop and self._desired_position.value == 100 or self._desired_position.value == 0:
+            self._actual_position.value = self._desired_position.value
             self.set_state(ShutterModes.SLEEP)
         else:
             self.set_state(ShutterModes.STOP)

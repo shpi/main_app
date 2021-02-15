@@ -2,6 +2,7 @@
 
 from PySide2.QtCore import QSettings, QObject, Signal
 import time
+import sys
 import logging
 import threading
 from core.Toolbox import Pre_5_15_2_fix
@@ -27,21 +28,21 @@ class ServerHandler(BaseHTTPRequestHandler):
                                                                                                              False):
 
                 if 'set' in query:
-                    if 'set' in self.inputs[query['key']]:
+                    if self.inputs[query['key']].set is not None:
                         logging.debug(f'SET: {query["key"]} : {query["set"]}')
-                        self.inputs[query['key']]['set'](query['set'])
+                        self.inputs[query['key']].set(query['set'])
 
                 value = self.inputs[query['key']]
                 self.send_response(200)
                 self.send_header('Content-type', 'text')
                 self.end_headers()
                 message = '{'
-                # message += '"description":"' + str(value.get('description', '')) + '",'
-                # message += '"type":"' + Convert.type_to_str(value["type"]) + '",'
-                message += '"lastupdate":' + str(value.get('lastupdate', '')) + ','
+                # message += '"description":"' + str(value.description) + '",'
+                # message += '"type":"' + Convert.type_to_str(value.type) + '",'
+                message += '"last_update":' + str(value.last_update) + ','
                 # if 'set' in value: message += '"set": true,'
-                message += '"interval":' + str(value.get('interval', '0')) + ','
-                message += '"value":"' + str(value.get('value', '')) + '"}'
+                message += '"interval":' + str(value.interval) + ','
+                message += '"value":"' + str(value.value) + '"}'
 
                 # print(json.loads(message))
 
@@ -59,16 +60,16 @@ class ServerHandler(BaseHTTPRequestHandler):
                 # exposed = list(filter(lambda x: self.inputs[x]['exposed'], self.inputs.keys()))
 
                 for key, value in self.inputs.items():
-                    if value['exposed']:
+                    if value.exposed:
 
                         message += '"' + key + '":{'
-                        message += '"description":"' + str(value.get('description', '')) + '",'
-                        message += '"type":"' + Convert.type_to_str(value["type"]) + '",'
-                        message += '"lastupdate":' + str(value.get('lastupdate', '')) + ','
-                        if 'set' in value:
+                        message += '"description":"' + str(value.description) + '",'
+                        message += '"type":"' + Convert.type_to_str(value.type) + '",'
+                        message += '"lastupdate":' + str(value.last_update) + ','
+                        if value.set is not None:
                             message += '"set": true,'
-                        message += '"interval":' + str(value.get('interval', '0')) + ','
-                        message += '"value":"' + str(value.get('value', '')) + '"'
+                        message += '"interval":' + str(value.interval) + ','
+                        message += '"value":"' + str(value.value) + '"'
 
                         # print('<td>' + str(value.get('available', '')) + '</td>')
                         # print('<td>' + str(value.get('min', '')) + '</td>')

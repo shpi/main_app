@@ -35,6 +35,7 @@ class DataType(Enum):
     WORD = 14  # int, 0-65535
     ENUM = 15
     MODULE = 16  # 'ok', 'error', 'not_initialized'
+    THREAD = 17 #
 
     # Special types (from sensors)
     TEMPERATURE = 20  # float, Celsius
@@ -84,36 +85,18 @@ class Convert:
     @staticmethod
     def str_to_tight_datatype(value_str):
         # Convert a number stored as a string to a <float> or an <int>, <str> as fallback
-
         try:
             value = float(value_str)
-            #isfloat = True
+
+            if value == int(integer):
+                return int(value)
+
+            return value
+
         except:
             return str(value_str)
 
-        number = value_str.split(".")
 
-        if len(number) > 1:
-            integer = number[0]
-            mantissa = number[1]
-            if integer.isdecimal() and mantissa.isdecimal():
-
-                if int(mantissa) == 0:
-                    # value is an integer; mantissa is 0
-                    #isfloat = False
-                    value = int(integer)
-
-                elif integer.isdecimal():
-                    # value is an integer because a value is only
-                    # returned for 'integer' variable by .split(),
-                    # the returned mantissa value is null.
-                    #isfloat = False
-                    value = int(integer)
-            else:
-                #isfloat = False
-                value = int(value_str)
-
-        return value
 
 
     @staticmethod
@@ -139,6 +122,7 @@ class Convert:
             return DataType.UNDEFINED
 
     _mapping_type_str = {DataType.UNDEFINED: 'undefined',
+                         DataType.THREAD: 'thread',
                          DataType.MODULE: 'module',
                          DataType.FLOAT: 'float',
                          DataType.INT: 'integer',

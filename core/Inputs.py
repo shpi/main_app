@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import time
-import threading
 from PySide2.QtCore import QModelIndex, QSortFilterProxyModel
 from PySide2.QtCore import QAbstractListModel, Property, Signal, Slot, QObject
 from core.DataTypes import Convert
@@ -16,6 +14,7 @@ import logging
 import numpy as np
 import sys
 
+
 class InputListModel(QAbstractListModel):
     PathRole = Qt.UserRole + 1000
     ValueRole = Qt.UserRole + 1001
@@ -25,6 +24,10 @@ class InputListModel(QAbstractListModel):
     ExposedRole = Qt.UserRole + 1005
     OutputRole = Qt.UserRole + 1006
     LoggingRole = Qt.UserRole + 1007
+    AvailableRole = Qt.UserRole + 1008
+    MinRole = Qt.UserRole + 1009
+    MaxRole = Qt.UserRole + 1010
+    StepRole = Qt.UserRole + 1011
 
     def __init__(self, dictionary, parent=None):
         super(InputListModel, self).__init__(parent)
@@ -50,29 +53,35 @@ class InputListModel(QAbstractListModel):
                 if role == InputListModel.PathRole:
                     return self._keys[index.row()]
                 elif role == InputListModel.ValueRole:
-                    return str(item["value"])
+                    return str(item.value)
                 elif role == InputListModel.OutputRole:
-                    return '1' if ('set' in item) else '0'
+                    return item.is_output
                 elif role == InputListModel.TypeRole:
-                    return Convert.type_to_str(item["type"])
+                    return Convert.type_to_str(item.type)
                 elif role == InputListModel.DescriptionRole:
-                    return item["description"]
+                    return item.description
                 elif role == InputListModel.IntervalRole:
-                    return item["interval"]
+                    return item.interval
                 elif role == InputListModel.ExposedRole:
-                    return item["exposed"]
+                    return item.exposed
                 elif role == InputListModel.LoggingRole:
-                    if 'logging' in item:
-                        return item["logging"]
-                    else:
-                        return 0
+                    return item.logging
+                elif role == InputListModel.AvailableRole:
+                    return item.available
+                elif role == InputListModel.MinRole:
+
+                    return item.min
+                elif role == InputListModel.MaxRole:
+                    return item.max
+                elif role == InputListModel.StepRole:
+                    return item.step
+
                 else:
                     return 'unknown role'
             except Exception as e:
                 exception_type, exception_object, exception_traceback = sys.exc_info()
                 line_number = exception_traceback.tb_lineno
-                logging.error(f'error: {e} in line {line_number}')
-
+                logging.error(f'{self._keys[index.row()]} error {exception_type}: {e} in line {line_number}')
 
     def roleNames(self):
         roles = dict()
@@ -84,6 +93,10 @@ class InputListModel(QAbstractListModel):
         roles[InputListModel.ExposedRole] = b"exposed"
         roles[InputListModel.OutputRole] = b"output"
         roles[InputListModel.LoggingRole] = b"logging"
+        roles[InputListModel.AvailableRole] = b"available"
+        roles[InputListModel.MinRole] = b"min"
+        roles[InputListModel.MaxRole] = b"max"
+        roles[InputListModel.StepRole] = b"step"
         return roles
 
 
@@ -158,10 +171,10 @@ class InputsDict(QObject):
 
     # Workaround for https://bugreports.qt.io/browse/PYSIDE-1426
     # @Property('QVariantMap', constant=True)  # , notify=dataChanged)
-    def data(self) -> dict:
-        return self.entries
+    # def data(self) -> dict:
+    #    return self.entries
 
-    data = Property('QVariantMap', data, constant=True)
+    # data = Property('QVariantMap', data, constant=True)
 
     def register_timerschedule(self, key, interval):
         interval = int(interval)
@@ -176,34 +189,26 @@ class InputsDict(QObject):
                 self.timerschedule[interval].remove(key)
 
     def add(self, newinputs=None):
-        if newinputs is None:
-            newinputs = {}
 
-        for key in list(newinputs):
+        for newproperty in newinputs:
 
-            newinputs[key]['logging'] = bool(int(self.settings.value(key + "/logging", 0)))
-            if newinputs[key]['logging']:
-                self.buffer[key] = CircularBuffer(10000)
+            # newinputs[key].logging = bool(int(self.settings.value(key + "/logging", 0)))
 
-            newinputs[key]['exposed'] = bool(int(self.settings.value(key + "/exposed", 0)))
+            if newproperty.logging:
+                self.buffer[newproperty.path] = CircularBuffer(10000)
 
-            if 'lastupdate' not in newinputs[key]:
-                newinputs[key]['lastupdate'] = 0
-            if 'value' not in newinputs[key]:
-                newinputs[key]['value'] = 0
-            if 'call' in newinputs[key]:
-                newinputs[key]['interval'] = int(
-                    self.settings.value(key + "/interval", newinputs[key].get('interval', 60)))
+            if newproperty.interval > 0:
+                self.register_timerschedule(newproperty.path, newproperty.interval)
 
+            self.entries[newproperty.path] = newproperty
 
-
-            if newinputs[key]['interval'] != 0:
-                self.register_timerschedule(key, newinputs[key]['interval'])
+            if newproperty.events is not None:
+                newproperty.events.append(self.update_remote)
 
             # following lines are inserted to make it possible to update values from another class
             # without removing dict memory adress of introducing class. for example:
             # adding [interrupts] in InputsDevs from another class
-
+            """
             if key in self.entries:
                 for subkey in list(newinputs[key]):  # like lastupdate
                     if subkey in self.entries[key]:
@@ -217,22 +222,10 @@ class InputsDict(QObject):
                     else:
                         self.entries[key][subkey] = newinputs[key][subkey]
                 del newinputs[key]  # ??
+            """
 
-        self.entries.update(newinputs)
         self.completelist.updateKeys()
         self.dataChanged.emit()
-
-        # 'available' -> for ENUM datatype, list of option for dropdown box
-        # 'lastupdate' -> lastupdate
-        # 'call' -> for get actual sensor value
-        # 'step', 'min', 'max'  -> for integer slides
-        # 'value' -> cached sensor value
-        # 'thread' -> thread for input devices
-        # 'type' -> datatype of sensor
-        # 'description' -> description
-        # 'set' -> outputs have set function
-        # 'interrupts' -> for input devices, could be reworked to events for multipurpose
-        # 'interval'  -> #  -1 =  update through class, 0 =  one time,  > 0 = update throug  call function
 
     @Slot(str, result='QVariantList')
     @Slot(str, 'long long', float, result='QVariantList')
@@ -296,8 +289,8 @@ class InputsDict(QObject):
     def set_interval(self, key, value):
         logging.debug('set_interval ' + key + ' ' + str(value))
         try:
-            self.delete_timerschedule(key, self.entries[key]['interval'])
-            self.entries[key]['interval'] = int(value)
+            self.delete_timerschedule(key, self.entries[key].interval)
+            self.entries[key].interval = int(value)
             self.register_timerschedule(key, int(value))
             self.settings.setValue(key + "/interval", value)
         except KeyError:
@@ -307,7 +300,7 @@ class InputsDict(QObject):
     def set_logging(self, key, value):
         logging.info('set_logging ' + key + ' ' + str(value))
         try:
-            self.entries[key]['logging'] = bool(value)
+            self.entries[key].logging = bool(value)
             self.settings.setValue(key + "/logging", int(value))
             if value and key not in self.buffer:
                 self.buffer[key] = CircularBuffer(10000)
@@ -318,28 +311,19 @@ class InputsDict(QObject):
     def set_exposed(self, key, value):
         logging.debug('set_exposed ' + key + ' ' + str(value))
         try:
-            self.entries[key]['exposed'] = bool(value)
+            self.entries[key].exposed = bool(value)
 
             self.settings.setValue(key + "/exposed", int(value))
 
         except KeyError:
             logging.debug(key + ' not in Inputdictionary')
 
-    def update_remote(self, keys):  # doing eventing here
-        key = ''
+    def update_remote(self, key):  # doing eventing here
+
         try:
-            for key in keys:
-                value = self.entries[key]
-
-                self.completelist.updateListView(key)
-
-                if 'event' in value and isinstance(value['event'], list):
-                    for eventfunction in value['event']:
-                        eventfunction()
-
-                if value['logging'] > 0:
-                    self.buffer[key].append(float(value['value']), value['lastupdate'])
-
+            self.completelist.updateListView(key)
+            if self.entries[key].logging > 0:
+                self.buffer[key].append(float(self.entries[key].value), self.entries[key].last_update)
 
         except KeyError as e:
             logging.error(key + ' does not exists yet, you can ignore this message, if it onlys happens during startup')
@@ -347,9 +331,7 @@ class InputsDict(QObject):
     def register_event(self, key, eventfunction):
         try:
             logging.info(key + ' : ' + str(eventfunction))
-            if 'event' not in self.entries[key]:
-                self.entries[key]['event'] = []
-            self.entries[key]['event'].append(eventfunction)
+            self.entries[key].events.append(eventfunction)
         except Exception as e:
             exception_type, exception_object, exception_traceback = sys.exc_info()
             line_number = exception_traceback.tb_lineno
@@ -358,69 +340,34 @@ class InputsDict(QObject):
     def unregister_event(self, key, eventfunction):
         try:
             logging.info(key + ' : ' + str(eventfunction))
-            if eventfunction in self.entries[key]['event']:
-                self.entries[key]['event'].remove(eventfunction)
+            if eventfunction in self.entries[key].events:
+                self.entries[key].events.remove(eventfunction)
         except Exception as e:
             logging.error(str(e))
 
     def update(self, lastupdate):
 
         for timeinterval in self.timerschedule:
-
-            if timeinterval != -1 and lastupdate % timeinterval == 0:
-
+            if lastupdate % timeinterval == 0:
                 for key in self.timerschedule[timeinterval]:
-
                     try:
-
-                        if (key.startswith('http')):
-                            if 'updatethread' not in self.entries[key] or not self.entries[key]['updatethread'].is_alive():
-                                self.entries[key]['updatethread'] = (
-                                    threading.Thread(target=self.update_value, args=(key,)))
-                                self.entries[key]['updatethread'].start()
-                        else:
-                            self.update_value(key)
+                        self.entries[key].update()
                     except Exception as e:
                         exception_type, exception_object, exception_traceback = sys.exc_info()
+                        print(exception_type)
                         line_number = exception_traceback.tb_lineno
                         logging.error(f'{e}, removed ' + key + ' from timer_schedule, in line: {line_number}')
                         self.timerschedule[timeinterval].remove(key)
 
-        # self.dataChanged.emit() needs too many ressources
-
-    def update_value(self, key, value=None):
-       try:
-        if value is None:
-            value = self.entries[key]
-
-        if 'call' in self.entries[key]:
-            temp = self.entries[key]['call']()
-            if temp != value['value']:
-                self.entries[key]['value'] = temp
-                self.completelist.updateListView(key)
-                if 'event' in self.entries[key] and isinstance(self.entries[key]['event'], list):
-                    for eventfunction in self.entries[key]['event']:
-                        eventfunction()
-            self.entries[key]['lastupdate'] = time.time()
-
-            if self.entries[key]['logging'] > 0:
-                # logging.debug('logging:' + key + ' value:' + str(self.entries[key]['value']))
-                self.buffer[key].append(float(self.entries[key]['value']), self.entries[key]['lastupdate'])
-
-       except Exception as e:
-           exception_type, exception_object, exception_traceback = sys.exc_info()
-           line_number = exception_traceback.tb_lineno
-           logging.error(f'{e} key: {key} error in line: {line_number}')
-
     @Slot(str, str)
     def set(self, key, value):
         logging.debug('set:' + key + ':' + value)
-        if key in self.entries and 'set' in self.entries[key]:
-            if self.entries[key]['type'] == DataType.PERCENT_INT:
-                self.entries[key]['set'](float(value))
-            elif self.entries[key]['type'] == DataType.INT:
-                self.entries[key]['set'](int(value))
-            elif self.entries[key]['type'] == DataType.BOOL:
-                self.entries[key]['set'](int(value))
-            elif self.entries[key]['type'] == DataType.ENUM:
-                self.entries[key]['set'](int(value))
+        if key in self.entries and self.entries[key].is_output:
+            if self.entries[key].type == DataType.PERCENT_INT:
+                self.entries[key].set(float(value))
+            elif self.entries[key].type == DataType.INT:
+                self.entries[key].set(int(value))
+            elif self.entries[key].type == DataType.BOOL:
+                self.entries[key].set(int(value))
+            elif self.entries[key].type == DataType.ENUM:
+                self.entries[key].set(int(value))

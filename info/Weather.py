@@ -4,10 +4,11 @@ from PySide2.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequ
 import logging
 import os
 import json
-import time
+import sys
 import datetime
 from core.DataTypes import DataType
 from core.Toolbox import Pre_5_15_2_fix
+from core.Property import EntityProperty
 
 
 class CityModel(QAbstractListModel):
@@ -63,84 +64,50 @@ class Weather(QObject):
 
         super(Weather, self).__init__()
         self.settings = settings
-        self.path = name
+        self.name = name
         self.inputs = inputs
         self._data = dict()
         self._cities = CityModel()
-        self._module_inputs = {}
+        self._properties = {}
 
-        self._module_inputs['weather/' + self.path] = {'description': 'Weather Module ' + self.path,
-                                                       'value': 'NOT_INITIALIZED',
-                                                       'type': DataType.MODULE,
-                                                       'lastupdate': 0,
-                                                       'call': self.update,
-                                                       'interval': int(
-                                                           settings.value('weather/' + self.path + "/interval", 1200))}
+        self._properties['module'] =        EntityProperty(parent = self,
+                                                           category = 'module/info',
+                                                           entity = self.name,
+                                                           value = 'NOT_INITIALIZED',
+                                                           name = self.name,
+                                                           description = 'Weather module: ' + self.name,
+                                                           type = DataType.MODULE,
+                                                           call = self.update,
+                                                           interval = int(settings.value('weather/' + self.name + '/interval', 1200)))
 
-        self._module_inputs['weather/' + self.path + '/sunrise'] = {"description": "sunrise time",
-                                                                   "type": DataType.TIME, "interval": -1,
-                                                                   'value': settings.value(
-                                                                       'weather/' + self.path + "/sunrise",
-                                                                       "6:00")}
-        self._module_inputs['weather/' + self.path + '/sunset'] = {"description": "sunset time", "type": DataType.TIME,
-                                                                  "interval": -1,
-                                                                  'value': settings.value(
-                                                                      'weather/' + self.path + "/sunset",
-                                                                      "22:00")}
-        self._module_inputs['weather/' + self.path + '/lastupdate'] = {"description": "lastUpdate time",
-                                                                      "type": DataType.TIMESTAMP, "interval": -1,
-                                                                      'value': 0}
-        self._module_inputs['weather/' + self.path + '/current_pressure'] = {"description": "pressure in Pa",
-                                                                            "type": DataType.PRESSURE, "interval": -1}
-        self._module_inputs['weather/' + self.path + '/current_humidity'] = {"description": "humidity in %",
-                                                                            "type": DataType.HUMIDITY, "interval": -1}
-        self._module_inputs['weather/' + self.path + '/current_wind_speed'] = {"description": "windspeed in kpH",
-                                                                              "type": DataType.VELOCITY,
-                                                                              "interval": -1}
-        self._module_inputs['weather/' + self.path + '/current_wind_deg'] = {"description": "Wind direction in Degrees",
-                                                                            "type": DataType.DIRECTION, "interval": -1}
-        self._module_inputs['weather/' + self.path + '/current_clouds'] = {"description": "Cloudiness in %",
-                                                                          "type": DataType.PERCENT_FLOAT,
-                                                                          "interval": -1}
-        self._module_inputs['weather/' + self.path + '/current_pop'] = {
-            "description": "Possibility of precipation in %", "type": DataType.PERCENT_FLOAT, "interval": -1}
-        self._module_inputs['weather/' + self.path + '/current_uvi'] = {"description": "UV Index",
-                                                                       "type": DataType.UVINDEX, "interval": -1}
-        self._module_inputs['weather/' + self.path + '/current_rain'] = {"description": "Rain per sqm in mm",
-                                                                        "type": DataType.HEIGHT, "interval": -1}
-        self._module_inputs['weather/' + self.path + '/current_temp'] = {"description": "Temperature in °C",
-                                                                        "type": DataType.TEMPERATURE, "interval": -1}
-        self._module_inputs['weather/' + self.path + '/current_weather_icon'] = {"description": "Weather icon",
-                                                                                "type": DataType.STRING,
-                                                                                "interval": -1}
-        self._module_inputs['weather/' + self.path + '/current_weather_desc'] = {"description": "Weather description",
-                                                                                "type": DataType.STRING,
-                                                                                "interval": -1}
-        self._module_inputs['weather/' + self.path + '/current_dew_point'] = {"description": "dew point in °C",
-                                                                             "type": DataType.TEMPERATURE,
-                                                                             "interval": -1}
-        self._module_inputs['weather/' + self.path + '/city'] = {"description": "City", "type": DataType.STRING,
-                                                                "interval": -1,
-                                                                "value": settings.value(
-                                                                    'weather/' + self.path + "/city", "")}
-        self._module_inputs['weather/' + self.path + '/lat'] = {"description": "Latitude", "type": DataType.LATITUDE,
-                                                               "interval": -1,
-                                                               "value": settings.value('weather/' + self.path + "/lat",
-                                                                                       "")}
-        self._module_inputs['weather/' + self.path + '/lon'] = {"description": "Longitude", "type": DataType.LONGITUDE,
-                                                               "interval": -1,
-                                                               "value": settings.value('weather/' + self.path + "/lon",
-                                                                                       "")}
+
+        self._properties['sunrise'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'sunrise', description =  "sunrise time",type = DataType.TIME, value = settings.value('weather/' + self.name + "/sunrise","6:00"))
+        self._properties['sunset'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'sunset', description =  "sunset time", type = DataType.TIME,value = settings.value('weather/' + self.name +"/sunset","22:00"))
+        self._properties['current_pressure'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'current_pressure', description =  "pressure in Pa",  type = DataType.PRESSURE)
+        self._properties['current_humidity'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'current_humidity', description =  "humidity in %",   type = DataType.HUMIDITY)
+        self._properties['current_wind_speed'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'current_wind_speed',description =  "windspeed in kpH", type = DataType.VELOCITY)
+        self._properties['current_wind_deg'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'current_wind_deg', description =  "Wind direction in Degrees",  type = DataType.DIRECTION)
+        self._properties['current_clouds'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'current_clouds', description =  "Cloudiness in %",  type = DataType.PERCENT_FLOAT)
+        self._properties['current_pop'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'current_pop', description =  "Possibility of precipation in %", type = DataType.PERCENT_FLOAT)
+        self._properties['current_uvi'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'current_uvi', description =  "UV Index", type = DataType.UVINDEX)
+        self._properties['current_rain'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'current_rain', description =  "Rain per sqm in mm",type = DataType.HEIGHT)
+        self._properties['current_temp'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'current_temp',description =  "Temperature in °C",type = DataType.TEMPERATURE)
+        self._properties['current_weather_icon'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'current_weather_icon',description =  "Weather icon",type = DataType.STRING)
+        self._properties['current_weather_desc'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'current_weather_desc', description =  "Weather description",type = DataType.STRING)
+        self._properties['current_dew_point'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'current_dew_point', description =  "dew point in °C",  type = DataType.TEMPERATURE)
+        self._properties['city'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'city',description =  "City", type = DataType.STRING,value = settings.value('weather/' + self.name +"/city", ""))
+        self._properties['lat'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'lat' ,description =  "Latitude", type = DataType.LATITUDE, value = settings.value('weather/' + self.name +  "/lat",""))
+        self._properties['lon'] = EntityProperty(parent = self, category = 'info/weather', entity = self.name,interval = -1, name = 'lon',description =  "Longitude", type = DataType.LONGITUDE,value = settings.value('weather/' + self.name +  "/lon",""))
 
         self._has_error = False
-        self._api_key = settings.value('weather/' + self.path + "/api_key", "20f7aab0a600927a8486b220200ee694")
+        self._api_key = settings.value('weather/' + self.name +  "/api_key", "20f7aab0a600927a8486b220200ee694")
         self._current_date = ""
 
-    def get_inputs(self) -> dict:
-        return self._module_inputs
+    def get_inputs(self) -> list:
+        return self._properties.values()
 
     def delete_inputs(self):
-        for key in self._module_inputs:
+        for key in self._properties:
             del self.inputs.entries[key]
 
     @property
@@ -149,11 +116,11 @@ class Weather(QObject):
 
     @Property(str)
     def sunrise(self):
-        return self._module_inputs['weather/' + self.path + '/sunrise']['value']
+        return self._properties['sunrise'].value
 
     @Property(str)
     def sunset(self):
-        return self._module_inputs['weather/' + self.path + '/sunset']['value']
+        return self._properties['sunset'].value
 
     @Property(str)
     def current_date(self):
@@ -171,20 +138,19 @@ class Weather(QObject):
     @Pre_5_15_2_fix(str, api_key, notify=api_keyChanged)
     def api_key(self, key):
         self._api_key = key
-        self.settings.setValue('weather/' + self.path + "/api_key", key)
-        self._module_inputs['weather/' + self.path + '/lastupdate']['value'] = 0
+        self.settings.setValue('weather/' + self.name +  "/api_key", key)
+
 
     # @Property(str)
     def lat(self):
-        return self._module_inputs['weather/' + self.path + '/lat']['value']
+        return self._properties['lat'].value
 
     # @lat.setter
     @Pre_5_15_2_fix(str, lat, notify=api_keyChanged)
     def lat(self, lat):
-        self._module_inputs['weather/' + self.path + '/lat']['lastupdate'] = time.time()
-        self._module_inputs['weather/' + self.path + '/lastupdate']['value'] = 0
-        self._module_inputs['weather/' + self.path + '/lat']['value'] = lat
-        self.settings.setValue('weather/' + self.path + "/lat", lat)
+
+        self._properties['lat'].value = lat
+        self.settings.setValue('weather/' + self.name +  "/lat", lat)
 
     @Signal
     def intervalChanged(self):
@@ -192,25 +158,40 @@ class Weather(QObject):
 
     # @Property(int, notify=intervalChanged)
     def interval(self):
-        return self._module_inputs['weather/' + self.path]['interval']
+        return self._properties['module'].interval
 
     # @interval.setter
     @Pre_5_15_2_fix(int, interval, notify=intervalChanged)
     def interval(self, interval):
-        self._module_inputs['weather/' + self.path]['interval'] = int(interval)
-        self.settings.setValue('weather/' + self.path + "/interval", interval)
+        self._properties['module'].interval = int(interval)
+        self.settings.setValue('weather/' + self.name +  "/interval", interval)
+
+    @Property(float)
+    def current_temp(self):
+            return float(self._properties['current_temp'].value)
+
+
+    @Property(float)
+    def lastupdate(self):
+            return float(self._properties['current_temp'].last_update)
+
+
+    @Property(str)
+    def current_weather_icon(self):
+        return self._properties['current_weather_icon'].value
+
+
 
     # @Property(str)
     def lon(self):
-        return self._module_inputs['weather/' + self.path + '/lon']['value']
+        return self._properties['lon'].value
 
     # @lon.setter
     @Pre_5_15_2_fix(str, lon, notify=api_keyChanged)
     def lon(self, lon):
-        self._module_inputs['weather/' + self.path + '/lon']['lastupdate'] = time.time()
-        self._module_inputs['weather/' + self.path + '/lastupdate']['value'] = 0
-        self._module_inputs['weather/' + self.path + '/lon']['value'] = lon
-        self.settings.setValue('weather/' + self.path + "/lon", lon)
+
+        self._properties['lon'].value = lon
+        self.settings.setValue('weather/' + self.name +  "/lon", lon)
 
     @Signal
     def cityChanged(self):
@@ -218,15 +199,14 @@ class Weather(QObject):
 
     # @Property(str, notify=cityChanged)
     def city(self):
-        return self._module_inputs['weather/' + self.path + '/city']['value']
+        return self._properties['city'].value
 
     # @city.setter
     @Pre_5_15_2_fix(str, city, notify=cityChanged)
     def city(self, city: str) -> None:
-        self._module_inputs['weather/' + self.path + '/city']['lastupdate'] = time.time()
-        self._module_inputs['weather/' + self.path + '/lastupdate']['value'] = 0
-        self._module_inputs['weather/' + self.path + '/city']['value'] = city
-        self.settings.setValue('weather/' + self.path + "/city", city)
+
+        self._properties['city'].value = city
+        self.settings.setValue('weather/' + self.name +  "/city", city)
         self.cityChanged.emit()
 
     @Signal
@@ -294,27 +274,6 @@ class Weather(QObject):
         self.citiesChanged.emit()
         rf.close()
 
-    """
-        i = 0
-        self._cities = CityModel()
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                  "city.list.json"), "r",  encoding="utf8") as rf:
-            city_data = json.load(rf)
-
-        for s in range(len(city_data)):
-            if city_data[s]["name"].lower().startswith(city.lower()):
-                i += 1
-                self._cities.appendRow(dict(name = city_data[s]["name"],
-                                        lat = city_data[s]["coord"]['lat'],
-                                        lon = city_data[s]["coord"]['lon'],
-                                        stat = city_data[s]["state"],
-                                        country = city_data[s]["country"]))
-                if (i > 100):
-                   break
-
-        self.citiesChanged.emit()
-        rf.close()
-    """
 
     @Slot(result=bool)
     def hasError(self):
@@ -324,19 +283,14 @@ class Weather(QObject):
     def update(self):
         status = 'NOT_INITIALIZED'
         try:
-            if ((self._module_inputs['weather/' + self.path + '/lon']['value'] != '') and (
-                    self._module_inputs['weather/' + self.path + '/lat']['value'] != '')):
+            if ((self._properties['lon'].value != '') and (self._properties['lat'].value != '')):
 
                 status  = 'OK'
 
-                self._module_inputs['weather/' + self.path +
-                                   '/lastupdate']['value'] = time.time()
                 url = QUrl(Weather.BASE_URL)
                 query = QUrlQuery()
-                query.addQueryItem("lat", str(
-                    self._module_inputs['weather/' + self.path + '/lat']['value']))
-                query.addQueryItem("lon", str(
-                    self._module_inputs['weather/' + self.path + '/lon']['value']))
+                query.addQueryItem("lat", str(self._properties['lat'].value))
+                query.addQueryItem("lon", str(self._properties['lon'].value))
                 query.addQueryItem("appid", self._api_key)
                 query.addQueryItem("exclude", "minutely,hourly")
                 query.addQueryItem("units", "metric")
@@ -354,71 +308,44 @@ class Weather(QObject):
 
     def _handle_reply(self):
         
-
         has_error = False
         reply: QNetworkReply = self.sender()
         if reply.error() == QNetworkReply.NoError:
             data = reply.readAll().data()
-            # logging.debug(f"data: {data}")
             d = json.loads(data)
-            self._data = dict()
             has_error = False
             self._data = d
 
-            self._module_inputs['weather/' + self.path + '/sunrise']['value'] = datetime.datetime.fromtimestamp(
-                int(d["current"]["sunrise"])).strftime('%H:%M:%S')
-            self._module_inputs['weather/' + self.path + '/sunset']['value'] = datetime.datetime.fromtimestamp(
-                int(d["current"]["sunset"])).strftime('%H:%M:%S')
-            self._module_inputs['weather/' + self.path +
-                               '/lastupdate']['value'] = int(d["current"]["dt"])
-            self._module_inputs['weather/' + self.path +
-                               '/current_pressure']['value'] = float(d["current"]["pressure"])
-            self._module_inputs['weather/' + self.path +
-                               '/current_humidity']['value'] = float(d["current"]["humidity"])
-            self._module_inputs['weather/' + self.path +
-                               '/current_wind_speed']['value'] = float(d["current"]["wind_speed"])
-            self._module_inputs['weather/' + self.path +
-                               '/current_wind_deg']['value'] = float(d["current"]["wind_deg"])
-            self._module_inputs['weather/' + self.path +
-                               '/current_clouds']['value'] = float(d["current"]["clouds"])
-            self._module_inputs['weather/' + self.path + '/current_pop']['value'] = float(
-                d["current"]["pop"]) if 'pop' in d["current"] else 0
-            self._module_inputs['weather/' + self.path +
-                               '/current_uvi']['value'] = float(d["current"]["uvi"])
+            self._properties['sunrise'].value = datetime.datetime.fromtimestamp(int(d["current"]["sunrise"])).strftime('%H:%M:%S')
+            self._properties['sunset'].value = datetime.datetime.fromtimestamp(int(d["current"]["sunset"])).strftime('%H:%M:%S')
+
+            self._properties['current_pressure'].value = float(d["current"]["pressure"])
+            self._properties['current_humidity'].value = float(d["current"]["humidity"])
+            self._properties['current_wind_speed'].value = float(d["current"]["wind_speed"])
+            self._properties['current_wind_deg'].value = float(d["current"]["wind_deg"])
+            self._properties['current_clouds'].value = float(d["current"]["clouds"])
+            self._properties['current_pop'].value = float(d["current"]["pop"]) if 'pop' in d["current"] else 0
+            self._properties['current_uvi'].value = float(d["current"]["uvi"])
 
             if 'rain' in d["current"]:
                 if isinstance(d["current"]["rain"], dict) and '1h' in d["current"]["rain"]:
-                    self._module_inputs['weather/' + self.path + '/current_rain']['value'] = float(
-                        str(d["current"]["rain"]['1h']))
+                    self._properties['current_rain'].value = float(str(d["current"]["rain"]['1h']))
                 elif isinstance(d["current"]["rain"], float):
-                    self._module_inputs['weather/' + self.path +
-                                       '/current_rain']['value'] = float(str(d["current"]["rain"]))
+                    self._properties['current_rain'].value = float(str(d["current"]["rain"]))
 
-            self._module_inputs['weather/' + self.path +
-                               '/current_temp']['value'] = float(d["current"]["temp"])
-            self._module_inputs['weather/' + self.path +
-                               '/current_temp']['lastupdate'] = float(d["current"]["dt"])
+            self._properties['current_temp'].value = float(d["current"]["temp"])
+            #self._properties['current_temp']['lastupdate'] = float(d["current"]["dt"])
 
-            self._module_inputs['weather/' + self.path + '/current_weather_icon']['value'] = d.get(
-                "current", {}).get("weather", [{}])[0].get('icon')
-            self._module_inputs['weather/' + self.path + '/current_weather_desc']['value'] = d.get(
-                "current", {}).get("weather", [{}])[0].get('description')
-            self._module_inputs['weather/' + self.path +
-                               '/current_dew_point']['value'] = float(d["current"]["dew_point"])
+            self._properties['current_weather_icon'].value = d.get("current", {}).get("weather", [{}])[0].get('icon')
+            self._properties['current_weather_desc'].value = d.get("current", {}).get("weather", [{}])[0].get('description')
+            self._properties['current_dew_point'].value = float(d["current"]["dew_point"])
 
-            # self.settings.setValue(
-            #    f"{self.path}/sunset", self._module_inputs['weather/' + self.path + '/sunset']['value'])
-            # self.settings.setValue(
-            #    f"{self.path}/sunrise", self._module_inputs['weather/' + self.path + '/sunrise']['value'])
-
-            self.inputs.update_remote(self._module_inputs.keys())
 
             logging.debug(f"{self.current_date}: Weather: added forecast")
 
         else:
             self._data = dict()
             has_error = True
-
             logging.error(f"error: {reply.errorString()}")
 
         self._has_error = has_error

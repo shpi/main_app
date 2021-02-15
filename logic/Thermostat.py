@@ -6,7 +6,7 @@ import logging
 from core.Toolbox import Pre_5_15_2_fix
 import datetime
 from core.DataTypes import DataType
-
+from core.Property import EntityProperty
 
 class ThermostatModes:
     OFF = 0  # totally off
@@ -113,19 +113,24 @@ class Thermostat(QObject):
 
         self._hysteresis = int(settings.value("thermostat/" + self.name + '/hysteresis', 100))
         self._heating_state = 0
-        self._actual_temp = 99
+        self._actual_temp = None
         self._offset = 0
 
-        self._module = {'description': 'Thermostat Module for binary output',
-                        'value': 'NOT_INITIALIZED',
-                        'type': DataType.MODULE,
-                        'lastupdate': 0,
-                        'interval': 10,
-                        'call': self.update}
+        self._module =            EntityProperty(parent = self,
+                                                 category = 'module/logic',
+                                                 entity = 'thermostat',
+                                                 name = name,
+                                                 value = 'NOT_INITIALIZED',
+                                                 description = 'Thermostat Module for binary output',
+                                                 type = DataType.MODULE,
+                                                 call = self.update,
+                                                 interval = 10)
 
-    def get_inputs(self) -> dict:
 
-        return {'thermostat/' + self.name: self._module}
+
+    def get_inputs(self) -> list:
+
+        return self._module,
 
 
 
@@ -167,7 +172,10 @@ class Thermostat(QObject):
 
     @Property(float, notify=tempChanged)
     def actual_temp(self):
-        return float(self._actual_temp / 1000)  
+        if self._actual_temp != None:
+            return float(self._actual_temp / 1000)
+        else:
+            return None
 
     def set_temp(self):
         if self.thermostat_mode == ThermostatModes.OFF:
@@ -300,7 +308,7 @@ class Thermostat(QObject):
 
         try:
 
-                self._actual_temp = self.inputs[self._temp_path]['value']
+                self._actual_temp = self.inputs[self._temp_path].value
                 self.tempChanged.emit()
 
                 if self._thermostat_mode == ThermostatModes.OFF:  # totally off
@@ -373,7 +381,6 @@ class Thermostat(QObject):
                 except IndexError:
                     pass
 
-        # a = Schedule.get_desired_temp(value, self._schedule_mode, datetime.datetime.today())
 
         return value
 

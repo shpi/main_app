@@ -4,11 +4,11 @@ from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
 import time
 import os
 import logging
-import sys
 import threading
 from datetime import datetime
 from core.DataTypes import DataType
 from core.Toolbox import Pre_5_15_2_fix
+from core.Property import EntityProperty
 
 
 class NightModes:
@@ -34,13 +34,15 @@ class Appearance(QObject):
         self._backlightlevel = 0
         self._blackfilter = 0
         self.settings = settings
-        self._module_inputs = dict()
-        self._module_inputs['appearance'] = {'description': 'Appearance Module for Backlight / Nightmode etc.',
-                                             'value': 'NOT_INITIALIZED',
-                                             'type': DataType.MODULE,
-                                             'lastupdate': 0,
-                                             'call': self.update,
-                                             'interval': int(settings.value("appearance/interval", 5))}
+        self._module = EntityProperty(parent=self,
+                                      category='module',
+                                      entity='core',
+                                      name='appearance',
+                                      value='NOT_INITIALIZED',
+                                      description='Appearance Module for Backlight / Nightmode etc.',
+                                      type=DataType.MODULE,
+                                      call=self.update,
+                                      interval=int(settings.value("appearance/interval", 5)))
 
         self._background_night = int(settings.value("appearance/background_night", 1))
         self._min_backlight = int(settings.value("appearance/min", 60))
@@ -63,20 +65,24 @@ class Appearance(QObject):
         self.state = 'OFF'  # Enum('ACTIVE','SLEEP','OFF')
         self._night = False
 
-        self.possible_devs = dict()
-        self.possible_devs['list'] = list()
+        self.possible_devs = list()
 
         for key in self.inputs.keys():
-            if key.startswith('dev/') and key.find('/thread', 4) > 0:
+            if key.startswith('module/input_dev') and self.inputs[key].type == DataType.THREAD:
                 logging.debug(f"add to possible_devs: {key}")
-                self.possible_devs['list'].append(key)
-                try:
-                    self.possible_devs[key] = int(settings.value("appearance/" + key, 1))
-                except KeyError:
-                    self.possible_devs[key] = 1
-                if self.possible_devs[key] == 1:
+                self.possible_devs.append(key)
+                active = int(settings.value("appearance/" + key, 1))
+                if active:
                     logging.debug(f"add to dev interrupt: {key}")
-                    inputs.entries[key]['interrupts'].append(self.interrupt)
+                    inputs.entries[key].events.append(self.interrupt)
+
+    @Slot(str, result=str)
+    def device_description(self, path) -> str:
+        return self.inputs[path].description
+
+    @Slot(str, result=bool)
+    def selected_device(self, path) -> str:
+        return bool(int(self.settings.value("appearance/" + path, 1)))
 
     @Signal
     def dim_timer_changed(self):
@@ -86,9 +92,8 @@ class Appearance(QObject):
     def blackChanged(self):
         pass
 
-
     def get_inputs(self):
-        return self._module_inputs
+        return [self._module]
 
     # @Property(int, notify=dim_timer_changed)
     def dim_timer(self):
@@ -303,13 +308,13 @@ class Appearance(QObject):
             start_input = self.inputs[self._start_input_key]
             stop_input = self.inputs[self._stop_input_key]
 
-            if start_input['type'] != DataType.TIME or stop_input['type'] != DataType.TIME:
+            if start_input.type != DataType.TIME or stop_input.type != DataType.TIME:
                 logging.debug('Unknown start/stop type. Resetting to FromTimer.')
                 # self.night_mode = NightModes.FromTimer
                 return 'ERROR'
 
-            start_str = start_input['value']
-            stop_str = stop_input['value']
+            start_str = start_input.value
+            stop_str = stop_input.value
 
         if self._night_mode == NightModes.FromTimer:
             # Read start/stop from static values
@@ -363,7 +368,8 @@ class Appearance(QObject):
                 self.set_backlight(self._min_backlight)
             self.state = 'SLEEP'
 
-        elif self.state in ('SLEEP', 'OFF') and self._dim_timer > 0 and self.lastuserinput + self._dim_timer > time.time():
+        elif self.state in (
+        'SLEEP', 'OFF') and self._dim_timer > 0 and self.lastuserinput + self._dim_timer > time.time():
             logging.debug(f"changing nightmode to ACTIVE, old state: {self.state}, lastinput: {self.lastuserinput}")
             if self._night:
                 self.set_backlight(self._max_backlight_night)
@@ -382,11 +388,9 @@ class Appearance(QObject):
     def jump_stateChanged(self):
         pass
 
-
     @Property(int, notify=blackChanged)
     def backlightlevel(self):
         return int(self._backlightlevel)
-
 
     @Property(bool, notify=jump_stateChanged)
     def jump_state(self):
@@ -400,14 +404,14 @@ class Appearance(QObject):
         value = int(value)
         if value != self._backlightlevel:
             if value < 1:
-                self.inputs['backlight/brightness']['set'](0)
+                self.inputs['core/backlight/brightness'].set(0)
 
             elif value < 30:
-                self.inputs['backlight/brightness']['set'](1)
+                self.inputs['core/backlight/brightness'].set(1)
                 self._blackfilter = ((100 - (value * 3.3)) / 100)
 
             elif value <= 100:
-                self.inputs['backlight/brightness']['set'](value)
+                self.inputs['core/backlight/brightness'].set(value)
                 # mapping happens in backlight class int(self.mapFromTo(value, 30, 100, 1, 100)))
                 self._blackfilter = 0
 
@@ -436,7 +440,6 @@ class Appearance(QObject):
                     self.set_backlight(self._max_backlight)
             else:
 
-
                 if self.state == 'OFF':
                     self.lastuserinput = time.time() - self._dim_timer
                     logging.debug(
@@ -447,23 +450,18 @@ class Appearance(QObject):
                     else:
                         self.set_backlight(self._min_backlight)
 
-
     @Slot(str, int)
     def setDeviceTrack(self, path, value):
         value = int(value)
-        if value != self.possible_devs[path]:
-            self.possible_devs[path] = value
-            self.settings.setValue("appearance/" + path, value)
-
-            if self.possible_devs[path] == 1:
-                self.inputs[path]['interrupts'].append(self.interrupt)
-
-            else:
-                i = 0
-                for interrupt in self.inputs[path]['interrupts']:
-                    if interrupt == self.interrupt:
-                        self.inputs[path]['interrupts'].pop(i)
-                    i += 1
+        self.settings.setValue("appearance/" + path, value)
+        if value == 1:
+            self.inputs[path].events.append(self.interrupt)
+        else:
+            i = 0
+            for interrupt in self.inputs[path].events:
+                if interrupt == self.interrupt:
+                    self.inputs[path].events.pop(i)
+                i += 1
 
     @Property(float, notify=blackChanged)
     def blackfilter(self):
@@ -471,7 +469,7 @@ class Appearance(QObject):
 
     # Workaround for https://bugreports.qt.io/browse/PYSIDE-1426
     # @Property("QVariantMap", constant=True)
-    def devices(self) -> dict:
-        return dict(self.possible_devs)
+    def devices(self) -> list:
+        return self.possible_devs
 
-    devices = Property("QVariantMap", devices, constant=True)
+    devices = Property("QVariantList", devices, constant=True)

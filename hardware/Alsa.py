@@ -7,22 +7,21 @@ from subprocess import call, Popen, PIPE, DEVNULL
 from functools import partial
 from hardware.AlsaRecord import AlsaRecord
 from core.DataTypes import DataType
+from core.Property import EntityProperty
 
 
 class AlsaMixer:
 
     def __init__(self, inputs,
                  settings):
-
-        super(AlsaMixer, self).__init__()
+        self.name = 'alsamixer'
         self.settings = settings
         self.inputs = inputs
         self.recorder = dict()
-        self.system_cards = []
+        self.playback_cards = []
         self.cards = self.get_cards()
-        self.inputs.add(self.get_inputs())
 
-    def get_inputs(self) -> dict:
+    def get_inputs(self) -> list:
         return self.cards
 
     def delete_inputs(self):
@@ -31,9 +30,8 @@ class AlsaMixer:
                 del self.inputs.entries[key]
 
     def play(self, file='/usr/share/sounds/alsa/Front_Center.wav'):
-        for key in self.system_cards:
-            if self.cards[key]['value'] is True:
-                call(["aplay", "-D", "plughw:" + self.cards[key]['name'], file])
+        for key in self.playback_cards:
+            call(["aplay", "-D", "plughw:" + self.cards[key]['name'], file])
 
     @staticmethod
     def get_channel_name(desc, name, i):
@@ -54,45 +52,57 @@ class AlsaMixer:
         return None
 
     def get_cards(self):
-        self.system_cards = []
+        system_cards = []
         try:
             with open("/proc/asound/cards", 'r') as f:
                 line = True
                 while line:
                     line = f.readline()
                     if ']:' in line:
-                        self.system_cards.append(line.strip())
+                        system_cards.append(line.strip())
         except IOError as e:
             logging.error(str(e))
             if e.errno != errno.ENOENT:
                 raise e
 
-        cards = {}
+        cards = []
 
-        for i in self.system_cards:
+        for i in system_cards:
             pos1 = i.find(']:', 0, 30)
             pos0 = i.find('[', 0, 25)
             if 0 < pos0 < pos1 and pos1 > 0:
                 card_name = i[pos0 + 1:pos1].strip()
                 card_number = i.split(" [")[0].strip()
                 card_desc = i[pos1 + 2:].strip()
-                cards['alsa/' + card_name] = {  # 'id': card_number,
-                    'description': card_desc + ' on/off',
-                    # 'name': card_name,
-                    'value': self.settings.value("alsa/" + card_name, 1),
-                    'interval': -1,
-                    'set': partial(self.power_device, card_name),
-                    'type': DataType.BOOL}
-                cards.update(self.get_recording(card_name))
-                cards.update(self.get_controls(card_name))
+                value = self.settings.value("alsa/" + card_name, 1)
+
+                if value: self.playback_cards.append(card_name)
+
+                cards.append(EntityProperty(parent=self,
+                                            category='sound',
+                                            entity=card_name,
+                                            value=value,
+                                            name='play',
+                                            description=card_desc + ' sound on/off',
+                                            type=DataType.BOOL,
+                                            set=partial(self.power_device, card_name),
+                                            interval=-1))
+
+                cards.extend(self.get_recording(card_name))
+                cards.extend(self.get_controls(card_name))
 
         return cards
 
     def power_device(self, card_name, value):
 
-        if 'alsa/' + card_name in self.cards:
-            self.cards['alsa/' + card_name]['value'] = int(value)
-            self.settings.setValue("alsa/" + card_name, value)
+        if value:
+            if card_name not in self.playback_cards:
+                self.playback_cards.append(card_name)
+                self.settings.setValue("alsa/" + card_name, value)
+        else:
+            if card_name in self.playback_cards:
+                self.playback_cards.remove(card_name)
+                self.settings.setValue("alsa/" + card_name, value)
 
     def get_recording(self, card_name):
         record_details = Popen(["arecord", "-D", "hw:" + card_name,
@@ -125,10 +135,9 @@ class AlsaMixer:
             return self.recorder[card_name].get_inputs()
 
         else:
-            return {}
+            return []
 
-    @staticmethod
-    def get_controls(card_name):
+    def get_controls(self, card_name):
         try:
             amixer = Popen(
                 ['amixer', '-D', 'hw:' + str(card_name)], stdout=PIPE)
@@ -142,14 +151,13 @@ class AlsaMixer:
             logging.error(str(e))
             return {}
 
-        interfaces = dict()
+        interfaces = list()
+
         for a in amixer_contents.split(b"numid=")[1:]:
             lines = a.split(b"\n")
 
             interface = {
                 "id": int(lines[0].split(b",")[0]),
-                "interval": -1,
-                "lastupdate": 0,
                 "iface": lines[0].split(b",")[1].replace(b"iface=", b""),
                 "description": lines[0].split(b",")[2].replace(b"name=", b'').replace(b"'", b"").decode(),
                 "type": lines[1].split(b",")[0].replace(b"  ; type=", b""),
@@ -224,19 +232,31 @@ class AlsaMixer:
                     i = 0
                     description = interface['description']
                     for value in values:
-                        interface['value'] = value
+
                         interface['description'] = description
 
                         if len(channels) > i:
-                            interface['description']  +=  ' ' + channels[i]
+                            interface['description'] += ' ' + channels[i]
 
+                        # interfaces[f"alsa/{card_name}/control/{interface['id']}/{i}"] = interface.copy()
 
-                        interface['set'] = partial(
-                            AlsaMixer.change_control, card_name, interface['id'], i, len(values))
+                        interfaces.append(EntityProperty(parent=self,
+                                                         category='sound',
+                                                         value=value,
+                                                         entity=card_name,
+                                                         min=interface.get('min', None),
+                                                         max=interface.get('max', None),
+                                                         step=interface.get('step', None),
+                                                         available=interface.get('available', None),
+                                                         name=f"control_{interface['id']}_{i}",
+                                                         description=interface['description'],
+                                                         type=interface['type'],
+                                                         call=partial(AlsaMixer.get_control, card_name, interface['id'],
+                                                                      i),
+                                                         set=partial(AlsaMixer.change_control, card_name,
+                                                                     interface['id'], i, len(values)),
+                                                         interval=-1))
 
-                        interfaces[f"alsa/{card_name}/control/{interface['id']}/{i}"] = (
-                            interface.copy())
-                        del interfaces[f"alsa/{card_name}/control/{interface['id']}/{i}"]['id']
                         i += 1
 
         return interfaces
@@ -253,3 +273,18 @@ class AlsaMixer:
         call(command, stdout=DEVNULL)
         if os.geteuid() == 0:
             call(["alsactl", "store"])
+
+    @staticmethod
+    def get_control(card_name, num_id, channel):
+        try:
+            command = ['amixer', '-D', 'hw:' + str(card_name), "cget", "numid=%s" % num_id]
+            content = Popen(command, stdout=PIPE).communicate()[0].split('\n')
+
+            for line in content:
+                if line.startswith('  : values='):
+                    values = line[11:].strip().split(',')
+                    if len(values) > channel:
+                        return values[channel - 1]
+            return None
+        except Exception as e:
+            logging.error(str(e))

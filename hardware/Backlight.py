@@ -1,89 +1,125 @@
 import os
 import logging
-import time
 import sys
 from core.DataTypes import DataType
-
+from typing import Union
+from core.Property import EntityProperty
 
 class Backlight:
 
+    backlightpath = "/sys/class/backlight/"
+
     def __init__(self):
 
-        super(Backlight, self).__init__()
+        self.name = 'backlight'
 
-        backlightpath = "/sys/class/backlight/"
+        self.backlight_sysfs_path = False
+        self.backlight_sysfs_max = 100 # fallback value
+        self.backlight_sysfs_has_power = False
 
-        self.BACKLIGHT = ""
-        self.MAX_BACKLIGHT = 0
-        self.BL_POWER = 0
-        self._brightness = 1
-        self.module_inputs = dict()
-        if os.path.isdir(backlightpath):
-            for file in os.listdir(backlightpath):
-                if os.path.exists(backlightpath + file + "/brightness"):
-                    self.BACKLIGHT = backlightpath + file
-                    if os.path.exists(backlightpath + file
-                                      + "/max_brightness"):
-                        with open(backlightpath + file +
-                                  "/max_brightness") as max_backlight:
-                            self.MAX_BACKLIGHT = int(
-                                max_backlight.readline())
-                    if os.path.exists(backlightpath + file + "/bl_power"):
-                        self.BL_POWER = 1
+        self._module = EntityProperty(parent = self,
+                                      category = 'module',
+                                      entity = 'core',
+                                      name = 'backlight',
+                                      description = 'Backlight Module',
+                                      type = DataType.MODULE,
+                                      interval = -1)
 
-        self.module_inputs['backlight/brightness'] = {"description": 'BL brightness in %',
-                                                      "type": DataType.PERCENT_INT,
-                                                      "interval": 10,
-                                                      "lastupdate": 0,
-                                                      "call": self.get_brightness,
-                                                      "set": self.set_brightness}
+        self._module.value = 'NOT INITIALIZED'
 
-    def delete_inputs(self):
-        del self.module_inputs  # does this delete references in inputs?
 
-    def get_inputs(self) -> dict:
-        return self.module_inputs
+        if not os.path.isdir(Backlight.backlightpath):
+            self._module.value =  'ERROR'
+            logging.error('No physical backlight found.')
+            return # Nothing to do here, no backlight found.
 
-    def set_brightness(self, brightness):
+        for file in os.listdir(Backlight.backlightpath):
 
-        # logging.debug("set_brightness({brightness})")
+            if os.path.exists(Backlight.backlightpath + file + "/brightness"):
 
-        if (len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0):
-            setbrightness = int((self.MAX_BACKLIGHT / 100) * brightness)
+                self.backlight_sysfs_path = Backlight.backlightpath + file
+
+                if os.path.exists(Backlight.backlightpath + file + "/backlight_sysfs_has_power"):
+                    self.backlight_sysfs_has_power = 1
+
+                if not os.path.exists(Backlight.backlightpath + file + "/max_brightness"):
+                    break
+
+                with open(Backlight.backlightpath + file + "/max_brightness") as backlight_sysfs_max:
+                            self.backlight_sysfs_max = int(backlight_sysfs_max.readline())
+
+                break    # we're looking only for one backlight now
+
+        if self.backlight_sysfs_path:
+
+         self._brightness  =  EntityProperty(parent = self,
+                                            category = 'core',
+                                            name = 'brightness',
+                                            description = 'Backlight brightness in %',
+                                            type = DataType.PERCENT_INT,
+                                            call = self.get_brightness,
+                                            set = self.set_brightness,
+
+                                            interval = 10)
+
+         self._properties = [self._module, self._brightness]
+
+
+    def delete_inputs(self) -> list:
+        [prop.path for prop in self._properties]
+
+
+    def get_inputs(self) -> list:
+        return self._properties
+
+    def set_brightness(self, brightness: Union[float, int]):
+
+            # reducing brightness to 0-100
+            setbrightness = int((self.backlight_sysfs_max / 100) * brightness)
 
             if setbrightness == 0 and brightness > 0:
                 setbrightness = 1
 
-            # logging.debug("hardware brightness level: {setbrightness}")
-
-            if self.BL_POWER > 0:
+            if self.backlight_sysfs_has_power > 0:
                 try:
-                    with open(self.BACKLIGHT + "/bl_power", "w") as bright:
-                        if brightness < 1:
-                            bright.write("4")
-                            # logging.debug(f"bl_power: 4")
-                        else:
-                            bright.write("0")
-                            # logging.debug(f"bl_power: 0")
+                    with open(self.backlight_sysfs_path + "/bl_power", "w") as bright:
+                        if brightness < 1: bright.write("4")
+                        else:              bright.write("0")
+
                 except Exception as e:
+                    self._module.value = 'ERROR'
+                    self.inputs.update_remote(self._module.path)
                     exception_type, exception_object, exception_traceback = sys.exc_info()
                     line_number = exception_traceback.tb_lineno
                     logging.error(f'error: {e} in line {line_number}')
 
             try:
-                with open(self.BACKLIGHT + "/brightness", "w") as bright:
+                with open(self.backlight_sysfs_path + "/brightness", "w") as bright:
                     bright.write(str(setbrightness))
-                    self._brightness = brightness
-                    self.module_inputs['backlight/brightness']['value'] = brightness
-                    self.module_inputs['backlight/brightness']['lastupdate'] = time.time()
+                    self._module.value = 'OK'
+
             except Exception as e:
+                self._module.value = 'ERROR'
                 exception_type, exception_object, exception_traceback = sys.exc_info()
                 line_number = exception_traceback.tb_lineno
                 logging.error(f'error: {e} in line {line_number}')
 
-    def get_brightness(self):
-        if (len(self.BACKLIGHT) > 0) & (self.MAX_BACKLIGHT > 0):
-            with open(self.BACKLIGHT + "/brightness", "r") as bright:
-                self._brightness = int((100 / self.MAX_BACKLIGHT)
-                                       * int(bright.readline().rstrip()))
-        return self._brightness
+    def get_brightness(self) -> int :
+        try:
+         with open(self.backlight_sysfs_path + "/brightness", "r") as bright:
+                value =  int((100 / self.backlight_sysfs_max) * int(bright.readline().rstrip()))
+                self._module.value = 'OK'
+                return value
+        except Exception as e:
+                self._module.value = 'ERROR'
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                line_number = exception_traceback.tb_lineno
+                logging.error(f'error: {e} in line {line_number}')
+                return 0
+
+
+
+
+
+
+

@@ -1,0 +1,216 @@
+﻿from core.DataTypes import DataType
+import logging
+import time
+import threading
+import ctypes
+
+class ModuleThread(threading.Thread):
+
+    def get_id(self):
+
+        # returns id of the respective thread
+        if hasattr(self, '_thread_id'):
+            return self._thread_id
+        for did, thread in threading._active.items():
+            if thread is self:
+                return did
+
+    def raise_exception(self):
+        thread_id = self.get_id()
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,
+                                                         ctypes.py_object(SystemExit))
+        if res > 1:
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
+            logging.error('Thread Exception raise failure.')
+
+
+# FOR NOW: ONE PROPERTY FOR ALL FIELDS, LATER WE WILL SPLIT  RW, RO, WO, THREAD, MODULE
+
+
+class EntityProperty:
+    version = "1.0"
+    description = "Basic Property Class for all Sensors, Outputs, Modules"
+
+    def __init__(self, name: str = None, category: str = None, parent=None, value=None, set=None, call=None,
+                 description=None,
+                 type=None, available=None, min=None, max=None, step=None, exposed=False, logging=False, update=None,
+                 interval=None, entity=None):
+
+        self.parent_module = parent  # parent_module that provides this property, parents needs .name property
+        self.category = category  # category for tree in GUI, like sensor, output, sound, network
+        self.name = name  # name for this property
+        self.entity = entity  # usually entity is module name, but some modules provide multiple entities, then we use this for path
+        self.path = category + '/' + (self.entity or parent.name) + '/' + name
+        self.description = description  # description
+        self._value = value  # value
+        self._old_value = None
+        self.type = type  # DataType
+        self.last_update = None
+        self.last_change = None
+        self.exposed = exposed  # make it available for network
+        self.logging = logging  #
+        self.events = []
+        self.__call = call
+        self.available = available
+        self.step = step
+        self.min = min
+        self.max = max
+        self.__set = set  # is Output? private function! control access to it
+        self.is_exclusive_output = False  # for unique access
+        self.registered_output_path = None  # if exclusive
+        self.interval = interval
+        self.update_needs_thread = False  # for stuff with timeout like http etc
+
+    @property
+    def value(self):
+        return self._value
+
+    @property
+    def is_output(self):
+        return callable(self.__set)
+
+    @property
+    def call(self):
+        raise ValueError('Access to call function is restricted.')
+
+    @call.setter
+    def call(self, callable_function):
+        if callable(callable_function):
+            self.__call = callable_function
+
+    @property
+    def set(self):
+        if self.is_exclusive_output:
+            raise ValueError('Access to set function is restricted.')
+        else:
+            return self.__set
+
+    @set.setter
+    def set(self, callable_function):
+        if callable(callable_function):
+            self.__set = callable_function
+
+    @value.setter
+    def value(self, value):
+        self.last_update = time.time()
+        if value != self._value:
+            # Todo: Check Dataype here!
+            self._old_value = self._value
+            self._value = value
+            self.last_change = self.last_update
+
+            for event in self.events:
+                if callable(event):
+                    event(self.path)
+                else:
+                    logging.error(self.name + ' event[' + str(event) + '] ot a function!')
+
+    def update(self):
+        if self.__call != None:
+            value = self.__call()
+            self.value = value
+        else:
+            logging.error('No Update Function for ' + self.name + ' given.')
+
+
+class ThreadProperty:
+    version = "1.0"
+    description = "Thread Property Class for Modules"
+
+    def __init__(self, name: str = None,
+                 category: str = None,
+                 parent=None,
+                 value=None,
+                 description=None,
+                 exposed=False,
+                 logging=False,
+                 interval=60,
+                 entity=None,
+                 function=None):
+
+        self.parent_module = parent  # parent_module that provides this property, parents needs .name property
+        self.category = category  # category for tree in GUI, like sensor, output, sound, network
+        self.name = name  # name for this property
+        self.entity = entity  # usually entity is module name, but some modules provide multiple entities, then we use this for path
+        self.path = category + '/' + (self.entity or parent.name) + '/' + name
+        self.description = description  # description
+        self._value = value  # value
+        self.type = DataType.THREAD
+        self.last_update = None
+        self.last_change = None
+        self.is_output = True
+        self.logging = logging
+        self.exposed = exposed
+        self.events = []
+        self.is_exclusive_output = False  # for unique access
+        self.interval = interval
+        self.function = function
+        self.thread = ModuleThread(target=self.function)
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def set(self, value):
+        self.last_update = time.time()
+        if value != self._value:
+            self._value = value
+            self.last_change = self.last_update
+            self.update()
+        elif value:  # if thread is active and still value setted, we fire events
+            for event in self.events:
+                if callable(event):
+                    event(self.path)
+                else:
+                    logging.error(self.name + ' event[' + str(event) + '] ot a function!')
+
+    def update(self):
+
+        if self._value and not self.thread.is_alive():
+            self.thread = ModuleThread(target=self.function)
+            self.thread.start()
+            logging.info('(Re)Started Thread ' + (self.entity or self.parent_module.name) + ' ' + self.name)
+
+        elif not self._value and self.thread.is_alive():
+            self.thread.raise_exception()
+            logging.info('Stopped Thread ' + (self.entity or self.parent_module.name) + ' ' + self.name)
+
+
+class StaticProperty:
+    version = "1.0"
+    description = "Basic Property Class for all Statics"
+
+    def __init__(self, name: str = None,
+                 category: str = None,
+                 parent=None,
+                 value=None,
+                 description=None,
+                 type=None,
+                 exposed=False,
+                 entity=None):
+        self.parent_module = parent  # parent_module that provides this property, parents needs .name property
+        self.category = category  # category for tree in GUI, like sensor, output, sound, network
+        self.name = name  # name for this property
+        self.entity = entity  # usually entity is module name, but some modules provide multiple entities, then we use this for path
+        self.path = category + '/' + (self.entity or parent.name) + '/' + name
+        self.description = description  # description
+        self.value = value  # value
+        self.type = type  # DataType
+        self.exposed = exposed  # make it available for network
+
+    @staticmethod
+    def update():
+        pass
+
+    @property
+    def logging(self):
+        return False
+
+    @property
+    def interval(self):
+        return 0
+
+    @property
+    def events(self):
+        return None

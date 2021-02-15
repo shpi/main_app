@@ -494,17 +494,17 @@ Item {
             }
 
             Repeater {
-                model: appearance.devices.list
+
+                model: appearance.devices
                 CheckBox {
-                    checked: appearance.devices[modelData]
+                    checked: appearance.selected_device(modelData)
                     Text {
                         anchors.left: parent.right
                         anchors.leftMargin: 10
                         color: Colors.black
-                        text: inputs.data[modelData]['description']
+                        text: appearance.device_description(modelData)
                     }
                     onCheckStateChanged: {
-                        // console.log('onCheckStateChanged called')
                         appearance.setDeviceTrack(modelData, this.checked)
                     }
                 }
@@ -515,6 +515,7 @@ Item {
     Component.onCompleted: {
 
         inputs.set_typeList('time')
+
 
         if (appearance.night_mode === 3) {
             combo_night_mode_end.currentIndex = getIndex(

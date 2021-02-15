@@ -24,8 +24,10 @@ from hardware.HWMon import HWMon
 from hardware.IIO import IIO
 from hardware.InputDevs import InputDevs
 from hardware.Leds import Led
+from hardware.CPU import CPU
 from hardware.System import SystemInfo
 from core.Wifi import Wifi
+from hardware.Disk import DiskStats
 from core.Logger import LogModel, MessageHandler
 
 from core.MLX90615 import MLX90615
@@ -117,18 +119,23 @@ def check_loop():
 settings = QSettings("SHPI GmbH", "Main")
 inputs = InputsDict(settings)
 systeminfo = SystemInfo()
+cpu = CPU()
 iio = IIO()
 leds = Led()
 hwmon = HWMon()
+disk = DiskStats()
 inputdevs = InputDevs()
 backlight = Backlight()
 wifi = Wifi(settings)
 httpserver = HTTPServer(inputs, settings)
 mlx90615 = MLX90615(inputs,settings)
 alsamixer = AlsaMixer(inputs, settings)
+inputs.add(alsamixer.get_inputs())
 inputs.add(iio.get_inputs())
+inputs.add(disk.get_inputs())
 inputs.add(wifi.get_inputs())
 inputs.add(leds.get_inputs())
+inputs.add(cpu.get_inputs())
 inputs.add(hwmon.get_inputs())
 inputs.add(inputdevs.get_inputs())
 inputs.add(systeminfo.get_inputs())
@@ -142,7 +149,7 @@ modules = ModuleManager(inputs, settings)
 def killThreads():
     for key in inputs.entries:
         if key.endswith('thread'):
-            inputs.entries[key]['set'](0)
+            inputs.entries[key].set(0)
 
     httpserver.server.shutdown()
     httpserver.server_thread.join()
@@ -157,7 +164,7 @@ app = QApplication(sys.argv)
 QFontDatabase.addApplicationFont("./fonts/orkney-custom.ttf")
 
 
-#qInstallMessageHandler(qml_log)
+qInstallMessageHandler(qml_log)
 
 app.aboutToQuit.connect(killThreads)
 app.setApplicationName("Main")

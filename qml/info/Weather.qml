@@ -7,9 +7,9 @@ import "../../fonts/"
 Rectangle {
 
     property string instancename: parent.instancename !== undefined ? parent.instancename : modules.modules['Info']['Weather'][0]
-    property string weatherimage: inputs.data['weather/' + instancename + '/current_weather_icon']['value']
-    property string average_temp: inputs.data['weather/' + instancename + '/current_temp']['value']
-    property string day: new Date(inputs.data['weather/' + instancename + '/lastupdate']['value'] * 1000)
+    property string weatherimage: modules.loaded_instances['Info']['Weather'][instancename].current_weather_icon
+    property string average_temp: modules.loaded_instances['Info']['Weather'][instancename].current_temp
+    property string day: new Date(modules.loaded_instances['Info']['Weather'][instancename].lastupdate * 1000)
     property string dayname: Qt.formatDate(day, "dddd")
 
     id: dayrect
@@ -49,10 +49,9 @@ Rectangle {
         id: weatherdaysconn
         target: modules.loaded_instances['Info']['Weather'][instancename]
         onDataChanged: {
-
-            weatherimage = inputs.data['weather/' + instancename + '/current_weather_icon']['value']
-            average_temp = inputs.data['weather/' + instancename + '/current_temp']['value']
-            day = new Date(inputs.data['weather/' + instancename + '/lastupdate']['value'] * 1000)
+            weatherimage = modules.loaded_instances['Info']['Weather'][instancename].current_weather_icon
+            average_temp = modules.loaded_instances['Info']['Weather'][instancename].current_temp
+            day = new Date(modules.loaded_instances['Info']['Weather'][instancename].lastupdate * 1000)
         }
     }
 

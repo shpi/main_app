@@ -381,23 +381,11 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
-        //console.log('count of weater instances : ' + modules.modules['Info']['Weather'].length)
+
         Colors.night = appearance.night
 
 
-
-        /*  for (let [key, value] of Object.entries(inputs.data)) {
-      if (key.toString().startsWith('alsa'))   { console.log(`${key}: ${value}`);
-
-       for (let [subkey, subvalue] of Object.entries(value)) {
-            console.log(`${subkey}: ${subvalue}`);
-
-       } }
-
-      }
-    }
-
-*/ }
+ }
 
 
 

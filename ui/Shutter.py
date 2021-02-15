@@ -19,14 +19,14 @@ class Shutter(QObject):
 
         if self._actual_position_path in self.inputs.entries:
             self.inputs.register_event(self._actual_position_path, self.ui_event)
-            self._actual_position = int(self.inputs.entries[self._actual_position_path]['value'])
+            self._actual_position = int(self.inputs.entries[self._actual_position_path].value)
         else:
             self._actual_position = None
             logging.error(self.name + ' no valid actual position value')
 
         if self._desired_position_path in self.inputs.entries:
             self.inputs.register_event(self._desired_position_path, self.ui_event)
-            self._desired_position = int(self.inputs.entries[self._desired_position_path]['value'])
+            self._desired_position = int(self.inputs.entries[self._desired_position_path].value)
         else:
             self._desired_position = None
             logging.error(self.name + ' no valid desired position value')
@@ -69,8 +69,8 @@ class Shutter(QObject):
         self.settings.setValue('shutter/' + self.name + "/desired_position", key)
 
     def ui_event(self):
-        if self._desired_position != self.inputs.entries[self._desired_position_path]['value']:
-            self._desired_position = self.inputs.entries[self._desired_position_path]['value']
+        if self._desired_position != self.inputs.entries[self._desired_position_path].value:
+            self._desired_position = self.inputs.entries[self._desired_position_path].value
             self.positionChanged.emit()
             if not self.checkthread.is_alive():
                 self.checkthread = threading.Thread(target=self.thread)
@@ -87,11 +87,11 @@ class Shutter(QObject):
 
     @Property(int, notify=positionChanged)
     def desired_position(self):
-        return int(self.inputs.entries[self._desired_position_path]['value'])
+        return int(self.inputs.entries[self._desired_position_path].value)
 
     @Property(float, notify=positionChanged)
     def actual_position(self):
-        return int(self.inputs.entries[self._actual_position_path]['value'])
+        return int(self.inputs.entries[self._actual_position_path].value)
 
     @Slot(int)
     def set_position(self, value):
