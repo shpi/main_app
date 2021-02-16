@@ -9,6 +9,7 @@ from datetime import datetime
 from core.DataTypes import DataType
 from core.Toolbox import Pre_5_15_2_fix
 from core.Property import EntityProperty
+from functools import partial
 
 
 class NightModes:
@@ -66,6 +67,8 @@ class Appearance(QObject):
         self._night = False
 
         self.possible_devs = list()
+
+        inputs.entries['core/input_dev/lasttouch'].events.append(self.tinterrupt)
 
         for key in self.inputs.keys():
             if key.startswith('module/input_dev') and self.inputs[key].type == DataType.THREAD:
@@ -418,28 +421,9 @@ class Appearance(QObject):
             self.blackChanged.emit()
             self._backlightlevel = value
 
-    # def mapFromTo(self, x, a, b, c, d):
-    #    y = (x-a)/(b-a)*(d-c)+c
-    #    return y
-
-    def interrupt(self, key, value, ismouse=0):
-        logging.debug(f"key: {key}, value: {value}")
+    def interrupt(self, key, value):
+        #logging.debug(f"interrupt key: {key}, value: {value}")
         if value > 0:
-            if ismouse:
-                self.lastuserinput = time.time()
-                self._jump_state = 0
-                self.jump_stateChanged.emit()
-
-                if self.state in ('OFF', 'SLEEP'):
-                    logging.debug(
-                        f"changing nightmode to ACTIVE, old state: {self.state}, lastinput: {self.lastuserinput}")
-                    self.state = 'ACTIVE'
-                if self._night:
-                    self.set_backlight(self._max_backlight_night)
-                else:
-                    self.set_backlight(self._max_backlight)
-            else:
-
                 if self.state == 'OFF':
                     self.lastuserinput = time.time() - self._dim_timer
                     logging.debug(
@@ -449,6 +433,22 @@ class Appearance(QObject):
                         self.set_backlight(self._min_backlight_night)
                     else:
                         self.set_backlight(self._min_backlight)
+
+
+    def tinterrupt(self, key, value):
+        #logging.debug(f"tinterrupt key: {key}, value: {value}")
+        self.lastuserinput = time.time()
+        self._jump_state = 0
+        self.jump_stateChanged.emit()
+        if self.state in ('OFF', 'SLEEP'):
+                logging.debug(
+                        f"changing nightmode to ACTIVE, old state: {self.state}, lastinput: {self.lastuserinput}")
+                self.state = 'ACTIVE'
+                if self._night:
+                    self.set_backlight(self._max_backlight_night)
+                else:
+                    self.set_backlight(self._max_backlight)
+
 
     @Slot(str, int)
     def setDeviceTrack(self, path, value):

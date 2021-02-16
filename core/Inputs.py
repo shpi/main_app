@@ -114,7 +114,7 @@ class InputsDict(QObject):
         self.outputs = QSortFilterProxyModel()
         self.outputs.setSourceModel(self.completelist)
         self.outputs.setFilterRole(self.completelist.OutputRole)
-        self.outputs.setFilterFixedString('1')
+        self.outputs.setFilterFixedString('true')
 
         self.outputssearch = QSortFilterProxyModel()
         self.outputssearch.setSourceModel(self.outputs)
@@ -318,7 +318,7 @@ class InputsDict(QObject):
         except KeyError:
             logging.debug(key + ' not in Inputdictionary')
 
-    def update_remote(self, key):  # doing eventing here
+    def update_remote(self, key,value):  # doing eventing here
 
         try:
             self.completelist.updateListView(key)

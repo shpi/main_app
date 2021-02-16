@@ -150,9 +150,9 @@ class InputDevs:
                 function=partial(self.devloop, f"/dev/input/{subdevice['event'][0]}", id)
             )
 
-    def get_inputs(self) -> dict:
+    def get_inputs(self) -> list:
 
-        return [value for key, value in self.properties.items()]
+        return self.properties.values()
 
     def devloop(self, devpath, id):
 
@@ -165,15 +165,16 @@ class InputDevs:
                     event = devfile.read(16 if systembits == 32 else 24)
                     (timestamp, _id, type, keycode, value) = struct.unpack('llHHI', event)
 
-                    if (type == 3):
-                        self.properties['lasttouch'].value = devpath
+
+                    if (type == 3): # mouse movement
+                        #logging.debug(str(timestamp) + ' ' + str(type) + ' ' + str(keycode) + ' ' + str(value))
+                        self.properties['lasttouch'].value = value
 
                     elif (type == 1):  # type 1 = key, we watch only keys!
 
                         try:
                             self.properties['lastinput'].value = devpath
-                            self.properties[
-                                f'{id}/thread'].value = 1  # helping action to track activity on input device
+                            self.properties[f'{id}/thread'].value = 1  # helping action to track activity on input device
                             self.properties[f'{id}/key_{str(keycode)}'].value = value
 
                         except KeyError:

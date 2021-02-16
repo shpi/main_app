@@ -2,6 +2,7 @@
 
 from hardware.iio import ChannelType
 from enum import Enum
+import logging
 
 
 class DataType(Enum):
@@ -88,12 +89,13 @@ class Convert:
         try:
             value = float(value_str)
 
-            if value == int(integer):
+            if value == int(value):
                 return int(value)
 
             return value
 
-        except:
+        except Exception as e:
+            logging.error(str(e))
             return str(value_str)
 
 

@@ -101,7 +101,7 @@ class EntityProperty:
 
             for event in self.events:
                 if callable(event):
-                    event(self.path)
+                    event(self.path, self._value)
                 else:
                     logging.error(self.name + ' event[' + str(event) + '] ot a function!')
 
@@ -147,12 +147,15 @@ class ThreadProperty:
         self.function = function
         self.thread = ModuleThread(target=self.function)
 
+    def set(self,value):
+        self.value = value
+
     @property
     def value(self):
         return self._value
 
     @value.setter
-    def set(self, value):
+    def value(self, value):
         self.last_update = time.time()
         if value != self._value:
             self._value = value
@@ -161,7 +164,7 @@ class ThreadProperty:
         elif value:  # if thread is active and still value setted, we fire events
             for event in self.events:
                 if callable(event):
-                    event(self.path)
+                    event(self.path,self._value)
                 else:
                     logging.error(self.name + ' event[' + str(event) + '] ot a function!')
 
@@ -202,6 +205,10 @@ class StaticProperty:
     @staticmethod
     def update():
         pass
+
+    @property
+    def is_output(self):
+        return False
 
     @property
     def logging(self):

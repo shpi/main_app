@@ -141,6 +141,7 @@ inputs.add(inputdevs.get_inputs())
 inputs.add(systeminfo.get_inputs())
 inputs.add(backlight.get_inputs())
 inputs.add(mlx90615.get_inputs())
+
 appearance = Appearance(inputs, settings)
 inputs.add(appearance.get_inputs())
 
