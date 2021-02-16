@@ -24,12 +24,13 @@ class ModuleThread(threading.Thread):
             logging.error('Thread Exception raise failure.')
 
 
-# FOR NOW: ONE PROPERTY FOR ALL FIELDS, LATER WE WILL SPLIT  RW, RO, WO, THREAD, MODULE
-
-
 class EntityProperty:
-    version = "1.0"
-    description = "Basic Property Class for all Sensors, Outputs, Modules"
+    #version = "1.0"
+    #description = "Basic Property Class for all Sensors, Outputs, Modules"
+
+    __slots__ = ['parent_module', 'category', 'name', 'entity', 'description', '_value', '_old_value', 'type',
+                  'last_update', 'last_change','step','available', 'logging', 'exposed', '__call', '__set', 'min', 'max','events',
+                  'is_exclusive_output', 'registered_output_path', 'update_needs_thread', 'interval']
 
     def __init__(self, name: str = None, category: str = None, parent=None, value=None, set=None, call=None,
                  description=None,
@@ -40,7 +41,6 @@ class EntityProperty:
         self.category = category  # category for tree in GUI, like sensor, output, sound, network
         self.name = name  # name for this property
         self.entity = entity  # usually entity is module name, but some modules provide multiple entities, then we use this for path
-        self.path = category + '/' + (self.entity or parent.name) + '/' + name
         self.description = description  # description
         self._value = value  # value
         self._old_value = None
@@ -64,6 +64,11 @@ class EntityProperty:
     @property
     def value(self):
         return self._value
+
+    @property
+    def path(self):
+        return  self.category + '/' + (self.entity or self.parent_module.name) + '/' + self.name
+
 
     @property
     def is_output(self):
@@ -114,8 +119,12 @@ class EntityProperty:
 
 
 class ThreadProperty:
-    version = "1.0"
-    description = "Thread Property Class for Modules"
+    #version = "1.0"
+    #description = "Thread Property Class for Modules"
+
+    __slots__ = ['parent_module', 'category', 'name', 'entity', 'description', '_value', 'type',
+                  'last_update', 'last_change', 'logging', 'exposed', 'events', 'is_exclusive_output',
+                  'interval', 'function', 'thread']
 
     def __init__(self, name: str = None,
                  category: str = None,
@@ -132,13 +141,11 @@ class ThreadProperty:
         self.category = category  # category for tree in GUI, like sensor, output, sound, network
         self.name = name  # name for this property
         self.entity = entity  # usually entity is module name, but some modules provide multiple entities, then we use this for path
-        self.path = category + '/' + (self.entity or parent.name) + '/' + name
         self.description = description  # description
         self._value = value  # value
         self.type = DataType.THREAD
         self.last_update = None
         self.last_change = None
-        self.is_output = True
         self.logging = logging
         self.exposed = exposed
         self.events = []
@@ -149,6 +156,14 @@ class ThreadProperty:
 
     def set(self,value):
         self.value = value
+
+    @property
+    def is_output(self):
+        return True
+
+    @property
+    def path(self):
+        return  self.category + '/' + (self.entity or self.parent_module.name) + '/' + self.name
 
     @property
     def value(self):
