@@ -169,13 +169,6 @@ class InputsDict(QObject):
     def set_searchList(self, type_):
         self.search.setFilterFixedString(type_)
 
-    # Workaround for https://bugreports.qt.io/browse/PYSIDE-1426
-    # @Property('QVariantMap', constant=True)  # , notify=dataChanged)
-    # def data(self) -> dict:
-    #    return self.entries
-
-    # data = Property('QVariantMap', data, constant=True)
-
     def register_timerschedule(self, key, interval):
         interval = int(interval)
         if interval not in self.timerschedule:
@@ -192,7 +185,7 @@ class InputsDict(QObject):
 
         for newproperty in newinputs:
 
-            # newinputs[key].logging = bool(int(self.settings.value(key + "/logging", 0)))
+            newproperty.logging = bool(int(self.settings.value(newproperty.path + "/logging", 0)))
 
             if newproperty.logging:
                 self.buffer[newproperty.path] = CircularBuffer(10000)
