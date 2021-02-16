@@ -12,6 +12,7 @@ from core.Property import EntityProperty
 class IIO:
     """Class for retrieving the requested information."""
 
+
     def __init__(self):
 
         self.properties = dict()
@@ -35,8 +36,12 @@ class IIO:
 
         # print("IIO context has %u devices:" % len(self.context.devices))
 
+
+
+
     def get_inputs(self) -> list:
-        return [value for key, value in self.properties.items()]
+        print(self.properties)
+        return self.properties.values()
 
     @staticmethod
     def read_iio(id, channel, retries=0):
@@ -86,27 +91,27 @@ class IIO:
                 return (rf.write(str(value)))
 
     def _device_info(self, dev):
-        # print("\t" + dev.id + ": " + dev.name)
-        # print("\t\t%u channels found: " % len(dev.channels))
+        print("\t" + dev.id + ": " + dev.name)
+        print("\t\t%u channels found: " % len(dev.channels))
         for channel in dev.channels:
-
-            # print("\t\t\t%s: %s (%s)" % (channel.id, channel.name or "", "output" if channel.output else "input"))
+            
+            print("\t\t\t%s: %s (%s)" % (channel.id, channel.name or "", "output" if channel.output else "input"))
 
             if len(channel.attrs) > 0:
                 scale = 1
                 offset = 0
                 raw = None
 
-                self.properties[f'{dev.name}/{channel.name or channel.id}'] = EntityProperty(parent=self,
+                self.properties[f'{dev.name}/{channel.id}'] = EntityProperty(parent=self,
                                                                                              category='sensor',
                                                                                              entity=dev.name,
-                                                                                             name=channel.name or channel.id,
+                                                                                             name=channel.id,
                                                                                              description=dev.name + ' ' + channel.id,
                                                                                              type=Convert.iio_to_shpi(
                                                                                                  channel.type),
                                                                                              interval=20)
 
-                # print("\t\t\t%u channel-specific attributes found: " % len(channel.attrs))
+                print("\t\t\t%u channel-specific attributes found: " % len(channel.attrs))
                 for channel_attr in channel.attrs:
                     path = channel.attrs[channel_attr].filename
 
@@ -122,65 +127,66 @@ class IIO:
                         pass  # not useful for us
 
                     elif channel_attr == 'input':
-                        self.properties[f'{dev.name}/{channel.name or channel.id}'].value = channel.attrs[
+                        self.properties[f'{dev.name}/{channel.id}'].value = channel.attrs[
                             channel_attr].value
-                        self.properties[f'{dev.name}/{channel.name or channel.id}'].call = partial(IIO.read_iio, dev.id,
-                                                                                                   path)
+                        self.properties[f'{dev.name}/{channel.id}'].call = partial(IIO.read_iio, dev.id,path)
 
                     elif channel_attr == 'raw':
                         raw = channel.attrs[channel_attr].value
 
                     elif channel_attr.endswith('_available'):
 
-                        if f'{dev.name}/{channel.name or channel.id}/{channel_attr[:-10]}' not in self.properties:
+                        if f'{dev.name}/{channel.id}/{channel_attr[:-10]}' not in self.properties:
                             self.properties[
-                                f'{dev.name}/{channel.name or channel.id}/{channel_attr[:-10]}'] = EntityProperty(
+                                f'{dev.name}/{channel.id}/{channel_attr[:-10]}'] = EntityProperty(
                                 parent=self,
                                 category='sensor',
                                 entity=dev.name,
-                                # name =  channel.name or channel.id,
-                                description=dev.name + ' ' + channel.name + ' ' + channel.id,
+                                name = channel_attr[:-10],
+                                description=dev.name + ' ' + channel.id,
                                 type=DataType.FLOAT,
                                 available=channel.attrs[channel_attr].value.split(),
                                 interval=-1)
 
                         else:
-                            self.properties[f'{dev.name}/{channel.name or channel.id}/{channel_attr[:-10]}'].available = \
+                            self.properties[f'{dev.name}/{channel.id}/{channel_attr[:-10]}'].available = \
                             channel.attrs[channel_attr].value.split()
 
 
                     else:
-                        if f'{dev.name}/{channel.name or channel.id}/{channel_attr}' not in self.properties:
-                            self.properties[f'{dev.name}/{channel.name or channel.id}/{channel_attr}'] = EntityProperty(
+                        if f'{dev.name}/{channel.id}/{channel_attr}' not in self.properties:
+                            self.properties[f'{dev.name}/{channel.id}/{channel_attr}'] = EntityProperty(
 
                                 parent=self,
                                 category='sensor',
                                 entity=dev.name,
+                                name=channel_attr,
                                 type=DataType.FLOAT,
                                 interval=-1)
 
                         self.properties[
-                            f'{dev.name}/{channel.name or channel.id}/{channel_attr}'].description = dev.name + ' ' + channel.name + ' ' + channel.id + ' ' + channel_attr
-                        self.properties[f'{dev.name}/{channel.name or channel.id}/{channel_attr}'].name = channel_attr
-                        self.properties[f'{dev.name}/{channel.name or channel.id}/{channel_attr}'].value = \
+                            f'{dev.name}/{channel.id}/{channel_attr}'].description = dev.name + ' ' + channel.id + ' ' + channel_attr
+                        self.properties[f'{dev.name}/{channel.id}/{channel_attr}'].name = channel_attr
+                        self.properties[f'{dev.name}/{channel.id}/{channel_attr}'].value = \
                         channel.attrs[channel_attr].value.rstrip()
-                        self.properties[f'{dev.name}/{channel.name or channel.id}/{channel_attr}'].call = partial(
+                        self.properties[f'{dev.name}/{channel.id}/{channel_attr}'].call = partial(
                             IIO.read_iio, dev.id, path)
 
                         try:
                             IIO.write_iio(dev.id, path, channel.attrs[channel_attr].value)
-                            self.properties[f'{dev.name}/{channel.name or channel.id}/{channel_attr}'].set = partial(
+                            self.properties[f'{dev.name}/{channel.id}/{channel_attr}'].set = partial(
                                 IIO.write_iio, dev.id, path)
 
                         except Exception as e:
+                            logging.error('error iio: ' + str(e))
                             pass
 
                 if raw is not None:
-                    self.properties[f'{dev.name}/{channel.name or channel.id}'].value = (float(raw) + offset) * scale
-                    self.properties[f'{dev.name}/{channel.name or channel.id}'].call = partial(IIO.read_processed,
+                    self.properties[f'{dev.name}/{channel.id}'].value = (float(raw) + float(offset)) * float(scale)
+                    self.properties[f'{dev.name}/{channel.id}'].call = partial(IIO.read_processed,
                                                                                                dev.id, channel.attrs[
                                                                                                    'raw'].filename,
-                                                                                               scale, offset)
+                                                                                               float(scale), float(offset))
 
         if len(dev.attrs) > 0:
 
@@ -199,42 +205,43 @@ class IIO:
 
                     # "[min step max]"
 
-                    if f'{dev.name}/{channel.name or channel.id}/{device_attr[:-10]}' not in self.properties:
+                    if f'{dev.name}/{channel.id}/{device_attr[:-10]}' not in self.properties:
                         self.properties[
-                            f'{dev.name}/{channel.name or channel.id}/{device_attr[:-10]}'] = EntityProperty(
+                            f'{dev.name}/{channel.id}/{device_attr[:-10]}'] = EntityProperty(
 
                             parent=self,
                             category='sensor',
                             entity=dev.name,
                             name=device_attr[:-10],
-                            description=dev.name + ' ' + channel.name + ' ' + channel.id + ' ' + device_attr[:-10],
+                            description=dev.name + ' ' +  channel.id + ' ' + device_attr[:-10],
                             type=DataType.UNDEFINED,
                             interval=-1)
 
-                    self.properties[f'{dev.name}/{channel.name or channel.id}/{device_attr[:-10]}'].available = \
+                    self.properties[f'{dev.name}/{channel.id}/{device_attr[:-10]}'].available = \
                     dev.attrs[device_attr].value.split()
 
                 else:
-                    if f'{dev.name}/{channel.name or channel.id}/{device_attr}' not in self.properties:
-                        self.properties[f'{dev.name}/{channel.name or channel.id}/{device_attr}'] = EntityProperty(
+                    if f'{dev.name}/{channel.id}/{device_attr}' not in self.properties:
+                        self.properties[f'{dev.name}/{channel.id}/{device_attr}'] = EntityProperty(
 
                             parent=self,
                             category='sensor',
                             entity=dev.name,
                             name=device_attr,
-                            description=dev.name + ' ' + channel.name + ' ' + channel.id + ' ' + device_attr,
+                            description=dev.name + ' ' + channel.id + ' ' + device_attr,
                             type=DataType.UNDEFINED,
                             interval=-1)
 
-                    self.properties[f'{dev.name}/{channel.name or channel.id}/{device_attr}'].value = dev.attrs[
+                    self.properties[f'{dev.name}/{channel.id}/{device_attr}'].value = dev.attrs[
                         device_attr].value.rstrip()
-                    self.properties[f'{dev.name}/{channel.name or channel.id}/{device_attr}'].call = partial(
+                    self.properties[f'{dev.name}/{channel.id}/{device_attr}'].call = partial(
                         IIO.read_iio, dev.id, dev.attrs[device_attr].filename)
 
                     try:
                         IIO.write_iio(dev.id, path, dev.attrs[device_attr].value)
-                        self.properties[f'{dev.name}/{channel.name or channel.id}/{device_attr}'].set = partial(
+                        self.properties[f'{dev.name}/{channel.id}/{device_attr}'].set = partial(
                             IIO.write_iio, dev.id, path)
 
                     except Exception as e:
+                        logging.error(str(e))
                         pass
