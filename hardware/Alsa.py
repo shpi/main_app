@@ -83,7 +83,7 @@ class AlsaMixer:
                                             entity=card_name,
                                             value=value,
                                             name='play',
-                                            description=card_desc + ' sound on/off',
+                                            description=card_desc + ' on/off',
                                             type=DataType.BOOL,
                                             set=partial(self.power_device, card_name),
                                             interval=-1))

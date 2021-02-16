@@ -228,7 +228,7 @@ class MLX90615:
                     # if (a[1] - a[0]) > self.delta:
 
                     if abs(tempobj - self.object_mean) > self.delta:
-                        logging.debug('fast temp change: ' + str((self.object_mean - tempobj) * 50 / 1000))
+                        logging.info('fast temp change: ' + str((self.object_mean - tempobj) * 50 / 1000))
                         self.last_movement = time.time()
                         for function in self.inputs.entries['module/input_dev/mlx90615'].events:
                                 function('module/input_dev/mlx90615', abs(self.object_mean - tempobj))

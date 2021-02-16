@@ -330,7 +330,7 @@ Rectangle {
                 if (Math.abs(velocity) > 5) {
                 xPrev = mouse.y
 
-                calcrotation -= (velocity / 12)
+                calcrotation -= (velocity / 8)
 
                 if (calcrotation   > 240)    calcrotation = 240
                 else if  (calcrotation   < 0)    calcrotation = 0
@@ -381,7 +381,7 @@ Rectangle {
 
         Behavior on rotation {
 
-            PropertyAnimation {duration:100}
+            PropertyAnimation {}
 
         }
 

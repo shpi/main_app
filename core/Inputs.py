@@ -369,5 +369,7 @@ class InputsDict(QObject):
                 self.entries[key].set(int(value))
             elif self.entries[key].type == DataType.BOOL:
                 self.entries[key].set(int(value))
+            elif self.entries[key].type == DataType.THREAD:
+                    self.entries[key].set(int(value))
             elif self.entries[key].type == DataType.ENUM:
                 self.entries[key].set(int(value))

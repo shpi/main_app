@@ -19,7 +19,7 @@ class AlsaRecord:
                             entity = card,
                             value = 1,
                             name = 'thread',
-                            description = 'microphone process/thread',
+                            description = 'Microphone thread',
                             type = DataType.THREAD,
                             set =   self.control,
                             call =  self.check_process,
@@ -57,7 +57,9 @@ class AlsaRecord:
 
 
     def control(self, onoff):
+        logging.error('Microphone thread controll called with: ' + str(onoff))
         self._control.value = onoff
+        self.check_process()
 
     def delete_inputs(self):
         return [self.input.path, self._control.path]
