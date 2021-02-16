@@ -292,7 +292,7 @@ class Thermostat(QObject):
     def set_state(self, value):
         logging.info('set heating to ' + str(value))
         self._heating_state = int(value)
-        self.inputs[self._heating_contact_path]['set'](bool(value))
+        self.inputs[self._heating_contact_path].set(bool(value))
         self.heatingStateChanged.emit()
 
     def update(self):

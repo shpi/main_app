@@ -260,7 +260,7 @@ Rectangle {
 
 
 
-
+Component.onCompleted: console.log(' N O NE ?' + modules.loaded_instances['Logic']['Shutter'][instancename].actual_position)
 
 
 

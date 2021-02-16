@@ -174,7 +174,7 @@ class Shutter(QObject):
 
     @Property(int, notify=positionChanged)
     def desired_position(self):
-        return int(self._desired_position.value)
+        return (self._desired_position.value)
 
     @Slot(int)
     # @desired_position.setter
@@ -188,7 +188,7 @@ class Shutter(QObject):
 
     # @Property(float,notify=positionChanged)
     def actual_position(self):
-        return int(self._actual_position.value)
+        return (self._actual_position.value)
 
     # @actual_position.setter
     @Pre_5_15_2_fix(int, actual_position, notify=positionChanged)
@@ -248,7 +248,9 @@ class Shutter(QObject):
         return float(self._residue_time)
 
     def move(self):
-
+       if self._actual_position.value == None:
+           logging.error('Please calibrate Shutter Instance')
+       else:
         was_in_loop = False
 
         while (self._actual_position.value < self._desired_position.value) or (

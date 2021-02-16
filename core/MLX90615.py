@@ -77,7 +77,7 @@ class MLX90615:
                                                       call=self.update,
                                                       interval=10)
 
-                        self._thread = ThreadProperty(entity='sensor',
+                        self._thread = ThreadProperty(entity='input_dev',
                                                       name='mlx90615',
                                                       category='module',
                                                       parent=self,
@@ -230,9 +230,8 @@ class MLX90615:
                     if abs(tempobj - self.object_mean) > self.delta:
                         logging.debug('fast temp change: ' + str((self.object_mean - tempobj) * 50 / 1000))
                         self.last_movement = time.time()
-                        if 'events' in self.inputs.entries[f'dev/mlx90615/thread']:
-                            for function in self.inputs.entries[f'dev/mlx90615/thread'].events:
-                                function(f'dev/mlx90615', abs(self.object_mean - tempobj), 0)
+                        for function in self.inputs.entries['module/input_dev/mlx90615'].events:
+                                function('module/input_dev/mlx90615', abs(self.object_mean - tempobj))
 
                     self.object_mean = (self.object_mean * 9 + tempobj) // 10
 
