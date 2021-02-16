@@ -173,19 +173,18 @@ class InputDevs:
                     elif (type == 1):  # type 1 = key, we watch only keys!
 
                         try:
-                            self.properties['lastinput'].value = devpath
+                            self.properties['lastinput'].value = value
                             self.properties[f'{id}/thread'].value = 1  # helping action to track activity on input device
                             self.properties[f'{id}/key_{str(keycode)}'].value = value
 
                         except KeyError:
-                            self.properties[f'{id}/key_{str(keycode)}'] = EntityProperty(
-                                parent=self,
-                                category='input_dev',
-                                entity=id,
-                                name=str(keycode),
-                                description=str(keycode),
-                                type=DataType.INT,
-                                interval=-1)
+                            self.properties[f'{id}/key_{str(keycode)}'] = EntityProperty(parent=self,
+                                                                                         category='input_dev',
+                                                                                         entity=id,
+                                                                                         name=str(keycode),
+                                                                                         description=str(keycode),
+                                                                                         type=DataType.INT,
+                                                                                         interval=-1)
                             self.properties[f'{id}/key_{str(keycode)}'].value = value
 
 

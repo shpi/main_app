@@ -69,15 +69,14 @@ class InputListModel(QAbstractListModel):
                 elif role == InputListModel.AvailableRole:
                     return item.available
                 elif role == InputListModel.MinRole:
-
                     return item.min
                 elif role == InputListModel.MaxRole:
                     return item.max
                 elif role == InputListModel.StepRole:
                     return item.step
-
                 else:
                     return 'unknown role'
+
             except Exception as e:
                 exception_type, exception_object, exception_traceback = sys.exc_info()
                 line_number = exception_traceback.tb_lineno
@@ -201,6 +200,7 @@ class InputsDict(QObject):
             # following lines are inserted to make it possible to update values from another class
             # without removing dict memory adress of introducing class. for example:
             # adding [interrupts] in InputsDevs from another class
+
             """
             if key in self.entries:
                 for subkey in list(newinputs[key]):  # like lastupdate

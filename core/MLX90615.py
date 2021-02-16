@@ -115,7 +115,7 @@ class MLX90615:
             logging.debug('skipping room temp calculation due to movement')
             return self._temp.value
 
-        if 'lastinput' in self.inputs.entries and self.inputs.entries['lastinput']['lastupdate'] + 60 > time.time():
+        if 'core/input_dev/lastinput' in self.inputs.entries and self.inputs.entries['core/input_dev/lastinput'].last_update + 60 > time.time():
             logging.debug('skipping room temp calculation due to input')
             return self._temp.value
 
@@ -236,7 +236,7 @@ class MLX90615:
                     self.object_mean = (self.object_mean * 9 + tempobj) // 10
 
                     try:
-                        while (time.time() - self.inputs.entries['lasttouch'].last_update) < 5:
+                        while (time.time() - self.inputs.entries['core/input_dev/lasttouch'].last_update) < 5:
                             logging.debug('halted mlx90615 thread due touch inputs')
                             self.buffer_enable(0)
                             time.sleep(6)

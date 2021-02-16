@@ -29,7 +29,7 @@ class EntityProperty:
     #description = "Basic Property Class for all Sensors, Outputs, Modules"
 
     __slots__ = ['parent_module', 'category', 'name', 'entity', 'description', '_value', '_old_value', 'type',
-                  'last_update', 'last_change','step','available', 'logging', 'exposed', '__call', '__set', 'min', 'max','events',
+                  'last_update', 'last_change','step','available', '_logging', 'exposed', '__call', '__set', 'min', 'max','events',
                   'is_exclusive_output', 'registered_output_path', 'update_needs_thread', 'interval']
 
     def __init__(self, name: str = None, category: str = None, parent=None, value=None, set=None, call=None,
@@ -48,7 +48,7 @@ class EntityProperty:
         self.last_update = None
         self.last_change = None
         self.exposed = exposed  # make it available for network
-        self.logging = logging  #
+        self._logging = logging  #
         self.events = []
         self.__call = call
         self.available = available
@@ -64,6 +64,17 @@ class EntityProperty:
     @property
     def value(self):
         return self._value
+
+    @property
+    def logging(self):
+        return self._logging
+
+
+    @logging.setter
+    def logging(self, value):
+        self._logging = bool(value)
+
+
 
     @property
     def path(self):
@@ -123,7 +134,7 @@ class ThreadProperty:
     #description = "Thread Property Class for Modules"
 
     __slots__ = ['parent_module', 'category', 'name', 'entity', 'description', '_value', 'type',
-                  'last_update', 'last_change', 'logging', 'exposed', 'events', 'is_exclusive_output',
+                  'last_update', 'last_change', '_logging', 'exposed', 'events', 'is_exclusive_output',
                   'interval', 'function', 'thread']
 
     def __init__(self, name: str = None,
@@ -146,13 +157,25 @@ class ThreadProperty:
         self.type = DataType.THREAD
         self.last_update = None
         self.last_change = None
-        self.logging = logging
+        self._logging = logging
         self.exposed = exposed
         self.events = []
         self.is_exclusive_output = False  # for unique access
         self.interval = interval
         self.function = function
         self.thread = ModuleThread(target=self.function)
+
+
+    @property
+    def logging(self):
+        return self._logging
+
+
+    @logging.setter
+    def logging(self, value):
+        self._logging = bool(value)
+
+
 
     def set(self,value):
         self.value = value
@@ -196,8 +219,8 @@ class ThreadProperty:
 
 
 class StaticProperty:
-    version = "1.0"
-    description = "Basic Property Class for all Statics"
+    # version = "1.0"
+    # description = "Basic Property Class for all Statics"
 
     def __init__(self, name: str = None,
                  category: str = None,
@@ -207,11 +230,11 @@ class StaticProperty:
                  type=None,
                  exposed=False,
                  entity=None):
+
         self.parent_module = parent  # parent_module that provides this property, parents needs .name property
         self.category = category  # category for tree in GUI, like sensor, output, sound, network
         self.name = name  # name for this property
         self.entity = entity  # usually entity is module name, but some modules provide multiple entities, then we use this for path
-        self.path = category + '/' + (self.entity or parent.name) + '/' + name
         self.description = description  # description
         self.value = value  # value
         self.type = type  # DataType
@@ -222,12 +245,21 @@ class StaticProperty:
         pass
 
     @property
+    def path(self):
+        return self.category + '/' + (self.entity or self.parent_module.name) + '/' + self.name
+
+    @property
     def is_output(self):
         return False
 
     @property
     def logging(self):
         return False
+
+    @logging.setter
+    def logging(self, value):
+        if value:
+            logging.error('Property: ' + self.path  + ', static properties do not support logging.')
 
     @property
     def interval(self):

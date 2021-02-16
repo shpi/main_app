@@ -28,10 +28,10 @@ class ShowValue(QObject):
     def valueChanged(self):
         pass
 
-    def ui_event(self):
+    def ui_event(self, path, value):
         try:
-            if self._value != str(self.inputs.entries[self._value_path].value):
-                self._value = str(self.inputs.entries[self._value_path].value)
+            if self._value != value and self.value_path == path:
+                self._value = value
                 self.valueChanged.emit()
         except Exception as e:
             logging.error(str(e))

@@ -118,17 +118,8 @@ class HWMon:
             try:
                 with open(f'/sys/class/hwmon/{channelid}/{channel}', 'r+') as rf:
                     rf.write(value)
-                    rf.seek(0)
-                    newvalue = rf.read().rstrip()
-                    logging.debug(f'reading back {newvalue}')
-                    if value == newvalue:
-                        return True
-                    else:
-                        if retries < 5:
-                            retries += 1
-                            return self.write_hwmon(channelid, channel, value, retries)
-                        else:
-                            return False
+                    return True
+
             except Exception as e:
                 if retries < 5:
                     retries += 1

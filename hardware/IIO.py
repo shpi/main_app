@@ -40,7 +40,6 @@ class IIO:
 
 
     def get_inputs(self) -> list:
-        print(self.properties)
         return self.properties.values()
 
     @staticmethod
@@ -91,11 +90,11 @@ class IIO:
                 return (rf.write(str(value)))
 
     def _device_info(self, dev):
-        print("\t" + dev.id + ": " + dev.name)
-        print("\t\t%u channels found: " % len(dev.channels))
+        #print("\t" + dev.id + ": " + dev.name)
+        #print("\t\t%u channels found: " % len(dev.channels))
         for channel in dev.channels:
             
-            print("\t\t\t%s: %s (%s)" % (channel.id, channel.name or "", "output" if channel.output else "input"))
+            #print("\t\t\t%s: %s (%s)" % (channel.id, channel.name or "", "output" if channel.output else "input"))
 
             if len(channel.attrs) > 0:
                 scale = 1
@@ -111,7 +110,7 @@ class IIO:
                                                                                                  channel.type),
                                                                                              interval=20)
 
-                print("\t\t\t%u channel-specific attributes found: " % len(channel.attrs))
+                # print("\t\t\t%u channel-specific attributes found: " % len(channel.attrs))
                 for channel_attr in channel.attrs:
                     path = channel.attrs[channel_attr].filename
 
