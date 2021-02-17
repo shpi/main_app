@@ -272,9 +272,8 @@ class InputsDict(QObject):
         memory = np.frombuffer(buffer, np.float)
         memory[: (size - 1) * 2 + 1: 2] = (self.buffer[key].time(size) - np.datetime64(startx, 'ms')).astype(
             float) * scalex
-        memory[1: (size - 1) * 2 + 2: 2] = (self.buffer[key].data(size) - min) * scaley
+        memory[1: (size - 1) * 2 + 2: 2] = height - (self.buffer[key].data(size) - min) * scaley
 
-        # [ QPoint(     int(   (v[0] - startx) * scalex), height - int(v[1]/divider * scaley))     for v in self.buffer[key]]s
         return {'startDate': QDateTime(startx), 'endDate': QDateTime(endx), 'polyline': polyline, 'count': size,
                 'minValue': float(min / divider), 'maxValue': float(max / divider)}
 

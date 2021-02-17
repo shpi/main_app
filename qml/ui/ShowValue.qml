@@ -1,7 +1,9 @@
-import QtQuick 2.12
-import QtGraphicalEffects 1.12
-import QtQuick.Shapes 1.12
+import QtQuick 2.15
 import QtQuick.Controls 2.12
+import QtQuick.Shapes 1.15
+import QtGraphicalEffects 1.12
+
+
 
 import "../../fonts/"
 
@@ -17,6 +19,38 @@ Rectangle {
     radius: 10
     color: Colors.whitetrans
     clip: true
+
+    Shape {
+        id: graphShape
+        smooth: true
+        //layer.enabled: true
+        //layer.samples: 4
+        width: parent.width
+        height: width
+        anchors.centerIn: parent
+        asynchronous: true
+        ShapePath {
+            fillColor: "transparent"
+            capStyle: ShapePath.FlatCap
+            strokeWidth: 3
+            strokeColor: "#77FF4444"
+
+            PathPolyline {
+                id: ppl
+                path: modules.loaded_instances['UI']['ShowValue'][instancename].preview
+            }
+        }
+
+
+
+        }
+
+
+
+
+
+
+
 
     Text {
         id: icontext

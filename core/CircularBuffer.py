@@ -4,6 +4,9 @@ import logging
 import time
 import datetime
 import numpy as np
+from PySide2.QtGui import QPolygonF
+import shiboken2
+import ctypes
 
 
 class CircularBuffer:
@@ -107,3 +110,32 @@ class CircularBuffer:
             return np.max(self._data[:self._index])
         else:
             return np.max(self._data)
+
+
+    def preview(self, width=100, height=100, divider=1):
+
+        startx = self.min_time()
+        endx = self.max_time()
+
+        scalex = 1
+
+        if (startx != endx):
+            scalex = width / ((endx - startx).total_seconds() * 1000)
+
+        max = self.max_data()
+        min = self.min_data()
+
+        scaley = 1
+
+        if (min != max):
+            scaley = height / (abs(min - max))
+
+        size = self.length()
+        polyline = QPolygonF(size)
+        buffer = (ctypes.c_double * 2 * size).from_address(shiboken2.getCppPointer(polyline.data())[0])
+        memory = np.frombuffer(buffer, np.float)
+        memory[: (size - 1) * 2 + 1: 2] = (self.time() - np.datetime64(startx, 'ms')).astype(
+            float) * scalex
+        memory[1: (size - 1) * 2 + 2: 2] = height - (self.data() - min) * scaley
+
+        return polyline

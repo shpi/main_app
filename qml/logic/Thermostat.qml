@@ -79,7 +79,7 @@ Rectangle {
 
         Text {
             id: actualSetTemperature
-            text: (modules.loaded_instances['Logic']['Thermostat'][instancename].actual_temp + modules.loaded_instances['Logic']['Thermostat'][instancename].offset).toFixed(1) + "°"
+            text: modules.loaded_instances['Logic']['Thermostat'][instancename].actual_temp  + "°"
             anchors.verticalCenter: parent.verticalCenter
             anchors.verticalCenterOffset: -5
             anchors.horizontalCenter: parent.horizontalCenter

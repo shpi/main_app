@@ -3,6 +3,8 @@
 from PySide2.QtCore import QSettings, QObject, Property, Signal
 from core.Toolbox import Pre_5_15_2_fix
 import logging
+from core.CircularBuffer import CircularBuffer
+from PySide2.QtGui import QPolygonF
 
 
 class ShowValue(QObject):
@@ -12,6 +14,7 @@ class ShowValue(QObject):
         self.settings = settings
         self.inputs = inputs
         self.name = name
+        self.buffer = CircularBuffer(30)
         self._value_path = settings.value('showvalue/' + self.name + "/path", '')
         self._value = ''
         self._icon = settings.value('showvalue/' + self.name + "/icon", '')
@@ -28,13 +31,21 @@ class ShowValue(QObject):
     def valueChanged(self):
         pass
 
+    @Property(QPolygonF, notify=valueChanged)
+    def preview(self):
+        return self.buffer.preview(width=100, height=100, divider=self._divider)
+
     def ui_event(self, path, value):
         try:
+            self.buffer.append(value)
             if self._value != value and self.value_path == path:
                 self._value = value
                 self.valueChanged.emit()
         except Exception as e:
             logging.error(str(e))
+
+
+
 
     @Property(bool, notify=settingsChanged)
     def logging(self):
@@ -43,6 +54,31 @@ class ShowValue(QObject):
     @Property(int, notify=settingsChanged)
     def interval(self):
         return self.inputs.entries[self._value_path].interval
+
+
+    # @Property(str,notify=valueChanged)
+    def precision(self):
+        return self._precision
+
+    # @value_path.setter
+    @Pre_5_15_2_fix(int, precision, notify=settingsChanged)
+    def precision(self, key):
+        self.settings.setValue('showvalue/' + self.name + "/precision", key)
+        logging.info(self.settings.value('showvalue/' + self.name + "/precision", ''))
+        self._precision = int(key)
+
+
+    # @Property(str,notify=valueChanged)
+    def unit(self):
+        return self._unit
+
+    # @value_path.setter
+    @Pre_5_15_2_fix(int, unit, notify=settingsChanged)
+    def unit(self, key):
+        self.settings.setValue('showvalue/' + self.name + "/unit", key)
+        logging.info(self.settings.value('showvalue/' + self.name + "/unit", ''))
+        self._precision = str(key)
+
 
     # @Property(str,notify=valueChanged)
     def value_path(self):
