@@ -6,7 +6,7 @@ import time
 import struct
 import numpy as np
 # from ufunclab import minmax # https://github.com/WarrenWeckesser/ufunclab
-from core.CircularBuffer import CircularBuffer
+# from core.CircularBuffer import CircularBuffer
 from core.DataTypes import DataType
 from PySide2.QtCore import QSettings
 from core.Property import EntityProperty, ThreadProperty
@@ -64,7 +64,8 @@ class MLX90615:
 
                         # self.current_consumption_mean = 0
 
-                        self.buffer = CircularBuffer(6000, dtype=np.int16)
+                        self.buffer = self._data = np.full(6000, self.object_temperature, dtype=np.int16)
+
 
                         # np.full(self.buffer_size,fill_value=self.object_temperature, dtype=np.int16)
                         # data = [startvalue] * size
@@ -206,7 +207,7 @@ class MLX90615:
         return 0
 
     def mlx_thread(self):
-
+        i = 0
         logging.info('starting MLX90615 thread')
 
         if os.path.exists('/dev/' + self.id):
@@ -216,7 +217,9 @@ class MLX90615:
                     line = devfile.read(16)
                     (tempobj, tempamb, _, timestamp) = struct.unpack('<HHiq', line)
 
-                    self.buffer.append(tempobj)
+                    self.buffer[i] = tempobj
+                    i += 1
+                    if i > 5999: i = 0
 
                     # temp2 -= 13657.5
                     # temp2 *= 20
