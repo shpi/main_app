@@ -28,7 +28,7 @@ class EntityProperty:
     #version = "1.0"
     #description = "Basic Property Class for all Sensors, Outputs, Modules"
 
-    __slots__ = ['parent_module', 'category', 'name', 'entity', 'description', '_value', '_old_value', 'type',
+    __slots__ = ['category', 'name', 'entity', 'description', '_value', '_old_value', 'type',
                   'last_update', 'last_change','step','available', '_logging', 'exposed', '__call', '__set', 'min', 'max','events',
                   'is_exclusive_output', 'registered_output_path', 'update_needs_thread', 'interval']
 
@@ -37,12 +37,11 @@ class EntityProperty:
                  type=None, available=None, min=None, max=None, step=None, exposed=False, logging=False, update=None,
                  interval=None, entity=None):
 
-        self.parent_module = parent  # parent_module that provides this property, parents needs .name property
+        # self.parent_module = parent  # parent_module that provides this property, parents needs .name property
         self.category = category  # category for tree in GUI, like sensor, output, sound, network
         self.name = name  # name for this property
         self.entity = entity  # usually entity is module name, but some modules provide multiple entities, then we use this for path
         self.description = description  # description
-        self._value = value  # value
         self._old_value = None
         self.type = type  # DataType
         self.last_update = 0
@@ -61,6 +60,14 @@ class EntityProperty:
         self.interval = interval
         self.update_needs_thread = False  # for stuff with timeout like http etc
 
+        if value != None:
+            self._value = value
+        elif self.__call != None:
+            self._value = None
+            self.update()
+        else:
+            self._value = None
+
     @property
     def value(self):
         return self._value
@@ -78,7 +85,7 @@ class EntityProperty:
 
     @property
     def path(self):
-        return  self.category + '/' + (self.entity or self.parent_module.name) + '/' + self.name
+        return  self.category + '/' + self.entity  + '/' + self.name
 
 
     @property
@@ -133,7 +140,7 @@ class ThreadProperty:
     #version = "1.0"
     #description = "Thread Property Class for Modules"
 
-    __slots__ = ['parent_module', 'category', 'name', 'entity', 'description', '_value', 'type',
+    __slots__ = ['category', 'name', 'entity', 'description', '_value', 'type',
                   'last_update', 'last_change', '_logging', 'exposed', 'events', 'is_exclusive_output',
                   'interval', 'function', 'thread']
 
@@ -148,7 +155,7 @@ class ThreadProperty:
                  entity=None,
                  function=None):
 
-        self.parent_module = parent  # parent_module that provides this property, parents needs .name property
+        #self.parent_module = parent  # parent_module that provides this property, parents needs .name property
         self.category = category  # category for tree in GUI, like sensor, output, sound, network
         self.name = name  # name for this property
         self.entity = entity  # usually entity is module name, but some modules provide multiple entities, then we use this for path
@@ -186,7 +193,7 @@ class ThreadProperty:
 
     @property
     def path(self):
-        return  self.category + '/' + (self.entity or self.parent_module.name) + '/' + self.name
+        return  self.category + '/' + self.entity + '/' + self.name
 
     @property
     def value(self):
@@ -222,6 +229,9 @@ class StaticProperty:
     # version = "1.0"
     # description = "Basic Property Class for all Statics"
 
+    __slots__ = ['category', 'name', 'entity', 'description', 'value', 'type', 'exposed']
+
+
     def __init__(self, name: str = None,
                  category: str = None,
                  parent=None,
@@ -231,7 +241,7 @@ class StaticProperty:
                  exposed=False,
                  entity=None):
 
-        self.parent_module = parent  # parent_module that provides this property, parents needs .name property
+        #self.parent_module = parent  # parent_module that provides this property, parents needs .name property
         self.category = category  # category for tree in GUI, like sensor, output, sound, network
         self.name = name  # name for this property
         self.entity = entity  # usually entity is module name, but some modules provide multiple entities, then we use this for path
@@ -246,7 +256,7 @@ class StaticProperty:
 
     @property
     def path(self):
-        return self.category + '/' + (self.entity or self.parent_module.name) + '/' + self.name
+        return self.category + '/' + self.entity + '/' + self.name
 
     @property
     def is_output(self):

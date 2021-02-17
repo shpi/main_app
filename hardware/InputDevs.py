@@ -64,12 +64,12 @@ class InputDevs:
 
         super(InputDevs, self).__init__()
 
-        self.name = 'input_dev'
         self.devs = dict()
         self.properties = dict()
 
         self.properties['lastinput'] = EntityProperty(parent=self,
                                                       category='core',
+                                                      entity='input_dev',
                                                       name='lastinput',
                                                       description='Last active input device',
                                                       type=DataType.STRING,
@@ -77,6 +77,7 @@ class InputDevs:
 
         self.properties['lasttouch'] = EntityProperty(parent=self,
                                                       category='core',
+                                                      entity='input_dev',
                                                       name='lasttouch',
                                                       description='Last touch input device',
                                                       type=DataType.STRING,
@@ -143,18 +144,19 @@ class InputDevs:
             self.properties[f'{id}/thread'] = ThreadProperty(
                 name=id,
                 category='module',
+                entity='input_dev',
                 parent=self,
                 value=1,
                 description='Thread for ' + subdevice['name'],
                 interval=60,
-                function=partial(self.devloop, f"/dev/input/{subdevice['event'][0]}", id)
+                function=partial(self.devloop, f"/dev/input/{subdevice['event'][0]}", id, 'EV_ABS' in subdevice['EV'])
             )
 
     def get_inputs(self) -> list:
 
         return self.properties.values()
 
-    def devloop(self, devpath, id):
+    def devloop(self, devpath, id, ismouse=0):
 
         systembits = (struct.calcsize("P") * 8)
         try:
@@ -165,14 +167,13 @@ class InputDevs:
                     event = devfile.read(16 if systembits == 32 else 24)
                     (timestamp, _id, type, keycode, value) = struct.unpack('llHHI', event)
 
-
-                    if (type == 3): # mouse movement
-                        #logging.debug(str(timestamp) + ' ' + str(type) + ' ' + str(keycode) + ' ' + str(value))
-                        self.properties['lasttouch'].value = value
-
-                    elif (type == 1):  # type 1 = key, we watch only keys!
+                    if (type == 1):  # type 1 = key, we watch only keys!
 
                         try:
+
+                            if ismouse:
+                                self.properties['lasttouch'].value = value
+
                             self.properties['lastinput'].value = value
                             self.properties[f'{id}/thread'].value = 1  # helping action to track activity on input device
                             self.properties[f'{id}/key_{str(keycode)}'].value = value

@@ -347,10 +347,10 @@ class InputsDict(QObject):
                         self.entries[key].update()
                     except Exception as e:
                         exception_type, exception_object, exception_traceback = sys.exc_info()
-                        print(exception_type)
+                        # print(exception_type)
                         line_number = exception_traceback.tb_lineno
                         logging.error(f'{e}, removed ' + key + ' from timer_schedule, in line: {line_number}')
-                        self.timerschedule[timeinterval].remove(key)
+                        # self.timerschedule[timeinterval].remove(key)
 
     @Slot(str, str)
     def set(self, key, value):

@@ -10,7 +10,6 @@ class Led:
 
     def __init__(self):
 
-        self.name = 'leds'
         self.properties = list()
 
         if os.path.isdir(Led.ledpath):
@@ -25,6 +24,7 @@ class Led:
                             max = int(max_led.readline())
                             self.properties.append(EntityProperty(parent=self,
                                                                   category='output',
+                                                                  entity='leds',
                                                                   name=file,
                                                                   description='brightness of led in %',
                                                                   type=DataType.PERCENT_FLOAT,

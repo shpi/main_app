@@ -12,6 +12,7 @@ class SystemInfo:
 
         self.properties.append(StaticProperty(name='is64bit',
                                               category='core',
+                                              entity='system',
                                               parent=self,
                                               value=SystemInfo.is64bit(),
                                               description='is 64bit System?',
@@ -56,6 +57,7 @@ class SystemInfo:
 
         self.properties.append(EntityProperty(name='uptime',
                                               category='core',
+                                              entity='system',
                                               parent=self,
                                               call=SystemInfo.get_uptime,
                                               description='uptime in seconds',

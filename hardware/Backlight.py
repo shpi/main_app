@@ -11,7 +11,6 @@ class Backlight:
 
     def __init__(self):
 
-        self.name = 'backlight'
 
         self.backlight_sysfs_path = False
         self.backlight_sysfs_max = 100 # fallback value
@@ -54,6 +53,7 @@ class Backlight:
 
          self._brightness  =  EntityProperty(parent = self,
                                             category = 'core',
+                                            entity='backlight',
                                             name = 'brightness',
                                             description = 'Backlight brightness in %',
                                             type = DataType.PERCENT_INT,
