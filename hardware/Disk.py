@@ -55,7 +55,7 @@ class DiskStats:
     def update(self, init=False):
 
         oldtime = self.properties['module'].last_update
-        self.properties['module'].value = 'OK'  # for getting new time
+        self.properties['module'].value = 'OK'
         quotient = self.properties['module'].last_update - oldtime
 
         with open(DiskStats.stat_path) as stat_file:
@@ -86,6 +86,8 @@ class DiskStats:
                     f'{line[2]}/write_abs'].value) // quotient
                 self.properties[f'{line[2]}/read_abs'].value = int(line[3])
                 self.properties[f'{line[2]}/write_abs'].value = int(line[7])
+
+        return 'OK'   
 
     def get_inputs(self) -> list:
         return self.properties.values()

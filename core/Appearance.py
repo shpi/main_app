@@ -63,7 +63,7 @@ class Appearance(QObject):
         self._dim_timer = int(settings.value("appearance/dim_timer", 100))
         self._off_timer = int(settings.value("appearance/off_timer", 300))
         self.lastuserinput = time.time()
-        self.state = 'OFF'  # Enum('ACTIVE','SLEEP','OFF')
+        self.state = 'ACTIVE'  # Enum('ACTIVE','SLEEP','OFF')
         self._night = False
 
         self.possible_devs = list()

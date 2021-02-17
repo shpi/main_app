@@ -45,7 +45,7 @@ class EntityProperty:
         self._value = value  # value
         self._old_value = None
         self.type = type  # DataType
-        self.last_update = None
+        self.last_update = 0
         self.last_change = None
         self.exposed = exposed  # make it available for network
         self._logging = logging  #

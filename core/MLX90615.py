@@ -1,5 +1,6 @@
 import os
 import glob
+import sys
 import logging
 import time
 import struct
@@ -54,6 +55,7 @@ class MLX90615:
                         self.object_temperature = self.single_shot('in_temp_object_raw')
 
                         self.object_mean = self.object_temperature
+
 
                         # self.load = os.getloadavg()[2]
                         self.cpu_temp_mean = self.get_cpu_temp()
@@ -112,11 +114,11 @@ class MLX90615:
     def calc_temp(self):
 
         if self.last_movement + 60 > time.time():
-            logging.debug('skipping room temp calculation due to movement')
+            logging.info('skipping room temp calculation due to movement')
             return self._temp.value
 
         if 'core/input_dev/lastinput' in self.inputs.entries and self.inputs.entries['core/input_dev/lastinput'].last_update + 60 > time.time():
-            logging.debug('skipping room temp calculation due to input')
+            logging.info('skipping room temp calculation due to input')
             return self._temp.value
 
         object_temp = (self.object_mean - 13657.5) * 20
@@ -127,23 +129,18 @@ class MLX90615:
 
         if sensor_temp > object_temp:
             temp = object_temp - ((sensor_temp - object_temp) / 6)
-            logging.debug('raumtemperatur simple correction: ' + str(temp))
 
         else:
             temp = object_temp
-            logging.debug('raumptemperatur no correction: ' + str(temp))
 
         if self.cpu_temp_mean > sensor_temp:
             temp -= (self.cpu_temp_mean - sensor_temp) / 60
-            logging.debug('raumtemperatur correction cpu: ' + str(temp))
 
         if self.fan_speed_mean < 1800:
             temp -= 1000
-            logging.debug('vent off, temp corrected: ' + str(temp))
 
         if self.backlight_level_mean > 0:
             temp -= self.backlight_level_mean * 3
-            logging.debug('raumptemperatur corrected backlight: ' + str(temp))
 
         self._temp.value = temp
 
@@ -243,5 +240,7 @@ class MLX90615:
 
                         self.buffer_enable(1)
                     except Exception as e:
-                        # logging.error(str(e))
-                        pass
+                       exception_type, exception_object, exception_traceback = sys.exc_info()
+                       line_number = exception_traceback.tb_lineno
+                       logging.error(f'error: {e} in line {line_number}')
+                       pass
