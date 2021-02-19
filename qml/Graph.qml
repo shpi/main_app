@@ -108,7 +108,7 @@ Item {
                 height: 1
                 width: parent.width - scaleText.width
                 color: Colors.black
-                y: (index + 0.5) * (graphShape.height / yAxiscount)
+                y: ((yAxiscount - index) + 0.5) * (graphShape.height / yAxiscount)
 
                 Text {
                     id: scaleText

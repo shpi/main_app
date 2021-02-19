@@ -81,19 +81,19 @@ class SystemInfo:
     def ram_used():
         # total        used        free      shared  buff/cache   available
         # for future /proc/meminfo
-        return (os.popen('free -m').readlines()[1].split())[2]
+        return int((os.popen('free -m').readlines()[1].split())[2])
 
     @staticmethod
     def ram_buff():
         # total        used        free      shared  buff/cache   available
         # for future /proc/meminfo
-        return (os.popen('free -m').readlines()[1].split())[5]
+        return int((os.popen('free -m').readlines()[1].split())[5])
 
     @staticmethod
     def ram_free():
         # total        used        free      shared  buff/cache   available
         # for future /proc/meminfo
-        return (os.popen('free -m').readlines()[1].split())[3]
+        return int((os.popen('free -m').readlines()[1].split())[3])
 
     @staticmethod
     def get_uptime(stat_path='/proc/uptime'):

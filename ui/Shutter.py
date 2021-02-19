@@ -68,7 +68,7 @@ class Shutter(QObject):
 
         self.settings.setValue('shutter/' + self.name + "/desired_position", key)
 
-    def ui_event(self):
+    def ui_event(self, path, value):
         if self._desired_position != self.inputs.entries[self._desired_position_path].value:
             self._desired_position = self.inputs.entries[self._desired_position_path].value
             self.positionChanged.emit()

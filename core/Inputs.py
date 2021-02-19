@@ -348,7 +348,7 @@ class InputsDict(QObject):
                         exception_type, exception_object, exception_traceback = sys.exc_info()
                         # print(exception_type)
                         line_number = exception_traceback.tb_lineno
-                        logging.error(f'{e}, removed ' + key + ' from timer_schedule, in line: {line_number}')
+                        logging.error(f'{e}, removed ' + key + ' from timer_schedule, in line: ' + str(line_number))
                         # self.timerschedule[timeinterval].remove(key)
 
     @Slot(str, str)

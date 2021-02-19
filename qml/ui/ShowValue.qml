@@ -26,21 +26,31 @@ Rectangle {
         //layer.enabled: true
         //layer.samples: 4
         width: parent.width
-        height: width
+        height: parent.height * 0.7
         anchors.centerIn: parent
         asynchronous: true
+
+
+
         ShapePath {
-            fillColor: "transparent"
+            scale.height: graphShape.height / 100
+            scale.width: graphShape.width / 100
+            fillColor: "#77FF4444"
             capStyle: ShapePath.FlatCap
             strokeWidth: 3
             strokeColor: "#77FF4444"
+            startX: 0
+            startY: 100
+
+            PathLine { x: 0; y: 100 }
 
             PathPolyline {
                 id: ppl
                 path: modules.loaded_instances['UI']['ShowValue'][instancename].preview
             }
+            PathLine { x: 100; y: 100 }
+            PathLine { x: 0; y: 100 }
         }
-
 
 
         }
