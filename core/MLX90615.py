@@ -93,6 +93,7 @@ class MLX90615:
                                                     category='sensor',
                                                     entity='mlx90615',
                                                     name='room_temperature',
+                                                    value=self.object_temperature,
                                                     description='Room temperature stabilized',
                                                     type=DataType.TEMPERATURE,
                                                     call=self.calc_temp,
