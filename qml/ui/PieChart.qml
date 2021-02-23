@@ -63,9 +63,9 @@ Rectangle {
 
 
             id: graphShape2
-            smooth: true
-            //layer.enabled: true
-            //layer.samples: 4
+            layer.enabled: true
+            layer.smooth: true
+            layer.samples: 4
             width: minimal
             height: minimal
             anchors.centerIn: root
