@@ -117,8 +117,12 @@ class Git(QObject):
         return check_output(['git','branch', '-r']).decode().strip().split('\n')
 
     @Property(int, notify=gitChanged)
-    def actual_version(self):
+    def current_version_date(self):
         return int(check_output(['git','show', '-s','--format=%ct']).decode().strip())
+
+    @Property(str, notify=gitChanged)
+    def current_version_hex(self):
+        return check_output(['git','rev-parse', '--short','HEAD']).decode().strip()
 
     @Slot()
     def reboot(self):

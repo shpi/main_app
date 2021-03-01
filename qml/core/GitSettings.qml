@@ -96,7 +96,7 @@ Rectangle {
         }
         Text {
 
-            text: new Date(git.actual_version * 1000).toLocaleDateString()
+            text: git.current_version_hex + ', ' + new Date(git.current_version_date * 1000).toLocaleDateString()
 
             font.pixelSize: 20
             color: Colors.black
@@ -181,7 +181,7 @@ Rectangle {
 
 
     DelayButton {
-        text: "merge " + Icons.doublearrow
+        text: "update " + Icons.doublearrow
         delay: 2500
         width: 300
         height: 80
