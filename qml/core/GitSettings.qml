@@ -134,7 +134,7 @@ Rectangle {
     Popup {
            property string text2: ''
            id: messageDialog
-           width: parent.width * 0.7
+           width: parent.width * 0.9
            height: parent.height * 0.7
            parent: Overlay.overlay
            x: Math.round((parent.width - width) / 2)
@@ -153,34 +153,33 @@ Rectangle {
            }
 
            ScrollView {
-
-               anchors.fill: parent
-
+               id: scrollview
+               anchors.fill:parent
+               anchors.bottom:parent.bottom
                Text {
+               anchors.centerIn: parent
                text: messageDialog.text2
-               anchors.centerIn:parent
                color: Colors.black
-               font.pixelSize: 30
+               font.pixelSize: 20
                }
+
+               RoundButton {
+
+                   anchors.bottom: parent.bottom
+                   anchors.bottomMargin: 5
+                   anchors.right: parent.right
+                   anchors.rightMargin: 5
+                   text: "OK"
+                   palette.button: "darkgreen"
+                   palette.buttonText: "white"
+                   font.pixelSize: 40
+                   font.family: localFont.name
+                   onClicked:  messageDialog.close()
+                   }
            }
 
 
 
-
-           RoundButton {
-               opacity: 1
-               anchors.top: parent.top
-               anchors.left: parent.left
-               anchors.topMargin: 10
-               anchors.leftMargin: 10
-               width: height
-               text: Icons.close
-               palette.button: "darkred"
-               palette.buttonText: "white"
-               font.pixelSize: 50
-               font.family: localFont.name
-               onClicked:  messageDialog.close()
-               }
            }
 
 
