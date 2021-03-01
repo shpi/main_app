@@ -17,6 +17,7 @@ from PySide2.QtGui import QFont, QFontDatabase
 from core.Appearance import Appearance
 from core.HTTPServer import HTTPServer
 from core.Inputs import InputsDict
+from core.Git import Git
 from core.ModuleManager import ModuleManager
 from hardware.Alsa import AlsaMixer
 from hardware.Backlight import Backlight
@@ -123,6 +124,7 @@ cpu = CPU()
 iio = IIO()
 leds = Led()
 hwmon = HWMon()
+git = Git(settings)
 disk = DiskStats()
 inputdevs = InputDevs()
 backlight = Backlight()
@@ -135,6 +137,7 @@ inputs.add(iio.get_inputs())
 inputs.add(disk.get_inputs())
 inputs.add(wifi.get_inputs())
 inputs.add(leds.get_inputs())
+inputs.add(git.get_inputs())
 inputs.add(cpu.get_inputs())
 inputs.add(hwmon.get_inputs())
 inputs.add(inputdevs.get_inputs())
@@ -178,6 +181,7 @@ engine = QQmlApplicationEngine()
 engine.rootContext().setContextProperty("logs", logs)
 engine.rootContext().setContextProperty("inputs", inputs)
 engine.rootContext().setContextProperty('wifi', wifi)
+engine.rootContext().setContextProperty('git', git)
 engine.rootContext().setContextProperty("appearance", appearance)
 engine.rootContext().setContextProperty("modules", modules)
 

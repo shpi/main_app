@@ -186,7 +186,7 @@ ApplicationWindow {
                 width: height
                 palette.button: settingsstackView.depth > 0 ? "darkred" : "#11000000"
                 palette.buttonText: settingsstackView.depth > 0 ? "white" : Colors.black
-                font.pixelSize: settingsstackView.depth > 0 ? 50 : 75
+                font.pixelSize: settingsstackView.depth > 0 ? 50 : 50
                 onClicked: {
                     if (settingsstackView.depth === 0)
                         //drawer.position = 0.0
@@ -225,6 +225,13 @@ ApplicationWindow {
                     page: "hardware/AlsaSettings.qml"
                 }
 
+                ListElement {
+                    title: "\uE045" // Icons.reset
+                    size: 50
+                    page: "core/GitSettings.qml"
+                }
+
+
 
                 ListElement {
                     title: "\uE010" // Icons.settings
@@ -238,7 +245,7 @@ ApplicationWindow {
                 RoundButton {
                     anchors.verticalCenter: parent.verticalCenter
                     font.family: localFont.name
-                    height:  settingsstackView.depth > 0 ? 80 : 110
+                    height:  settingsstackView.depth > 0 ? 80 : 100
                     font.pixelSize: settingsstackView.depth > 0 ?  size : size * 1.5
                     text: title
                     onClicked: {
