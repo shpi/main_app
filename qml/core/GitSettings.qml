@@ -152,12 +152,19 @@ Rectangle {
                border.color: Colors.black
            }
 
-           Text {
-           text: messageDialog.text2
-           anchors.centerIn:parent
-           color: Colors.black
-           font.pixelSize: 30
+           ScrollView {
+
+               anchors.fill: parent
+
+               Text {
+               text: messageDialog.text2
+               anchors.centerIn:parent
+               color: Colors.black
+               font.pixelSize: 30
+               }
            }
+
+
 
 
            RoundButton {
