@@ -10,8 +10,8 @@ Rectangle {
     radius: 10
     color: Colors.whitetrans
     clip: true
-    property string instancename: parent.instancename != undefined ? parent.instancename : modules.modules['Logic']['Shutter'][0]
-    property bool iconview: parent.iconview != undefined ? parent.iconview : false
+    property string instancename: parent.instancename !== undefined ? parent.instancename : modules.modules['Logic']['Shutter'][0]
+    property bool iconview: parent.iconview !== undefined ? parent.iconview : false
 
     Rectangle {
 
@@ -83,6 +83,8 @@ Rectangle {
                 anchors.verticalCenterOffset: parent.value > 50 ? parent.height
                                                                   * 0.2 : -parent.height * 0.2
                 font.pixelSize: parent.height * 0.29
+                visible: modules.loaded_instances['Logic']['Shutter'][instancename].actual_position !== -1
+
                 color: Colors.black
                 Text {
                     text: "%"
@@ -91,6 +93,22 @@ Rectangle {
                     anchors.bottom: parent.bottom
                     color: Colors.black
                 }
+            }
+
+            Text {
+                width: control.width
+                text: shutterObject.iconview2 ? "??" : "Unknown position, will be calibrated on first move."
+                wrapMode: Text.Wrap
+                horizontalAlignment: Text.AlignHCenter
+                color: "red"
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: modules.loaded_instances['Logic']['Shutter'][instancename].actual_position === -1
+                anchors.verticalCenterOffset: parent.value > 50 ? parent.height
+                                                                  * 0.3 : -parent.height * 0.3
+                fontSizeMode: Text.Fit
+
+
             }
 
             background: Rectangle {
@@ -258,9 +276,6 @@ Rectangle {
 
 
 
-
-
-Component.onCompleted: console.log(' N O NE ?' + modules.loaded_instances['Logic']['Shutter'][instancename].actual_position)
 
 
 

@@ -11,6 +11,7 @@ Rectangle {
     property var instance: modules.loaded_instances['UI']['PieChart'][instancename]
     property bool shifted: false
     property real minimal: parent.width > parent.height ? parent.height : parent.width
+    property bool iconview: parent.iconview != undefined ? parent.iconview : false
 
     function degToRad(degrees) {
           return degrees * (Math.PI / 180);
@@ -118,6 +119,7 @@ Rectangle {
                 text: root.instance.names[index]
                 font.pixelSize:16
                 rotation: centerangle - 90
+                visible: root.iconview ? false : true
             }
 
 

@@ -182,10 +182,6 @@ Rectangle {
 
            }
 
-
-
-
-
     DelayButton {
         text: "update " + Icons.doublearrow
         delay: 2500

@@ -75,7 +75,7 @@ class Shutter(QObject):
         return self._module, self._actual_position, self._desired_position
 
     def set_up(self, value):
-        status = 'NOT_INITIALIZED'
+
         if self._relay_up in self.inputs:
             if self.inputs[self._relay_up].type == DataType.BOOL:
                 if 'set' in self.inputs[self._relay_up]:
@@ -98,7 +98,7 @@ class Shutter(QObject):
         self._module.value = status
 
     def set_down(self, value):
-        status = 'NOT_INITIALIZED'
+
         if self._relay_down in self.inputs:
             if self.inputs[self._relay_down].type == DataType.BOOL:
                 if 'set' in self.inputs[self._relay_down]:
@@ -183,11 +183,23 @@ class Shutter(QObject):
         self.userinput = 1
         self._desired_position.value = int(value)
         self._residue_time = 0
+
+        if self._actual_position.value == None:
+            if value > 50:
+                self._actual_position.value = 0
+                self._desired_position.value = 100
+            else:
+                self._actual_position.value = 100
+                self._desired_position.value = 0
+
+
         self.positionChanged.emit()
         self.start_move()
 
     # @Property(float,notify=positionChanged)
     def actual_position(self):
+        if self._actual_position.value == None:
+            return -1
         return (self._actual_position.value)
 
     # @actual_position.setter
