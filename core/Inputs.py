@@ -327,7 +327,7 @@ class InputsDict(QObject):
         except Exception as e:
             exception_type, exception_object, exception_traceback = sys.exc_info()
             line_number = exception_traceback.tb_lineno
-            logging.error(f'error: {e} in line {line_number}')
+            logging.error(f'error: {e} in line {line_number} key {key}')
 
     def unregister_event(self, key, eventfunction):
         try:

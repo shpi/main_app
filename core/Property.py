@@ -225,11 +225,13 @@ class ThreadProperty:
             logging.info('Stopped Thread ' + (self.entity or self.parent_module.name) + ' ' + self.name)
 
 
-class StaticProperty:
+class StaticProperty(object):
     # version = "1.0"
     # description = "Basic Property Class for all Statics"
 
     __slots__ = ['category', 'name', 'entity', 'description', 'value', 'type', 'exposed']
+
+
 
 
     def __init__(self, name: str = None,
@@ -257,6 +259,22 @@ class StaticProperty:
     @property
     def path(self):
         return self.category + '/' + self.entity + '/' + self.name
+
+    @property
+    def events(self):
+
+        logging.warning('This is a static property, so no events will happen :-)')
+
+        @property
+        def append(self):
+            return lambda x: logging.warning('This is a static property, so no events will happen :-)')
+
+        StaticProperty.events.append = append
+
+        return 'No events in static property'
+
+    #events.append = None
+
 
     @property
     def is_output(self):

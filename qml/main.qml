@@ -14,12 +14,11 @@ ApplicationWindow {
     visible: true
     font.family: localFont.name
 
-
     function keyboard(object) {
-       if (object.activeFocus === true) {
-       keyboardLoader.item.textfield = object
-       keyboardPopup.open() }
-
+        if (object.activeFocus === true) {
+            keyboardLoader.item.textfield = object
+            keyboardPopup.open()
+        }
     }
 
     function getIndex(path, mmodel) {
@@ -55,7 +54,8 @@ ApplicationWindow {
         id: bg
         source: ""
         fillMode: Image.Stretch
-        visible: appearance.night === 0 || appearance.background_night > 0 ? true : false
+        visible: appearance.night === 0
+                 || appearance.background_night > 0 ? true : false
 
         RadialGradient {
             angle: 30
@@ -111,44 +111,12 @@ ApplicationWindow {
         edge: Qt.TopEdge
         visible: true
         interactive: settingsstackView.depth > 0 ? false : true
-         Behavior on position {
+        Behavior on position {
             PropertyAnimation {}
         }
         background: Rectangle {
             color: "transparent"
         }
-
-
-
-       /* InputPanel {
-            id: inputPanel
-            z: 99
-            y: Qt.inputMethod.visible ? parent.height - inputPanel.height : parent.height
-            anchors.left: parent.left
-            anchors.right: parent.right
-            visible: Qt.inputMethod.visible
-
-            Rectangle {
-                visible: Qt.inputMethod.visible
-                anchors.bottom: parent.top
-                width: parent.width
-                height: 50
-                color: Colors.white
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.top: parent.top
-                    padding: 2
-                    anchors.left: parent.left
-                    anchors.leftMargin: this.width > parent.width ? parent.width - this.width : 5
-                    color: Colors.black
-                    text: InputContext.surroundingText
-                    font.pixelSize: 45
-                }
-            }
-        }
-       */
-
-
 
         Rectangle {
 
@@ -231,8 +199,6 @@ ApplicationWindow {
                     page: "core/GitSettings.qml"
                 }
 
-
-
                 ListElement {
                     title: "\uE010" // Icons.settings
                     size: 50
@@ -245,8 +211,8 @@ ApplicationWindow {
                 RoundButton {
                     anchors.verticalCenter: parent.verticalCenter
                     font.family: localFont.name
-                    height:  settingsstackView.depth > 0 ? 80 : 100
-                    font.pixelSize: settingsstackView.depth > 0 ?  size : size * 1.5
+                    height: settingsstackView.depth > 0 ? 80 : 100
+                    font.pixelSize: settingsstackView.depth > 0 ? size : size * 1.5
                     text: title
                     onClicked: {
                         settingsstackView.clear()
@@ -285,11 +251,8 @@ ApplicationWindow {
 
         currentIndex: 1
         anchors.fill: parent
+
         //anchors.bottom: inputPanel.top
-
-
-
-
         Loader {
             asynchronous: true
             id: rooms
@@ -304,8 +267,6 @@ ApplicationWindow {
             source: "screensaver/Screensaver.qml"
         }
 
-
-
         Repeater {
 
             id: thermostatrepeater
@@ -318,7 +279,6 @@ ApplicationWindow {
                 source: "thermostat/Thermostat.qml"
                 visible: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
                 active: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
-
             }
         }
 
@@ -333,7 +293,7 @@ ApplicationWindow {
                 id: weatherslide
                 source: "weather/WeatherFull.qml"
                 visible: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
-                 active: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
+                active: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
             }
         }
     }
@@ -346,7 +306,6 @@ ApplicationWindow {
         anchors.horizontalCenter: parent.horizontalCenter
     }
 
-
     Rectangle {
         id: backlighthelper
         visible: appearance.blackfilter > 0
@@ -357,9 +316,10 @@ ApplicationWindow {
     Connections {
         target: appearance
         function onJump_stateChanged() {
-            if (appearance.jump_state)  { view.currentIndex = 1
-                                          console.log('JumpState: ' + appearance.jump_state)
-                                          }
+            if (appearance.jump_state) {
+                view.currentIndex = 1
+                console.log('JumpState: ' + appearance.jump_state)
+            }
         }
     }
 
@@ -367,10 +327,11 @@ ApplicationWindow {
 
         interval: 30000
         repeat: true
-        running: (appearance.jump_state && appearance.backlightlevel > 0) //to make ui more fluent
+        running: (appearance.jump_state
+                  && appearance.backlightlevel > 0) //to make ui more fluent
         onTriggered: {
 
-            console.log('Jump State ' + appearance.jump_state.toString())
+
             mask.angle = Math.random() * 180
 
             mask.verticalOffset = -mask.height / 4 + (Math.random(
@@ -390,12 +351,7 @@ ApplicationWindow {
     Component.onCompleted: {
 
         Colors.night = appearance.night
-
-
- }
-
-
-
+    }
 
     Popup {
 
@@ -423,9 +379,7 @@ ApplicationWindow {
             anchors.fill: parent
             id: graphLoader
             source: "Graph.qml"
-
         }
-
 
         RoundButton {
             opacity: 0.5
@@ -439,17 +393,13 @@ ApplicationWindow {
             palette.buttonText: "white"
             font.pixelSize: 50
             font.family: localFont.name
-            onClicked:  {graphPopup.close()
-                         graphLoader.sensorpath = ''
-
-                         graphLoader.divider = 0
-
-
+            onClicked: {
+                graphPopup.close()
+                graphLoader.sensorpath = ''
+                graphLoader.divider = 0
             }
         }
     }
-
-
 
     Popup {
 
@@ -473,16 +423,6 @@ ApplicationWindow {
             id: keyboardLoader
             anchors.fill: parent
             source: "keyboard/Keyboard.qml"
-
         }
-
-
-
     }
-
-
-
-
-
-
 }

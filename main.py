@@ -48,7 +48,7 @@ logs = LogModel()
 handler = MessageHandler(logs)
 
 logging.basicConfig(
-                level=logging.DEBUG,
+                level=logging.WARNING,
                 format='%(asctime)s.%(msecs)03d %(module)s - %(funcName)s: %(message)s',
                 datefmt='%m-%d %H:%M:%S',
                 handlers=[
