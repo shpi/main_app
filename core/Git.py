@@ -65,10 +65,10 @@ class Git(QObject):
     def update(self):
          #git fetch --all
          try:
-          a = check_output(['git', 'fetch', '--all'],stderr=PIPE).decode()
+          a = check_output(['git', 'fetch', '--all'],stdout=DEVNULL,stderr=PIPE).decode()
           logging.info(str(a))
          except Exception as e:
-             logging.error(str(e))
+           logging.error(str(e))
          self.check_updates()
          self.latest_update()
          self.gitChanged.emit()

@@ -172,9 +172,15 @@ class Shutter(QObject):
     def state(self):
         return self._state
 
-    @Property(int, notify=positionChanged)
+
     def desired_position(self):
         return (self._desired_position.value)
+
+
+    @Pre_5_15_2_fix(int, desired_position, notify=positionChanged)
+    def desired_position(self, value):
+        self._desired_position.value = int(value)
+        self.positionChanged.emit()
 
     @Slot(int)
     # @desired_position.setter
@@ -206,7 +212,9 @@ class Shutter(QObject):
     @Pre_5_15_2_fix(int, actual_position, notify=positionChanged)
     def actual_position(self, value):
         self._actual_position.value = int(value)
-        self.settings.setValue('shutter/' + self.name + "/actual_position", value)
+        self.positionChanged.emit()
+
+        #self.settings.setValue('shutter/' + self.name + "/actual_position", value)
 
     @Signal
     def relayChanged(self):

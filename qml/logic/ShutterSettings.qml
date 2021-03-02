@@ -188,6 +188,7 @@ Item {
                             timer.running = false
                             modules.loaded_instances['Logic']['Shutter'][instancename].set_state(0)
                             modules.loaded_instances['Logic']['Shutter'][instancename].actual_position = 0
+                            modules.loaded_instances['Logic']['Shutter'][instancename].desired_position = 0
                             //time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
                         }
                     }
@@ -240,6 +241,7 @@ Item {
                             timer.running = false
                             modules.loaded_instances['Logic']['Shutter'][instancename].set_state(0)
                             modules.loaded_instances['Logic']['Shutter'][instancename].actual_position = 100
+                            modules.loaded_instances['Logic']['Shutter'][instancename].desired_position = 100
                             //time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
                         }
                     }
