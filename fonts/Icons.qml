@@ -71,6 +71,7 @@ QtObject {
     readonly property string schedule : "\uE043"
     readonly property string speaker : "\uE046"
     readonly property string graph : "\uE049"
+    readonly property string enter : "\uE04C"
 
 
 }

@@ -47,7 +47,7 @@ Rectangle {
             ListElement {label: "Us"; command:"source"; source:"keyboard_us"; ratio: "1"}
             ListElement {label: " "; alternate: ""; ratio: "5"}
             ListElement {label: "."; alternate: ","; ratio: "1"}
-            ListElement {label: "↵"; command:"enter"; ratio: "1.5"}
+            ListElement {label: "\uE04C"; command:"enter"; ratio: "1.5"}
     }
 
 
@@ -87,7 +87,7 @@ Rectangle {
             ListElement {label: "Ru"; command:"source"; source:"keyboard_ru"; ratio: "1"}
             ListElement {label: " "; alternate: ""; ratio: "5"}
             ListElement {label: "."; alternate: ","; ratio: "1"}
-            ListElement {label: "↵"; command:"enter"; ratio: "1.5"}
+            ListElement {label: "\uE04C"; command:"enter"; ratio: "1.5"}
     }
             ListModel {
                 id: keyboard_num
@@ -128,7 +128,7 @@ Rectangle {
 
             ListElement {label:  " "; ratio: "5"}
             ListElement {label:  "."; alternate: ",!?@"; ratio: "1"}
-            ListElement {label:  "↵"; command:"enter"; ratio: "1.5"}
+            ListElement {label:  "\uE04C"; command:"enter"; ratio: "1.5"}
     }
 
             ListModel {
@@ -173,7 +173,7 @@ Rectangle {
     ListElement {label:  "De"; command:"source"; source:"keyboard_de"; ratio: "1"}
     ListElement {label:  " "; ratio: "5"}
     ListElement {label:  "."; alternate: ","; ratio: "1"}
-    ListElement {label:  "↵"; commmand:"enter"; ratio: "1.5"}
+    ListElement {label:  "\uE04C"; commmand:"enter"; ratio: "1.5"}
     }
 
 
