@@ -89,7 +89,7 @@ class MultiShutter(QObject):
     def _set_position(self, path, value):
         try:
 
-            self.inputs.entries[path]['set'](int(value))
+            self.inputs.entries[path].set(int(value))
             self._success += 1
         except Exception as e:
             logging.error(str(e))

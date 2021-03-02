@@ -95,7 +95,7 @@ class Shutter(QObject):
 
     @Slot(int)
     def set_position(self, value):
-        self.inputs.entries[self._desired_position_path]['set'](int(value))
+        self.inputs.entries[self._desired_position_path].set(int(value))
         self._desired_position = int(value)
         self.positionChanged.emit()
         if not self.checkthread.is_alive():

@@ -78,9 +78,9 @@ class Shutter(QObject):
 
         if self._relay_up in self.inputs:
             if self.inputs[self._relay_up].type == DataType.BOOL:
-                if 'set' in self.inputs[self._relay_up]:
+                if self.inputs[self._relay_up].is_output:
                     try:
-                        self.inputs[self._relay_up]['set'](bool(value))
+                        self.inputs[self._relay_up].set(bool(value))
                         status = 'OK'
                     except Exception as e:
                         status = 'ERROR'
@@ -101,9 +101,9 @@ class Shutter(QObject):
 
         if self._relay_down in self.inputs:
             if self.inputs[self._relay_down].type == DataType.BOOL:
-                if 'set' in self.inputs[self._relay_down]:
+                if self.inputs[self._relay_down].is_output:
                     try:
-                        self.inputs[self._relay_down]['set'](bool(value))
+                        self.inputs[self._relay_down].set(bool(value))
                         status = 'OK'
                     except Exception as e:
                         status = 'ERROR'
