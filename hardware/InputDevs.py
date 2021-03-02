@@ -177,7 +177,7 @@ class InputDevs:
                             self.properties['lastinput'].value = value
                             self.properties[f'{id}/thread'].value = 1  # helping action to track activity on input device
                             self.properties[f'{id}/key_{str(keycode)}'].value = value
-                            logging.debug(devpath + ' key: '+ keycode + ', ' + value )
+                            logging.debug(devpath + ' key: '+ str(keycode) + ', ' + str(value))
 
                         except KeyError:
                             self.properties[f'{id}/key_{str(keycode)}'] = EntityProperty(parent=self,
