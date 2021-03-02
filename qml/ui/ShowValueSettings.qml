@@ -46,7 +46,7 @@ Rectangle {
         width: parent.width * 0.9
         anchors.horizontalCenter: parent.horizontalCenter
         id: list
-        spacing: 20
+        spacing: 10
 
         Text {
 
@@ -93,6 +93,27 @@ Rectangle {
                 anchors.rightMargin: 10
                 text: "VarPath"
                 font.family: localFont.name
+                color: Colors.black
+            }
+        }
+
+        SpinBox {
+            id:precbox
+            anchors.right: parent.right
+            stepSize: 1
+
+            onValueModified: modules.loaded_instances['UI']['ShowValue'][instancename].precision = this.value
+            from: 0
+            to: 4
+
+            Component.onCompleted: { precbox.value = modules.loaded_instances['UI']['ShowValue'][instancename].precision
+                                   }
+
+
+            Label {
+                anchors.right: parent.left
+                anchors.rightMargin: 10
+                text: "Precision"
                 color: Colors.black
             }
         }

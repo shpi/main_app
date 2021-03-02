@@ -17,6 +17,8 @@ class ShowValue(QObject):
         self.buffer = CircularBuffer(30)
         self._value_path = settings.value('showvalue/' + self.name + "/path", '')
         self._value = ''
+        self._precision = int(settings.value('showvalue/' + self.name + "/precision", 1))
+
         self._icon = settings.value('showvalue/' + self.name + "/icon", '')
         self._divider = settings.value('showvalue/' + self.name + "/divider", '1000')
 
@@ -50,6 +52,12 @@ class ShowValue(QObject):
     @Property(bool, notify=settingsChanged)
     def logging(self):
         return self.inputs.entries[self._value_path].logging
+
+
+    @logging.setter
+    def logging(self,value):
+        self.inputs.entries[self._value_path].logging = bool(value)
+
 
     @Property(int, notify=settingsChanged)
     def interval(self):
@@ -127,6 +135,6 @@ class ShowValue(QObject):
     @Property(str, notify=valueChanged)
     def value(self):
         if self.is_number(self._value) and self.is_number(self._divider):
-            return "{:.1f}".format(float(self._value) / float(self._divider))
+            return ("{:." + str(self._precision) + "f}").format(float(self._value) / float(self._divider))
         else:
             return self._value
