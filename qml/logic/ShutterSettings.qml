@@ -182,13 +182,15 @@ Item {
                             controlup.running = !control.running
 
                             time.startTime = new Date().getTime()
+                            modules.loaded_instances['Logic']['Shutter'][instancename].desired_position = 0
+                            modules.loaded_instances['Logic']['Shutter'][instancename].actual_position = 100
                             modules.loaded_instances['Logic']['Shutter'][instancename].set_state(2)
                             timer.running = true
                         } else {
                             timer.running = false
-                            modules.loaded_instances['Logic']['Shutter'][instancename].set_state(0)
                             modules.loaded_instances['Logic']['Shutter'][instancename].actual_position = 0
-                            modules.loaded_instances['Logic']['Shutter'][instancename].desired_position = 0
+                            modules.loaded_instances['Logic']['Shutter'][instancename].set_state(0)
+
                             //time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
                         }
                     }
@@ -235,13 +237,14 @@ Item {
                         if (controlup.running) {
                             control.running = !controlup.running
                             time.startTime = new Date().getTime()
+                            modules.loaded_instances['Logic']['Shutter'][instancename].actual_position = 0
+                            modules.loaded_instances['Logic']['Shutter'][instancename].desired_position = 100
                             modules.loaded_instances['Logic']['Shutter'][instancename].set_state(1)
                             timer.running = true
                         } else {
                             timer.running = false
                             modules.loaded_instances['Logic']['Shutter'][instancename].set_state(0)
                             modules.loaded_instances['Logic']['Shutter'][instancename].actual_position = 100
-                            modules.loaded_instances['Logic']['Shutter'][instancename].desired_position = 100
                             //time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
                         }
                     }
