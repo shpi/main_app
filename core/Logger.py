@@ -5,6 +5,7 @@ import logging
 class LogModel(QAbstractListModel):
 
     def __init__(self, items=None):
+        #QAbstractListModel.__init__(self)
         super(LogModel, self).__init__()
 
         if items is None:
@@ -35,20 +36,23 @@ class LogModel(QAbstractListModel):
             Qt.UserRole + 276: b"asctime"
         }
 
+
+
+    def rowCount(self, parent=QModelIndex()) -> int:
+                #if parent.isValid():
+                #    return 0
+                return len(self._items)
+
     def appendRow(self, item):
-        self.beginInsertRows(QModelIndex(),
-                             self.rowCount(),
-                             self.rowCount())
+
+        row = len(self._items)
+
+        self.beginInsertRows(QModelIndex(),  row, row)
         self._items.append(item)  # .__dict__)
         self.endInsertRows()
 
         # while len(self._items) > 10:
         #    self.removeRows(0)
-
-    def rowCount(self, parent=QModelIndex()):
-        if parent.isValid():
-            return 0
-        return len(self._items)
 
     @Slot(int)
     def removeRows(self, row, parent=QModelIndex()):

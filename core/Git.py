@@ -3,7 +3,7 @@ import sys
 import os
 import time
 from subprocess import check_output, call, Popen, PIPE, DEVNULL
-from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
+from PySide2.QtCore import QSettings, Qt, QModelIndex, Property, Signal, Slot, QObject
 from core.DataTypes import DataType
 import logging
 

@@ -30,7 +30,7 @@ class Led:
                                                                   type=DataType.PERCENT_FLOAT,
                                                                   value=100 / max * rawvalue,
                                                                   set=partial(self.set_brightness, file, max),
-                                                                  call=partial(self.get_brightness, file),
+                                                                  call=partial(self.get_brightness, file, max),
                                                                   interval=-1))
 
     def get_inputs(self) -> list:
@@ -44,9 +44,9 @@ class Led:
             bright.write(str(setbrightness))
 
     @staticmethod
-    def get_brightness(file):
+    def get_brightness(file,max):
         with open(Led.ledpath + file + "/brightness") as bright:
             #self.leds[file]['rawvalue'] = int(bright.readline().rstrip())
             pbrightness = int((100 / max) * int(bright.readline().rstrip()))
-
-        return pbrightness
+            return pbrightness
+        return 0

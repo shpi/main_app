@@ -225,6 +225,12 @@ class ThreadProperty:
             logging.info('Stopped Thread ' + (self.entity or self.parent_module.name) + ' ' + self.name)
 
 
+class FakeEvents:
+    def append(fakeself, value):
+        logging.warning('This is a static property, so no events will happen :-) ' + str(value))
+
+
+
 class StaticProperty(object):
     # version = "1.0"
     # description = "Basic Property Class for all Statics"
@@ -252,6 +258,8 @@ class StaticProperty(object):
         self.type = type  # DataType
         self.exposed = exposed  # make it available for network
 
+
+
     @staticmethod
     def update():
         pass
@@ -262,19 +270,7 @@ class StaticProperty(object):
 
     @property
     def events(self):
-
-        logging.warning('This is a static property, so no events will happen :-)')
-
-        @property
-        def append(self):
-            return lambda x: logging.warning('This is a static property, so no events will happen :-)')
-
-        StaticProperty.events.append = append
-
-        return 'No events in static property'
-
-    #events.append = None
-
+        return FakeEvents()
 
     @property
     def is_output(self):
@@ -293,6 +289,4 @@ class StaticProperty(object):
     def interval(self):
         return 0
 
-    @property
-    def events(self):
-        return None
+
