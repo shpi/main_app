@@ -1,6 +1,7 @@
 import logging
 from subprocess import Popen, PIPE
 from threading import Thread
+
 # import socket for later audio intercom
 from core.DataTypes import DataType
 from core.Property import EntityProperty
@@ -14,16 +15,16 @@ class AlsaRecord:
         self.input = dict()
         self.name = card
 
-        self._control = EntityProperty(parent = self,
-                            category = 'sound',
-                            entity = card,
-                            value = 1,
-                            name = 'thread',
-                            description = 'Microphone thread',
-                            type = DataType.THREAD,
-                            set =   self.control,
-                            call =  self.check_process,
-                            interval = 60)
+        self._control = EntityProperty(parent=self,
+                                       category='sound',
+                                       entity=card,
+                                       value=1,
+                                       name='thread',
+                                       description='Microphone thread',
+                                       type=DataType.THREAD,
+                                       set=self.control,
+                                       call=self.check_process,
+                                       interval=60)
 
         self.card = card
         self.bufferpos = 0
@@ -31,18 +32,14 @@ class AlsaRecord:
         self.buffer = [b'' for x in range(self.buffersize)]
         self.rate = 44100
 
-
-
-
-        self.input = EntityProperty(parent = self,
-                            category = 'sound',
-                            entity = card,
-                            value = 0,
-                            name = 'microphone',
-                            description = 'Microphone volume',
-                            type = DataType.PERCENT_INT,
-                            interval = -1)
-
+        self.input = EntityProperty(parent=self,
+                                    category='sound',
+                                    entity=card,
+                                    value=0,
+                                    name='microphone',
+                                    description='Microphone volume',
+                                    type=DataType.PERCENT_INT,
+                                    interval=-1)
 
         self.format = 'S16_LE'
         self.bits = 16  # S8, S16_LE, S32_BE ..
@@ -54,7 +51,6 @@ class AlsaRecord:
         self.thread_stderr = None
 
         self._control.value = self.check_process()
-
 
     def control(self, onoff):
         logging.error('Microphone thread controll called with: ' + str(onoff))

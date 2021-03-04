@@ -1,7 +1,8 @@
-from typing import Callable, NamedTuple, Optional, Union
-from PySide2.QtCore import Property, __version_info__
 import socket
 from re import compile
+from typing import Callable, NamedTuple, Optional, Union
+
+from PySide2.QtCore import Property, __version_info__
 
 """
     # Perfect world as with Python's own 'property' (since 5.15.2):
@@ -137,7 +138,7 @@ def ipbytes_to_ipstr(ip: bytes) -> str:
 
 def netmaskbytes_to_prefixlen(netmask: bytes) -> int:
     bits = 0
-    valid_maskbytes = {255 << 8-bits & 255: bits for bits in range(9)}
+    valid_maskbytes = {255 << 8 - bits & 255: bits for bits in range(9)}
 
     for b in netmask:
         if b not in valid_maskbytes:

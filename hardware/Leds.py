@@ -1,6 +1,6 @@
 import os
-import time
 from functools import partial
+
 from core.DataTypes import DataType
 from core.Property import EntityProperty
 
@@ -21,32 +21,31 @@ class Led:
 
                     if os.path.exists(Led.ledpath + file + "/max_brightness"):
                         with open(Led.ledpath + file + "/max_brightness") as max_led:
-                            max = int(max_led.readline())
+                            lmax = int(max_led.readline())
                             self.properties.append(EntityProperty(parent=self,
                                                                   category='output',
                                                                   entity='leds',
                                                                   name=file,
                                                                   description='brightness of led in %',
                                                                   type=DataType.PERCENT_FLOAT,
-                                                                  value=100 / max * rawvalue,
-                                                                  set=partial(self.set_brightness, file, max),
-                                                                  call=partial(self.get_brightness, file, max),
+                                                                  value=100 / lmax * rawvalue,
+                                                                  set=partial(self.set_brightness, file, lmax),
+                                                                  call=partial(self.get_brightness, file, lmax),
                                                                   interval=-1))
 
     def get_inputs(self) -> list:
         return self.properties
 
     @staticmethod
-    def set_brightness(file, max, brightness):
+    def set_brightness(file, lmax, brightness):
 
-        setbrightness = int((max / 100) * brightness)
+        setbrightness = int((lmax / 100) * brightness)
         with open(Led.ledpath + file + "/brightness", "w") as bright:
             bright.write(str(setbrightness))
 
     @staticmethod
-    def get_brightness(file,max):
+    def get_brightness(file, lmax):
         with open(Led.ledpath + file + "/brightness") as bright:
-            #self.leds[file]['rawvalue'] = int(bright.readline().rstrip())
-            pbrightness = int((100 / max) * int(bright.readline().rstrip()))
+            # self.leds[file]['rawvlalue'] = int(bright.readline().rstrip())
+            pbrightness = int((100 / lmax) * int(bright.readline().rstrip()))
             return pbrightness
-        return 0

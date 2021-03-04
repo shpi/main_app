@@ -1,12 +1,12 @@
 ﻿# from core.DataTypes import DataType
 # from core.Toolbox import Pre_5_15_2_fix
-import logging
-import time
-import datetime
-import numpy as np
-from PySide2.QtGui import QPolygonF
-import shiboken2
 import ctypes
+import datetime
+import time
+
+import numpy as np
+import shiboken2
+from PySide2.QtGui import QPolygonF
 
 
 class CircularBuffer:
@@ -110,7 +110,6 @@ class CircularBuffer:
             return np.max(self._data[:self._index])
         else:
             return np.max(self._data)
-
 
     def preview(self, width=100, height=100, divider=1):
 

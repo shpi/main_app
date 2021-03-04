@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import errno
 import logging
 import os
-import errno
-from subprocess import call, Popen, PIPE, DEVNULL
 from functools import partial
-from hardware.AlsaRecord import AlsaRecord
+from subprocess import call, Popen, PIPE, DEVNULL
+
 from core.DataTypes import DataType
 from core.Property import EntityProperty
+from hardware.AlsaRecord import AlsaRecord
 
 
 class AlsaMixer:

@@ -1,5 +1,6 @@
-import os
 import glob
+import os
+
 from core.DataTypes import DataType
 from core.Property import EntityProperty
 
@@ -7,7 +8,6 @@ from core.Property import EntityProperty
 class CPU:
 
     def __init__(self):
-
 
         self.properties = list()
 

@@ -1,10 +1,12 @@
-﻿from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
-import time
+﻿import logging
 import threading
+import time
+
+from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
+
 from core.DataTypes import DataType
-from core.Toolbox import Pre_5_15_2_fix
-import logging
 from core.Property import EntityProperty
+from core.Toolbox import Pre_5_15_2_fix
 
 
 class ShutterModes:
@@ -72,7 +74,7 @@ class Shutter(QObject):
         self._state = ShutterModes.STOP
 
     def get_inputs(self) -> list:
-        return self._module, self._actual_position, self._desired_position
+        return [self._module, self._actual_position, self._desired_position]
 
     def set_up(self, value):
 
@@ -172,10 +174,8 @@ class Shutter(QObject):
     def state(self):
         return self._state
 
-
     def desired_position(self):
         return (self._desired_position.value)
-
 
     @Pre_5_15_2_fix(int, desired_position, notify=positionChanged)
     def desired_position(self, value):
@@ -198,7 +198,6 @@ class Shutter(QObject):
                 self._actual_position.value = 100
                 self._desired_position.value = 0
 
-
         self.positionChanged.emit()
         self.start_move()
 
@@ -214,7 +213,7 @@ class Shutter(QObject):
         self._actual_position.value = int(value)
         self.positionChanged.emit()
 
-        #self.settings.setValue('shutter/' + self.name + "/actual_position", value)
+        # self.settings.setValue('shutter/' + self.name + "/actual_position", value)
 
     @Signal
     def relayChanged(self):
@@ -268,63 +267,63 @@ class Shutter(QObject):
         return float(self._residue_time)
 
     def move(self):
-       if self._actual_position.value == None:
-           logging.error('Please calibrate Shutter Instance')
-       else:
-        was_in_loop = False
-
-        while (self._actual_position.value < self._desired_position.value) or (
-                self._actual_position.value > self._desired_position.value):
-
-            was_in_loop = True
-
-            if self._actual_position.value < self._desired_position.value:
-
-                # need to move down, to close
-                if self.userinput == 1 and self._state != ShutterModes.UP:
-                    self.set_state(ShutterModes.UP)
-                    self.userinput = 0
-                    self.time_start = time.time()
-                    self.start_position = self._actual_position.value
-                time.sleep(0.1)
-                self._actual_position.value = self.start_position + \
-                                              ((100 / self._down_time) * (time.time() - self.time_start))
-                self.positionChanged.emit()
-                self._residue_time = (
-                                             self._desired_position.value - self._actual_position.value) * (
-                                             self._down_time / 100)
-                if self._residue_time < 0:  # detected overshoot, so stopping
-                    self._residue_time = 0
-                    if self.userinput == 0:  # ignore overshoots and allow direction change only on new input
-                        self._actual_position.value = self._desired_position.value
-                        self.positionChanged.emit()
-
-
-            elif self._actual_position.value > self._desired_position.value:
-
-                # need to move up, to open
-                if self.userinput == 1 and self._state != ShutterModes.DOWN:
-                    self.set_state(ShutterModes.DOWN)
-                    self.userinput = 0
-                    self.time_start = time.time()
-                    self.start_position = self._actual_position.value
-                time.sleep(0.1)
-                self._actual_position.value = self.start_position - \
-                                              (100 / self._up_time) * (time.time() - self.time_start)
-                self.positionChanged.emit()
-                self._residue_time = (
-                                             self._actual_position.value - self._desired_position.value) * (
-                                             self._up_time / 100)
-                if self._residue_time < 0:
-                    self._residue_time = 0
-                    if self.userinput == 0:
-                        self._actual_position.value = self._desired_position.value
-                        self.positionChanged.emit()
-
-        self._residue_time = 0
-
-        if was_in_loop and self._desired_position.value == 100 or self._desired_position.value == 0:
-            self._actual_position.value = self._desired_position.value
-            self.set_state(ShutterModes.SLEEP)
+        if self._actual_position.value == None:
+            logging.error('Please calibrate Shutter Instance')
         else:
-            self.set_state(ShutterModes.STOP)
+            was_in_loop = False
+
+            while (self._actual_position.value < self._desired_position.value) or (
+                    self._actual_position.value > self._desired_position.value):
+
+                was_in_loop = True
+
+                if self._actual_position.value < self._desired_position.value:
+
+                    # need to move down, to close
+                    if self.userinput == 1 and self._state != ShutterModes.UP:
+                        self.set_state(ShutterModes.UP)
+                        self.userinput = 0
+                        self.time_start = time.time()
+                        self.start_position = self._actual_position.value
+                    time.sleep(0.1)
+                    self._actual_position.value = self.start_position + \
+                                                  ((100 / self._down_time) * (time.time() - self.time_start))
+                    self.positionChanged.emit()
+                    self._residue_time = (
+                                                 self._desired_position.value - self._actual_position.value) * (
+                                                 self._down_time / 100)
+                    if self._residue_time < 0:  # detected overshoot, so stopping
+                        self._residue_time = 0
+                        if self.userinput == 0:  # ignore overshoots and allow direction change only on new input
+                            self._actual_position.value = self._desired_position.value
+                            self.positionChanged.emit()
+
+
+                elif self._actual_position.value > self._desired_position.value:
+
+                    # need to move up, to open
+                    if self.userinput == 1 and self._state != ShutterModes.DOWN:
+                        self.set_state(ShutterModes.DOWN)
+                        self.userinput = 0
+                        self.time_start = time.time()
+                        self.start_position = self._actual_position.value
+                    time.sleep(0.1)
+                    self._actual_position.value = self.start_position - \
+                                                  (100 / self._up_time) * (time.time() - self.time_start)
+                    self.positionChanged.emit()
+                    self._residue_time = (
+                                                 self._actual_position.value - self._desired_position.value) * (
+                                                 self._up_time / 100)
+                    if self._residue_time < 0:
+                        self._residue_time = 0
+                        if self.userinput == 0:
+                            self._actual_position.value = self._desired_position.value
+                            self.positionChanged.emit()
+
+            self._residue_time = 0
+
+            if was_in_loop and self._desired_position.value == 100 or self._desired_position.value == 0:
+                self._actual_position.value = self._desired_position.value
+                self.set_state(ShutterModes.SLEEP)
+            else:
+                self.set_state(ShutterModes.STOP)

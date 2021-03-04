@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
-import time
-import os
 import logging
+import os
 import threading
+import time
 from datetime import datetime
+
+from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
+
 from core.DataTypes import DataType
-from core.Toolbox import Pre_5_15_2_fix
 from core.Property import EntityProperty
-from functools import partial
+from core.Toolbox import Pre_5_15_2_fix
 
 
 class NightModes:
@@ -372,7 +373,7 @@ class Appearance(QObject):
             self.state = 'SLEEP'
 
         elif self.state in (
-        'SLEEP', 'OFF') and self._dim_timer > 0 and self.lastuserinput + self._dim_timer > time.time():
+                'SLEEP', 'OFF') and self._dim_timer > 0 and self.lastuserinput + self._dim_timer > time.time():
             logging.debug(f"changing nightmode to ACTIVE, old state: {self.state}, lastinput: {self.lastuserinput}")
             if self._night:
                 self.set_backlight(self._max_backlight_night)
@@ -422,33 +423,31 @@ class Appearance(QObject):
             self._backlightlevel = value
 
     def interrupt(self, key, value):
-        #logging.debug(f"interrupt key: {key}, value: {value}")
+        # logging.debug(f"interrupt key: {key}, value: {value}")
         if value > 0:
-                if self.state == 'OFF':
-                    self.lastuserinput = time.time() - self._dim_timer
-                    logging.debug(
-                        f"changing nightmode to SLEEP, old state: {self.state}, lastinput: {self.lastuserinput}")
-                    self.state = 'SLEEP'
-                    if self._night:
-                        self.set_backlight(self._min_backlight_night)
-                    else:
-                        self.set_backlight(self._min_backlight)
-
+            if self.state == 'OFF':
+                self.lastuserinput = time.time() - self._dim_timer
+                logging.debug(
+                    f"changing nightmode to SLEEP, old state: {self.state}, lastinput: {self.lastuserinput}")
+                self.state = 'SLEEP'
+                if self._night:
+                    self.set_backlight(self._min_backlight_night)
+                else:
+                    self.set_backlight(self._min_backlight)
 
     def tinterrupt(self, key, value):
-        #logging.debug(f"tinterrupt key: {key}, value: {value}")
+        # logging.debug(f"tinterrupt key: {key}, value: {value}")
         self.lastuserinput = time.time()
         self._jump_state = 0
         self.jump_stateChanged.emit()
         if self.state in ('OFF', 'SLEEP'):
-                logging.debug(
-                        f"changing nightmode to ACTIVE, old state: {self.state}, lastinput: {self.lastuserinput}")
-                self.state = 'ACTIVE'
-                if self._night:
-                    self.set_backlight(self._max_backlight_night)
-                else:
-                    self.set_backlight(self._max_backlight)
-
+            logging.debug(
+                f"changing nightmode to ACTIVE, old state: {self.state}, lastinput: {self.lastuserinput}")
+            self.state = 'ACTIVE'
+            if self._night:
+                self.set_backlight(self._max_backlight_night)
+            else:
+                self.set_backlight(self._max_backlight)
 
     @Slot(str, int)
     def setDeviceTrack(self, path, value):

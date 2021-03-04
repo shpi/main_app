@@ -1,6 +1,7 @@
-from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
-import time
 import threading
+import time
+
+from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 
 
 class Shutter(QObject):

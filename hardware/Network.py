@@ -1,20 +1,16 @@
 #!/usr/bin/env python3
-import sys
-import os
-import socket
 import fcntl
-import struct
-import shutil
-import re
-import glob
-import time
-import threading
-from typing import List, Dict
-from subprocess import Popen, PIPE
-from core.DataTypes import DataType
-from core.Toolbox import netmaskbytes_to_prefixlen, ipbytes_to_ipstr, IPEndpoint, lookup_oui
 import logging
-from core.Property import EntityProperty
+import os
+import re
+import socket
+import struct
+import sys
+import threading
+from subprocess import Popen, PIPE
+from typing import List, Dict
+
+from core.Toolbox import netmaskbytes_to_prefixlen, ipbytes_to_ipstr, IPEndpoint, lookup_oui
 
 _re_ifname = re.compile(r'\s*(\S+):')
 _re_ifname_w_stats = re.compile(r'\s*(\S+):' + (r'\s+(\d+)' * 16))  # 16 stat columns
@@ -63,13 +59,14 @@ class InterfaceInfo:
 
     @property
     def ip(self) -> bytes:
-       try:
-        raw = fcntl.ioctl(self._sock.fileno(), SIOCGIFADDR, struct.pack('256s', bytes(self._name, encoding="ascii")))
-        ip_bytes = raw[20:24]
-        return ip_bytes
-       except Exception as e:
-           logging.error(str(e))
-           return None
+        try:
+            raw = fcntl.ioctl(self._sock.fileno(), SIOCGIFADDR,
+                              struct.pack('256s', bytes(self._name, encoding="ascii")))
+            ip_bytes = raw[20:24]
+            return ip_bytes
+        except Exception as e:
+            logging.error(str(e))
+            return None
 
     @property
     def ip_human(self) -> str:
@@ -139,7 +136,6 @@ class InterfaceInfo:
 
 
 class Network(QObject):
-
     version = "1.0"
     required_packages = None
     allow_instances = False
@@ -148,80 +144,73 @@ class Network(QObject):
 
     def __init__(self, settings):
 
-
-        self.network_devices: Dict[str, InterfaceInfo] = {ifname: InterfaceInfo(ifname) for ifname in SystemInfo.get_net_devs()}
+        self.network_devices: Dict[str, InterfaceInfo] = {ifname: InterfaceInfo(ifname) for ifname in
+                                                          SystemInfo.get_net_devs()}
 
         for netdev in self.network_devices.values():
             netdev.scan()
 
-
     @staticmethod
     def get_ip4_address(ifname):
-                try:
-                    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    return ipbytes_to_ipstr(fcntl.ioctl(
-                        s.fileno(), SIOCGIFADDR,
-                        struct.pack('256s', bytes(ifname[:15], 'ascii'))
-                    )[20:24])
-                except OSError as e:
-                    logging.error(str(e))
-                    return -1
-
-
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            return ipbytes_to_ipstr(fcntl.ioctl(
+                s.fileno(), SIOCGIFADDR,
+                struct.pack('256s', bytes(ifname[:15], 'ascii'))
+            )[20:24])
+        except OSError as e:
+            logging.error(str(e))
+            return -1
 
     @Slot()
     def start_scan_hosts(self):
         for netdev in self.wifi_devices:
-                threading.Thread(target=self.scan_hosts, args=(netdev,)).start()
-
-
+            threading.Thread(target=self.scan_hosts, args=(netdev,)).start()
 
     def get_inputs(self) -> dict:
         return self.module_inputs
-
 
     @Signal
     def hostsChanged(self):
         pass
 
-
     def scan_hosts(self, device):
-      try:
+        try:
 
-        p = Popen(['nmap', '-sn', str(SystemInfo.get_ip4_address(device))+'/24'], stdout=PIPE, stdin=PIPE, stderr=PIPE)
-        #'sudo', '-S',
-        #stdout_data = p.communicate(input=b'password')[0].split(b'\n')
-        stdout_data = p.communicate()[0].split(b'\n')
+            p = Popen(['nmap', '-sn', str(SystemInfo.get_ip4_address(device)) + '/24'], stdout=PIPE, stdin=PIPE,
+                      stderr=PIPE)
+            # 'sudo', '-S',
+            # stdout_data = p.communicate(input=b'password')[0].split(b'\n')
+            stdout_data = p.communicate()[0].split(b'\n')
 
-        found_hosts =  list(self._network_hosts.keys())
+            found_hosts = list(self._network_hosts.keys())
 
-        for key in found_hosts:
+            for key in found_hosts:
 
-            if 'dev' in self._network_hosts[key]: # because helper list in dictionary for qml
-                if self._network_hosts[key]['dev'] == device:
-                    del self._network_hosts[key]
+                if 'dev' in self._network_hosts[key]:  # because helper list in dictionary for qml
+                    if self._network_hosts[key]['dev'] == device:
+                        del self._network_hosts[key]
 
-        for line in stdout_data:
-            output = re.search(b'Nmap scan report for ([^ ]*) \(([^\)]*)\)', line)
-            if output:
-                    ip = output.group(2).decode()
-                    self._network_hosts[ip] = {'ip':ip, 'hostname':output.group(1).decode(), 'dev' : device}
-            else:
-                output = re.search(b'Nmap scan report for ([^\n]*)', line)
+            for line in stdout_data:
+                output = re.search(b'Nmap scan report for ([^ ]*) \(([^\)]*)\)', line)
                 if output:
-                    ip = output.group(1).decode()
-                    self._network_hosts[ip] = {'ip': ip, 'dev' : device}
-            output = re.search(b'Host is up \(([^ ]*) latency\)', line)
-            if output:
-                self._network_hosts[ip]['latency'] = output.group(1).decode()
-            output = re.search(b'MAC Address: ([^ ]*) \(([^\)]*)\)', line)
-            if output:
-                self._network_hosts[ip]['mac'] = output.group(1).decode()
-                self._network_hosts[ip]['manufacturer'] = output.group(2).decode()
-        self.hostsChanged.emit()
-      except Exception as e:
-          logging.error(str(e))
-
+                    ip = output.group(2).decode()
+                    self._network_hosts[ip] = {'ip': ip, 'hostname': output.group(1).decode(), 'dev': device}
+                else:
+                    output = re.search(b'Nmap scan report for ([^\n]*)', line)
+                    if output:
+                        ip = output.group(1).decode()
+                        self._network_hosts[ip] = {'ip': ip, 'dev': device}
+                output = re.search(b'Host is up \(([^ ]*) latency\)', line)
+                if output:
+                    self._network_hosts[ip]['latency'] = output.group(1).decode()
+                output = re.search(b'MAC Address: ([^ ]*) \(([^\)]*)\)', line)
+                if output:
+                    self._network_hosts[ip]['mac'] = output.group(1).decode()
+                    self._network_hosts[ip]['manufacturer'] = output.group(2).decode()
+            self.hostsChanged.emit()
+        except Exception as e:
+            logging.error(str(e))
 
     @Property('QVariantMap', notify=hostsChanged)
     def network_hosts(self):
@@ -237,7 +226,6 @@ class Network(QObject):
     @Property('QVariantList', notify=devicesChanged)
     def devices(self):
         return self.wifi_devices
-
 
     @Signal
     def networksChanged(self):
@@ -274,5 +262,3 @@ class Network(QObject):
                     if with_lo or ifname != "lo":
                         netdevs.append(ifname)
         return netdevs
-
-

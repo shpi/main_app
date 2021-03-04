@@ -1,14 +1,15 @@
-import os
 import glob
-import sys
 import logging
-import time
+import os
 import struct
+import sys
+import time
+
 import numpy as np
+
 # from ufunclab import minmax # https://github.com/WarrenWeckesser/ufunclab
 # from core.CircularBuffer import CircularBuffer
 from core.DataTypes import DataType
-from PySide2.QtCore import QSettings
 from core.Property import EntityProperty, ThreadProperty
 
 
@@ -56,7 +57,6 @@ class MLX90615:
 
                         self.object_mean = self.object_temperature
 
-
                         # self.load = os.getloadavg()[2]
                         self.cpu_temp_mean = self.get_cpu_temp()
                         self.fan_speed_mean = 1900
@@ -65,7 +65,6 @@ class MLX90615:
                         # self.current_consumption_mean = 0
 
                         self.buffer = self._data = np.full(6000, self.object_temperature, dtype=np.int16)
-
 
                         # np.full(self.buffer_size,fill_value=self.object_temperature, dtype=np.int16)
                         # data = [startvalue] * size
@@ -119,7 +118,8 @@ class MLX90615:
             logging.info('skipping room temp calculation due to movement')
             return self._temp.value
 
-        if 'core/input_dev/lastinput' in self.inputs.entries and self.inputs.entries['core/input_dev/lastinput'].last_update + 60 > time.time():
+        if 'core/input_dev/lastinput' in self.inputs.entries and self.inputs.entries[
+            'core/input_dev/lastinput'].last_update + 60 > time.time():
             logging.info('skipping room temp calculation due to input')
             return self._temp.value
 
@@ -232,7 +232,7 @@ class MLX90615:
                         logging.info('fast temp change: ' + str((self.object_mean - tempobj) * 50 / 1000))
                         self.last_movement = time.time()
                         for function in self.inputs.entries['module/input_dev/mlx90615'].events:
-                                function('module/input_dev/mlx90615', abs(self.object_mean - tempobj))
+                            function('module/input_dev/mlx90615', abs(self.object_mean - tempobj))
 
                     self.object_mean = (self.object_mean * 9 + tempobj) // 10
 
@@ -244,7 +244,7 @@ class MLX90615:
 
                         self.buffer_enable(1)
                     except Exception as e:
-                       exception_type, exception_object, exception_traceback = sys.exc_info()
-                       line_number = exception_traceback.tb_lineno
-                       logging.error(f'error: {e} in line {line_number}')
-                       pass
+                        exception_type, exception_object, exception_traceback = sys.exc_info()
+                        line_number = exception_traceback.tb_lineno
+                        logging.error(f'error: {e} in line {line_number}')
+                        pass

@@ -1,17 +1,15 @@
 ﻿#!/usr/bin/env python3
-import sys
-import os
-import time
-from subprocess import check_output, call, Popen, PIPE, DEVNULL
-from PySide2.QtCore import QSettings, Qt, QModelIndex, Property, Signal, Slot, QObject
-from core.DataTypes import DataType
 import logging
+import os
+from subprocess import check_output, PIPE
 
-from core.Property import EntityProperty, ThreadProperty
+from PySide2.QtCore import Property, Signal, Slot, QObject
+
+from core.DataTypes import DataType
+from core.Property import EntityProperty
 
 
 class Git(QObject):
-
     version = "1.0"
     required_packages = None
     allow_instances = False
@@ -41,9 +39,6 @@ class Git(QObject):
         self._update_timestamp = 0
         self._update_description = ''
 
-
-
-
         # git path
         # git remote path
 
@@ -60,37 +55,38 @@ class Git(QObject):
 
     @Signal
     def gitChanged(self):
-            pass
+        pass
+
     @Slot()
     def update(self):
-         #git fetch --all
-         try:
-          a = check_output(['git', 'fetch', '--all'],stderr=PIPE).decode()
-          logging.info(str(a))
-         except Exception as e:
-           logging.error(str(e))
-         self.check_updates()
-         self.latest_update()
-         self.gitChanged.emit()
-
+        # git fetch --all
+        try:
+            a = check_output(['git', 'fetch', '--all'], stderr=PIPE).decode()
+            logging.info(str(a))
+        except Exception as e:
+            logging.error(str(e))
+        self.check_updates()
+        self.latest_update()
+        self.gitChanged.emit()
 
     def get_inputs(self):
-             return self.properties.values()
-
+        return self.properties.values()
 
     def check_updates(self):
-        output = check_output(['git','rev-list', '--left-right', '--count', 'origin/main...main']).strip(b'\n').split(b'\t')
+        output = check_output(['git', 'rev-list', '--left-right', '--count', 'origin/main...main']).strip(b'\n').split(
+            b'\t')
         self._updates_remote = int(output[0])
         self._updates_local = int(output[1])
 
     def latest_update(self):
         if self._updates_remote > 0:
-            output = check_output(['git','log', '-1', '--pretty=format:"%H;%h;%at;%s"', 'HEAD...origin/main']).decode().strip('\n').split(';')
+            output = check_output(
+                ['git', 'log', '-1', '--pretty=format:"%H;%h;%at;%s"', 'HEAD...origin/main']).decode().strip(
+                '\n').split(';')
             self._update_hex = output[0]
             self._update_shex = output[1]
             self._update_timestamp = int(output[2])
             self._update_description = output[3]
-
 
     @Property(str, notify=gitChanged)
     def update_hex(self):
@@ -110,19 +106,19 @@ class Git(QObject):
 
     @Property(str, notify=gitChanged)
     def actual_branch(self):
-        return check_output(['git','branch', '--show-current']).decode().strip()
+        return check_output(['git', 'branch', '--show-current']).decode().strip()
 
     @Property('QVariantList', notify=gitChanged)
     def available_branches(self):
-        return check_output(['git','branch', '-r']).decode().strip().split('\n')
+        return check_output(['git', 'branch', '-r']).decode().strip().split('\n')
 
     @Property(int, notify=gitChanged)
     def current_version_date(self):
-        return int(check_output(['git','show', '-s','--format=%ct']).decode().strip())
+        return int(check_output(['git', 'show', '-s', '--format=%ct']).decode().strip())
 
     @Property(str, notify=gitChanged)
     def current_version_hex(self):
-        return check_output(['git','rev-parse', '--short','HEAD']).decode().strip()
+        return check_output(['git', 'rev-parse', '--short', 'HEAD']).decode().strip()
 
     @Slot()
     def reboot(self):
@@ -131,14 +127,12 @@ class Git(QObject):
 
     @Slot(result=str)
     def merge(self):
-            return check_output(['git','merge']).decode().strip()
+        return check_output(['git', 'merge']).decode().strip()
 
     @Property(int, notify=gitChanged)
     def updates_remote(self):
         return self._updates_remote
 
-
     @Property(int, notify=gitChanged)
     def updates_local(self):
         return self._updates_local
-

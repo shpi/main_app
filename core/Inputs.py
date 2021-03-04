@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 
-from PySide2.QtCore import QModelIndex, QSortFilterProxyModel
-from PySide2.QtCore import QAbstractListModel, Property, Signal, Slot, QObject
-from core.DataTypes import Convert
-from core.DataTypes import DataType
-from core.CircularBuffer import CircularBuffer
-from PySide2.QtGui import QPolygonF
-from PySide2.QtCore import QPointF
-from PySide2.QtCore import QDateTime, Qt
-import shiboken2
 import ctypes
 import logging
-import numpy as np
 import sys
+
+import numpy as np
+import shiboken2
+from PySide2.QtCore import QAbstractListModel, Property, Signal, Slot, QObject
+from PySide2.QtCore import QDateTime, Qt
+from PySide2.QtCore import QModelIndex, QSortFilterProxyModel
+from PySide2.QtCore import QPointF
+from PySide2.QtGui import QPolygonF
+
+from core.CircularBuffer import CircularBuffer
+from core.DataTypes import Convert
+from core.DataTypes import DataType
 
 
 class InputListModel(QAbstractListModel):
@@ -310,7 +312,7 @@ class InputsDict(QObject):
         except KeyError:
             logging.debug(key + ' not in Inputdictionary')
 
-    def update_remote(self, key,value):  # doing eventing here
+    def update_remote(self, key, value):  # doing eventing here
 
         try:
             self.completelist.updateListView(key)
@@ -362,6 +364,6 @@ class InputsDict(QObject):
             elif self.entries[key].type == DataType.BOOL:
                 self.entries[key].set(int(value))
             elif self.entries[key].type == DataType.THREAD:
-                    self.entries[key].set(int(value))
+                self.entries[key].set(int(value))
             elif self.entries[key].type == DataType.ENUM:
                 self.entries[key].set(int(value))

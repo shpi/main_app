@@ -1,8 +1,9 @@
 import glob
+import logging
 import os
 import sys
-import logging
 from functools import partial
+
 from core.DataTypes import Convert, DataType
 from core.Property import EntityProperty
 

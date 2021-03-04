@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
-import sys
-import logging
-from core.Toolbox import Pre_5_15_2_fix
 import datetime
+import logging
+import sys
+
+from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
+
 from core.DataTypes import DataType
 from core.Property import EntityProperty
+from core.Toolbox import Pre_5_15_2_fix
+
 
 class ThermostatModes:
     OFF = 0  # totally off
@@ -116,23 +119,19 @@ class Thermostat(QObject):
         self._actual_temp = None
         self._offset = 0
 
-        self._module =            EntityProperty(parent = self,
-                                                 category = 'module/logic',
-                                                 entity = 'thermostat',
-                                                 name = name,
-                                                 value = 'NOT_INITIALIZED',
-                                                 description = 'Thermostat Module for binary output',
-                                                 type = DataType.MODULE,
-                                                 call = self.update,
-                                                 interval = 10)
-
-
+        self._module = EntityProperty(parent=self,
+                                      category='module/logic',
+                                      entity='thermostat',
+                                      name=name,
+                                      value='NOT_INITIALIZED',
+                                      description='Thermostat Module for binary output',
+                                      type=DataType.MODULE,
+                                      call=self.update,
+                                      interval=10)
 
     def get_inputs(self) -> list:
 
-        return self._module,
-
-
+        return [self._module,]
 
     @Signal
     def offsetChanged(self):
@@ -213,8 +212,6 @@ class Thermostat(QObject):
             self._party_temp = value
 
         self.settingsChanged.emit()
-        
-
 
     # @Property(int, notify=scheduleChanged)
     def schedule_mode(self):
@@ -228,20 +225,15 @@ class Thermostat(QObject):
         self.settings.setValue("thermostat/" + self.name + '/schedule_mode', value)
         self.scheduleModeChanged.emit()
 
-
-
     def hysteresis(self):
-         return int(self._hysteresis)
-
+        return int(self._hysteresis)
 
     @Pre_5_15_2_fix(int, hysteresis, notify=settingsChanged)
     def hysteresis(self, value):
-             logging.debug('setting hysteresis:' + str(value))
-             self._hysteresis = int(value)
-             self.settings.setValue("thermostat/" + self.name + '/hysteresis', value)
-             self.settingsChanged.emit()
-
-
+        logging.debug('setting hysteresis:' + str(value))
+        self._hysteresis = int(value)
+        self.settings.setValue("thermostat/" + self.name + '/hysteresis', value)
+        self.settingsChanged.emit()
 
     # @Property(int, notify=thermostatModeChanged)
     def thermostat_mode(self):
@@ -256,7 +248,7 @@ class Thermostat(QObject):
             self.settings.setValue("thermostat/" + self.name + '/thermostat_mode', value)
             self.thermostatModeChanged.emit()
             self.settingsChanged.emit()
-            
+
         else:
             logging.error('Requested thermostat mode not valid')
 
@@ -268,7 +260,6 @@ class Thermostat(QObject):
         self._heating_contact_path = str(value)
         self.settings.setValue("thermostat/" + self.name + '/heating_contact_path', self._heating_contact_path)
         self.pathChanged.emit()
-        
 
     def temp_path(self):
         return str(self._temp_path)
@@ -278,7 +269,6 @@ class Thermostat(QObject):
         self._temp_path = str(value)
         self.settings.setValue("thermostat/" + self.name + '/temp_path', self._temp_path)
         self.settingsChanged.emit()
-        
 
     def heating_state(self):
         return str(self._heating_state)
@@ -298,7 +288,6 @@ class Thermostat(QObject):
 
     def update(self):
 
-
         if self._temp_path not in self.inputs:
             logging.error('temp path not in inputs')
             return 'ERROR'
@@ -309,58 +298,57 @@ class Thermostat(QObject):
 
         try:
 
-                self._actual_temp = self.inputs[self._temp_path].value
-                self.tempChanged.emit()
+            self._actual_temp = self.inputs[self._temp_path].value
+            self.tempChanged.emit()
 
-                if self._thermostat_mode == ThermostatModes.OFF:  # totally off
-                    self.set_state(0)
-                    self._offset = 0
-                    self.offsetChanged.emit()
-                    return 'OK'
-
-                elif self._thermostat_mode == ThermostatModes.AWAY:  # constant away temp
-                    set_temp = self._away_temp * 1000
-                    self._offset = 0
-                    self.offsetChanged.emit()
-
-                elif self._thermostat_mode == ThermostatModes.ECO:  # reduced automatic temp
-                    offset, since = Schedule.get_desired_temp(self._schedule, self._schedule_mode,
-                                                              datetime.datetime.today())
-                    set_temp = (self._eco_temp + offset - 1) * 1000
-                    self._offset = int(offset)
-                    self.offsetChanged.emit()
-                    logging.info('thermostat eco modus, actual schedule offset ' + str(offset))
-
-                elif self._thermostat_mode == ThermostatModes.AUTO:  # automatic temp regarding schedule
-                    offset, since = Schedule.get_desired_temp(self._schedule, self._schedule_mode,
-                                                              datetime.datetime.today())
-                    set_temp = (self._auto_temp + offset) * 1000
-                    self._offset = int(offset)
-                    self.offsetChanged.emit()
-                    logging.info('thermostat auto modus, actual schedule offset  ' + str(offset))
-
-                elif self._thermostat_mode == ThermostatModes.PARTY:  # ignore schedule
-                    set_temp = self._party_temp * 1000
-                    self._offset = 0
-                    self.offsetChanged.emit()
-                    logging.info('thermostat party')
-
-                else:
-                    logging.error('no thermostat mode detected, heating off')
-                    return 'ERROR'
-
-
-                if (self._actual_temp + self._hysteresis) < set_temp:
-                    logging.info('set temp: ' + str(set_temp))
-                    logging.info('act temp: ' + str(self._actual_temp))
-                    self.set_state(1)
-
-                elif (self._actual_temp + self._hysteresis) > set_temp:
-                    logging.info('set temp: ' + str(set_temp))
-                    logging.info('act temp: ' + str(self._actual_temp))
-                    self.set_state(0)
-
+            if self._thermostat_mode == ThermostatModes.OFF:  # totally off
+                self.set_state(0)
+                self._offset = 0
+                self.offsetChanged.emit()
                 return 'OK'
+
+            elif self._thermostat_mode == ThermostatModes.AWAY:  # constant away temp
+                set_temp = self._away_temp * 1000
+                self._offset = 0
+                self.offsetChanged.emit()
+
+            elif self._thermostat_mode == ThermostatModes.ECO:  # reduced automatic temp
+                offset, since = Schedule.get_desired_temp(self._schedule, self._schedule_mode,
+                                                          datetime.datetime.today())
+                set_temp = (self._eco_temp + offset - 1) * 1000
+                self._offset = int(offset)
+                self.offsetChanged.emit()
+                logging.info('thermostat eco modus, actual schedule offset ' + str(offset))
+
+            elif self._thermostat_mode == ThermostatModes.AUTO:  # automatic temp regarding schedule
+                offset, since = Schedule.get_desired_temp(self._schedule, self._schedule_mode,
+                                                          datetime.datetime.today())
+                set_temp = (self._auto_temp + offset) * 1000
+                self._offset = int(offset)
+                self.offsetChanged.emit()
+                logging.info('thermostat auto modus, actual schedule offset  ' + str(offset))
+
+            elif self._thermostat_mode == ThermostatModes.PARTY:  # ignore schedule
+                set_temp = self._party_temp * 1000
+                self._offset = 0
+                self.offsetChanged.emit()
+                logging.info('thermostat party')
+
+            else:
+                logging.error('no thermostat mode detected, heating off')
+                return 'ERROR'
+
+            if (self._actual_temp + self._hysteresis) < set_temp:
+                logging.info('set temp: ' + str(set_temp))
+                logging.info('act temp: ' + str(self._actual_temp))
+                self.set_state(1)
+
+            elif (self._actual_temp + self._hysteresis) > set_temp:
+                logging.info('set temp: ' + str(set_temp))
+                logging.info('act temp: ' + str(self._actual_temp))
+                self.set_state(0)
+
+            return 'OK'
 
         except Exception as e:
             exception_type, exception_object, exception_traceback = sys.exc_info()
@@ -381,7 +369,6 @@ class Thermostat(QObject):
                     value[a] = sorted(value[a], key=lambda tup: tup[0])
                 except IndexError:
                     pass
-
 
         return value
 

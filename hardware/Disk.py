@@ -1,8 +1,9 @@
+import logging
 import os
 import shutil
 import time
+
 from core.DataTypes import DataType
-import logging
 from core.Property import EntityProperty, StaticProperty
 
 
@@ -87,7 +88,7 @@ class DiskStats:
                 self.properties[f'{line[2]}/read_abs'].value = int(line[3])
                 self.properties[f'{line[2]}/write_abs'].value = int(line[7])
 
-        return 'OK'   
+        return 'OK'
 
     def get_inputs(self) -> list:
         return self.properties.values()

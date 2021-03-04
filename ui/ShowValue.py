@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from PySide2.QtCore import QSettings, QObject, Property, Signal
-from core.Toolbox import Pre_5_15_2_fix
 import logging
-from core.CircularBuffer import CircularBuffer
+
+from PySide2.QtCore import QSettings, QObject, Property, Signal
 from PySide2.QtGui import QPolygonF
+
+from core.CircularBuffer import CircularBuffer
+from core.Toolbox import Pre_5_15_2_fix
 
 
 class ShowValue(QObject):
@@ -46,23 +48,17 @@ class ShowValue(QObject):
         except Exception as e:
             logging.error(str(e))
 
-
-
-
     @Property(bool, notify=settingsChanged)
     def logging(self):
         return self.inputs.entries[self._value_path].logging
 
-
     @logging.setter
-    def logging(self,value):
+    def logging(self, value):
         self.inputs.entries[self._value_path].logging = bool(value)
-
 
     @Property(int, notify=settingsChanged)
     def interval(self):
         return self.inputs.entries[self._value_path].interval
-
 
     # @Property(str,notify=valueChanged)
     def precision(self):
@@ -75,7 +71,6 @@ class ShowValue(QObject):
         logging.info(self.settings.value('showvalue/' + self.name + "/precision", ''))
         self._precision = int(key)
 
-
     # @Property(str,notify=valueChanged)
     def unit(self):
         return self._unit
@@ -86,7 +81,6 @@ class ShowValue(QObject):
         self.settings.setValue('showvalue/' + self.name + "/unit", key)
         logging.info(self.settings.value('showvalue/' + self.name + "/unit", ''))
         self._precision = str(key)
-
 
     # @Property(str,notify=valueChanged)
     def value_path(self):

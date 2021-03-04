@@ -1,13 +1,14 @@
 ﻿#!/usr/bin/env python3
-import sys
-import os
-import time
-import re
-import threading
-from subprocess import check_output, call, Popen, PIPE, DEVNULL
-from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
-from core.DataTypes import DataType
 import logging
+import os
+import sys
+import threading
+import time
+from subprocess import check_output, Popen, PIPE, DEVNULL
+
+from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
+
+from core.DataTypes import DataType
 from core.Property import EntityProperty
 
 

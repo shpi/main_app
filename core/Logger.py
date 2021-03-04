@@ -1,11 +1,12 @@
-from PySide2.QtCore import Qt, QModelIndex, QAbstractListModel, Slot
 import logging
+
+from PySide2.QtCore import Qt, QModelIndex, QAbstractListModel, Slot
 
 
 class LogModel(QAbstractListModel):
 
     def __init__(self, items=None):
-        #QAbstractListModel.__init__(self)
+        # QAbstractListModel.__init__(self)
         super(LogModel, self).__init__()
 
         if items is None:
@@ -36,18 +37,16 @@ class LogModel(QAbstractListModel):
             Qt.UserRole + 276: b"asctime"
         }
 
-
-
     def rowCount(self, parent=QModelIndex()) -> int:
-                #if parent.isValid():
-                #    return 0
-                return len(self._items)
+        # if parent.isValid():
+        #    return 0
+        return len(self._items)
 
     def appendRow(self, item):
 
         row = len(self._items)
 
-        self.beginInsertRows(QModelIndex(),  row, row)
+        self.beginInsertRows(QModelIndex(), row, row)
         self._items.append(item)  # .__dict__)
         self.endInsertRows()
 

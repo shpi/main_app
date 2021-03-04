@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from PySide2.QtCore import QSettings, QObject, Signal
-import time
-import sys
 import logging
+import sys
 import threading
-from core.Toolbox import Pre_5_15_2_fix
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import time
 import urllib.parse as urlparse
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+from PySide2.QtCore import QSettings, QObject, Signal
+
 from core.DataTypes import Convert
+from core.Toolbox import Pre_5_15_2_fix
 
 
 class ServerHandler(BaseHTTPRequestHandler):
@@ -24,8 +26,9 @@ class ServerHandler(BaseHTTPRequestHandler):
             else:
                 success = False
 
-            if success and ('key' in query) and (query['key'] in self.inputs) and self.inputs[query['key']].get('exposed',
-                                                                                                             False):
+            if success and ('key' in query) and (query['key'] in self.inputs) and self.inputs[query['key']].get(
+                    'exposed',
+                    False):
 
                 if 'set' in query:
                     if self.inputs[query['key']].set is not None:

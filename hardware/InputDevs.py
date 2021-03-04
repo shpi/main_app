@@ -1,12 +1,10 @@
 import logging
-import subprocess
-import threading
 import struct
-import ctypes
-import time
+import subprocess
 import sys
-from core.DataTypes import DataType
 from functools import partial
+
+from core.DataTypes import DataType
 from core.Property import EntityProperty, ThreadProperty
 
 EV_SYN = 0x00
@@ -165,9 +163,9 @@ class InputDevs:
                 while self.properties[f'{id}/thread'].value:
                     # 16 byte for 32bit,  24 for 64bit
                     event = devfile.read(16 if systembits == 32 else 24)
-                    (timestamp, _id, type, keycode, value) = struct.unpack('llHHI', event)
+                    (timestamp, _id, evtype, keycode, value) = struct.unpack('llHHI', event)
 
-                    if (type == 1):  # type 1 = key, we watch only keys!
+                    if evtype == 1:  # type 1 = key, we watch only keys!
 
                         try:
 
@@ -178,7 +176,7 @@ class InputDevs:
                                 logging.debug(devpath + ' key: '+ str(keycode) + ', ' + str(value))
 
                             self.properties['lastinput'].value = value
-                            self.properties[f'{id}/thread'].value = 1  # helping action to track activity on input device
+                            self.properties[f'{id}/thread'].value = 1  # helping to track activity on input device
                             self.properties[f'{id}/key_{str(keycode)}'].value = value
 
                         except KeyError:
@@ -190,7 +188,6 @@ class InputDevs:
                                                                                          type=DataType.INT,
                                                                                          interval=-1)
                             self.properties[f'{id}/key_{str(keycode)}'].value = value
-
 
         except Exception as e:
             exception_type, exception_object, exception_traceback = sys.exc_info()

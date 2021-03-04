@@ -14,6 +14,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Lesser General Public License for more details.
 """
 
+import abc
+import weakref
 # Imports from package ctypes are not grouped
 # pylint: disable=ungrouped-imports
 #
@@ -44,13 +46,13 @@ from ctypes.util import find_library
 from enum import Enum
 from os import strerror as _strerror
 from platform import system as _system
-import weakref
-import abc
 
 if "Windows" in _system():
     from ctypes import get_last_error
 else:
     from ctypes import get_errno
+
+
 # pylint: enable=ungrouped-imports
 
 # ctypes requires the errcheck to take three arguments, but we don't use them
@@ -75,7 +77,7 @@ def _check_negative(result, func, arguments):
 # Python 2 and Python 3 compatible _isstring function.
 # pylint: disable=basestring-builtin
 def _isstring(argument):
-        return isinstance(argument, str)
+    return isinstance(argument, str)
 
 
 # pylint: enable=basestring-builtin
@@ -1428,7 +1430,7 @@ class Context(object):
         returns: type=iio.Device or type=iio.Trigger
             The IIO Device
         """
-        return next((x for x in self.devices if name_or_id in [x.name, x.id]), None,)
+        return next((x for x in self.devices if name_or_id in [x.name, x.id]), None, )
 
     name = property(
         lambda self: self._name, None, None, "Name of this IIO context.\n\ttype=str"

@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
-import logging
 import importlib
+import logging
+
+from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
+
 from core.Toolbox import Pre_5_15_2_fix
 
 
@@ -14,7 +16,7 @@ class ModuleManager(QObject):
         self.inputs = inputs
         self.available_modules = {'Logic': ['Shutter', 'Thermostat'],
                                   'Info': ['Weather'],
-                                  'UI': ['Shutter', 'ShowValue', 'MultiShutter','PieChart'],
+                                  'UI': ['Shutter', 'ShowValue', 'MultiShutter', 'PieChart'],
                                   'Connections': ['HTTP']}
 
         self._modules = dict()  # saves names of loaded instances

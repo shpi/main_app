@@ -1,8 +1,10 @@
-﻿from core.DataTypes import DataType
+﻿import ctypes
 import logging
-import time
 import threading
-import ctypes
+import time
+
+from core.DataTypes import DataType
+
 
 class ModuleThread(threading.Thread):
 
@@ -25,12 +27,13 @@ class ModuleThread(threading.Thread):
 
 
 class EntityProperty:
-    #version = "1.0"
-    #description = "Basic Property Class for all Sensors, Outputs, Modules"
+    # version = "1.0"
+    # description = "Basic Property Class for all Sensors, Outputs, Modules"
 
     __slots__ = ['category', 'name', 'entity', 'description', '_value', '_old_value', 'type',
-                  'last_update', 'last_change','step','available', '_logging', 'exposed', '__call', '__set', 'min', 'max','events',
-                  'is_exclusive_output', 'registered_output_path', 'update_needs_thread', 'interval']
+                 'last_update', 'last_change', 'step', 'available', '_logging', 'exposed', '__call', '__set', 'min',
+                 'max', 'events',
+                 'is_exclusive_output', 'registered_output_path', 'update_needs_thread', 'interval']
 
     def __init__(self, name: str = None, category: str = None, parent=None, value=None, set=None, call=None,
                  description=None,
@@ -76,17 +79,13 @@ class EntityProperty:
     def logging(self):
         return self._logging
 
-
     @logging.setter
     def logging(self, value):
         self._logging = bool(value)
 
-
-
     @property
     def path(self):
-        return  self.category + '/' + self.entity  + '/' + self.name
-
+        return self.category + '/' + self.entity + '/' + self.name
 
     @property
     def is_output(self):
@@ -137,12 +136,12 @@ class EntityProperty:
 
 
 class ThreadProperty:
-    #version = "1.0"
-    #description = "Thread Property Class for Modules"
+    # version = "1.0"
+    # description = "Thread Property Class for Modules"
 
     __slots__ = ['category', 'name', 'entity', 'description', '_value', 'type',
-                  'last_update', 'last_change', '_logging', 'exposed', 'events', 'is_exclusive_output',
-                  'interval', 'function', 'thread']
+                 'last_update', 'last_change', '_logging', 'exposed', 'events', 'is_exclusive_output',
+                 'interval', 'function', 'thread']
 
     def __init__(self, name: str = None,
                  category: str = None,
@@ -155,7 +154,7 @@ class ThreadProperty:
                  entity=None,
                  function=None):
 
-        #self.parent_module = parent  # parent_module that provides this property, parents needs .name property
+        # self.parent_module = parent  # parent_module that provides this property, parents needs .name property
         self.category = category  # category for tree in GUI, like sensor, output, sound, network
         self.name = name  # name for this property
         self.entity = entity  # usually entity is module name, but some modules provide multiple entities, then we use this for path
@@ -172,19 +171,15 @@ class ThreadProperty:
         self.function = function
         self.thread = ModuleThread(target=self.function)
 
-
     @property
     def logging(self):
         return self._logging
-
 
     @logging.setter
     def logging(self, value):
         self._logging = bool(value)
 
-
-
-    def set(self,value):
+    def set(self, value):
         self.value = value
 
     @property
@@ -193,7 +188,7 @@ class ThreadProperty:
 
     @property
     def path(self):
-        return  self.category + '/' + self.entity + '/' + self.name
+        return self.category + '/' + self.entity + '/' + self.name
 
     @property
     def value(self):
@@ -209,7 +204,7 @@ class ThreadProperty:
         elif value:  # if thread is active and still value setted, we fire events
             for event in self.events:
                 if callable(event):
-                    event(self.path,self._value)
+                    event(self.path, self._value)
                 else:
                     logging.error(self.name + ' event[' + str(event) + '] ot a function!')
 
@@ -230,15 +225,11 @@ class FakeEvents:
         logging.warning('This is a static property, so no events will happen :-) ' + str(value))
 
 
-
 class StaticProperty(object):
     # version = "1.0"
     # description = "Basic Property Class for all Statics"
 
     __slots__ = ['category', 'name', 'entity', 'description', 'value', 'type', 'exposed']
-
-
-
 
     def __init__(self, name: str = None,
                  category: str = None,
@@ -248,8 +239,7 @@ class StaticProperty(object):
                  type=None,
                  exposed=False,
                  entity=None):
-
-        #self.parent_module = parent  # parent_module that provides this property, parents needs .name property
+        # self.parent_module = parent  # parent_module that provides this property, parents needs .name property
         self.category = category  # category for tree in GUI, like sensor, output, sound, network
         self.name = name  # name for this property
         self.entity = entity  # usually entity is module name, but some modules provide multiple entities, then we use this for path
@@ -257,8 +247,6 @@ class StaticProperty(object):
         self.value = value  # value
         self.type = type  # DataType
         self.exposed = exposed  # make it available for network
-
-
 
     @staticmethod
     def update():
@@ -283,10 +271,8 @@ class StaticProperty(object):
     @logging.setter
     def logging(self, value):
         if value:
-            logging.error('Property: ' + self.path  + ', static properties do not support logging.')
+            logging.error('Property: ' + self.path + ', static properties do not support logging.')
 
     @property
     def interval(self):
         return 0
-
-

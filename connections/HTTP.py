@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 
-from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
+import json
 import logging
 import socket
 import sys
-from core.Toolbox import Pre_5_15_2_fix
-from core.Inputs import InputListModel
-from functools import partial
 import urllib.request
-import json
-from core.DataTypes import Convert
+from functools import partial
 from urllib.error import HTTPError, URLError
+
+from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
+
+from core.DataTypes import Convert
 from core.DataTypes import DataType
+from core.Inputs import InputListModel
 from core.Property import EntityProperty
+from core.Toolbox import Pre_5_15_2_fix
 
 
 class HTTP(QObject):
@@ -39,22 +41,22 @@ class HTTP(QObject):
                                                    type=DataType.MODULE,
                                                    interval=-1)
 
-        for property in self._vars:
-            self.properties[property] = EntityProperty(parent=self,
-                                                       category='connections/http',
-                                                       entity=self.name,
-                                                       name=property,
-                                                       value=None,
-                                                       description='place holder after init, module not initialized',
-                                                       type=DataType.UNDEFINED,
-                                                       interval=-1)
+        for sproperty in self._vars:
+            self.properties[sproperty] = EntityProperty(parent=self,
+                                                        category='connections/http',
+                                                        entity=self.name,
+                                                        name=sproperty,
+                                                        value=None,
+                                                        description='place holder after init, module not initialized',
+                                                        type=DataType.UNDEFINED,
+                                                        interval=-1)
 
         self.update_vars()
         self.inputlist = InputListModel(self.module_inputs)
 
     def get_inputs(self) -> list:
 
-        return self.properties.values()
+        return list(self.properties.values())
 
     @Signal
     def dataChanged(self):

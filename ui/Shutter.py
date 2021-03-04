@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
-import time
-import threading
-from core.Toolbox import Pre_5_15_2_fix
 import logging
+import threading
+import time
+
+from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
+
+from core.Toolbox import Pre_5_15_2_fix
 
 
 class Shutter(QObject):

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 
-import os
-import hardware.iio as iio
-from functools import partial
-from core.DataTypes import Convert, DataType
 import logging
+import os
 import sys
+from functools import partial
+
+import hardware.iio as iio
+from core.DataTypes import Convert, DataType
 from core.Property import EntityProperty
 
 
 class IIO:
     """Class for retrieving the requested information."""
-
 
     def __init__(self):
 
@@ -35,9 +35,6 @@ class IIO:
             logging.error(f'No IIO sensors found, error: {e} in line {line_number}')
 
         # print("IIO context has %u devices:" % len(self.context.devices))
-
-
-
 
     def get_inputs(self) -> list:
         return self.properties.values()
@@ -90,11 +87,11 @@ class IIO:
                 return (rf.write(str(value)))
 
     def _device_info(self, dev):
-        #print("\t" + dev.id + ": " + dev.name)
-        #print("\t\t%u channels found: " % len(dev.channels))
+        # print("\t" + dev.id + ": " + dev.name)
+        # print("\t\t%u channels found: " % len(dev.channels))
         for channel in dev.channels:
-            
-            #print("\t\t\t%s: %s (%s)" % (channel.id, channel.name or "", "output" if channel.output else "input"))
+
+            # print("\t\t\t%s: %s (%s)" % (channel.id, channel.name or "", "output" if channel.output else "input"))
 
             if len(channel.attrs) > 0:
                 scale = 1
@@ -102,13 +99,13 @@ class IIO:
                 raw = None
 
                 self.properties[f'{dev.name}/{channel.id}'] = EntityProperty(parent=self,
-                                                                                             category='sensor',
-                                                                                             entity=dev.name,
-                                                                                             name=channel.id,
-                                                                                             description=dev.name + ' ' + channel.id,
-                                                                                             type=Convert.iio_to_shpi(
-                                                                                                 channel.type),
-                                                                                             interval=20)
+                                                                             category='sensor',
+                                                                             entity=dev.name,
+                                                                             name=channel.id,
+                                                                             description=dev.name + ' ' + channel.id,
+                                                                             type=Convert.iio_to_shpi(
+                                                                                 channel.type),
+                                                                             interval=20)
 
                 # print("\t\t\t%u channel-specific attributes found: " % len(channel.attrs))
                 for channel_attr in channel.attrs:
@@ -128,7 +125,7 @@ class IIO:
                     elif channel_attr == 'input':
                         self.properties[f'{dev.name}/{channel.id}'].value = channel.attrs[
                             channel_attr].value
-                        self.properties[f'{dev.name}/{channel.id}'].call = partial(IIO.read_iio, dev.id,path)
+                        self.properties[f'{dev.name}/{channel.id}'].call = partial(IIO.read_iio, dev.id, path)
 
                     elif channel_attr == 'raw':
                         raw = channel.attrs[channel_attr].value
@@ -141,7 +138,7 @@ class IIO:
                                 parent=self,
                                 category='sensor',
                                 entity=dev.name,
-                                name = channel_attr[:-10],
+                                name=channel_attr[:-10],
                                 description=dev.name + ' ' + channel.id,
                                 type=DataType.FLOAT,
                                 available=channel.attrs[channel_attr].value.split(),
@@ -149,7 +146,7 @@ class IIO:
 
                         else:
                             self.properties[f'{dev.name}/{channel.id}/{channel_attr[:-10]}'].available = \
-                            channel.attrs[channel_attr].value.split()
+                                channel.attrs[channel_attr].value.split()
 
 
                     else:
@@ -167,7 +164,7 @@ class IIO:
                             f'{dev.name}/{channel.id}/{channel_attr}'].description = dev.name + ' ' + channel.id + ' ' + channel_attr
                         self.properties[f'{dev.name}/{channel.id}/{channel_attr}'].name = channel_attr
                         self.properties[f'{dev.name}/{channel.id}/{channel_attr}'].value = \
-                        channel.attrs[channel_attr].value.rstrip()
+                            channel.attrs[channel_attr].value.rstrip()
                         self.properties[f'{dev.name}/{channel.id}/{channel_attr}'].call = partial(
                             IIO.read_iio, dev.id, path)
 
@@ -183,9 +180,9 @@ class IIO:
                 if raw is not None:
                     self.properties[f'{dev.name}/{channel.id}'].value = (float(raw) + float(offset)) * float(scale)
                     self.properties[f'{dev.name}/{channel.id}'].call = partial(IIO.read_processed,
-                                                                                               dev.id, channel.attrs[
-                                                                                                   'raw'].filename,
-                                                                                               float(scale), float(offset))
+                                                                               dev.id, channel.attrs[
+                                                                                   'raw'].filename,
+                                                                               float(scale), float(offset))
 
         if len(dev.attrs) > 0:
 
@@ -212,12 +209,12 @@ class IIO:
                             category='sensor',
                             entity=dev.name,
                             name=device_attr[:-10],
-                            description=dev.name + ' ' +  channel.id + ' ' + device_attr[:-10],
+                            description=dev.name + ' ' + channel.id + ' ' + device_attr[:-10],
                             type=DataType.UNDEFINED,
                             interval=-1)
 
                     self.properties[f'{dev.name}/{channel.id}/{device_attr[:-10]}'].available = \
-                    dev.attrs[device_attr].value.split()
+                        dev.attrs[device_attr].value.split()
 
                 else:
                     if f'{dev.name}/{channel.id}/{device_attr}' not in self.properties:

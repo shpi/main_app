@@ -1,5 +1,6 @@
-import sys
 import os
+import sys
+
 from core.DataTypes import DataType
 from core.Property import EntityProperty, StaticProperty
 

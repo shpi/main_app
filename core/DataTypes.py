@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from hardware.iio import ChannelType
-from enum import Enum
 import logging
+from enum import Enum
+
+from hardware.iio import ChannelType
 
 
 class DataType(Enum):
@@ -36,7 +37,7 @@ class DataType(Enum):
     WORD = 14  # int, 0-65535
     ENUM = 15
     MODULE = 16  # 'ok', 'error', 'not_initialized'
-    THREAD = 17 #
+    THREAD = 17  #
 
     # Special types (from sensors)
     TEMPERATURE = 20  # float, Celsius
@@ -98,9 +99,6 @@ class Convert:
             logging.error(str(e))
             return str(value_str)
 
-
-
-
     @staticmethod
     def iio_to_shpi(iio: ChannelType):
         if iio in Convert._mapping_iio_shpi:
@@ -146,8 +144,8 @@ class Convert:
                          DataType.PRESSURE: 'pressure',
                          DataType.HUMIDITY: 'humidity',
                          DataType.PRESENCE: 'presence',
-                         #DataType.ONOFF: 'on_off',
-                         #DataType.COUNT: 'count',
+                         # DataType.ONOFF: 'on_off',
+                         # DataType.COUNT: 'count',
                          DataType.FAN: 'fan',
                          DataType.ACCELERATION: 'acceleration',
                          DataType.VELOCITY: 'velocity',
@@ -167,7 +165,7 @@ class Convert:
                          DataType.WORK: 'work',
                          DataType.ENERGY: 'energy',
                          DataType.CONDUCTIVITY: 'conductivity',
-                         #DataType.BYTES: 'bytes',
+                         # DataType.BYTES: 'bytes',
                          DataType.GPS_COORDS: 'gps_coordinates',
                          DataType.LATITUDE: 'latitude',
                          DataType.LONGITUDE: 'longitude',
