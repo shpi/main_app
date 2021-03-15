@@ -138,7 +138,7 @@ class MLX90615:
         if self.cpu_temp_mean > sensor_temp:
             temp -= (self.cpu_temp_mean - sensor_temp) / 60
 
-        if self.fan_speed_mean < 1800:
+        if self.fan_speed_mean < 1790:
             temp -= 1000
 
         if self.backlight_level_mean > 0:

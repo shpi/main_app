@@ -95,7 +95,7 @@ Item {
         }
     }
 
-    Connections {
+   /* Connections {
                 id: screensaverconn
                 target: modules
 
@@ -106,4 +106,6 @@ Item {
 
                 }
 
-}}
+} */
+
+}

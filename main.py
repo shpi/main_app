@@ -1,5 +1,4 @@
 # This Python file uses the following encoding: utf-8
-
 import logging
 import os
 import signal
@@ -48,7 +47,7 @@ logs = LogModel()
 handler = MessageHandler(logs)
 
 logging.basicConfig(
-    level=logging.WARNING,
+    level=logging.DEBUG,
     format='%(asctime)s.%(msecs)03d %(module)s - %(funcName)s: %(message)s',
     datefmt='%m-%d %H:%M:%S',
     handlers=[
@@ -164,7 +163,7 @@ def killThreads():
 
 app = QApplication(sys.argv)
 
-QFontDatabase.addApplicationFont("./fonts/orkney-custom.ttf")
+QFontDatabase.addApplicationFont("./fonts/dejavu-custom.ttf")
 
 qInstallMessageHandler(qml_log)
 
@@ -173,7 +172,7 @@ app.setApplicationName("Main")
 app.setOrganizationName("SHPI GmbH")
 app.setOrganizationDomain("shpi.de")
 
-app.setFont(QFont('Orkney Regular', 10))
+app.setFont(QFont('Dejavu', 15))
 
 engine = QQmlApplicationEngine()
 engine.rootContext().setContextProperty("logs", logs)

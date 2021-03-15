@@ -32,7 +32,7 @@ Item {
             days[i] = component.createObject(precast, {
                                                  "index": i,
                                                  "weather_icons": weather_icons_arr,
-                                                 "average_temp": weatherdaysconn.target.data['daily'][i]['temp']['day'],
+                                                 "average_temp": weatherdaysconn.target.data['daily'][i]['temp']['day'].toFixed(1),
                                                  "day": new Date(weatherdaysconn.target.data['daily'][i]['dt'] * 1000)
                                              })
 

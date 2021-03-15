@@ -99,7 +99,7 @@ ApplicationWindow {
 
     FontLoader {
         id: localFont
-        source: "../fonts/orkney-custom.ttf"
+        source: "../fonts/dejavu-custom.ttf"
     }
 
     Drawer {
@@ -318,7 +318,7 @@ ApplicationWindow {
         function onJump_stateChanged() {
             if (appearance.jump_state) {
                 view.currentIndex = 1
-                console.log('JumpState: ' + appearance.jump_state)
+                //console.log('JumpState: ' + appearance.jump_state)
             }
         }
     }

@@ -118,6 +118,7 @@ class Weather(QObject):
                                                           description="Rain per sqm in mm", type=DataType.HEIGHT)
         self._properties['current_temp'] = EntityProperty(parent=self, category='info/weather', entity=self.name,
                                                           interval=-1, name='current_temp',
+                                                          value = 0,
                                                           description="Temperature in °C", type=DataType.TEMPERATURE)
         self._properties['current_weather_icon'] = EntityProperty(parent=self, category='info/weather',
                                                                   entity=self.name, interval=-1,
@@ -197,6 +198,10 @@ class Weather(QObject):
     def intervalChanged(self):
         pass
 
+    @Signal
+    def dataChanged(self):
+        pass
+
     # @Property(int, notify=intervalChanged)
     def interval(self):
         return self._properties['module'].interval
@@ -207,15 +212,15 @@ class Weather(QObject):
         self._properties['module'].interval = int(interval)
         self.settings.setValue('weather/' + self.name + "/interval", interval)
 
-    @Property(float)
+    @Property(float, notify=dataChanged)
     def current_temp(self):
         return float(self._properties['current_temp'].value)
 
-    @Property(float)
+    @Property(float, notify=dataChanged)
     def lastupdate(self):
         return float(self._properties['current_temp'].last_update)
 
-    @Property(str)
+    @Property(str, notify=dataChanged)
     def current_weather_icon(self):
         return self._properties['current_weather_icon'].value
 
@@ -246,9 +251,7 @@ class Weather(QObject):
         self.settings.setValue('weather/' + self.name + "/city", city)
         self.cityChanged.emit()
 
-    @Signal
-    def dataChanged(self):
-        pass
+
 
     @Property("QVariantMap", notify=dataChanged)
     def data(self) -> dict:

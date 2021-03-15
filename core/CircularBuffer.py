@@ -129,6 +129,8 @@ class CircularBuffer:
         if (min != max):
             scaley = height / (abs(min - max))
 
+
+
         size = self.length()
         polyline = QPolygonF(size)
         buffer = (ctypes.c_double * 2 * size).from_address(shiboken2.getCppPointer(polyline.data())[0])

@@ -8,7 +8,7 @@ Rectangle {
 
     property string instancename: parent.instancename !== undefined ? parent.instancename : modules.modules['Info']['Weather'][0]
     property string weatherimage: modules.loaded_instances['Info']['Weather'][instancename].current_weather_icon
-    property string average_temp: modules.loaded_instances['Info']['Weather'][instancename].current_temp
+    property real average_temp: modules.loaded_instances['Info']['Weather'][instancename].current_temp
     property string day: new Date(modules.loaded_instances['Info']['Weather'][instancename].lastupdate * 1000)
     property string dayname: Qt.formatDate(day, "dddd")
 
@@ -29,7 +29,7 @@ Rectangle {
     }
 
     Text {
-        text: average_temp
+        text: average_temp.toFixed(1)
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 5
         anchors.horizontalCenter: parent.horizontalCenter
@@ -48,7 +48,7 @@ Rectangle {
     Connections {
         id: weatherdaysconn
         target: modules.loaded_instances['Info']['Weather'][instancename]
-        onDataChanged: {
+        function onDataChanged() {
             weatherimage = modules.loaded_instances['Info']['Weather'][instancename].current_weather_icon
             average_temp = modules.loaded_instances['Info']['Weather'][instancename].current_temp
             day = new Date(modules.loaded_instances['Info']['Weather'][instancename].lastupdate * 1000)
