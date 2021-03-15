@@ -1,6 +1,6 @@
 import QtQuick 2.15
 
-import "../../fonts/"
+import "qrc:/fonts"
 
 Rectangle {
     id: root
@@ -54,7 +54,7 @@ Rectangle {
     ListModel {
         id: keyboard_us
 
-            ListElement {label: "q";   alternate: "1";  ratio: "1"}
+            ListElement {label: "q"; alternate: "1";  ratio: "1"}
             ListElement {label: "w"; alternate: "2"; ratio: "1"}
             ListElement {label: "e"; alternate: "3"; ratio: "1"}
             ListElement {label: "r"; alternate: "4"; ratio: "1"}
@@ -91,7 +91,6 @@ Rectangle {
     }
             ListModel {
                 id: keyboard_num
-
 
             ListElement {label:  "1"; ratio: "1"}
             ListElement {label:  "2"; ratio: "1"}

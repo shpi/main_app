@@ -3,7 +3,7 @@ import QtQuick.Controls 2.12
 import QtQuick.Shapes 1.15
 import QtGraphicalEffects 1.12
 
-import "../../fonts/"
+import "qrc:/fonts"
 
 Rectangle {
     id: root

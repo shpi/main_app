@@ -1,7 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 
-import "../../fonts/"
+import "qrc:/fonts"
 
 Flickable {
 
@@ -126,8 +126,8 @@ Flickable {
                             height: 70
                             leftPadding: 10
 
-                            RoundButton {
-                                radius: height / 2
+                            RadioButton {
+                                //radius: height / 2
                                 anchors.verticalCenter: parent.verticalCenter
                                 visible: wrapper.ListView.isCurrentItem ? true : false
                                 text: "\u2713 set"
@@ -141,7 +141,7 @@ Flickable {
                                             = lat
                                     modules.loaded_instances['Info']['Weather'][instancename].city
                                             = name
-                                    modules.loaded_instances['Info']['Weather'][instancename].update()
+                                    modules.loaded_instances['Info']['Weather'][instancename].start_update()
                                 }
                             }
                             Text {

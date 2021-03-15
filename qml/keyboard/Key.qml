@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.9
 
 Item {
     id: root
@@ -83,6 +83,7 @@ Item {
     MouseArea {
         id: mouseArea
         anchors.fill: parent
+        pressAndHoldInterval: 300
         onPressAndHold: alternatesRow.visible = true
 
         onClicked: {

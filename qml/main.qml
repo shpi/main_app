@@ -4,11 +4,11 @@ import QtQuick.VirtualKeyboard 2.1
 import Qt.labs.folderlistmodel 2.12
 import QtGraphicalEffects 1.12
 
-import "../fonts/"
+import "qrc:/fonts"
 
 ApplicationWindow {
     id: window
-    title: qsTr("SHPI")
+    title: "SHPI"
     width: 800
     height: 480
     visible: true
@@ -41,7 +41,8 @@ ApplicationWindow {
     FolderListModel {
         caseSensitive: false
         id: folderModel
-        folder: "../backgrounds/"
+        folder: "file://" + applicationDirPath + "/backgrounds"
+
         nameFilters: ["*.png", "*.jpg"]
         onCountChanged: {
             if (folderModel.count > 0)
@@ -99,7 +100,7 @@ ApplicationWindow {
 
     FontLoader {
         id: localFont
-        source: "../fonts/dejavu-custom.ttf"
+        source: "/fonts/dejavu-custom.ttf"
     }
 
     Drawer {
@@ -425,4 +426,5 @@ ApplicationWindow {
             source: "keyboard/Keyboard.qml"
         }
     }
+
 }

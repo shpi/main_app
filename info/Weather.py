@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+import threading
 
 from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject, QUrl, \
     QUrlQuery
@@ -319,12 +320,17 @@ class Weather(QObject):
         return self._has_error
 
     @Slot()
+    def start_update(self):
+        self.update()
+        #threading.Thread(target=self.update).start()
+
+
+
     def update(self):
         status = 'NOT_INITIALIZED'
         try:
             if (self._properties['lon'].value != '') and (self._properties['lat'].value != ''):
                 status = 'OK'
-
                 url = QUrl(Weather.BASE_URL)
                 query = QUrlQuery()
                 query.addQueryItem("lat", str(self._properties['lat'].value))

@@ -5,7 +5,7 @@ import QtGraphicalEffects 1.12
 
 
 
-import "../../fonts/"
+import "qrc:/fonts"
 
 Rectangle {
 
@@ -87,7 +87,8 @@ Rectangle {
     MouseArea {
     anchors.fill: parent
     enabled: instance.logging
-    onClicked: {
+
+    onPressAndHold: {
     graphLoader.sensorpath = instance.value_path
     graphLoader.divider = instance.divider
     graphLoader.interval = instance.interval

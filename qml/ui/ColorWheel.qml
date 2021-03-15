@@ -4,7 +4,8 @@ import QtGraphicalEffects 1.12 as Effects
 import QtQuick.Shapes 1.12 as Shapes
 import QtQuick.Controls 2.12
 
-import "../../fonts/"
+import "qrc:/fonts"
+
 
 Rectangle {
 

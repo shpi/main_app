@@ -1,6 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
-import "../../fonts/"
+import "qrc:/fonts"
 
 Item {
     id: root

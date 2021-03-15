@@ -31,6 +31,8 @@ from hardware.InputDevs import InputDevs
 from hardware.Leds import Led
 from hardware.System import SystemInfo
 
+import files
+
 # from PySide2.QtQml import QQmlDebuggingEnabler
 
 if check_output(['uname', '-m']).startswith(b'armv6'):
@@ -175,6 +177,7 @@ app.setOrganizationDomain("shpi.de")
 app.setFont(QFont('Dejavu', 11))
 
 engine = QQmlApplicationEngine()
+engine.rootContext().setContextProperty("applicationDirPath", os.path.dirname(os.path.realpath(__file__)));
 engine.rootContext().setContextProperty("logs", logs)
 engine.rootContext().setContextProperty("inputs", inputs)
 engine.rootContext().setContextProperty('wifi', wifi)
@@ -184,10 +187,9 @@ engine.rootContext().setContextProperty("modules", modules)
 
 setup_interrupt_handling()
 
-filename = os.path.join(os.path.dirname(
-    os.path.realpath(__file__)), "qml/main.qml")
+#filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "qml/main.qml")
 
-engine.load(QUrl.fromLocalFile(filename))
+engine.load("qrc:/qml/main.qml")
 
 if not engine.rootObjects():
     sys.exit(-1)

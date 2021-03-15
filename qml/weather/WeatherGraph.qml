@@ -2,7 +2,7 @@
 import QtQuick.Controls 2.12
 import QtQuick.Shapes 1.15
 
-import "../../fonts/"
+import "qrc:/fonts"
 
 Item {
     id: root
@@ -19,7 +19,7 @@ Item {
     property var mintempspath: []
     property var maxtempspath: []
      property var rainpath: []
-    property var weekday: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    property var weekday: ["Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"]
     property real scaleY: chart.height / (Math.abs(
                                               root.minValue - root.maxValue))
 
@@ -32,10 +32,10 @@ Item {
 
             if (daytempspath.length > 7) {
 
-                daytempspath.splice(0, 1)
-                mintempspath.splice(0, 1)
-                maxtempspath.splice(0, 1)
-                rainpath.splice(0, 1)
+                daytempspath = []
+                mintempspath = []
+                maxtempspath = []
+                rainpath = [] //splice(0, 1)
             }
 
 
