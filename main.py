@@ -172,7 +172,7 @@ app.setApplicationName("Main")
 app.setOrganizationName("SHPI GmbH")
 app.setOrganizationDomain("shpi.de")
 
-app.setFont(QFont('Dejavu', 15))
+app.setFont(QFont('Dejavu', 11))
 
 engine = QQmlApplicationEngine()
 engine.rootContext().setContextProperty("logs", logs)

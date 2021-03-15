@@ -79,6 +79,6 @@ class MessageHandler(logging.Handler):
     def emit(self, record):
         self.format(record)
         self.model.appendRow({b'levelno': record.levelno,
-                              b'msg': record.msg,
+                              b'msg': f'{record.module} - {record.funcName}: {record.msg}',
                               b'levelname': record.levelname,
                               b'asctime': record.asctime})

@@ -39,7 +39,7 @@ Rectangle {
 
     Image {
         anchors.horizontalCenter: parent.horizontalCenter
-        source: weatherimage !== '0' ? "../../weathersprites/"
+        source: weatherimage !== '' ? "../../weathersprites/"
                                                 + weatherimage + ".png" : ""
 
 
