@@ -91,7 +91,7 @@ Item {
                 rainpath.push(
                             Qt.point(
                             new Date(weatherconn.target.data['daily'][i]['dt'] - (root.mindate / 1000)),
-                            chart.height - (weatherconn.target.data['daily'][i]['rain'] * 10)))
+                            chart.height - (weatherconn.target.data['daily'][i]['rain'] * 20)))
             else
                 rainpath.push(
                             Qt.point(
@@ -150,7 +150,7 @@ Item {
             startY: chart.height
             fillColor: "#880000FF"
             capStyle: ShapePath.FlatCap
-            strokeWidth: 7
+            strokeWidth: 1
             strokeColor: "darkblue"
 
             PathPolyline {
@@ -166,7 +166,7 @@ Item {
             startY: 0
             fillColor: "transparent"
             capStyle: ShapePath.FlatCap
-            strokeWidth: 7
+            strokeWidth: 5
             strokeColor: Colors.black
 
             PathPolyline {
@@ -181,8 +181,8 @@ Item {
             startY: 0
             fillColor: "transparent"
             capStyle: ShapePath.FlatCap
-            strokeWidth: 2
-            strokeColor: "blue"
+            strokeWidth: 3
+            strokeColor: "lightblue"
 
             PathPolyline {
                 id: mintemps
@@ -196,7 +196,7 @@ Item {
             startY: 0
             fillColor: "transparent"
             capStyle: ShapePath.FlatCap
-            strokeWidth: 2
+            strokeWidth: 3
             strokeColor: "red"
 
             PathPolyline {

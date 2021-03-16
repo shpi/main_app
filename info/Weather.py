@@ -5,8 +5,11 @@ import os
 import sys
 import threading
 
-from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject, QUrl, \
-    QUrlQuery
+import urllib.request
+from urllib.error import HTTPError, URLError
+
+
+from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
 from PySide2.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 
 from core.DataTypes import DataType
@@ -331,17 +334,39 @@ class Weather(QObject):
         try:
             if (self._properties['lon'].value != '') and (self._properties['lat'].value != ''):
                 status = 'OK'
-                url = QUrl(Weather.BASE_URL)
-                query = QUrlQuery()
-                query.addQueryItem("lat", str(self._properties['lat'].value))
-                query.addQueryItem("lon", str(self._properties['lon'].value))
-                query.addQueryItem("appid", self._api_key)
-                query.addQueryItem("exclude", "minutely,hourly")
-                query.addQueryItem("units", "metric")
-                url.setQuery(query)
-                request = QNetworkRequest(url)
-                reply: QNetworkReply = self.manager.get(request)
-                reply.finished.connect(self._handle_reply)
+                url = Weather.BASE_URL
+                params = {'lat': str(self._properties['lat'].value),
+                          "lon": str(self._properties['lon'].value),
+                          "appid": self._api_key,
+                          "exclude": "minutely,hourly",
+                          "units": "metric"}
+
+                url += urllib.parse.urlencode(params)
+
+
+
+                try:
+                    response = urllib.request.urlopen(url, timeout=5)
+
+
+                except HTTPError as error:
+                    status = 'ERROR'
+                    self.properties['module'].value = status
+                    logging.debug('Data not retrieved because %s\nURL: %s', error, url)
+                    return None
+                except URLError as error:
+                    status = 'ERROR'
+                    if isinstance(error.reason, socket.timeout):
+                        logging.debug('socket timed out - URL %s', url)
+                    else:
+                        logging.debug('some other error happened')
+                    self.properties['module'].value = status
+                    return None
+
+                else:
+                    data = response.read().decode('utf-8')
+                    self._handle_reply(data)
+
         except Exception as e:
             status = 'ERROR'
             exception_type, exception_object, exception_traceback = sys.exc_info()
@@ -350,12 +375,8 @@ class Weather(QObject):
 
         return status
 
-    def _handle_reply(self):
+    def _handle_reply(self,data):
 
-        has_error = False
-        reply: QNetworkReply = self.sender()
-        if reply.error() == QNetworkReply.NoError:
-            data = reply.readAll().data()
             d = json.loads(data)
             has_error = False
             self._data = d
@@ -389,11 +410,6 @@ class Weather(QObject):
 
             logging.debug(f"{self.current_date}: Weather: added forecast")
 
-        else:
-            self._data = dict()
-            has_error = True
-            logging.error(f"error: {reply.errorString()}")
 
-        self._has_error = has_error
-        self.dataChanged.emit()
-        reply.deleteLater()
+            self.dataChanged.emit()
+
