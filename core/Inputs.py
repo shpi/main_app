@@ -39,9 +39,9 @@ class InputListModel(QAbstractListModel):
     def updateKeys(self):
         self._keys = list(self.entries.keys())
 
-    def rowCount(self, parent=QModelIndex()):
-        if parent.isValid():
-            return 0
+    def rowCount(self, parent=None):
+        #if parent.isValid():
+        #    return 0
         return len(self.entries)
 
     def updateListView(self, key):

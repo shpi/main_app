@@ -41,7 +41,7 @@ ApplicationWindow {
     FolderListModel {
         caseSensitive: false
         id: folderModel
-        folder: "file://" + applicationDirPath + "/backgrounds"
+        folder: "file://" + applicationDirPath + "/backgrounds/"
 
         nameFilters: ["*.png", "*.jpg"]
         onCountChanged: {

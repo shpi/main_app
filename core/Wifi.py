@@ -25,7 +25,7 @@ class WifiNetworkModel(QAbstractListModel):
         self._entries = entries
         self.settings = settings
 
-    def rowCount(self, parent=QModelIndex()):
+    def rowCount(self, parent=None):
         if parent.isValid():
             return 0
         return len(self._entries)

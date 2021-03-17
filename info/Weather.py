@@ -28,9 +28,9 @@ class CityModel(QAbstractListModel):
         super(CityModel, self).__init__()
         self._entries = []
 
-    def rowCount(self, parent=QModelIndex()):
-        if parent.isValid():
-            return 0
+    def rowCount(self, parent=None):
+        #if parent.isValid():
+        #    return 0
         return len(self._entries)
 
     def data(self, index, role=Qt.DisplayRole):

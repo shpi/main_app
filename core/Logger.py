@@ -37,7 +37,7 @@ class LogModel(QAbstractListModel):
             Qt.UserRole + 276: b"asctime"
         }
 
-    def rowCount(self, parent=QModelIndex()) -> int:
+    def rowCount(self, parent=None) -> int:
         # if parent.isValid():
         #    return 0
         return len(self._items)
@@ -54,7 +54,7 @@ class LogModel(QAbstractListModel):
         #    self.removeRows(0)
 
     @Slot(int)
-    def removeRows(self, row, parent=QModelIndex()):
+    def removeRows(self, row, parent=None):
         self.beginRemoveRows(parent, row, row)
         self._items.remove(self._items[row])
         self.endRemoveRows()

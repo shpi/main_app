@@ -16,7 +16,7 @@ Item {
 
     FolderListModel {
         id: folderModel
-        folder: "../backgrounds/"
+        folder: "file://" + applicationDirPath + "/backgrounds/"
         nameFilters: ["*.png", "*.jpg"]
     }
 
