@@ -268,7 +268,7 @@ class Thermostat(QObject):
     def temp_path(self, value):
         self._temp_path = str(value)
         self.settings.setValue("thermostat/" + self.name + '/temp_path', self._temp_path)
-        self.settingsChanged.emit()
+        self.pathChanged.emit()
 
     def heating_state(self):
         return str(self._heating_state)
