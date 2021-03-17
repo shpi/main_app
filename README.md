@@ -1,5 +1,7 @@
 # Main app
 
+Image file: https://shpi.de/alpha_image.img.gz
+
 ## Credentials
 
 username: pi
