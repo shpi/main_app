@@ -7,3 +7,8 @@ the goal is to make it completely public, but this is only possible when funding
 does not depend fully on my own private pocket. 
 
 
+## Hint
+
+please run "gcc keymap.c -o keymap" in keymap directory to get a valid binary.
+
+
