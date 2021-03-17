@@ -31,7 +31,7 @@ class Git(QObject):
                                                    call=self.update,
                                                    interval=6000)
 
-        self._git_path = settings.value('git/remote_path', 'https://github.com/shpi/qmlui')
+        self._git_path = settings.value('git/remote_path', 'https://github.com/shpi/main_app')
         self._updates_remote = 0
         self._updates_local = 0
         self._update_hex = ''
