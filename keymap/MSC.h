@@ -1,5 +1,0 @@
-	[ MSC_SERIAL       ] = "MSC_SERIAL",
-	[ MSC_PULSELED     ] = "MSC_PULSELED",
-	[ MSC_GESTURE      ] = "MSC_GESTURE",
-	[ MSC_RAW          ] = "MSC_RAW",
-	[ MSC_SCAN         ] = "MSC_SCAN",
