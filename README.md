@@ -10,8 +10,10 @@ password: raspberry
 
 1. Setup wifi
 2. Create logic modules
-3. Create rooms
-4. Add modules to rooms
+3. Create UI/ShowValue modules
+4. Activate logging for vars with ShowValue UI instances for graphs under settings/system variables
+5. Create rooms
+6. Add modules to rooms
 
 
 ## Calibrated room temperature
