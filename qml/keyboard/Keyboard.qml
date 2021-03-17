@@ -6,9 +6,8 @@ Rectangle {
     id: root
     color: Colors.white
     anchors.fill: parent
-
     property var textfield
-    onTextfieldChanged: { valueText.text = textfield.text }
+    onTextfieldChanged: if (textfield) { valueText.text = textfield.text }
 
 
     ListModel {
@@ -208,6 +207,7 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.fill: parent
                     id: valueText
+                    text: ''
                     font.pixelSize: 50
                     color: Colors.black
                 }
@@ -278,6 +278,7 @@ Rectangle {
         onEnterClicked: {
             textfield.text = valueText.text
             textfield.focus = false
+            textfield = undefined
             keyboardPopup.close()
         }
 

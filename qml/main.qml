@@ -15,10 +15,11 @@ ApplicationWindow {
     font.family: localFont.name
 
     function keyboard(object) {
+        keyboardLoader.item.textfield = object
         if (object.activeFocus === true) {
-            keyboardLoader.item.textfield = object
             keyboardPopup.open()
-        }
+        } 
+
     }
 
     function getIndex(path, mmodel) {

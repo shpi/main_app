@@ -117,7 +117,7 @@ def check_loop():
         ready = True
 
 
-settings = QSettings("SHPI GmbH", "Main")
+settings = QSettings('settings.ini', QSettings.IniFormat)
 inputs = InputsDict(settings)
 systeminfo = SystemInfo()
 cpu = CPU()

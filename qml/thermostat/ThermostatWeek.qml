@@ -139,6 +139,7 @@ Rectangle {
         clip: true
 
         Column {
+            property var week:['Weekend','Workday']
             property var weekday: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
             property int schedulemode: modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule_mode
 
@@ -157,7 +158,7 @@ Rectangle {
 
                               weekdays.schedulemode == 1 ? '' :
 
-                              weekdays.schedulemode == 2 ? 'Weekend' : 'Workday'
+                              weekdays.schedulemode == 2 ? parent.week[(index % 2)] : ''
 
 
                     even: index % 2 ? true : false
