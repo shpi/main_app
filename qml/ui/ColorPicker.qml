@@ -76,7 +76,6 @@ Rectangle {
     MouseArea {
         anchors.fill: parent
         onClicked:  colorpopup.open()
-
     }
 
     Connections {
@@ -157,12 +156,13 @@ Rectangle {
                 width: control.width + control.radius
                 height: control.height
                 radius: control.radius
-                color: "#33ffffff"
+                opacity: 0.7
+                color: Colors.black
 
                 Text {
                     font.family: localFont.name
                     font.pixelSize: 50
-                    color: "white"
+                    color: Colors.black
                     anchors.rightMargin: 15
                     text: Icons.sun
                     anchors.verticalCenter: parent.verticalCenter
@@ -172,7 +172,7 @@ Rectangle {
                 Text {
                     font.family: localFont.name
                     font.pixelSize: 50
-                    color: "white"
+                    color: Colors.black
                     anchors.leftMargin: 15
                     text: Icons.ssun
                     anchors.verticalCenter: parent.verticalCenter
@@ -215,7 +215,7 @@ Rectangle {
                       0).toString() + ' G:' + (colorpicker.color.g * 255).toFixed(0).toString(
                       ) + ' B:' + (colorpicker.color.b * 255).toFixed(
                       0).toString()
-            color: "white"
+            color: Colors.black
             anchors.verticalCenter: parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.horizontalCenterOffset: -80
@@ -284,6 +284,10 @@ Rectangle {
                     colorpicker.color = Qt.hsla(
                                 (360 + (rotator.rotation % 360)) % 360 / 360,
                                 1, control.value, 1)
+
+                    instance.set((colorpicker.color.r * 100).toFixed(0),
+                                 (colorpicker.color.g * 100).toFixed(0),
+                                 (colorpicker.color.b * 100).toFixed(0))
                 }
 
             }
