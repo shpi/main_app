@@ -54,13 +54,13 @@ Rectangle {
     Rectangle {
 
         border.width: 3
-        color: Qt.hsva(rotator.rotation / 360, 1, control.value, 1)
+        color: colorpicker.color
         border.color: "white"
         antialiasing: true
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter
-        height: 100
-        width: 100
+        height: parent.height * 0.8
+        width: parent.width * 0.8
         radius: 10
 
         Text {
@@ -252,11 +252,9 @@ Rectangle {
                 anchors.fill: parent
                 preventStealing: true
                 property real velocity: 0.0
-                property int xStart: 0
                 property int xPrev: 0
-                property bool tracing: false
+                property int calcrotation: rotator.rotation
                 onPressed: {
-                    xStart = mouse.y
                     xPrev = mouse.y
                     velocity = 0
 
@@ -270,24 +268,21 @@ Rectangle {
 
                     xPrev = mouse.y
                     if (velocity > 10) {
-                        if (rotator.rotation - add < 0)
-                            rotator.rotation = rotator.rotation - add
-                        else
-                            rotator.rotation -= add
+                        if (calcrotation - add < 0)
+                            calcrotation -= add
                     } else if (velocity < -10) {
-                        if (rotator.rotation + add > 360)
-                            rotator.rotation = rotator.rotation + add
-                        else
-                            rotator.rotation += add
+                            calcrotation += add
                     }
 
                     colorpicker.color = Qt.hsla(
-                                (360 + (rotator.rotation % 360)) % 360 / 360,
+                                (360 + (calcrotation % 360)) % 360 / 360,
                                 1, control.value, 1)
 
                     instance.set((colorpicker.color.r * 100).toFixed(0),
                                  (colorpicker.color.g * 100).toFixed(0),
                                  (colorpicker.color.b * 100).toFixed(0))
+
+                    rotator.rotation = calcrotation
                 }
 
             }
