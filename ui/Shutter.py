@@ -40,6 +40,11 @@ class Shutter(QObject):
         self.checkthread = threading.Thread(target=self.thread)
         self.checkthread.start()
 
+
+    def delete_inputs(self):
+        pass
+
+
     @Signal
     def position_pathChanged(self):
         pass

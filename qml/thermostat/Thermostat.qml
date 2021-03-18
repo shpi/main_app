@@ -344,14 +344,9 @@ Rectangle {
                 modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp = settemp
                 temptext.text = modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp.toFixed(1)  + '°C'
 
-
-
-
                 }
 
-
             }
-
 
         }
     }

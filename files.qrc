@@ -46,8 +46,9 @@
 <file>qml/ui/MultiShutter.qml</file>
 <file>qml/ui/ShowValueSettings.qml</file>
 <file>qml/ui/Shutter.qml</file>
+<file>qml/ui/ColorPickerSettings.qml</file>
 <file>qml/ui/PieChart.qml</file>
-<file>qml/ui/ColorWheel.qml</file>
+<file>qml/ui/ColorPicker.qml</file>
 <file>qml/ui/ShutterSettings.qml</file>
 <file>qml/ui/ShowValue.qml</file>
 <file>qml/main.qml</file>

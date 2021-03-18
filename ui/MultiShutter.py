@@ -28,6 +28,10 @@ class MultiShutter(QObject):
         self._success = 0
         self._failed = 0
 
+
+    def delete_inputs(self):
+        pass
+
     @Signal
     def position_pathChanged(self):
         pass

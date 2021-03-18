@@ -22,6 +22,7 @@ Rectangle {
     text: "You're up to date!"
     anchors.horizontalCenter: parent.horizontalCenter
     color: "green"
+    font.pixelSize: 24
     }
 
 
@@ -30,6 +31,7 @@ Rectangle {
     text: "New version available (" + git.updates_remote + ")"
     anchors.horizontalCenter: parent.horizontalCenter
     color: "red"
+    font.pixelSize: 24
     }
 
 

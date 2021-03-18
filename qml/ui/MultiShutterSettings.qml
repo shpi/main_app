@@ -74,7 +74,7 @@ Rectangle {
 }
             Repeater {
 
-                model: modules.loaded_instances['UI']['MultiShutter'][instancename].desired_position_path
+                model: modules.loaded_instances['UI']['MultiShutter'][instancename] ? modules.loaded_instances['UI']['MultiShutter'][instancename].desired_position_path : 0
                 Rectangle {
                     color: index % 2 === 0 ? Colors.white : "transparent"
                     height: 50

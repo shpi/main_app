@@ -22,6 +22,9 @@ class PieChart(QObject):
             self._values[value_path] = self.inputs.entries[value_path].value
             self.inputs.register_event(value_path, self.ui_event)
 
+    def delete_inputs(self):
+        pass
+
     @Signal
     def position_pathChanged(self):
         pass
