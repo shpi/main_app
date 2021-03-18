@@ -268,7 +268,6 @@ Rectangle {
 
                     xPrev = mouse.y
                     if (velocity > 10) {
-                        if (calcrotation - add < 0)
                             calcrotation -= add
                     } else if (velocity < -10) {
                             calcrotation += add
