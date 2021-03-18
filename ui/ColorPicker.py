@@ -64,8 +64,16 @@ class ColorPicker(QObject):
        try:
         self.inputs.entries[self._red_path].set(red)
         self._red = red
+       except Exception as e:
+           logging.error(str(e))
+
+       try:
         self.inputs.entries[self._green_path].set(green)
         self._green = green
+       except Exception as e:
+           logging.error(str(e))
+
+       try:
         self.inputs.entries[self._blue_path].set(blue)
         self._blue = blue
        except Exception as e:
