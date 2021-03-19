@@ -35,7 +35,7 @@ Flickable {
             stepSize: 60
             onValueChanged: modules.loaded_instances['Info']['Weather'][instancename].interval
                             = this.value
-            from: 600
+            from: 30
             to: 10000
             font.pixelSize: 32
             anchors.right: parent.right
