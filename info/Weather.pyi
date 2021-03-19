@@ -20,6 +20,7 @@ import json
 import PySide2.QtNetwork
 import logging
 import core.Toolbox
+import socket
 import core.DataTypes
 
 # This is not Python source even if it looks so. Make it clear for

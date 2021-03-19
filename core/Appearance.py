@@ -423,17 +423,16 @@ class Appearance(QObject):
             self._backlightlevel = value
 
     def interrupt(self, key, value):
-        # logging.debug(f"interrupt key: {key}, value: {value}")
-        if value > 0:
-            if self.state == 'OFF':
+        #logging.debug(f"interrupt key: {key}, value: {value}")
+        if self.state != 'ACTIVE' and value > 0:
                 self.lastuserinput = time.time() - self._dim_timer
-                logging.debug(
-                    f"changing nightmode to SLEEP, old state: {self.state}, lastinput: {self.lastuserinput}")
-                self.state = 'SLEEP'
-                if self._night:
-                    self.set_backlight(self._min_backlight_night)
-                else:
-                    self.set_backlight(self._min_backlight)
+                if self.state == 'OFF':
+                    logging.debug(f"changing nightmode to SLEEP, old state: {self.state}, lastinput: {self.lastuserinput}")
+                    self.state = 'SLEEP'
+                    if self._night:
+                        self.set_backlight(self._min_backlight_night)
+                    else:
+                        self.set_backlight(self._min_backlight)
 
     def tinterrupt(self, key, value):
         # logging.debug(f"tinterrupt key: {key}, value: {value}")

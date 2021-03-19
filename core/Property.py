@@ -116,6 +116,7 @@ class EntityProperty:
     def value(self, value):
         self.last_update = time.time()
         if value != self._value:
+            logging.debug(self.path + ' updated, new value: ' + str(value))
             # Todo: Check Dataype here!
             self._old_value = self._value
             self._value = value
@@ -123,6 +124,7 @@ class EntityProperty:
 
             for event in self.events:
                 if callable(event):
+                    logging.debug(self.path + ' event fired: ' + str(event))
                     event(self.path, self._value)
                 else:
                     logging.error(self.name + ' event[' + str(event) + '] ot a function!')

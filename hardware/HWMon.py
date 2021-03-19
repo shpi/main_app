@@ -100,7 +100,7 @@ class HWMon:
             try:
                 with open(f'/sys/class/hwmon/{channelid}/{channel}', 'r') as rf:
                     value = rf.read().strip()
-                    logging.debug(f' reading channel: {channel} value: {value}')
+                    #logging.debug(f' reading channel: {channel} value: {value}')
                     return Convert.str_to_tight_datatype(value)
 
 

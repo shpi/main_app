@@ -42,10 +42,10 @@ class MLX90615:
 
                         self.cpu_temp_mean = self.get_cpu_temp()
                         self.fan_speed_mean = 1900
-                        self._backlight_path = settings.value('mlx/backlight_path', 'backlight/brightness')
+                        self._backlight_path = settings.value('mlx/backlight_path', 'core/backlight/brightness')
 
                         self.backlight_level_mean = self.get_input_value(self._backlight_path)
-                        self._fan_path = settings.value('mlx/fan_path', 'hwmon/shpi/fan1_input')
+                        self._fan_path = settings.value('mlx/fan_path', 'sensor/shpi/fan1_input')
 
                         # self._backup_sensor_path = settings.value("mlx/" + self.name + '/backup_sensor_path', '')
                         # self._current_sensor_path = settings.value("mlx/" + self.name + '/current_path', '')
@@ -59,8 +59,6 @@ class MLX90615:
 
                         # self.load = os.getloadavg()[2]
                         self.cpu_temp_mean = self.get_cpu_temp()
-                        self.fan_speed_mean = 1900
-                        self.backlight_level_mean = self.get_input_value(self._backlight_path)
 
                         # self.current_consumption_mean = 0
 
@@ -114,12 +112,12 @@ class MLX90615:
 
     def calc_temp(self):
 
-        if self.last_movement + 60 > time.time():
+        if self.last_movement + 30 > time.time():
             logging.info('skipping room temp calculation due to movement')
             return self._temp.value
 
         if 'core/input_dev/lastinput' in self.inputs.entries and self.inputs.entries[
-            'core/input_dev/lastinput'].last_update + 60 > time.time():
+            'core/input_dev/lastinput'].last_update + 30 > time.time():
             logging.info('skipping room temp calculation due to input')
             return self._temp.value
 
@@ -131,18 +129,28 @@ class MLX90615:
 
         if sensor_temp > object_temp:
             temp = object_temp - ((sensor_temp - object_temp) / 6)
+            logging.debug('sensor self correction: ' + str(temp))
 
         else:
             temp = object_temp
 
         if self.cpu_temp_mean > sensor_temp:
             temp -= (self.cpu_temp_mean - sensor_temp) / 60
+            logging.debug('sensor cpu correction: ' + str(temp))
+
+
 
         if self.fan_speed_mean < 1790:
             temp -= 1000
+            logging.debug('sensor fan correction: ' + str(temp))
+
+
 
         if self.backlight_level_mean > 0:
             temp -= self.backlight_level_mean * 3
+            logging.debug('sensor backlight correction: ' + str(temp))
+
+
 
         self._temp.value = temp
 
@@ -153,11 +161,14 @@ class MLX90615:
         self.cpu_temp_mean = (self.cpu_temp_mean * 9 + self.get_cpu_temp()) / 10
         self.sensor_temp_mean = (self.sensor_temp_mean * 9 + (
                 self.single_shot('in_temp_ambient_raw') or self.sensor_temp_mean)) / 10
-        self.fan_speed_mean = (self.fan_speed_mean * 9 + self.get_input_value(self._fan_path)) / 10
 
+        self.fan_speed_mean = (self.fan_speed_mean * 9 + self.get_input_value(self._fan_path)) / 10
+        logging.debug('fan spead mean:' + str(self.fan_speed_mean))
+        
         self.backlight_level_mean *= 9
         self.backlight_level_mean += self.get_input_value(self._backlight_path)
         self.backlight_level_mean /= 10
+        logging.debug('backlight mean: ' + str(self.backlight_level_mean))
 
         return 'OK'
 
