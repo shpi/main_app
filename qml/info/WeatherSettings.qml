@@ -1,5 +1,5 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 import "qrc:/fonts"
 
@@ -11,12 +11,10 @@ Flickable {
     property string instancename
     contentHeight: weathercolumn.implicitHeight + cityview.height + 100
 
-
-
     Text {
         id: header
         padding: 10
-        anchors.left:parent.left
+        anchors.left: parent.left
         text: '<b>Weather > ' + instancename + '</b>'
         color: Colors.black
         font.bold: true
@@ -27,8 +25,6 @@ Flickable {
         id: weathercolumn
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: 20
-
-
 
         SpinBox {
             value: modules.loaded_instances['Info']['Weather'][instancename].interval
@@ -89,109 +85,103 @@ Flickable {
             }
         }
     }
-        ListView {
+    ListView {
 
-            id: cityview
+        id: cityview
 
-            anchors.top: weathercolumn.bottom
-            anchors.topMargin: 20
+        anchors.top: weathercolumn.bottom
+        anchors.topMargin: 20
 
-            model: modules.loaded_instances['Info']['Weather'][instancename].cities
+        model: modules.loaded_instances['Info']['Weather'][instancename].cities
 
-            delegate: contactDelegate
+        delegate: contactDelegate
 
-            width: flickable.width
+        width: flickable.width
 
-            onCountChanged: cityview.height = cityview.count * 100
+        onCountChanged: cityview.height = cityview.count * 100
 
-            clip: true
+        clip: true
 
-            Component {
-                id: contactDelegate
+        Component {
+            id: contactDelegate
 
-                Rectangle {
-                    property int delindex: index
-                    id: wrapper
-                    height: 100
+            Rectangle {
+                property int delindex: index
+                id: wrapper
+                height: 100
 
+                color: index % 2 === 0 ? "transparent" : Colors.white
 
-                    color: index % 2 === 0 ? "transparent" : Colors.white
+                Column {
 
-                    Column {
+                    height: 80
+                    spacing: 0
+                    Row {
+                        spacing: 10
+                        height: 70
+                        leftPadding: 10
 
-                        height: 80
-                        spacing: 0
-                        Row {
-                            spacing: 10
-                            height: 70
-                            leftPadding: 10
+                        RadioButton {
+                            //radius: height / 2
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: wrapper.ListView.isCurrentItem ? true : false
+                            text: "\u2713 set"
+                            font.pixelSize: 40
 
-                            RadioButton {
-                                //radius: height / 2
-                                anchors.verticalCenter: parent.verticalCenter
-                                visible: wrapper.ListView.isCurrentItem ? true : false
-                                text: "\u2713 set"
-                                font.pixelSize: 40
+                            onClicked: {
 
-                                onClicked: {
-
-                                    modules.loaded_instances['Info']['Weather'][instancename].lon
-                                            = lon
-                                    modules.loaded_instances['Info']['Weather'][instancename].lat
-                                            = lat
-                                    modules.loaded_instances['Info']['Weather'][instancename].city
-                                            = name
-                                    modules.loaded_instances['Info']['Weather'][instancename].start_update()
-                                }
-                            }
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: '<b>' + name + ' ' + stat + '</b>, ' + country
-
-                                font.pixelSize: 32
-                                color: Colors.black
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: cityview.currentIndex = wrapper.delindex
-                                }
+                                modules.loaded_instances['Info']['Weather'][instancename].lon = lon
+                                modules.loaded_instances['Info']['Weather'][instancename].lat = lat
+                                modules.loaded_instances['Info']['Weather'][instancename].city = name
+                                modules.loaded_instances['Info']['Weather'][instancename].start_update()
                             }
                         }
-
                         Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: '<b>' + name + ' ' + stat + '</b>, ' + country
 
-                            text: 'Latitude: ' + lat + ', Longitude: ' + lon
-                            font.pixelSize: 24
+                            font.pixelSize: 32
                             color: Colors.black
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: cityview.currentIndex = wrapper.delindex
+                            }
                         }
+                    }
+
+                    Text {
+
+                        text: 'Latitude: ' + lat + ', Longitude: ' + lon
+                        font.pixelSize: 24
+                        color: Colors.black
                     }
                 }
             }
         }
+    }
 
-        RoundButton {
-            anchors.top: cityview.bottom
-            anchors.topMargin: 20
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: 'Delete Instance'
-            palette.button: "darkred"
-            palette.buttonText: "white"
-            font.pixelSize: 40
-            onClicked: {
+    RoundButton {
+        anchors.top: cityview.bottom
+        anchors.topMargin: 20
+        anchors.horizontalCenter: parent.horizontalCenter
+        text: 'Delete Instance'
+        palette.button: "darkred"
+        palette.buttonText: "white"
+        font.pixelSize: 40
+        onClicked: {
 
-                settingsstackView.pop()
-                modules.remove_instance('Info', 'Weather', instancename)
+            settingsstackView.pop()
+            modules.remove_instance('Info', 'Weather', instancename)
 
-                if (modules.modules['Info']['Weather'].length === 0)
-                    weatherrepeater.model = 0
-            }
-        }
-
-        Connections {
-            target: modules.loaded_instances['Info']['Weather'][instancename]
-            function onCitiesChanged() {
-                cityview.update()
-
-            }
+            if (modules.modules['Info']['Weather'].length === 0)
+                weatherrepeater.model = 0
         }
     }
 
+    Connections {
+        target: modules.loaded_instances['Info']['Weather'][instancename]
+        function onCitiesChanged() {
+            cityview.update()
+        }
+    }
+}

@@ -1,6 +1,6 @@
 pragma Singleton
 
-import QtQuick 2.12
+import QtQuick 2.15
 
 QtObject {
     readonly property color white: appearance.night === 1 ? "#000000" : "#ffffff"

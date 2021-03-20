@@ -1,5 +1,5 @@
-import QtQuick 2.12
-import QtQuick.Controls 2.12
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 import "qrc:/fonts"
 
 Item {
@@ -118,7 +118,7 @@ Item {
                 Label {
                     anchors.left: parent.right
                     anchors.leftMargin: 10
-                    text: "seconds inactivity."
+                    text: "s inactivity."
                     color: Colors.black
                 }
 
@@ -140,7 +140,7 @@ Item {
                 Label {
                     anchors.left: parent.right
                     anchors.leftMargin: 10
-                    text: "seconds inactivity."
+                    text: "s inactivity."
                     color: Colors.black
                 }
 
@@ -162,7 +162,7 @@ Item {
                 Label {
                     anchors.left: parent.right
                     anchors.leftMargin: 10
-                    text: "seconds inactivity."
+                    text: "s inactivity."
                     color: Colors.black
                 }
 
@@ -487,7 +487,7 @@ Item {
             }
 
             Text {
-                text: "Track Input Devices for activity"
+                text: "Tracked Input Devices for activity"
                 color: Colors.black
                 font.bold: true
                 anchors.topMargin: 20
@@ -515,7 +515,6 @@ Item {
     Component.onCompleted: {
 
         inputs.set_typeList('time')
-
 
         if (appearance.night_mode === 3) {
             combo_night_mode_end.currentIndex = getIndex(

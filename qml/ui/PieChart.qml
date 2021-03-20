@@ -1,5 +1,5 @@
 import QtQuick 2.15
-import QtQuick.Controls 2.12
+import QtQuick.Controls 2.15
 import QtQuick.Shapes 1.15
 import QtGraphicalEffects 1.12
 
@@ -11,7 +11,7 @@ Rectangle {
     property var instance: modules.loaded_instances['UI']['PieChart'][instancename]
     property bool shifted: false
     property real minimal: parent.width > parent.height ? parent.height : parent.width
-    property bool iconview: parent.iconview != undefined ? parent.iconview : false
+    property bool iconview: parent.iconview !== undefined ? parent.iconview : false
 
     function degToRad(degrees) {
           return degrees * (Math.PI / 180);

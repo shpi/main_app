@@ -1,8 +1,7 @@
-import Qt.labs.folderlistmodel 2.12
-import QtQuick 2.12
+import QtQuick 2.15
 import QtGraphicalEffects 1.12 as Effects
-import QtQuick.Shapes 1.12 as Shapes
-import QtQuick.Controls 2.12
+import QtQuick.Shapes 1.15 as Shapes
+import QtQuick.Controls 2.15
 
 import "qrc:/fonts"
 
