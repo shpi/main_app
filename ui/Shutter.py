@@ -37,6 +37,12 @@ class Shutter(QObject):
             self._desired_position = None
             pass
 
+        if self._actual_position_path in self.inputs.entries:
+            self.inputs.register_event(self._actual_position_path, self.ui_event)
+
+        if self._desired_position_path in self.inputs.entries:
+            self.inputs.register_event(self._desired_position_path, self.ui_event)
+
         self.checkthread = threading.Thread(target=self.thread)
         self.checkthread.start()
 
@@ -80,15 +86,25 @@ class Shutter(QObject):
         self.settings.setValue('shutter/' + self.name + "/desired_position", key)
 
     def ui_event(self, path, value):
-        if self._desired_position != self.inputs.entries[self._desired_position_path].value:
-            self._desired_position = self.inputs.entries[self._desired_position_path].value
+        if path == self._desired_position_path and self._desired_position_path in self.inputs.entries:
+            self._desired_position = value
             self.positionChanged.emit()
             if not self.checkthread.is_alive():
                 self.checkthread = threading.Thread(target=self.thread)
                 self.checkthread.start()
 
+        if path == self._actual_position_path and self._actual_position_path in self.inputs.entries:
+            self._actual_position = value
+            self.positionChanged.emit()
+            if not self.checkthread.is_alive():
+                self.checkthread = threading.Thread(target=self.thread)
+                self.checkthread.start()
+
+
     def thread(self):
         while self._actual_position is not None and self._actual_position != self._desired_position:
+            self.inputs.entries[self._desired_position_path].update()
+            self.inputs.entries[self._actual_position_path].update()
             time.sleep(0.1)
             # self.inputs.update_value(self._actual_position_path)
 

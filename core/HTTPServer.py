@@ -80,7 +80,8 @@ class ServerHandler(BaseHTTPRequestHandler):
                         # print('<td>' + str(value.get('step', '')) + '</td>')
                         message += '},'
 
-                message = message[0:-1]
+                if message[0:-1] == ',':
+                    message = message[0:-1]
                 message += '}'
 
                 # print(json.loads(message))

@@ -156,8 +156,8 @@ Rectangle {
                 width: control.width + control.radius
                 height: control.height
                 radius: control.radius
-                opacity: 0.7
-                color: Colors.black
+
+                color: Colors.blacktrans
 
                 Text {
                     font.family: localFont.name

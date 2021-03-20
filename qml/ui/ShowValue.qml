@@ -13,7 +13,6 @@ Rectangle {
     property var instance: modules.loaded_instances['UI']['ShowValue'][instancename]
 
 
-
     height: parent.height
     width: height * 0.7
     radius: 10
@@ -88,7 +87,7 @@ Rectangle {
     anchors.fill: parent
     enabled: instance.logging
 
-    onPressAndHold: {
+    onClicked:  {
     graphLoader.sensorpath = instance.value_path
     graphLoader.divider = instance.divider
     graphLoader.interval = instance.interval

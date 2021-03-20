@@ -352,7 +352,7 @@ class Weather(QObject):
 
                 except HTTPError as error:
                     status = 'ERROR'
-                    self.properties['module'].value = status
+                    self._properties['module'].value = status
                     logging.debug('Data not retrieved because %s\nURL: %s', error, url)
                     return None
                 except URLError as error:
@@ -361,7 +361,7 @@ class Weather(QObject):
                         logging.debug('socket timed out - URL %s', url)
                     else:
                         logging.debug('some other error happened')
-                    self.properties['module'].value = status
+                    self._properties['module'].value = status
                     return None
 
                 else:

@@ -16,12 +16,12 @@ class CircularBuffer:
     # allow_instances = True
     # description = "CircularBuffer based on Numpy arrays"
 
-    def __init__(self, length=100, dtype=np.float):
+    def __init__(self, length=100, initialvalue = 0, dtype=np.float):
 
         super(CircularBuffer, self).__init__()
 
-        self._time = np.zeros(length, dtype='datetime64[ms]')
-        self._data = np.zeros(length, dtype=dtype)
+        self._time = np.full(length, np.datetime64(int(time.time() * 1000), 'ms'), dtype='datetime64[ms]')
+        self._data = np.full(length, initialvalue, dtype=dtype)
         self._index = 0
         self._count = 0
         self._length = length

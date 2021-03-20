@@ -16,9 +16,17 @@ class ShowValue(QObject):
         self.settings = settings
         self.inputs = inputs
         self.name = name
-        self.buffer = CircularBuffer(30)
+
         self._value_path = settings.value('showvalue/' + self.name + "/path", '')
-        self._value = ''
+
+        if self._value_path in self.inputs.entries:
+            self._value = self.inputs.entries[self._value_path].value
+        else:
+            self._value = 0
+
+        self.buffer = CircularBuffer(100, initialvalue = self._value)
+
+
         self._precision = int(settings.value('showvalue/' + self.name + "/precision", 1))
 
         self._icon = settings.value('showvalue/' + self.name + "/icon", '')
@@ -53,11 +61,15 @@ class ShowValue(QObject):
 
     @Property(bool, notify=settingsChanged)
     def logging(self):
-        return self.inputs.entries[self._value_path].logging
+        if self._value_path in self.inputs.entries:
+         return self.inputs.entries[self._value_path].logging
+        else:
+            return False
 
     @logging.setter
     def logging(self, value):
-        self.inputs.entries[self._value_path].logging = bool(value)
+        if self._value_path in self.inputs.entries:
+         self.inputs.entries[self._value_path].logging = bool(value)
 
     @Property(int, notify=settingsChanged)
     def interval(self):

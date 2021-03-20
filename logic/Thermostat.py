@@ -112,7 +112,7 @@ class Thermostat(QObject):
         self._auto_temp = float(settings.value("thermostat/" + self.name + '/auto_temp', 20))
         self._party_temp = float(settings.value("thermostat/" + self.name + '/party_temp', 25))
         self._eco_temp = float(settings.value("thermostat/" + self.name + '/eco_temp', 18))
-        self._away_temp = float(settings.value("thermostat/" + self.name + '/away_temp', 15))
+        self._away_temp = float(settings.value("thermostat/" + self.name + '/away_temp', 16))
 
         self._hysteresis = int(settings.value("thermostat/" + self.name + '/hysteresis', 100))
         self._heating_state = 0

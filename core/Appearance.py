@@ -381,7 +381,7 @@ class Appearance(QObject):
                 self.set_backlight(self._max_backlight)
             self.state = 'ACTIVE'
 
-        if self._jump_state == 0 and self._jump_timer + self.lastuserinput < time.time():
+        if self._jump_state == 0 and self._jump_timer > 0 and self._jump_timer + self.lastuserinput < time.time():
             logging.debug(f"jump to home, timer: {self._jump_timer}, lastuserinput: {self.lastuserinput}")
             self._jump_state = 1
             self.jump_stateChanged.emit()

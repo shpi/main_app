@@ -18,7 +18,7 @@ Rectangle {
 
     Dial {
         id: dialTherm
-        width: parent.height * 0.8
+        width: parent.width < parent.height ? parent.width * 0.8 : parent.height * 0.8
         height: width
 
         anchors.centerIn: parent
@@ -83,7 +83,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             anchors.verticalCenterOffset: -5
             anchors.horizontalCenter: parent.horizontalCenter
-            font.pixelSize: 30
+            font.pixelSize: 25
             color: Colors.black
 
 
@@ -94,7 +94,7 @@ Rectangle {
         Text{
             anchors.verticalCenter: parent.verticalCenter
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenterOffset: 30
+            anchors.verticalCenterOffset: 25
             font.pixelSize: 40
             font.family: localFont.name
             text: Icons.fire

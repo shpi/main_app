@@ -12,7 +12,9 @@ Rectangle {
     color: Colors.whitetrans
     clip: true
     property string instancename: parent.instancename != undefined ? parent.instancename : modules.modules['UI']['Shutter'][0]
-    property bool iconview: false
+
+    property bool iconview: parent.iconview !== undefined ? parent.iconview : false
+
 
 
     Rectangle {

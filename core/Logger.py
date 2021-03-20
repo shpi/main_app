@@ -75,6 +75,7 @@ class MessageHandler(logging.Handler):
     def __init__(self, model, *args, **kwargs):
         super(MessageHandler, self).__init__(*args, **kwargs)
         self.model = model
+        self.setLevel(logging.WARNING)
 
     def emit(self, record):
         self.format(record)
