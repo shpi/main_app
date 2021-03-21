@@ -33,17 +33,7 @@ from hardware.System import SystemInfo
 
 import files
 
-# from PySide2.QtQml import QQmlDebuggingEnabler
-
-if check_output(['uname', '-m']).startswith(b'armv6'):
-    os.environ["QT_QPA_PLATFORM"] = "eglfs"
-    os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/local/qt5pi/plugins/platforms"
-    os.environ["LD_LIBRARY_PATH"] = "/usr/local/qt5pi/lib"
-    os.environ["GST_DEBUG"] = "omx:4"
-    os.environ["QT_QPA_EGLFS_FORCE888"] = "1"
-    # os.environ["QT_QPA_EGLFS_PHYSICAL_WIDTH"] = "85"
-    # os.environ["QT_QPA_EGLFS_PHYSICAL_HEIGHT"] = "51"
-    # os.environ["XDG_RUNTIME_DIR"] = "/home/pi/qmlui"
+# from PySide2.QtQml import QQmlDebuggingEnablers
 
 logs = LogModel()
 handler = MessageHandler(logs)

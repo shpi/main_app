@@ -13,7 +13,7 @@ Flickable {
 
     Text {
         id: header
-        padding: 10
+        //padding: 10
         anchors.left: parent.left
         text: '<b>Weather > ' + instancename + '</b>'
         color: Colors.black
@@ -31,7 +31,7 @@ Flickable {
             stepSize: 60
             onValueChanged: modules.loaded_instances['Info']['Weather'][instancename].interval
                             = this.value
-            from: 30
+            from: 600
             to: 10000
             font.pixelSize: 32
             anchors.right: parent.right
@@ -119,7 +119,7 @@ Flickable {
                     Row {
                         spacing: 10
                         height: 70
-                        leftPadding: 10
+                        //leftPadding: 10
 
                         RadioButton {
                             //radius: height / 2
@@ -132,7 +132,8 @@ Flickable {
 
                                 modules.loaded_instances['Info']['Weather'][instancename].lon = lon
                                 modules.loaded_instances['Info']['Weather'][instancename].lat = lat
-                                modules.loaded_instances['Info']['Weather'][instancename].city = name
+                                modules.loaded_instances['Info']['Weather'][instancename].city
+                                        = name
                                 modules.loaded_instances['Info']['Weather'][instancename].start_update()
                             }
                         }
