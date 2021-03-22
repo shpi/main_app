@@ -173,7 +173,7 @@ class InputDevs:
                                 self.properties['lasttouch'].value = value
 
                             if value != self.properties['lastinput'].value:
-                                logging.debug(devpath + ' key: '+ str(keycode) + ', ' + str(value))
+                                logging.debug(devpath + ' key: ' + str(keycode) + ', ' + str(value))
 
                             self.properties['lastinput'].value = value
                             self.properties[f'{id}/thread'].value = value  # helping to track activity on input device

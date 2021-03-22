@@ -3,7 +3,6 @@
 import datetime
 import logging
 import sys
-
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 
 from core.DataTypes import DataType
@@ -131,7 +130,7 @@ class Thermostat(QObject):
 
     def get_inputs(self) -> list:
 
-        return [self._module,]
+        return [self._module, ]
 
     @Signal
     def offsetChanged(self):

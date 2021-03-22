@@ -2,7 +2,6 @@
 
 import importlib
 import logging
-
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 
 from core.Toolbox import Pre_5_15_2_fix
@@ -16,7 +15,7 @@ class ModuleManager(QObject):
         self.inputs = inputs
         self.available_modules = {'Logic': ['Shutter', 'Thermostat'],
                                   'Info': ['Weather'],
-                                  'UI': ['Shutter', 'ShowValue', 'MultiShutter', 'PieChart','ColorPicker'],
+                                  'UI': ['Shutter', 'ShowValue', 'MultiShutter', 'PieChart', 'ColorPicker'],
                                   'Connections': ['HTTP']}
 
         self._modules = dict()  # saves names of loaded instances
@@ -184,7 +183,7 @@ class ModuleManager(QObject):
     def remove_instance(self, category, classname, instancename):
         self._modules[category][classname].remove(instancename)
         self.settings.setValue(category + "/" + classname, self._modules[category][classname])
-        #logging.warning(self.settings.value(category + "/" + classname))
+        # logging.warning(self.settings.value(category + "/" + classname))
         self._instances[category][classname][instancename].delete_inputs()
         del self._instances[category][classname][instancename]
         self.modulesChanged.emit()

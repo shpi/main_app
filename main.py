@@ -4,15 +4,15 @@ import os
 import signal
 import sys
 import time
-from subprocess import check_output
-
 from PySide2 import QtCore
 from PySide2.QtCore import QSettings, qInstallMessageHandler
 from PySide2.QtCore import QTimer, QUrl
 from PySide2.QtGui import QFont, QFontDatabase
 from PySide2.QtQml import QQmlApplicationEngine
 from PySide2.QtWidgets import QApplication
+from subprocess import check_output
 
+import files
 from core.Appearance import Appearance
 from core.Git import Git
 from core.HTTPServer import HTTPServer
@@ -31,15 +31,13 @@ from hardware.InputDevs import InputDevs
 from hardware.Leds import Led
 from hardware.System import SystemInfo
 
-import files
-
 # from PySide2.QtQml import QQmlDebuggingEnablers
 
 logs = LogModel()
 handler = MessageHandler(logs)
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.WARNING,
     format='%(asctime)s.%(msecs)03d %(module)s - %(funcName)s: %(message)s',
     datefmt='%m-%d %H:%M:%S',
     handlers=[
@@ -177,7 +175,7 @@ engine.rootContext().setContextProperty("modules", modules)
 
 setup_interrupt_handling()
 
-#filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "qml/main.qml")
+# filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "qml/main.qml")
 
 engine.load("qrc:/qml/main.qml")
 

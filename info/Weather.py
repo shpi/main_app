@@ -2,16 +2,13 @@ import datetime
 import json
 import logging
 import os
+import socket
 import sys
 import threading
-import socket
-
 import urllib.request
-from urllib.error import HTTPError, URLError
-
-
 from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
 from PySide2.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
+from urllib.error import HTTPError, URLError
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty
@@ -30,7 +27,7 @@ class CityModel(QAbstractListModel):
         self._entries = []
 
     def rowCount(self, parent=None):
-        #if parent.isValid():
+        # if parent.isValid():
         #    return 0
         return len(self._entries)
 
@@ -123,7 +120,7 @@ class Weather(QObject):
                                                           description="Rain per sqm in mm", type=DataType.HEIGHT)
         self._properties['current_temp'] = EntityProperty(parent=self, category='info/weather', entity=self.name,
                                                           interval=-1, name='current_temp',
-                                                          value = 0,
+                                                          value=0,
                                                           description="Temperature in °C", type=DataType.TEMPERATURE)
         self._properties['current_weather_icon'] = EntityProperty(parent=self, category='info/weather',
                                                                   entity=self.name, interval=-1,
@@ -256,8 +253,6 @@ class Weather(QObject):
         self.settings.setValue('weather/' + self.name + "/city", city)
         self.cityChanged.emit()
 
-
-
     @Property("QVariantMap", notify=dataChanged)
     def data(self) -> dict:
         return self._data
@@ -326,9 +321,7 @@ class Weather(QObject):
     @Slot()
     def start_update(self):
         self.update()
-        #threading.Thread(target=self.update).start()
-
-
+        # threading.Thread(target=self.update).start()
 
     def update(self):
         status = 'NOT_INITIALIZED'
@@ -343,8 +336,6 @@ class Weather(QObject):
                           "units": "metric"}
 
                 url += urllib.parse.urlencode(params)
-
-
 
                 try:
                     response = urllib.request.urlopen(url, timeout=5)
@@ -376,41 +367,39 @@ class Weather(QObject):
 
         return status
 
-    def _handle_reply(self,data):
+    def _handle_reply(self, data):
 
-            d = json.loads(data)
-            has_error = False
-            self._data = d
+        d = json.loads(data)
+        has_error = False
+        self._data = d
 
-            self._properties['sunrise'].value = datetime.datetime.fromtimestamp(int(d["current"]["sunrise"])).strftime(
-                '%H:%M:%S')
-            self._properties['sunset'].value = datetime.datetime.fromtimestamp(int(d["current"]["sunset"])).strftime(
-                '%H:%M:%S')
+        self._properties['sunrise'].value = datetime.datetime.fromtimestamp(int(d["current"]["sunrise"])).strftime(
+            '%H:%M:%S')
+        self._properties['sunset'].value = datetime.datetime.fromtimestamp(int(d["current"]["sunset"])).strftime(
+            '%H:%M:%S')
 
-            self._properties['current_pressure'].value = float(d["current"]["pressure"])
-            self._properties['current_humidity'].value = float(d["current"]["humidity"])
-            self._properties['current_wind_speed'].value = float(d["current"]["wind_speed"])
-            self._properties['current_wind_deg'].value = float(d["current"]["wind_deg"])
-            self._properties['current_clouds'].value = float(d["current"]["clouds"])
-            self._properties['current_pop'].value = float(d["current"]["pop"]) if 'pop' in d["current"] else 0
-            self._properties['current_uvi'].value = float(d["current"]["uvi"])
+        self._properties['current_pressure'].value = float(d["current"]["pressure"])
+        self._properties['current_humidity'].value = float(d["current"]["humidity"])
+        self._properties['current_wind_speed'].value = float(d["current"]["wind_speed"])
+        self._properties['current_wind_deg'].value = float(d["current"]["wind_deg"])
+        self._properties['current_clouds'].value = float(d["current"]["clouds"])
+        self._properties['current_pop'].value = float(d["current"]["pop"]) if 'pop' in d["current"] else 0
+        self._properties['current_uvi'].value = float(d["current"]["uvi"])
 
-            if 'rain' in d["current"]:
-                if isinstance(d["current"]["rain"], dict) and '1h' in d["current"]["rain"]:
-                    self._properties['current_rain'].value = float(str(d["current"]["rain"]['1h']))
-                elif isinstance(d["current"]["rain"], float):
-                    self._properties['current_rain'].value = float(str(d["current"]["rain"]))
+        if 'rain' in d["current"]:
+            if isinstance(d["current"]["rain"], dict) and '1h' in d["current"]["rain"]:
+                self._properties['current_rain'].value = float(str(d["current"]["rain"]['1h']))
+            elif isinstance(d["current"]["rain"], float):
+                self._properties['current_rain'].value = float(str(d["current"]["rain"]))
 
-            self._properties['current_temp'].value = float(d["current"]["temp"])
-            # self._properties['current_temp']['lastupdate'] = float(d["current"]["dt"])
+        self._properties['current_temp'].value = float(d["current"]["temp"])
+        # self._properties['current_temp']['lastupdate'] = float(d["current"]["dt"])
 
-            self._properties['current_weather_icon'].value = d.get("current", {}).get("weather", [{}])[0].get('icon')
-            self._properties['current_weather_desc'].value = d.get("current", {}).get("weather", [{}])[0].get(
-                'description')
-            self._properties['current_dew_point'].value = float(d["current"]["dew_point"])
+        self._properties['current_weather_icon'].value = d.get("current", {}).get("weather", [{}])[0].get('icon')
+        self._properties['current_weather_desc'].value = d.get("current", {}).get("weather", [{}])[0].get(
+            'description')
+        self._properties['current_dew_point'].value = float(d["current"]["dew_point"])
 
-            logging.debug(f"{self.current_date}: Weather: added forecast")
+        logging.debug(f"{self.current_date}: Weather: added forecast")
 
-
-            self.dataChanged.emit()
-
+        self.dataChanged.emit()

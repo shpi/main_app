@@ -4,9 +4,8 @@ import os
 import sys
 import threading
 import time
-from subprocess import check_output, Popen, PIPE, DEVNULL
-
 from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
+from subprocess import check_output, Popen, PIPE, DEVNULL
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty
@@ -26,7 +25,7 @@ class WifiNetworkModel(QAbstractListModel):
         self.settings = settings
 
     def rowCount(self, parent=None):
-        #if parent.isValid():
+        # if parent.isValid():
         #    return 0
         return len(self._entries)
 

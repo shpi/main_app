@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import logging
-
 from PySide2.QtCore import QSettings, QObject, Property, Signal
 from PySide2.QtGui import QPolygonF
 
@@ -24,8 +23,7 @@ class ShowValue(QObject):
         else:
             self._value = 0
 
-        self.buffer = CircularBuffer(100, initialvalue = self._value)
-
+        self.buffer = CircularBuffer(100, initialvalue=self._value)
 
         self._precision = int(settings.value('showvalue/' + self.name + "/precision", 1))
 
@@ -62,14 +60,14 @@ class ShowValue(QObject):
     @Property(bool, notify=settingsChanged)
     def logging(self):
         if self._value_path in self.inputs.entries:
-         return self.inputs.entries[self._value_path].logging
+            return self.inputs.entries[self._value_path].logging
         else:
             return False
 
     @logging.setter
     def logging(self, value):
         if self._value_path in self.inputs.entries:
-         self.inputs.entries[self._value_path].logging = bool(value)
+            self.inputs.entries[self._value_path].logging = bool(value)
 
     @Property(int, notify=settingsChanged)
     def interval(self):

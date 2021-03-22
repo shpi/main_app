@@ -1,11 +1,10 @@
 import glob
 import logging
+import numpy as np
 import os
 import struct
 import sys
 import time
-
-import numpy as np
 
 # from ufunclab import minmax # https://github.com/WarrenWeckesser/ufunclab
 # from core.CircularBuffer import CircularBuffer
@@ -138,19 +137,13 @@ class MLX90615:
             temp -= (self.cpu_temp_mean - sensor_temp) / 60
             logging.debug('sensor cpu correction: ' + str(temp))
 
-
-
         if self.fan_speed_mean < 1790:
             temp -= 1000
             logging.debug('sensor fan correction: ' + str(temp))
 
-
-
         if self.backlight_level_mean > 0:
             temp -= self.backlight_level_mean * 3
             logging.debug('sensor backlight correction: ' + str(temp))
-
-
 
         self._temp.value = temp
 
@@ -164,7 +157,7 @@ class MLX90615:
 
         self.fan_speed_mean = (self.fan_speed_mean * 9 + self.get_input_value(self._fan_path)) / 10
         logging.debug('fan spead mean:' + str(self.fan_speed_mean))
-        
+
         self.backlight_level_mean *= 9
         self.backlight_level_mean += self.get_input_value(self._backlight_path)
         self.backlight_level_mean /= 10

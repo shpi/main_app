@@ -1,5 +1,6 @@
 import logging
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
+
 from core.Toolbox import Pre_5_15_2_fix
 
 
@@ -19,7 +20,6 @@ class ColorPicker(QObject):
         self._green_path = settings.value('colorpicker/' + self.name + "/green_path", '')
         self._blue_path = settings.value('colorpicker/' + self.name + "/blue_path", '')
 
-
     def delete_inputs(self):
         pass
 
@@ -30,7 +30,6 @@ class ColorPicker(QObject):
     @Signal
     def valuesChanged(self):
         pass
-
 
     def red_path(self):
         return self._red_path
@@ -59,26 +58,25 @@ class ColorPicker(QObject):
         self._blue_path = key
         self.settings.setValue('colorpicker/' + self.name + "/blue_path", key)
 
-    @Slot(int,int,int)
+    @Slot(int, int, int)
     def set(self, red, green, blue):
-       try:
-        self.inputs.entries[self._red_path].set(red)
-        self._red = red
-       except Exception as e:
-           logging.error(str(e))
+        try:
+            self.inputs.entries[self._red_path].set(red)
+            self._red = red
+        except Exception as e:
+            logging.error(str(e))
 
-       try:
-        self.inputs.entries[self._green_path].set(green)
-        self._green = green
-       except Exception as e:
-           logging.error(str(e))
+        try:
+            self.inputs.entries[self._green_path].set(green)
+            self._green = green
+        except Exception as e:
+            logging.error(str(e))
 
-       try:
-        self.inputs.entries[self._blue_path].set(blue)
-        self._blue = blue
-       except Exception as e:
-           logging.error(str(e))
-
+        try:
+            self.inputs.entries[self._blue_path].set(blue)
+            self._blue = blue
+        except Exception as e:
+            logging.error(str(e))
 
     @Property(int, notify=valuesChanged)
     def red(self):
@@ -105,6 +103,3 @@ class ColorPicker(QObject):
             if self._blue != value:
                 self._blue = value
                 self.valuesChanged.emit()
-
-
-

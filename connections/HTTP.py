@@ -5,10 +5,9 @@ import logging
 import socket
 import sys
 import urllib.request
+from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
 from functools import partial
 from urllib.error import HTTPError, URLError
-
-from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
 
 from core.DataTypes import Convert
 from core.DataTypes import DataType

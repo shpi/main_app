@@ -5,9 +5,8 @@ import sys
 import threading
 import time
 import urllib.parse as urlparse
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-
 from PySide2.QtCore import QSettings, QObject, Signal
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from core.DataTypes import Convert
 from core.Toolbox import Pre_5_15_2_fix

@@ -2,10 +2,9 @@
 # from core.Toolbox import Pre_5_15_2_fix
 import ctypes
 import datetime
-import time
-
 import numpy as np
 import shiboken2
+import time
 from PySide2.QtGui import QPolygonF
 
 
@@ -16,7 +15,7 @@ class CircularBuffer:
     # allow_instances = True
     # description = "CircularBuffer based on Numpy arrays"
 
-    def __init__(self, length=100, initialvalue = 0, dtype=np.float):
+    def __init__(self, length=100, initialvalue=0, dtype=np.float):
 
         super(CircularBuffer, self).__init__()
 
@@ -128,8 +127,6 @@ class CircularBuffer:
 
         if (min != max):
             scaley = height / (abs(min - max))
-
-
 
         size = self.length()
         polyline = QPolygonF(size)

@@ -2,10 +2,9 @@
 
 import ctypes
 import logging
-import sys
-
 import numpy as np
 import shiboken2
+import sys
 from PySide2.QtCore import QAbstractListModel, Property, Signal, Slot, QObject
 from PySide2.QtCore import QDateTime, Qt
 from PySide2.QtCore import QModelIndex, QSortFilterProxyModel
@@ -40,7 +39,7 @@ class InputListModel(QAbstractListModel):
         self._keys = list(self.entries.keys())
 
     def rowCount(self, parent=None):
-        #if parent.isValid():
+        # if parent.isValid():
         #    return 0
         return len(self.entries)
 

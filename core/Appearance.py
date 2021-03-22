@@ -4,9 +4,8 @@ import logging
 import os
 import threading
 import time
-from datetime import datetime
-
 from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
+from datetime import datetime
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty
@@ -423,16 +422,16 @@ class Appearance(QObject):
             self._backlightlevel = value
 
     def interrupt(self, key, value):
-        #logging.debug(f"interrupt key: {key}, value: {value}")
+        # logging.debug(f"interrupt key: {key}, value: {value}")
         if self.state != 'ACTIVE' and value > 0:
-                self.lastuserinput = time.time() - self._dim_timer
-                if self.state == 'OFF':
-                    logging.debug(f"changing nightmode to SLEEP, old state: {self.state}, lastinput: {self.lastuserinput}")
-                    self.state = 'SLEEP'
-                    if self._night:
-                        self.set_backlight(self._min_backlight_night)
-                    else:
-                        self.set_backlight(self._min_backlight)
+            self.lastuserinput = time.time() - self._dim_timer
+            if self.state == 'OFF':
+                logging.debug(f"changing nightmode to SLEEP, old state: {self.state}, lastinput: {self.lastuserinput}")
+                self.state = 'SLEEP'
+                if self._night:
+                    self.set_backlight(self._min_backlight_night)
+                else:
+                    self.set_backlight(self._min_backlight)
 
     def tinterrupt(self, key, value):
         # logging.debug(f"tinterrupt key: {key}, value: {value}")

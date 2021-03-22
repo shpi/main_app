@@ -1,9 +1,8 @@
 ﻿#!/usr/bin/env python3
 import logging
 import os
-from subprocess import check_output, PIPE
-
 from PySide2.QtCore import Property, Signal, Slot, QObject
+from subprocess import check_output, PIPE
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty
