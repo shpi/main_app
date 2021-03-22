@@ -1,16 +1,13 @@
 *.log
 *.user
-
-# Byte-compiled / optimized / DLL files
+*.build
+*.so
 __pycache__/
 *.py[cod]
 
-# Distribution / packaging
 venv/
 *.egg-info/
-
+settings.ini
 keymap/keymap
 keymap/keymap.o
-
-# Intellij IDEA files
 .idea/*
