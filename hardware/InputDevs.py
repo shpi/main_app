@@ -176,7 +176,7 @@ class InputDevs:
                                 logging.debug(devpath + ' key: ' + str(keycode) + ', ' + str(value))
 
                             self.properties['lastinput'].value = value
-                            self.properties[f'{id}/thread'].value = value  # helping to track activity on input device
+                            self.properties[f'{id}/thread'].value = 1  # helping to track activity on input device
                             self.properties[f'{id}/key_{str(keycode)}'].value = value
 
                         except KeyError:
