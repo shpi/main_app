@@ -25,9 +25,7 @@ class ServerHandler(BaseHTTPRequestHandler):
             else:
                 success = False
 
-            if success and ('key' in query) and (query['key'] in self.inputs) and self.inputs[query['key']].get(
-                    'exposed',
-                    False):
+            if success and ('key' in query) and (query['key'] in self.inputs) and self.inputs[query['key']].exposed:
 
                 if 'set' in query:
                     if self.inputs[query['key']].set is not None:
@@ -79,8 +77,8 @@ class ServerHandler(BaseHTTPRequestHandler):
                         # print('<td>' + str(value.get('step', '')) + '</td>')
                         message += '},'
 
-                if message[0:-1] == ',':
-                    message = message[0:-1]
+                if message[-1] == ',':
+                    message = message[:-1]
                 message += '}'
 
                 # print(json.loads(message))
