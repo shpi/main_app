@@ -116,8 +116,7 @@ class HTTP(QObject):
             status = 'NOT_INITIALIZED'
             logging.error(ex)
 
-        self.properties[
-            'module'].value = status  # we need to update it here, because we have no interval update function
+        self.properties['module'].value = status  # we need to update it here, because we have no interval update function
         self.inputlist = InputListModel(self.module_inputs)
         self.vars_changed.emit()
         self.dataChanged.emit()

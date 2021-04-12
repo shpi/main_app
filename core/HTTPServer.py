@@ -30,7 +30,8 @@ class ServerHandler(BaseHTTPRequestHandler):
                 if 'set' in query:
                     if self.inputs[query['key']].set is not None:
                         logging.debug(f'SET: {query["key"]} : {query["set"]}')
-                        self.inputs[query['key']].set(query['set'])
+                        self.inputs[query['key']].value = float(query['set'])
+                        self.inputs[query['key']].set(float(query['set']))
 
                 value = self.inputs[query['key']]
                 self.send_response(200)

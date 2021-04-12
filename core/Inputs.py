@@ -186,6 +186,8 @@ class InputsDict(QObject):
         for newproperty in newinputs:
 
             newproperty.logging = bool(int(self.settings.value(newproperty.path + "/logging", 0)))
+            newproperty.exposed = bool(int(self.settings.value(newproperty.path + "/exposed", 0)))
+
 
             if newproperty.logging:
                 self.buffer[newproperty.path] = CircularBuffer(10000)
@@ -297,8 +299,8 @@ class InputsDict(QObject):
             self.settings.setValue(key + "/logging", int(value))
             if value and key not in self.buffer:
                 self.buffer[key] = CircularBuffer(10000)
-        except KeyError:
-            logging.debug(key + ' not in Inputdictionary')
+        except Exception as e:
+            logging.error(str(e))
 
     @Slot(str, bool)
     def set_exposed(self, key, value):
