@@ -151,7 +151,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     anchors.rightMargin: 20
-                    font.pixelSize: 40
+                    font.pixelSize: 60
                     text: root.roomname === '' ? Icons.arrow : Icons.trash
                     rotation: root.roomname === '' ? 270 : 0
                     font.family: localFont.name

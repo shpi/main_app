@@ -16,6 +16,75 @@ from core.DataTypes import Convert
 from core.DataTypes import DataType
 
 
+class InputListModelDict(QAbstractListModel):
+    PathRole = Qt.UserRole + 1000
+    ValueRole = Qt.UserRole + 1001
+    DescriptionRole = Qt.UserRole + 1002
+    TypeRole = Qt.UserRole + 1003
+    IntervalRole = Qt.UserRole + 1004
+    ExposedRole = Qt.UserRole + 1005
+    OutputRole = Qt.UserRole + 1006
+    LoggingRole = Qt.UserRole + 1007
+
+    def __init__(self, dictionary, parent=None):
+        super(InputListModelDict, self).__init__(parent)
+        self.entries = dictionary
+        self._keys = list(self.entries.keys())
+
+    def updateKeys(self):
+        self._keys = list(self.entries.keys())
+
+    def rowCount(self, parent=QModelIndex()):
+        if parent.isValid():
+            return 0
+        return len(self.entries)
+
+    def updateListView(self, key):
+        keyindex = self.index(self._keys.index(key))
+        self.dataChanged.emit(keyindex, keyindex, [self.ValueRole])
+
+    def data(self, index, role=Qt.DisplayRole):
+        if 0 <= index.row() < self.rowCount() and index.isValid():
+            item = self.entries[self._keys[index.row()]]
+            try:
+                if role == InputListModel.PathRole:
+                    return self._keys[index.row()]
+                elif role == InputListModel.ValueRole:
+                    return str(item["value"])
+                elif role == InputListModel.OutputRole:
+                    return '1' if ('set' in item) else '0'
+                elif role == InputListModel.TypeRole:
+                    return Convert.type_to_str(item["type"])
+                elif role == InputListModel.DescriptionRole:
+                    return item["description"]
+                elif role == InputListModel.IntervalRole:
+                    return item["interval"]
+                elif role == InputListModel.ExposedRole:
+                    return item["exposed"]
+                elif role == InputListModel.LoggingRole:
+                    if 'logging' in item:
+                        return item["logging"]
+                    else:
+                        return 0
+                else:
+                    return 'unknown role'
+            except Exception as e:
+                logging.error(str(e))
+
+    def roleNames(self):
+        roles = dict()
+        roles[InputListModel.PathRole] = b"path"
+        roles[InputListModel.ValueRole] = b"value"
+        roles[InputListModel.DescriptionRole] = b"description"
+        roles[InputListModel.TypeRole] = b"type"
+        roles[InputListModel.IntervalRole] = b"interval"
+        roles[InputListModel.ExposedRole] = b"exposed"
+        roles[InputListModel.OutputRole] = b"output"
+        roles[InputListModel.LoggingRole] = b"logging"
+        return roles
+
+
+
 class InputListModel(QAbstractListModel):
     PathRole = Qt.UserRole + 1000
     ValueRole = Qt.UserRole + 1001

@@ -11,7 +11,7 @@ from urllib.error import HTTPError, URLError
 
 from core.DataTypes import Convert
 from core.DataTypes import DataType
-from core.Inputs import InputListModel
+from core.Inputs import InputListModelDict
 from core.Property import EntityProperty
 from core.Toolbox import Pre_5_15_2_fix
 
@@ -26,7 +26,12 @@ class HTTP(QObject):
         self.settings = settings
         self._ip = str(settings.value(self.path + "/ip", '127.0.0.1'))
         self._port = int(settings.value(self.path + "/port", '9000'))
-        self._vars = list(settings.value(self.path + "/vars", []))
+        self._vars = (settings.value(self.path + "/vars", []))
+
+        if isinstance(self._vars, str):
+            self._vars = [self._vars]
+
+
         self._ssl = False
         self.module_inputs = dict()
         self.properties = dict()
@@ -36,9 +41,10 @@ class HTTP(QObject):
                                                    entity='connections',
                                                    name=self.name,
                                                    value='NOT_INITIALIZED',
+                                                   call=self.update_vars,
                                                    description='HTTP Module for ' + self.name + '(' + self._ip + ')',
                                                    type=DataType.MODULE,
-                                                   interval=-1)
+                                                   interval=60)
 
         for sproperty in self._vars:
             self.properties[sproperty] = EntityProperty(parent=self,
@@ -51,7 +57,7 @@ class HTTP(QObject):
                                                         interval=-1)
 
         self.update_vars()
-        self.inputlist = InputListModel(self.module_inputs)
+
 
     def get_inputs(self) -> list:
 
@@ -79,45 +85,48 @@ class HTTP(QObject):
 
             except HTTPError as error:
                 status = 'ERROR'
-                logging.debug('Data not retrieved because %s\nURL: %s', error, url)
+                logging.error('Data not retrieved because %s\nURL: %s', error, url)
 
             except URLError as error:
                 status = 'ERROR'
                 if isinstance(error.reason, socket.timeout):
-                    logging.debug('socket timed out - URL %s', url)
+                    logging.error('socket timed out - URL %s', url)
                 else:
-                    logging.debug('unknown error happened')
+                    logging.error('unknown error happened')
 
             else:
                 data = response.read().decode('utf-8')
                 data = json.loads(data)
                 for key in data:
 
-                    data[key]["type"] = Convert.str_to_type(data[key]['type'])
+                    data[key]['type'] = Convert.str_to_type(data[key].get('type', 'undefined'))
+
                     if data[key]['interval'] == -1:
                         data[key]['interval'] = 60
                     # -1 means updated through class on remote device,
                     # so we need to define standard interval for network vars
 
                     if key in self.properties:
-                        self.properties[property].type = Convert.str_to_type(data[key].get('type', 'undefined'))
-                        self.properties[property].interval = data[key].get('interval', 60)
-                        self.properties[property].description = data[key].get('description', None)
-                        self.properties[property].call = partial(self.get_value, key)
+                        self.properties[key].type = Convert.str_to_type(data[key].get('type', 'undefined'))
+                        self.properties[key].interval = data[key].get('interval', 60)
+                        self.properties[key].value = data[key].get('value', 0)
+                        self.properties[key].description = data[key].get('description', None)
+                        self.properties[key].call = partial(self.get_value, key)
                         if 'set' in data[key]:
-                            self.properties[property].set = partial(self.set_value, key)
+                            self.properties[key].set = partial(self.set_value, key)
 
                 self.module_inputs = data
+
                 status = 'OK'
 
                 # TODO check for correctness of dict
 
         except Exception as ex:
             status = 'NOT_INITIALIZED'
-            logging.error(ex)
+            logging.error('damns:' + str(ex))
 
         self.properties['module'].value = status  # we need to update it here, because we have no interval update function
-        self.inputlist = InputListModel(self.module_inputs)
+        self.inputlist = InputListModelDict(self.module_inputs)
         self.vars_changed.emit()
         self.dataChanged.emit()
 
