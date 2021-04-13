@@ -40,6 +40,8 @@ ApplicationWindow {
     property int i: 0
 
     FolderListModel {
+        Component.onCompleted: console.error(applicationDirPath)
+
         caseSensitive: false
         id: folderModel
         folder: "file://" + applicationDirPath + "/backgrounds/"
@@ -48,6 +50,7 @@ ApplicationWindow {
         onCountChanged: {
             if (folderModel.count > 0)
                 bg.source = folderModel.get(i, "fileURL")
+                console.error(bg.source)
         }
     }
 
@@ -427,5 +430,7 @@ ApplicationWindow {
             source: "keyboard/Keyboard.qml"
         }
     }
+
+
 
 }
