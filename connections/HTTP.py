@@ -56,7 +56,6 @@ class HTTP(QObject):
                                                         type=DataType.UNDEFINED,
                                                         interval=-1)
 
-        self.update_vars()
 
 
     def get_inputs(self) -> list:
@@ -75,13 +74,14 @@ class HTTP(QObject):
     @Slot()
     def update_vars(self):
         self.module_inputs = dict()
+        status = 'OK'
 
         try:
             url = 'https://' if self._ssl else 'http://'
             url += self._ip + ':' + str(self._port) + '/'
 
             try:
-                response = urllib.request.urlopen(url, timeout=5)
+                response = urllib.request.urlopen(url, timeout=1)
 
             except HTTPError as error:
                 status = 'ERROR'
@@ -93,8 +93,11 @@ class HTTP(QObject):
                     logging.error('socket timed out - URL %s', url)
                 else:
                     logging.error('unknown error happened')
+            except Exception as e:
+                status = 'ERROR'
+                logging.error(str(e))
 
-            else:
+            if status != 'ERROR':
                 data = response.read().decode('utf-8')
                 data = json.loads(data)
                 for key in data:
@@ -138,7 +141,7 @@ class HTTP(QObject):
             url += self._ip + ':' + str(self._port) + '/?' + urllib.parse.urlencode(params)
 
             try:
-                response = urllib.request.urlopen(url, timeout=5)
+                response = urllib.request.urlopen(url, timeout=1)
 
             except HTTPError as error:
                 status = 'ERROR'
@@ -177,7 +180,7 @@ class HTTP(QObject):
             url += self._ip + ':' + str(self._port) + '/?' + urllib.parse.urlencode(params)
 
             try:
-                response = urllib.request.urlopen(url, timeout=5)
+                response = urllib.request.urlopen(url, timeout=1)
 
             except HTTPError as error:
                 logging.error('Data not retrieved because %s\nURL: %s', error, url)
