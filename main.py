@@ -165,7 +165,7 @@ app.setOrganizationDomain("shpi.de")
 app.setFont(QFont('Dejavu', 11))
 
 engine = QQmlApplicationEngine()
-engine.rootContext().setContextProperty("applicationDirPath", os.path.dirname(os.path.realpath(__file__)));
+engine.rootContext().setContextProperty("applicationDirPath", os.path.abspath(os.path.dirname(sys.argv[0])));
 engine.rootContext().setContextProperty("logs", logs)
 engine.rootContext().setContextProperty("inputs", inputs)
 engine.rootContext().setContextProperty('wifi', wifi)
