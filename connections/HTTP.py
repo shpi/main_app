@@ -5,9 +5,10 @@ import logging
 import socket
 import sys
 import urllib.request
-from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
 from functools import partial
 from urllib.error import HTTPError, URLError
+
+from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
 
 from core.DataTypes import Convert
 from core.DataTypes import DataType
@@ -30,7 +31,6 @@ class HTTP(QObject):
 
         if isinstance(self._vars, str):
             self._vars = [self._vars]
-
 
         self._ssl = False
         self.module_inputs = dict()
@@ -56,10 +56,7 @@ class HTTP(QObject):
                                                         type=DataType.UNDEFINED,
                                                         interval=-1)
 
-
-
     def get_inputs(self) -> list:
-
         return list(self.properties.values())
 
     @Signal
@@ -68,7 +65,6 @@ class HTTP(QObject):
 
     @Property(QObject, notify=dataChanged)
     def inputList(self):
-
         return self.inputlist
 
     @Slot()
@@ -110,7 +106,7 @@ class HTTP(QObject):
                     # so we need to define standard interval for network vars
 
                     if key in self.properties:
-                        self.properties[key].type = Convert.str_to_type(data[key].get('type', 'undefined'))
+                        self.properties[key].type = data[key]['type']
                         self.properties[key].interval = data[key].get('interval', 60)
                         self.properties[key].value = data[key].get('value', 0)
                         self.properties[key].description = data[key].get('description', None)
@@ -128,7 +124,8 @@ class HTTP(QObject):
             status = 'NOT_INITIALIZED'
             logging.error('damns:' + str(ex))
 
-        self.properties['module'].value = status  # we need to update it here, because we have no interval update function
+        self.properties[
+            'module'].value = status  # we need to update it here, because we have no interval update function
         self.inputlist = InputListModelDict(self.module_inputs)
         self.vars_changed.emit()
         self.dataChanged.emit()
@@ -173,7 +170,6 @@ class HTTP(QObject):
             return None
 
     def get_value(self, path):
-
         try:
             url = 'https://' if self._ssl else 'http://'
             params = {'key': path}
@@ -242,7 +238,6 @@ class HTTP(QObject):
 
     @Slot(str)
     def add_var(self, key):
-
         if key in self.module_inputs:
             self.properties[key] = EntityProperty(parent=self,
                                                   category='connections/http',

@@ -63,9 +63,9 @@ class EntityProperty:
         self.interval = interval
         self.update_needs_thread = False  # for stuff with timeout like http etc
 
-        if value != None:
+        if value is not None:
             self._value = value
-        elif self.__call != None:
+        elif self.__call is not None:
             self._value = None
             self.update()
         else:
@@ -130,7 +130,7 @@ class EntityProperty:
                     logging.error(self.name + ' event[' + str(event) + '] ot a function!')
 
     def update(self):
-        if self.__call != None:
+        if self.__call is not None:
             value = self.__call()
             self.value = value
         else:

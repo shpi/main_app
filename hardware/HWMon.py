@@ -96,39 +96,38 @@ class HWMon:
     @staticmethod
     def read_hwmon(channelid, channel):
 
-        if os.path.isfile(f'/sys/class/hwmon/{channelid}/{channel}'):
-            try:
-                with open(f'/sys/class/hwmon/{channelid}/{channel}', 'r') as rf:
-                    value = rf.read().strip()
-                    # logging.debug(f' reading channel: {channel} value: {value}')
-                    return Convert.str_to_tight_datatype(value)
-
-
-            except Exception as e:
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                line_number = exception_traceback.tb_lineno
-                logging.error(f'channel: {channel} error: {e} in line {line_number}')
-
-        else:
+        if not os.path.isfile(f'/sys/class/hwmon/{channelid}/{channel}'):
             return None
+
+        try:
+            with open(f'/sys/class/hwmon/{channelid}/{channel}', 'r') as rf:
+                value = rf.read().strip()
+                # logging.debug(f' reading channel: {channel} value: {value}')
+                return Convert.str_to_tight_datatype(value)
+
+
+        except Exception as e:
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            line_number = exception_traceback.tb_lineno
+            logging.error(f'channel: {channel} error: {e} in line {line_number}')
 
     def write_hwmon(self, channelid, channel, value, retries=0):
         logging.debug(f' writing {value} to output')
         value = str(int(value))
-        if os.path.isfile(f'/sys/class/hwmon/{channelid}/{channel}'):
-            try:
-                with open(f'/sys/class/hwmon/{channelid}/{channel}', 'r+') as rf:
-                    rf.write(value)
-                    return True
-
-            except Exception as e:
-                if retries < 5:
-                    retries += 1
-                    return self.write_hwmon(channelid, channel, value, retries)
-                else:
-                    exception_type, exception_object, exception_traceback = sys.exc_info()
-                    line_number = exception_traceback.tb_lineno
-                    logging.error(f'channel: {channel} error: {e} in line {line_number}')
-                    return False
-        else:
+        if not os.path.isfile(f'/sys/class/hwmon/{channelid}/{channel}'):
             return False
+
+        try:
+            with open(f'/sys/class/hwmon/{channelid}/{channel}', 'r+') as rf:
+                rf.write(value)
+                return True
+
+        except Exception as e:
+            if retries < 5:
+                retries += 1
+                return self.write_hwmon(channelid, channel, value, retries)
+            else:
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                line_number = exception_traceback.tb_lineno
+                logging.error(f'channel: {channel} error: {e} in line {line_number}')
+                return False

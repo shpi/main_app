@@ -2,9 +2,10 @@
 # from core.Toolbox import Pre_5_15_2_fix
 import ctypes
 import datetime
+import time
+
 import numpy as np
 import shiboken2
-import time
 from PySide2.QtGui import QPolygonF
 
 

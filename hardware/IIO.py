@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import logging
-import os
 import sys
 from functools import partial
 
@@ -43,12 +42,11 @@ class IIO:
     def read_iio(id, channel, retries=0):
 
         try:
-            if os.path.isfile(f'/sys/bus/iio/devices/{id}/{channel}'):
-                with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
-                    value = rf.read().rstrip()
-                    logging.debug('reading ' + channel + ': ' + str(value))
 
-                    return Convert.str_to_tight_datatype(value)
+            with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
+                value = rf.read().rstrip()
+                logging.debug('reading ' + channel + ': ' + str(value))
+                return Convert.str_to_tight_datatype(value)
 
         except Exception as e:
             if (retries < 3):
@@ -58,33 +56,35 @@ class IIO:
                 exception_type, exception_object, exception_traceback = sys.exc_info()
                 line_number = exception_traceback.tb_lineno
                 logging.error(f'channel: {channel} error: {e} in line {line_number}')
-
                 return None
 
     def read_processed(id, channel, scale=1, offset=0, retries=0):
-        if os.path.isfile(f'/sys/bus/iio/devices/{id}/{channel}'):
-            try:
-                with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
-                    value = scale * (float(rf.read().rstrip()) + offset)
-                    logging.debug('reading ' + channel + ': ' + str(value))
-                    return (value)
+
+        try:
+            with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
+                value = scale * (float(rf.read().rstrip()) + offset)
+                logging.debug('reading ' + channel + ': ' + str(value))
+                return (value)
 
 
-            except Exception as e:
-                if (retries < 3):
-                    return IIO.read_processed(id, channel, scale, offset, retries + 1)
-                else:
-                    exception_type, exception_object, exception_traceback = sys.exc_info()
-                    line_number = exception_traceback.tb_lineno
-                    logging.error(f'channel: {channel} error: {e} in line {line_number}')
-                    return None
+        except Exception as e:
+            if (retries < 3):
+                return IIO.read_processed(id, channel, scale, offset, retries + 1)
+            else:
+                exception_type, exception_object, exception_traceback = sys.exc_info()
+                line_number = exception_traceback.tb_lineno
+                logging.error(f'channel: {channel} error: {e} in line {line_number}')
+                return None
 
     @staticmethod
     def write_iio(id, channel, value):
-
-        if os.path.isfile(f'/sys/bus/iio/devices/{id}/{channel}'):
+        try:
             with open(f'/sys/bus/iio/devices/{id}/{channel}', 'w') as rf:
                 return (rf.write(str(value)))
+
+        except Exception as e:
+            logging.error(f'channel: {channel} error: {e} in line {line_number}')
+            return None
 
     def _device_info(self, dev):
         # print("\t" + dev.id + ": " + dev.name)

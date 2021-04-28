@@ -2,9 +2,10 @@
 
 import ctypes
 import logging
+import sys
+
 import numpy as np
 import shiboken2
-import sys
 from PySide2.QtCore import QAbstractListModel, Property, Signal, Slot, QObject
 from PySide2.QtCore import QDateTime, Qt
 from PySide2.QtCore import QModelIndex, QSortFilterProxyModel
@@ -82,7 +83,6 @@ class InputListModelDict(QAbstractListModel):
         roles[InputListModel.OutputRole] = b"output"
         roles[InputListModel.LoggingRole] = b"logging"
         return roles
-
 
 
 class InputListModel(QAbstractListModel):
@@ -256,7 +256,6 @@ class InputsDict(QObject):
 
             newproperty.logging = bool(int(self.settings.value(newproperty.path + "/logging", 0)))
             newproperty.exposed = bool(int(self.settings.value(newproperty.path + "/exposed", 0)))
-
 
             if newproperty.logging:
                 self.buffer[newproperty.path] = CircularBuffer(10000)

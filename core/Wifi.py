@@ -4,8 +4,9 @@ import os
 import sys
 import threading
 import time
-from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
 from subprocess import check_output, Popen, PIPE, DEVNULL
+
+from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty

@@ -4,15 +4,14 @@ import os
 import signal
 import sys
 import time
+
 from PySide2 import QtCore
 from PySide2.QtCore import QSettings, qInstallMessageHandler
-from PySide2.QtCore import QTimer, QUrl
+from PySide2.QtCore import QTimer
 from PySide2.QtGui import QFont, QFontDatabase
 from PySide2.QtQml import QQmlApplicationEngine
 from PySide2.QtWidgets import QApplication
-from subprocess import check_output
 
-import files
 from core.Appearance import Appearance
 from core.Git import Git
 from core.HTTPServer import HTTPServer
@@ -107,34 +106,30 @@ def check_loop():
 
 settings = QSettings('settings.ini', QSettings.IniFormat)
 inputs = InputsDict(settings)
-systeminfo = SystemInfo()
-cpu = CPU()
-iio = IIO()
-leds = Led()
-hwmon = HWMon()
-git = Git(settings)
-disk = DiskStats()
-inputdevs = InputDevs()
-backlight = Backlight()
-wifi = Wifi(settings)
-httpserver = HTTPServer(inputs, settings)
-mlx90615 = MLX90615(inputs, settings)
-alsamixer = AlsaMixer(inputs, settings)
-inputs.add(alsamixer.get_inputs())
-inputs.add(iio.get_inputs())
-inputs.add(disk.get_inputs())
-inputs.add(wifi.get_inputs())
-inputs.add(leds.get_inputs())
-inputs.add(git.get_inputs())
-inputs.add(cpu.get_inputs())
-inputs.add(hwmon.get_inputs())
-inputs.add(inputdevs.get_inputs())
-inputs.add(systeminfo.get_inputs())
-inputs.add(backlight.get_inputs())
-inputs.add(mlx90615.get_inputs())
 
-appearance = Appearance(inputs, settings)
-inputs.add(appearance.get_inputs())
+core_modules = dict()
+
+core_modules['systeminfo'] = SystemInfo()
+core_modules['cpu'] = CPU()
+core_modules['iio'] = IIO()
+core_modules['leds'] = Led()
+core_modules['hwmon'] = HWMon()
+core_modules['git'] = Git(settings)
+core_modules['disk'] = DiskStats()
+core_modules['inputdevs'] = InputDevs()
+core_modules['backlight'] = Backlight()
+core_modules['wifi'] = Wifi(settings)
+core_modules['httpserver'] = HTTPServer(inputs, settings)
+core_modules['mlx90615'] = MLX90615(inputs, settings)
+core_modules['alsamixer'] = AlsaMixer(inputs, settings)
+
+
+for core_module in core_modules:
+    inputs.add(core_modules[core_module].get_inputs())
+
+core_modules['appearance'] = Appearance(inputs, settings)
+
+inputs.add(core_modules['appearance'].get_inputs())
 
 modules = ModuleManager(inputs, settings)
 
@@ -168,9 +163,9 @@ engine = QQmlApplicationEngine()
 engine.rootContext().setContextProperty("applicationDirPath", os.path.abspath(os.path.dirname(sys.argv[0])));
 engine.rootContext().setContextProperty("logs", logs)
 engine.rootContext().setContextProperty("inputs", inputs)
-engine.rootContext().setContextProperty('wifi', wifi)
-engine.rootContext().setContextProperty('git', git)
-engine.rootContext().setContextProperty("appearance", appearance)
+engine.rootContext().setContextProperty('wifi', core_modules['wifi'])
+engine.rootContext().setContextProperty('git', core_modules['git'])
+engine.rootContext().setContextProperty("appearance", core_modules['appearance'])
 engine.rootContext().setContextProperty("modules", modules)
 
 setup_interrupt_handling()

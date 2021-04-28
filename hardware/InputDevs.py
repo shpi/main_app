@@ -2,23 +2,26 @@ import logging
 import struct
 import subprocess
 import sys
+from enum import Enum
 from functools import partial
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty, ThreadProperty
 
-EV_SYN = 0x00
-EV_KEY = 0x01
-EV_REL = 0x02
-EV_ABS = 0x03
-EV_MSC = 0x04
-EV_SW = 0x05
-EV_LED = 0x11
-EV_SND = 0x12
-EV_REP = 0x14
-EV_FF = 0x15
-EV_PWR = 0x16
-EV_FF_STATUS = 0x17
+
+class EvTypes(Enum):
+    EV_SYN = 0x00
+    EV_KEY = 0x01
+    EV_REL = 0x02
+    EV_ABS = 0x03
+    EV_MSC = 0x04
+    EV_SW = 0x05
+    EV_LED = 0x11
+    EV_SND = 0x12
+    EV_REP = 0x14
+    EV_FF = 0x15
+    EV_PWR = 0x16
+    EV_FF_STATUS = 0x17
 
 
 def test_bit(eventlist, b):
@@ -34,25 +37,17 @@ def test_bit(eventlist, b):
 
 def EvHexToStr(events):
     s = []
-    if test_bit(events, EV_SYN):       s.append("EV_SYN")
-    if test_bit(events, EV_KEY):       s.append("EV_KEY")
-    if test_bit(events, EV_REL):       s.append("EV_REL")
-    if test_bit(events, EV_ABS):       s.append("EV_ABS")
-    if test_bit(events, EV_MSC):       s.append("EV_MSC")
-    if test_bit(events, EV_LED):       s.append("EV_LED")
-    if test_bit(events, EV_SND):       s.append("EV_SND")
-    if test_bit(events, EV_REP):       s.append("EV_REP")
-    if test_bit(events, EV_FF):        s.append("EV_FF")
-    if test_bit(events, EV_PWR):       s.append("EV_PWR")
-    if test_bit(events, EV_FF_STATUS): s.append("EV_FF_STATUS")
+
+    for key in EvTypes:
+        #print(key.value)
+        if test_bit(events, key.value):
+            s.append(key.name)
 
     return s
 
 
 def createId(x):
-    if x in ('1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'):
-        return True
-    return False
+    return x in ('1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')
 
 
 class InputDevs:

@@ -1,10 +1,11 @@
 import glob
 import logging
-import numpy as np
 import os
 import struct
 import sys
 import time
+
+import numpy as np
 
 # from ufunclab import minmax # https://github.com/WarrenWeckesser/ufunclab
 # from core.CircularBuffer import CircularBuffer

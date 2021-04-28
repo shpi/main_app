@@ -3,6 +3,7 @@
 import datetime
 import logging
 import sys
+
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 
 from core.DataTypes import DataType
@@ -170,7 +171,7 @@ class Thermostat(QObject):
 
     @Property(float, notify=tempChanged)
     def actual_temp(self):
-        if self._actual_temp != None:
+        if self._actual_temp is not None:
             return float(self._actual_temp / 1000)
         else:
             return None

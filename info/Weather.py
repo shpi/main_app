@@ -4,11 +4,11 @@ import logging
 import os
 import socket
 import sys
-import threading
 import urllib.request
-from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
-from PySide2.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from urllib.error import HTTPError, URLError
+
+from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
+from PySide2.QtNetwork import QNetworkAccessManager
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty

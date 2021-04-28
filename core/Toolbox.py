@@ -1,7 +1,8 @@
 import socket
-from PySide2.QtCore import Property, __version_info__
 from re import compile
 from typing import Callable, NamedTuple, Optional, Union
+
+from PySide2.QtCore import Property, __version_info__
 
 """
     # Perfect world as with Python's own 'property' (since 5.15.2):

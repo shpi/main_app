@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+
 from PySide2.QtCore import QSettings, QObject, Property, Signal
 from PySide2.QtGui import QPolygonF
 

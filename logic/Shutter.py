@@ -1,6 +1,7 @@
 ﻿import logging
 import threading
 import time
+
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 
 from core.DataTypes import DataType
@@ -189,7 +190,7 @@ class Shutter(QObject):
         self._desired_position.value = int(value)
         self._residue_time = 0
 
-        if self._actual_position.value == None:
+        if self._actual_position.value is None:
             if value > 50:
                 self._actual_position.value = 0
                 self._desired_position.value = 100
@@ -202,7 +203,7 @@ class Shutter(QObject):
 
     # @Property(float,notify=positionChanged)
     def actual_position(self):
-        if self._actual_position.value == None:
+        if self._actual_position.value is None:
             return -1
         return (self._actual_position.value)
 
@@ -266,7 +267,7 @@ class Shutter(QObject):
         return float(self._residue_time)
 
     def move(self):
-        if self._actual_position.value == None:
+        if self._actual_position.value is None:
             logging.error('Please calibrate Shutter Instance')
         else:
             was_in_loop = False
