@@ -30,6 +30,8 @@ from hardware.InputDevs import InputDevs
 from hardware.Leds import Led
 from hardware.System import SystemInfo
 
+import files
+
 # from PySide2.QtQml import QQmlDebuggingEnablers
 
 logs = LogModel()

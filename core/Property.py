@@ -8,6 +8,10 @@ from core.DataTypes import DataType
 
 class ModuleThread(threading.Thread):
 
+    #def _init_(self):
+    #    super()._init_()
+
+
     def get_id(self):
 
         # returns id of the respective thread
@@ -17,7 +21,7 @@ class ModuleThread(threading.Thread):
             if thread is self:
                 return did
 
-    def raise_exception(self):
+    def stop(self):
         thread_id = self.get_id()
         res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,
                                                          ctypes.py_object(SystemExit))
@@ -137,7 +141,7 @@ class EntityProperty:
             logging.error('No Update Function for ' + self.name + ' given.')
 
 
-class ThreadProperty:
+class ThreadProperty(ModuleThread):
     # version = "1.0"
     # description = "Thread Property Class for Modules"
 
@@ -171,7 +175,9 @@ class ThreadProperty:
         self.is_exclusive_output = False  # for unique access
         self.interval = interval
         self.function = function
-        self.thread = ModuleThread(target=self.function)
+
+        ModuleThread.__init__(self, target=self.function)
+        # self.thread = ModuleThread(target=self.function)
 
     @property
     def logging(self):
@@ -212,14 +218,15 @@ class ThreadProperty:
 
     def update(self):
 
-        if self._value and not self.thread.is_alive():
-            self.thread = ModuleThread(target=self.function)
-            self.thread.start()
-            logging.info('(Re)Started Thread ' + (self.entity or self.parent_module.name) + ' ' + self.name)
+        if self._value and not self.is_alive():
+            #self.thread = ModuleThread(target=self.function)
+            ModuleThread.__init__(self, target=self.function)
+            self.start()
+            logging.warning('(Re)Started Thread ' + (self.entity or self.parent_module.name) + ' ' + self.name)
 
-        elif not self._value and self.thread.is_alive():
-            self.thread.raise_exception()
-            logging.info('Stopped Thread ' + (self.entity or self.parent_module.name) + ' ' + self.name)
+        elif not self._value and self.is_alive():
+            self.stop()
+            logging.warning('Stopped Thread ' + (self.entity or self.parent_module.name) + ' ' + self.name)
 
 
 class FakeEvents:

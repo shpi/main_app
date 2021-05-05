@@ -9,8 +9,8 @@ import "qrc:/fonts"
 ApplicationWindow {
     id: window
     title: "SHPI"
-    width: 800
-    height: 480
+    width: 480
+    height: 800
     visible: true
     font.family: localFont.name
 
