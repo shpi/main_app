@@ -11,11 +11,9 @@ class Backlight:
     backlightpath = "/sys/class/backlight/"
 
     def __init__(self):
-
         self.backlight_sysfs_path = False
         self.backlight_sysfs_max = 100  # fallback value
         self.backlight_sysfs_has_power = False
-
         self._module = EntityProperty(parent=self,
                                       category='module',
                                       entity='core',
@@ -23,7 +21,6 @@ class Backlight:
                                       description='Backlight Module',
                                       type=DataType.MODULE,
                                       interval=-1)
-
         self._module.value = 'NOT INITIALIZED'
 
         if not os.path.isdir(Backlight.backlightpath):
@@ -47,6 +44,8 @@ class Backlight:
                     self.backlight_sysfs_max = int(backlight_sysfs_max.readline())
 
                 break  # we're looking only for one backlight now
+
+        self._properties = [self._module]
 
         if self.backlight_sysfs_path:
             self._brightness = EntityProperty(parent=self,
