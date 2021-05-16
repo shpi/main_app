@@ -2,15 +2,30 @@
 
 import logging
 import sys
-import threading
 import time
 import urllib.parse as urlparse
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from PySide2.QtCore import QSettings, QObject, Signal
+from PySide2.QtCore import QObject
+
+from http.server import BaseHTTPRequestHandler
+
+try:
+    # Python 3.7
+    from http.server import ThreadingHTTPServer
+except ImportError:
+    # Python 3.6
+    from socketserver import ThreadingMixIn
+    from http.server import HTTPServer
+
+    class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
+        daemon_threads = True
+
+from PySide2.QtCore import Signal
 
 from core.DataTypes import Convert
 from core.Toolbox import Pre_5_15_2_fix
+from core.Settings import settings
+from interfaces.Module import ThreadModuleBase
 
 
 class ServerHandler(BaseHTTPRequestHandler):
@@ -90,19 +105,20 @@ class ServerHandler(BaseHTTPRequestHandler):
                 # self.wfile.write(bytes(json.dumps(exposed), "utf8"))
 
                 self.connection.close()
+
         except Exception as e:
-            exception_type, exception_object, exception_traceback = sys.exc_info()
+            exception_traceback = sys.exc_info()[2]
             line_number = exception_traceback.tb_lineno
             logging.error(f'error: {e} in line {line_number}')
-            self.send_response(400)
+            self.send_response(500)
             self.connection.close()
 
         logging.debug("request finished in:  %s seconds" %
                       (time.time() - start_time))
         # return
 
-    def log_message(self, format, *args):
-        logging.info("%s - [%s] %s" % (self.address_string(), self.log_date_time_string(), format % args))
+    def log_message(self, fmt, *args):
+        logging.info("%s - [%s] %s", (self.address_string(), self.log_date_time_string(), fmt % args))
 
     def do_POST(self):
         self.do_GET()
@@ -115,21 +131,19 @@ class ServerHandler(BaseHTTPRequestHandler):
             logging.error('httpserver error: {}'.format(e))
 
 
-class HTTPServer(QObject):
-    def __init__(self, inputs, settings: QSettings):
-        super().__init__()
+class HTTPServer(ThreadingHTTPServer, ThreadModuleBase):
+    allow_maininstance = True
+    allow_instances = False
+    description = "HTTP Server"
 
-        self.settings = settings
-        self._port = int(settings.value("httpserver/port", 9000))
+    def __init__(self, inputs):
+        # QObject.__init__(self)
+        ThreadModuleBase.__init__(self)
+
+        self._port = settings.int("httpserver/port", 9000)
+        ThreadingHTTPServer.__init__(self, ('0.0.0.0', self._port), ServerHandler)
 
         ServerHandler.inputs = inputs.entries
-        self.server = ThreadingHTTPServer(("0.0.0.0", self._port), ServerHandler)
-
-        self.server_thread = threading.Thread(target=self.server.serve_forever)
-        self.server_thread.start()
-
-        # server.shutdown()
-        # server_thread.join()
 
     @Signal
     def port_changed(self):
@@ -145,4 +159,19 @@ class HTTPServer(QObject):
     @Pre_5_15_2_fix(int, port, notify=port_changed)
     def port(self, value):
         self._port = int(value)
-        self.settings.setValue("httpserver/port", value)
+        settings.setint("httpserver/port", self._port)
+
+    def stop(self):
+        print("HTTPServer: Shutdown")
+        self.shutdown()
+
+    def load(self):
+        pass
+
+    def unload(self):
+        self.server_close()
+
+    def run(self) -> None:
+        print("HTTPServer: Run")
+        self.serve_forever()
+        print("HTTPServer: End of run")

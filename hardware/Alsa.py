@@ -8,15 +8,14 @@ from subprocess import call, Popen, PIPE, DEVNULL
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty
+from core.Settings import settings
 from hardware.AlsaRecord import AlsaRecord
 
 
 class AlsaMixer:
+    name = 'alsamixer'
 
-    def __init__(self, inputs,
-                 settings):
-        self.name = 'alsamixer'
-        self.settings = settings
+    def __init__(self, inputs):
         self.inputs = inputs
         self.recorder = dict()
         self.playback_cards = []
@@ -56,13 +55,11 @@ class AlsaMixer:
         system_cards = []
         try:
             with open("/proc/asound/cards", 'r') as f:
-                line = True
-                while line:
-                    line = f.readline()
+                for line in f:
                     if ']:' in line:
                         system_cards.append(line.strip())
         except IOError as e:
-            logging.error(str(e))
+            logging.error(str(e), exc_info=True)
             if e.errno != errno.ENOENT:
                 raise e
 
@@ -75,9 +72,10 @@ class AlsaMixer:
                 card_name = i[pos0 + 1:pos1].strip()
                 card_number = i.split(" [")[0].strip()
                 card_desc = i[pos1 + 2:].strip()
-                value = self.settings.value("alsa/" + card_name, 1)
+                value = settings.int("alsa/" + card_name, 1)
 
-                if value: self.playback_cards.append(card_name)
+                if value:
+                    self.playback_cards.append(card_name)
 
                 cards.append(EntityProperty(parent=self,
                                             category='sound',
@@ -95,64 +93,61 @@ class AlsaMixer:
         return cards
 
     def power_device(self, card_name, value):
-
         if value:
             if card_name not in self.playback_cards:
                 self.playback_cards.append(card_name)
-                self.settings.setValue("alsa/" + card_name, value)
+                settings.set("alsa/" + card_name, value)
         else:
             if card_name in self.playback_cards:
                 self.playback_cards.remove(card_name)
-                self.settings.setValue("alsa/" + card_name, value)
+                settings.set("alsa/" + card_name, value)
 
     def get_recording(self, card_name):
         record_details = Popen(["arecord", "-D", "hw:" + card_name,
-                                '-c', '99', "--dump-hw-params"], stderr=PIPE).communicate()[1]
-        record_details = record_details.split(b'\n')
+                                '-c', '99', "--dump-hw-params"], stderr=PIPE, encoding="utf8").communicate()[1]
+        record_details = record_details.split('\n')
         card_rates = card_formats = card_rchannel = 0
 
         for x in record_details:
-            if x.startswith(b'FORMAT:'):
+            if x.startswith('FORMAT:'):
                 card_formats = x[7:].strip()
-                if b'[' in card_formats and b']' in card_formats:
-                    card_formats = card_formats[1:-1].split(b' ')
+                if '[' in card_formats and ']' in card_formats:
+                    card_formats = card_formats[1:-1].split(' ')
                 else:
                     card_formats = [card_formats]
 
-            elif x.startswith(b'CHANNELS:'):
+            elif x.startswith('CHANNELS:'):
                 card_rchannel = int(x[9:].strip())
 
-            elif x.startswith(b'RATE:'):
+            elif x.startswith('RATE:'):
                 card_rates = x[5:].strip()
-                if b'[' in card_rates and b']' in card_rates:
+                if '[' in card_rates and ']' in card_rates:
                     card_rates = card_rates[1:-1].split()
                 else:
                     card_rates = [card_rates]
                 break
+
         if card_rchannel > 0:
-
             self.recorder[card_name] = AlsaRecord(self.inputs, card_name)
-
             return self.recorder[card_name].get_inputs()
 
-        else:
-            return []
+        return []
 
     def get_controls(self, card_name):
         try:
             amixer = Popen(
-                ['amixer', '-D', 'hw:' + str(card_name)], stdout=PIPE)
+                ['amixer', '-D', 'hw:' + str(card_name)], stdout=PIPE, encoding="utf8")
             amixer_channels = Popen(
-                ["grep", "-e", "control", "-e", "channels"], stdin=amixer.stdout, stdout=PIPE)
+                ['grep', '-e', 'control', '-e', 'channels'], stdin=amixer.stdout, stdout=PIPE)
             amixer_chandesc = (amixer_channels.communicate()[0]).split(
                 b"Simple mixer control ")[1:]
             amixer_contents = Popen(
-                ['amixer', '-D', 'hw:' + str(card_name), "contents"], stdout=PIPE).communicate()[0]
+                ['amixer', '-D', 'hw:' + str(card_name), 'contents'], stdout=PIPE).communicate()[0]
         except OSError as e:
             logging.error(str(e))
             return {}
 
-        interfaces = list()
+        interfaces = []
 
         for a in amixer_contents.split(b"numid=")[1:]:
             lines = a.split(b"\n")
@@ -263,23 +258,23 @@ class AlsaMixer:
         return interfaces
 
     @staticmethod
-    def change_control(card_name, num_id, channel, channelcount, settings):
-        logging.debug(f'{card_name},{num_id},{channel},{channelcount},{settings}')
+    def change_control(card_name, num_id, channel, channelcount, alsa_settings):
+        logging.debug(f'{card_name},{num_id},{channel},{channelcount},{alsa_settings}')
         if channelcount != 1:
-            settings = (channel * ',') + str(settings) + \
+            alsa_settings = (channel * ',') + str(alsa_settings) + \
                        ((channelcount - channel - 1) * ',')
 
         command = ['amixer', '-D', 'hw:' +
-                   str(card_name), "cset", "numid=%s" % num_id, "--", str(settings)]
+                   str(card_name), "cset", "numid=%s" % num_id, "--", str(alsa_settings)]
         call(command, stdout=DEVNULL)
         if os.geteuid() == 0:
             call(["alsactl", "store"])
 
     @staticmethod
     def get_control(card_name, num_id, channel):
+        command = ['amixer', '-D', 'hw:' + str(card_name), "cget", "numid=%s" % num_id]
         try:
-            command = ['amixer', '-D', 'hw:' + str(card_name), "cget", "numid=%s" % num_id]
-            content = Popen(command, stdout=PIPE).communicate()[0].split('\n')
+            content = Popen(command, stdout=PIPE, encoding='utf8').communicate()[0].split('\n')
 
             for line in content:
                 if line.startswith('  : values='):
@@ -287,5 +282,6 @@ class AlsaMixer:
                     if len(values) > channel:
                         return values[channel - 1]
             return None
+
         except Exception as e:
-            logging.error(str(e))
+            logging.error("Error in get_control(): " + str(e), exc_info=True)

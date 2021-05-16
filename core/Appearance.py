@@ -6,11 +6,12 @@ import threading
 import time
 from datetime import datetime
 
-from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
+from PySide2.QtCore import QObject, Signal, Slot, Property
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty
 from core.Toolbox import Pre_5_15_2_fix
+from core.Settings import settings
 
 
 class NightModes:
@@ -28,14 +29,13 @@ class NightModes:
 
 
 class Appearance(QObject):
-    def __init__(self, inputs, settings: QSettings):
+    def __init__(self, inputs):
         super().__init__()
 
         self.path = 'appearance'
         self.inputs = inputs.entries
         self._backlightlevel = 0
         self._blackfilter = 0
-        self.settings = settings
         self._module = EntityProperty(parent=self,
                                       category='module',
                                       entity='core',
@@ -44,25 +44,26 @@ class Appearance(QObject):
                                       description='Appearance Module for Backlight / Nightmode etc.',
                                       type=DataType.MODULE,
                                       call=self.update,
-                                      interval=int(settings.value("appearance/interval", 5)))
+                                      interval=settings.int("appearance/interval", 5),
+                                      )
 
-        self._background_night = int(settings.value("appearance/background_night", 1))
-        self._min_backlight = int(settings.value("appearance/min", 60))
-        self._max_backlight = int(settings.value("appearance/max", 100))
-        self._min_backlight_night = int(settings.value("appearance/min_night", 30))
-        self._max_backlight_night = int(settings.value("appearance/max_night", 100))
+        self._background_night = settings.int("appearance/background_night", 1)
+        self._min_backlight = settings.int("appearance/min", 60)
+        self._max_backlight = settings.int("appearance/max", 100)
+        self._min_backlight_night = settings.int("appearance/min_night", 30)
+        self._max_backlight_night = settings.int("appearance/max_night", 100)
 
-        self._start_input_key = str(settings.value("appearance/start_input_key", ''))
-        self._stop_input_key = str(settings.value("appearance/stop_input_key", ''))
+        self._start_input_key = settings.str("appearance/start_input_key", '')
+        self._stop_input_key = settings.str("appearance/stop_input_key", '')
 
-        self._night_mode = int(settings.value("appearance/night_mode", 0))
-        self._night_mode_start = settings.value("appearance/night_mode_start", '00:00')
-        self._night_mode_end = settings.value("appearance/night_mode_end", '00:00')
+        self._night_mode = settings.int("appearance/night_mode", 0)
+        self._night_mode_start = settings.str("appearance/night_mode_start", '00:00')
+        self._night_mode_end = settings.str("appearance/night_mode_end", '00:00')
 
-        self._jump_timer = int(settings.value("appearance/jump_timer", 20))
+        self._jump_timer = settings.int("appearance/jump_timer", 20)
         self._jump_state = 0
-        self._dim_timer = int(settings.value("appearance/dim_timer", 100))
-        self._off_timer = int(settings.value("appearance/off_timer", 300))
+        self._dim_timer = settings.int("appearance/dim_timer", 100)
+        self._off_timer = settings.int("appearance/off_timer", 300)
         self.lastuserinput = time.time()
         self.state = 'ACTIVE'  # Enum('ACTIVE','SLEEP','OFF')
         self._night = False
@@ -75,7 +76,7 @@ class Appearance(QObject):
             if key.startswith('module/input_dev') and self.inputs[key].type == DataType.THREAD:
                 logging.debug(f"add to possible_devs: {key}")
                 self.possible_devs.append(key)
-                active = int(settings.value("appearance/" + key, 1))
+                active = settings.int("appearance/" + key, 1)
                 if active:
                     logging.debug(f"add to dev interrupt: {key}")
                     inputs.entries[key].events.append(self.interrupt)
@@ -86,7 +87,7 @@ class Appearance(QObject):
 
     @Slot(str, result=bool)
     def selected_device(self, path) -> str:
-        return bool(int(self.settings.value("appearance/" + path, 1)))
+        return settings.bool("appearance/" + path, True)
 
     @Signal
     def dim_timer_changed(self):
@@ -106,7 +107,7 @@ class Appearance(QObject):
     @Pre_5_15_2_fix(int, dim_timer, notify=dim_timer_changed)
     def dim_timer(self, seconds):
         self._dim_timer = int(seconds)
-        self.settings.setValue("appearance/dim_timer", seconds)
+        settings.setint("appearance/dim_timer", seconds)
 
     @Signal
     def start_input_changed(self):
@@ -120,7 +121,7 @@ class Appearance(QObject):
     @Pre_5_15_2_fix(str, start_input_key, notify=start_input_changed)
     def start_input_key(self, time_):
         self._start_input_key = time_
-        self.settings.setValue("appearance/start_input_key", time_)
+        settings.setstr("appearance/start_input_key", time_)
 
     @Signal
     def stop_input_changed(self):
@@ -134,7 +135,7 @@ class Appearance(QObject):
     @Pre_5_15_2_fix(str, stop_input_key, notify=stop_input_changed)
     def stop_input_key(self, time_):
         self._stop_input_key = time_
-        self.settings.setValue("appearance/stop_input_key", time_)
+        settings.setstr("appearance/stop_input_key", time_)
 
     @Signal
     def night_mode_start_changed(self):
@@ -148,7 +149,7 @@ class Appearance(QObject):
     @Pre_5_15_2_fix(str, night_mode_start, notify=night_mode_start_changed)
     def night_mode_start(self, time_):
         self._night_mode_start = time_
-        self.settings.setValue("appearance/night_mode_start", time_)
+        settings.setstr("appearance/night_mode_start", time_)
 
     @Signal
     def night_mode_end_changed(self):
@@ -162,7 +163,7 @@ class Appearance(QObject):
     @Pre_5_15_2_fix(str, night_mode_end, notify=night_mode_end_changed)
     def night_mode_end(self, time_):
         self._night_mode_end = time_
-        self.settings.setValue("appearance/night_mode_end", time_)
+        settings.setstr("appearance/night_mode_end", time_)
 
     @Slot(str)
     def delete_file(self, path):
@@ -181,7 +182,7 @@ class Appearance(QObject):
     @Pre_5_15_2_fix(int, jump_timer, notify=jump_timer_changed)
     def jump_timer(self, seconds):
         self._jump_timer = int(seconds)
-        self.settings.setValue("appearance/jump_timer", seconds)
+        settings.setint("appearance/jump_timer", seconds)
 
     @Signal
     def nightmodeChanged(self):
@@ -191,10 +192,10 @@ class Appearance(QObject):
     def night_mode(self):
         return self._night_mode
 
-    @Pre_5_15_2_fix(int, night_mode, notify=nightmodeChanged)  # XXX
+    @Pre_5_15_2_fix(int, night_mode, notify=nightmodeChanged)
     def night_mode(self, value):
         self._night_mode = int(value)
-        self.settings.setValue("appearance/night_mode", value)
+        settings.setint("appearance/night_mode", value)
         self.nightmodeChanged.emit()
         self.check_nightmode()
 
@@ -210,7 +211,7 @@ class Appearance(QObject):
     @Pre_5_15_2_fix(int, off_timer, notify=off_timer_changed)
     def off_timer(self, seconds):
         self._off_timer = int(seconds)
-        self.settings.setValue("appearance/off_timer", seconds)
+        settings.setint("appearance/off_timer", seconds)
 
     @Signal
     def background_Night_Changed(self):
@@ -220,10 +221,10 @@ class Appearance(QObject):
     def background_night(self):
         return int(self._background_night)
 
-    @Pre_5_15_2_fix(bool, background_night, notify=background_Night_Changed)  # XXX
+    @Pre_5_15_2_fix(bool, background_night, notify=background_Night_Changed)
     def background_night(self, bg_night):
         self._background_night = int(bg_night)
-        self.settings.setValue("appearance/background_night", self._background_night)
+        settings.setint("appearance/background_night", self._background_night)
         self.background_Night_Changed.emit()
 
     @Signal
@@ -238,7 +239,7 @@ class Appearance(QObject):
     @Pre_5_15_2_fix(int, minbacklight, notify=rangeChanged)
     def minbacklight(self, min_):
         self._min_backlight = int(min_)
-        self.settings.setValue("appearance/min", self._min_backlight)
+        settings.setint("appearance/min", self._min_backlight)
         self.rangeChanged.emit()
 
     # @Property(int, notify=rangeChanged)
@@ -249,7 +250,7 @@ class Appearance(QObject):
     @Pre_5_15_2_fix(int, minbacklight_night, notify=rangeChanged)
     def minbacklight_night(self, min_):
         self._min_backlight_night = int(min_)
-        self.settings.setValue("appearance/min_night", self._min_backlight_night)
+        settings.setint("appearance/min_night", self._min_backlight_night)
         self.rangeChanged.emit()
 
     # @Property(int, notify=rangeChanged)
@@ -261,7 +262,7 @@ class Appearance(QObject):
     def maxbacklight(self, max_):
         self._max_backlight = int(max_)
         self.rangeChanged.emit()
-        self.settings.setValue("appearance/max", self._max_backlight)
+        settings.setint("appearance/max", self._max_backlight)
         self.set_backlight(self._max_backlight)
         self.rangeChanged.emit()
 
@@ -274,7 +275,7 @@ class Appearance(QObject):
     def maxbacklight_night(self, max_):
         self._max_backlight_night = int(max_)
         self.rangeChanged.emit()
-        self.settings.setValue("appearance/max_night", self._max_backlight_night)
+        settings.setint("appearance/max_night", self._max_backlight_night)
         self.set_backlight(self._max_backlight_night)
         self.rangeChanged.emit()
 
@@ -416,6 +417,18 @@ class Appearance(QObject):
 
             elif value <= 100:
                 self.inputs['core/backlight/brightness'].set(value)
+
+                """ XXX
+                Traceback (most recent call last):
+                  File "/usr/lib/python3.9/threading.py", line 954, in _bootstrap_inner
+                    self.run()
+                  File "/usr/lib/python3.9/threading.py", line 892, in run
+                    self._target(*self._args, **self._kwargs)
+                  File "/media/big/NextCloud/Projekte/Python/qmlui/core/Appearance.py", line 419, in _set_backlight
+                    self.inputs['core/backlight/brightness'].set(value)
+                KeyError: 'core/backlight/brightness'
+                """
+
                 # mapping happens in backlight class int(self.mapFromTo(value, 30, 100, 1, 100)))
                 self._blackfilter = 0
 
@@ -451,7 +464,7 @@ class Appearance(QObject):
     @Slot(str, int)
     def setDeviceTrack(self, path, value):
         value = int(value)
-        self.settings.setValue("appearance/" + path, value)
+        settings.setstr("appearance/" + path, value)
         if value == 1:
             self.inputs[path].events.append(self.interrupt)
         else:

@@ -1,13 +1,14 @@
-import logging
+# -*- coding: utf-8 -*-
 
+import logging
+from PySide2 import QtCore
 from PySide2.QtCore import Qt, QModelIndex, QAbstractListModel, Slot
 
 
 class LogModel(QAbstractListModel):
-
     def __init__(self, items=None):
         # QAbstractListModel.__init__(self)
-        super(LogModel, self).__init__()
+        super().__init__()
 
         if items is None:
             self._items = []
@@ -43,7 +44,6 @@ class LogModel(QAbstractListModel):
         return len(self._items)
 
     def appendRow(self, item):
-
         row = len(self._items)
 
         self.beginInsertRows(QModelIndex(), row, row)
@@ -60,7 +60,6 @@ class LogModel(QAbstractListModel):
         self.endRemoveRows()
 
     def data(self, index, role=Qt.DisplayRole):
-
         if 0 <= index.row() < self.rowCount() and index.isValid():
             return self._items[index.row()].get(self.roles[role], '')
 
@@ -70,10 +69,9 @@ class LogModel(QAbstractListModel):
         return self.roles
 
 
-class MessageHandler(logging.Handler):
-
+class QtWarningHandler(logging.Handler):
     def __init__(self, model, *args, **kwargs):
-        super(MessageHandler, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.model = model
         self.setLevel(logging.WARNING)
 
@@ -83,3 +81,32 @@ class MessageHandler(logging.Handler):
                               b'msg': f'{record.module} - {record.funcName}: {record.msg}',
                               b'levelname': record.levelname,
                               b'asctime': record.asctime})
+
+
+log_model = LogModel()
+qt_warning_handler = QtWarningHandler(log_model)
+
+
+logging.basicConfig(
+    level=logging.WARNING,
+    format='%(asctime)s.%(msecs)03d %(module)s - %(funcName)s: %(message)s',
+    datefmt='%m-%d %H:%M:%S',
+    handlers=[
+        logging.StreamHandler(),
+        # logging.FileHandler("debug.log"),
+        qt_warning_handler
+    ]
+)
+
+
+def qml_log(mode, context, message):
+    if mode == QtCore.QtInfoMsg:
+        logging.info("%s (%d, %s)" % (message, context.line, context.file))
+    elif mode == QtCore.QtWarningMsg:
+        logging.warning("%s (%d, %s)" % (message, context.line, context.file))
+    elif mode == QtCore.QtCriticalMsg:
+        logging.critical("%s (%d, %s)" % (message, context.line, context.file))
+    elif mode == QtCore.QtFatalMsg:
+        logging.error("%s (%d, %s)" % (message, context.line, context.file))
+    else:
+        logging.debug("%s (%d, %s)" % (message, context.line, context.file))

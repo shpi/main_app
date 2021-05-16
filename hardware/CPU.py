@@ -1,14 +1,15 @@
 import glob
 import os
+from pathlib import Path
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty
 
 
 class CPU:
+    CPU_TEMP_PATH = Path('/sys/class/thermal/thermal_zone0/temp')
 
     def __init__(self):
-
         self.properties = list()
 
         self.properties.append(EntityProperty(name='cpu_freq',
@@ -56,3 +57,16 @@ class CPU:
         if os.path.isfile(stat_path):
             with open(stat_path) as stat_file:
                 return next(stat_file).split()[1:]
+
+    if CPU_TEMP_PATH.is_file():
+        # Temp path available
+        @classmethod
+        def get_cpu_temp(cls) -> int:
+            return int(cls.CPU_TEMP_PATH.read_text().strip())
+
+    else:
+        # No cpu temp available
+        @staticmethod
+        def get_cpu_temp() -> int:
+            # Dummy function for speedup
+            return 0

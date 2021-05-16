@@ -2,11 +2,14 @@
 import logging
 import os
 from subprocess import check_output, PIPE
+from pathlib import Path
 
 from PySide2.QtCore import Property, Signal, Slot, QObject
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty
+from core.Settings import settings
+from core.Constants import GIT_CLONE_PATH
 
 
 class Git(QObject):
@@ -16,10 +19,10 @@ class Git(QObject):
     allow_maininstance = True
     description = "Git module for managing sofware updates"
 
-    def __init__(self, settings):
-
+    def __init__(self, app_path: Path):
         super().__init__()
-        self.settings = settings
+        self.app_path = app_path
+        self.git_dir = app_path / '.git'
         self.properties = dict()
         self.properties['module'] = EntityProperty(parent=self,
                                                    category='module',
@@ -31,7 +34,7 @@ class Git(QObject):
                                                    call=self.update,
                                                    interval=6000)
 
-        self._git_path = settings.value('git/remote_path', 'https://github.com/shpi/main_app')
+        self._git_path = settings.str('git/remote_path', GIT_CLONE_PATH)
         self._updates_remote = 0
         self._updates_local = 0
         self._update_hex = ''
@@ -53,12 +56,19 @@ class Git(QObject):
 
         # git revert -m 1 hASH
 
+    def is_git(self) -> bool:
+        return self.git_dir.is_dir()
+
     @Signal
     def gitChanged(self):
         pass
 
     @Slot()
     def update(self):
+        if not self.is_git():
+            logging.info('Skipping update() because of ".git" directory missing.')
+            return
+
         # git fetch --all
         try:
             a = check_output(['git', 'fetch', '--all'], stderr=PIPE).decode()
@@ -73,12 +83,20 @@ class Git(QObject):
         return self.properties.values()
 
     def check_updates(self):
+        if not self.is_git():
+            logging.info('Skipping check_updates() because of ".git" directory missing.')
+            return
+
         output = check_output(['git', 'rev-list', '--left-right', '--count', 'origin/main...main']).strip(b'\n').split(
             b'\t')
         self._updates_remote = int(output[0])
         self._updates_local = int(output[1])
 
     def latest_update(self):
+        if not self.is_git():
+            logging.info('Skipping latest_update() because of ".git" directory missing.')
+            return
+
         if self._updates_remote > 0:
             output = check_output(
                 ['git', 'log', '-1', '--pretty=format:"%H;%h;%at;%s"', 'HEAD...origin/main']).decode().strip(
@@ -106,19 +124,27 @@ class Git(QObject):
 
     @Property(str, notify=gitChanged)
     def actual_branch(self):
-        return check_output(['git', 'branch', '--show-current']).decode().strip()
+        if self.is_git():
+            return check_output(['git', 'branch', '--show-current']).decode().strip()
+        return ""
 
     @Property('QVariantList', notify=gitChanged)
     def available_branches(self):
-        return check_output(['git', 'branch', '-r']).decode().strip().split('\n')
+        if self.is_git():
+            return check_output(['git', 'branch', '-r']).decode().strip().split('\n')
+        return ""
 
     @Property(int, notify=gitChanged)
     def current_version_date(self):
-        return int(check_output(['git', 'show', '-s', '--format=%ct']).decode().strip())
+        if self.is_git():
+            return int(check_output(['git', 'show', '-s', '--format=%ct']).decode().strip())
+        return 0
 
     @Property(str, notify=gitChanged)
     def current_version_hex(self):
-        return check_output(['git', 'rev-parse', '--short', 'HEAD']).decode().strip()
+        if self.is_git():
+            return check_output(['git', 'rev-parse', '--short', 'HEAD']).decode().strip()
+        return ""
 
     @Slot()
     def reboot(self):
@@ -127,7 +153,8 @@ class Git(QObject):
 
     @Slot(result=str)
     def merge(self):
-        return check_output(['git', 'merge']).decode().strip()
+        if self.is_git():
+            return check_output(['git', 'merge']).decode().strip()
 
     @Property(int, notify=gitChanged)
     def updates_remote(self):

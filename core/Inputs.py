@@ -15,6 +15,7 @@ from PySide2.QtGui import QPolygonF
 from core.CircularBuffer import CircularBuffer
 from core.DataTypes import Convert
 from core.DataTypes import DataType
+from core.Settings import settings
 
 
 class InputListModelDict(QAbstractListModel):
@@ -28,7 +29,7 @@ class InputListModelDict(QAbstractListModel):
     LoggingRole = Qt.UserRole + 1007
 
     def __init__(self, dictionary, parent=None):
-        super(InputListModelDict, self).__init__(parent)
+        super().__init__(parent)
         self.entries = dictionary
         self._keys = list(self.entries.keys())
 
@@ -100,7 +101,7 @@ class InputListModel(QAbstractListModel):
     StepRole = Qt.UserRole + 1011
 
     def __init__(self, dictionary, parent=None):
-        super(InputListModel, self).__init__(parent)
+        super().__init__(parent)
         self.entries = dictionary
         self._keys = list(self.entries.keys())
 
@@ -170,9 +171,8 @@ class InputListModel(QAbstractListModel):
 
 
 class InputsDict(QObject):
-    def __init__(self, settings):
-        super(InputsDict, self).__init__()
-        self.settings = settings
+    def __init__(self):
+        super().__init__()
         self.entries = dict()
         self.buffer = dict()
 
@@ -251,11 +251,9 @@ class InputsDict(QObject):
                 self.timerschedule[interval].remove(key)
 
     def add(self, newinputs=None):
-
         for newproperty in newinputs:
-
-            newproperty.logging = bool(int(self.settings.value(newproperty.path + "/logging", 0)))
-            newproperty.exposed = bool(int(self.settings.value(newproperty.path + "/exposed", 0)))
+            newproperty.logging = settings.bool(newproperty.path + "/logging")
+            newproperty.exposed = settings.bool(newproperty.path + "/exposed")
 
             if newproperty.logging:
                 self.buffer[newproperty.path] = CircularBuffer(10000)
@@ -320,13 +318,12 @@ class InputsDict(QObject):
 
     @Slot(str, int, int, int, result='QVariantMap')
     def get_calc_points(self, key, width=800, height=480, divider=1, start=None):
-
         startx = self.buffer[key].min_time()
         endx = self.buffer[key].max_time()
 
         scalex = 1
 
-        if (startx != endx):
+        if startx != endx:
             scalex = width / ((endx - startx).total_seconds() * 1000)
 
         max = self.buffer[key].max_data()
@@ -334,8 +331,8 @@ class InputsDict(QObject):
 
         scaley = 1
 
-        if (min != max):
-            scaley = height / (abs(min - max))
+        if min != max:
+            scaley = height / abs(min - max)
 
         size = self.buffer[key].length()
         polyline = QPolygonF(size)
@@ -355,7 +352,7 @@ class InputsDict(QObject):
             self.delete_timerschedule(key, self.entries[key].interval)
             self.entries[key].interval = int(value)
             self.register_timerschedule(key, int(value))
-            self.settings.setValue(key + "/interval", value)
+            settings.setstr(key + "/interval", value)
         except KeyError:
             logging.debug(key + ' not in Inputdictionary')
 
@@ -364,25 +361,23 @@ class InputsDict(QObject):
         logging.info('set_logging ' + key + ' ' + str(value))
         try:
             self.entries[key].logging = bool(value)
-            self.settings.setValue(key + "/logging", int(value))
+            settings.setint(key + "/logging", value)
             if value and key not in self.buffer:
                 self.buffer[key] = CircularBuffer(10000)
         except Exception as e:
-            logging.error(str(e))
+            logging.error(str(e), exc_info=True)
 
     @Slot(str, bool)
     def set_exposed(self, key, value):
         logging.debug('set_exposed ' + key + ' ' + str(value))
         try:
             self.entries[key].exposed = bool(value)
-
-            self.settings.setValue(key + "/exposed", int(value))
+            settings.setint(key + "/exposed", value)
 
         except KeyError:
             logging.debug(key + ' not in Inputdictionary')
 
     def update_remote(self, key, value):  # doing eventing here
-
         try:
             self.completelist.updateListView(key)
             if self.entries[key].logging > 0:
@@ -409,7 +404,6 @@ class InputsDict(QObject):
             logging.error(str(e))
 
     def update(self, lastupdate):
-
         for timeinterval in self.timerschedule:
             if lastupdate % timeinterval == 0:
                 for key in self.timerschedule[timeinterval]:

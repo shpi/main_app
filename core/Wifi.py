@@ -6,10 +6,11 @@ import threading
 import time
 from subprocess import check_output, Popen, PIPE, DEVNULL
 
-from PySide2.QtCore import QSettings, Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
+from PySide2.QtCore import Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty
+from core.Settings import settings
 
 
 class WifiNetworkModel(QAbstractListModel):
@@ -20,10 +21,11 @@ class WifiNetworkModel(QAbstractListModel):
     FrequencyRole = Qt.UserRole + 1004
     PasswordRole = Qt.UserRole + 1005
 
-    def __init__(self, entries=[], settings: QSettings = None, active='', parent=None):
-        super(WifiNetworkModel, self).__init__(parent)
-        self._entries = entries
-        self.settings = settings
+    def __init__(self, entries: list = None):
+        super().__init__()
+        self._entries = []
+        if entries:
+            self._entries.append(entries)
 
     def rowCount(self, parent=None):
         # if parent.isValid():
@@ -49,7 +51,7 @@ class WifiNetworkModel(QAbstractListModel):
                 else:
                     return 'OPEN'
             elif role == WifiNetworkModel.PasswordRole:
-                return self.settings.value("wifi/password/" + item[b"bssid"], "")
+                return settings.str("wifi/password/" + item[b"bssid"])
 
             elif role == WifiNetworkModel.FrequencyRole:
                 if int(item[b"frequency"]) in Wifi.freqtochn:
@@ -58,7 +60,6 @@ class WifiNetworkModel(QAbstractListModel):
                     return item[b"frequency"]
 
     def roleNames(self):
-
         roles = {WifiNetworkModel.BSSIDRole: b"bssid",
                  WifiNetworkModel.SSIDRole: b"ssid",
                  WifiNetworkModel.FlagsRole: b"flags",
@@ -81,15 +82,13 @@ class Wifi(QObject):
     allow_maininstance = True
     description = "Wifi Module for managing WPA supplicant"
 
-    def __init__(self, settings):
-
-        super(Wifi, self).__init__()
-        self.settings = settings
+    def __init__(self):
+        super().__init__()
         self.changing_wpa = True
         self.properties = dict()
         self.wifi_devices = Wifi.get_wifi_devs()
 
-        self._networks = WifiNetworkModel([], self.settings)
+        self._networks = WifiNetworkModel()
 
         self._wpa_state = ''
         self._wpa_bssid = ''
@@ -193,7 +192,7 @@ class Wifi(QObject):
                 exception_type, exception_object, exception_traceback = sys.exc_info()
                 line_number = exception_traceback.tb_lineno
                 logging.error(f'{e} in line {line_number}')
-        self._networks = WifiNetworkModel(networks, self.settings)
+        self._networks = WifiNetworkModel(networks)
         self.networksChanged.emit()
 
     @Slot(str)
@@ -268,9 +267,9 @@ class Wifi(QObject):
         try:
             self.changing_wpa = False
 
-            self.settings.setValue("wifi/password/" + bssid, passwd)
-            with open('/etc/wpa_supplicant/wpa_supplicant.conf', 'w') as f:
+            settings.setstr("wifi/password/" + bssid, passwd)
 
+            with open('/etc/wpa_supplicant/wpa_supplicant.conf', 'w') as f:
                 f.write('ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\n')
                 f.write('update_config=1\n')
                 f.write('country=US\n')

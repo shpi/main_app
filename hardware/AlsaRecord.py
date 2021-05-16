@@ -8,9 +8,7 @@ from core.Property import EntityProperty
 
 
 class AlsaRecord:
-
     def __init__(self, inputs, card='1'):
-
         self.inputs = inputs
         self.input = dict()
         self.name = card
@@ -53,18 +51,17 @@ class AlsaRecord:
         self._control.value = self.check_process()
 
     def control(self, onoff):
-        logging.error('Microphone thread controll called with: ' + str(onoff))
+        logging.error('Microphone thread control called with: ' + str(onoff))
         self._control.value = onoff
         self.check_process()
 
     def delete_inputs(self):
         return [self.input.path, self._control.path]
 
-    def get_inputs(self) -> dict:
+    def get_inputs(self) -> list:
         return [self.input, self._control]
 
     def process_arecord_stdout(self, arecord_process):  # output-consuming thread
-
         while self._control.value:
             for i in range(0, self.buffersize):
                 self.bufferpos = i
@@ -89,7 +86,6 @@ class AlsaRecord:
                 dat += buf
 
     def check_process(self):
-
         if self._control.value:
             if not self.arecord_process or self.arecord_process.poll() is not None:
                 logging.debug('starting arecord process on ' + self.card)
