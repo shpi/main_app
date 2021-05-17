@@ -3,5 +3,5 @@ python3 -m nuitka main.py \
     --show-progress \
     --follow-imports \
     --plugin-enable=pylint-warnings \
-    --nofollow-import-to=numpy \
-    --file-reference-choice=runtime
+    --nofollow-import-to=numpy # \
+#    --file-reference-choice=runtime
