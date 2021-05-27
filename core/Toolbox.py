@@ -195,15 +195,3 @@ class RepeatingTimer:
         if self.started:
             self.stop()
         del self.timer
-
-
-try:
-    # Python 3.7
-    from http.server import ThreadingHTTPServer
-except ImportError:
-    # Python 3.6
-    from socketserver import ThreadingMixIn
-    from http.server import HTTPServer
-
-    class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
-        daemon_threads = True

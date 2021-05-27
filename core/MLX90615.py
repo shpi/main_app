@@ -1,5 +1,4 @@
 import logging
-import os
 import struct
 import sys
 import time
@@ -11,12 +10,18 @@ import numpy as np
 # from ufunclab import minmax # https://github.com/WarrenWeckesser/ufunclab
 # from core.CircularBuffer import CircularBuffer
 from core.DataTypes import DataType
-from core.Property import EntityProperty, ThreadProperty
+from core.Property import EntityProperty
 from core.Settings import settings
 from hardware.CPU import CPU
+from interfaces.Module import ThreadModuleBase, ModuleCategories, IgnoreModuleException
 
 
-class MLX90615:
+class MLX90615(ThreadModuleBase):
+    allow_maininstance = True
+    allow_instances = False
+    description = "MLX90615"
+    categories = (ModuleCategories.HARDWARE, )
+
     TEMP_RANGE_MIN = 0.1
     TEMP_RANGE_MAX = 45.
 
@@ -43,15 +48,14 @@ class MLX90615:
                 if namefile.is_file() or not with_name_file:
                     yield device
 
-    def __init__(self, inputs):
+    def __init__(self):
         super().__init__()
 
         self.ospath: Optional[Path] = None
 
         devices = list(self.iio_device_paths(name_match='mlx90615'))
         if not devices:
-            logging.error('No MLX90615 device found')
-            return
+            raise IgnoreModuleException("Hardware not found.")
 
         if len(devices) > 1:
             logging.warning('Multiple MLX90615 device found? Using first.')
@@ -63,8 +67,6 @@ class MLX90615:
         self.buffer_enable(0)
         self.activate_channel()
         self.buffer_enable(1)
-
-        self.inputs = inputs
 
         # self.load = os.getloadavg()[2]
         # self.cpu_temp_mean = CPU.get_cpu_temp()
@@ -104,14 +106,14 @@ class MLX90615:
                                       call=self.update,
                                       interval=10)
 
-        self._thread = ThreadProperty(entity='input_dev',
-                                      name='mlx90615',
-                                      category='module',
-                                      parent=self,
-                                      value=1,
-                                      description='Thread for MLX90615',
-                                      interval=60,
-                                      function=self.mlx_thread)
+        # self._thread = ThreadProperty(entity='input_dev',
+        #                              name='mlx90615',
+        #                              category='module',
+        #                              parent=self,
+        #                              value=1,
+        #                              description='Thread for MLX90615',
+        #                              interval=60,
+        #                              function=self.mlx_thread)
 
         self._temp = EntityProperty(parent=self,
                                     category='sensor',
@@ -123,11 +125,20 @@ class MLX90615:
                                     call=self.calc_temp,
                                     interval=60)
 
-    def get_inputs(self) -> tuple:
-        if self.ospath and self.ospath.is_file():
-            return self._module, self._temp, self._thread
+    def load(self):
+        pass
 
-        return ()
+    def unload(self):
+        pass
+
+    def stop(self):
+        pass
+
+    def get_inputs(self) -> list:
+        if self.ospath and self.ospath.is_file():
+            return [self._module, self._temp]
+
+        return []
 
     def calc_temp(self):
         if self.last_movement + 30 > time.time():
@@ -223,7 +234,7 @@ class MLX90615:
 
         return None
 
-    def mlx_thread(self):
+    def run(self):
         i = 0
         logging.info('starting MLX90615 thread')
 
@@ -233,7 +244,7 @@ class MLX90615:
             return
 
         with dev_file.open('rb') as devfile:
-            while self._thread.value:
+            while self.module_is_running():
                 line = devfile.read(16)
                 (tempobj, tempamb, _, timestamp) = struct.unpack('<HHiq', line)
 

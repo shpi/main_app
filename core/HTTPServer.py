@@ -4,12 +4,12 @@ import logging
 import sys
 import time
 import urllib.parse as urlparse
-from http.server import BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from PySide2.QtCore import Signal
 
 from core.DataTypes import Convert
-from core.Toolbox import Pre_5_15_2_fix, ThreadingHTTPServer
+from core.Toolbox import Pre_5_15_2_fix
 from core.Settings import settings
 from interfaces.Module import ThreadModuleBase, ModuleCategories
 from core.Module import Module
@@ -150,7 +150,7 @@ class HTTPServer(ThreadingHTTPServer, ThreadModuleBase):
         settings.setint("httpserver/port", self._port)
 
     def stop(self):
-        print("HTTPServer: Shutdown")
+        # print("HTTPServer: Shutdown")
         self.shutdown()
 
     def load(self):
@@ -160,6 +160,6 @@ class HTTPServer(ThreadingHTTPServer, ThreadModuleBase):
         self.server_close()
 
     def run(self) -> None:
-        print("HTTPServer: Run")
+        # print("HTTPServer: Run")
         self.serve_forever()
-        print("HTTPServer: End of run")
+        # print("HTTPServer: End of run")

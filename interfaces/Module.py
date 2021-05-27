@@ -112,9 +112,18 @@ class ThreadModuleBase(ModuleBase):
         Called when a ThreadModule should stop its thread for unloading the module.
         """
 
-    def sleep(self, seconds):
+    def sleep(self, seconds) -> bool:
         """
         The ThreadModule should use this interruptable sleep function instead of Python's sleep().
         Sleeps "seconds" but may return earier, if module gets stopped.
         Do not rely on resulting sleep time for calculations based on timediff!
+
+        Returns True on normal sleep exit.
+        Returns False if module is stopping and sleep may have been interrupted earlier.
+        """
+
+    def module_is_running(self) -> bool:
+        """
+        Returns True if the module should run.
+        Use this function to exit loops.
         """

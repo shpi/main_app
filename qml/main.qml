@@ -40,7 +40,7 @@ ApplicationWindow {
     property int i: 0
 
     FolderListModel {
-        Component.onCompleted: console.error(applicationDirPath)
+        // Component.onCompleted: console.error(applicationDirPath)
 
         caseSensitive: false
         id: folderModel
@@ -50,7 +50,7 @@ ApplicationWindow {
         onCountChanged: {
             if (folderModel.count > 0)
                 bg.source = folderModel.get(i, "fileURL")
-                console.error(bg.source)
+                // console.error(bg.source)
         }
     }
 

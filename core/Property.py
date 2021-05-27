@@ -7,13 +7,10 @@ from core.DataTypes import DataType
 
 
 class ModuleThread(threading.Thread):
-
     #def _init_(self):
     #    super()._init_()
 
-
     def get_id(self):
-
         # returns id of the respective thread
         if hasattr(self, '_thread_id'):
             return self._thread_id
@@ -238,7 +235,7 @@ class StaticProperty(object):
     # version = "1.0"
     # description = "Basic Property Class for all Statics"
 
-    __slots__ = ['category', 'name', 'entity', 'description', 'value', 'type', 'exposed']
+    __slots__ = ('category', 'name', 'entity', 'description', 'value', 'type', 'exposed')
 
     def __init__(self, name: str = None,
                  category: str = None,

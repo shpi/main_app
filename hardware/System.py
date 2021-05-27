@@ -4,12 +4,20 @@ import sys
 from core.DataTypes import DataType
 from core.Property import EntityProperty, StaticProperty
 
+from interfaces.Module import ModuleBase, ModuleCategories
 
-class SystemInfo:
+
+class SystemInfo(ModuleBase):
+    allow_maininstance = True
+    allow_instances = False
+    description = "HTTP Server"
+    categories = (ModuleCategories._INTERNAL, ModuleCategories.INFO)
 
     def __init__(self):
+        ModuleBase.__init__(self)
+
         self.properties = list()
-        self.name = 'system'
+        # self.name = 'system'
 
         self.properties.append(StaticProperty(name='is64bit',
                                               category='core',
@@ -67,6 +75,12 @@ class SystemInfo:
 
     def get_inputs(self) -> list:
         return self.properties
+
+    def load(self):
+        pass
+
+    def unload(self):
+        pass
 
     @staticmethod
     def is64bit():

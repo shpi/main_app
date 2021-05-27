@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import ctypes
 from typing import Optional, Dict, Type, List
+import threading
 from threading import Thread, enumerate
 from time import sleep, time
 
-from interfaces.Module import ModuleBase, ThreadModuleBase
+from interfaces.Module import ModuleBase, ThreadModuleBase, IgnoreModuleException
 from core.Inputs import InputsDict
 
 
@@ -15,6 +17,8 @@ class Module:
     """
 
     instances_by_cls: Dict[str, Dict[Optional[str], "Module"]] = {}
+    instances_in_loadorder: List["Module"] = []
+
     inputs = InputsDict()
 
     # Loop for checking logic regularly
@@ -42,10 +46,9 @@ class Module:
 
     @classmethod
     def unload_modules(cls):
-        for mcls in list(cls.instances_by_cls.values()):
-            for minst in list(mcls.values()):
-                # Module.inputs.entries[key].set(0)
-                minst.unload()
+        # Unload in reverse order
+        for minst in reversed(list(Module.instances_in_loadorder)):
+            minst.unload()
 
         # Legacy compatibility
         for key in Module.inputs.entries:
@@ -56,6 +59,7 @@ class Module:
         logging.info(f"Creating Module instance {instancename!s} of {module_class.__name__}")
         self.module_class = module_class
 
+        # Check instancing policy with instancename
         if instancename is None:
             if not module_class.allow_maininstance:
                 raise NotImplementedError(
@@ -75,7 +79,22 @@ class Module:
         # Remember instance name
         self.module_instancename = instancename
 
+        self.running = False
         clsstr = module_class.__name__
+
+        try:
+            # Instantiate the module class
+            self.module_instance = None  # Default for checking in subclasses
+            self.module_instance = module_class()
+        except IgnoreModuleException as e:
+            logging.error(f"Module instance of {clsstr} denies instantiation: " + str(e))
+            return
+        except Exception as e:
+            # Handover other exceptions from module's init to caller
+            raise e
+
+        # Link functions and accessors to the module instance
+        self.module_instance.instancename = lambda: self.module_instancename
 
         # Lookup instance dict for specific subclass type
         clsinstances = Module.instances_by_cls.get(clsstr)
@@ -91,20 +110,12 @@ class Module:
         # Store new instance by instancename
         clsinstances[instancename] = self
 
-        self.running = False
-        # Instantiate the module class
-
-        # try:
-        # Handover exceptions from module's init to caller
-        m = self.module_instance = module_class()
-
-        # Link functions and accessors to the module instance
-        m.instancename = lambda: self.module_instancename
-
-        # except Exception as e:
-        #    logging.error("Error on __init__ of module: " + str(e), exc_info=True)
+        Module.instances_in_loadorder.append(self)
 
     def load(self):
+        if self.module_instance is None:
+            return
+
         self.running = True
         try:
             self.module_instance.load()
@@ -116,6 +127,7 @@ class Module:
 
         try:
             self.module_instance.unload()
+            self.instances_in_loadorder.remove(self)
         except Exception as e:
             logging.error("Error on unload() of module: " + str(e), exc_info=True)
 
@@ -142,6 +154,10 @@ class ThreadModule(Module):
     def __init__(self, module_class: Type[ThreadModuleBase], instancename: str = None, threadname: str = None):
         Module.__init__(self, module_class, instancename=instancename)
 
+        if self.module_instance is None:
+            # Module could not be instantiated. Should be handled in Module.__init__.
+            return
+
         if not threadname:
             threadname = module_class.__name__ + ("-" + instancename if instancename else "")
 
@@ -149,11 +165,15 @@ class ThreadModule(Module):
             raise RuntimeError(f"threadname '{threadname}' collides with an existing thread name.")
 
         self.module_threadname = threadname
-        self.module_instance.sleep = self.sleep
+        self.module_instance.sleep = self.sleep  # Get access to sleep function
+        self.module_instance.module_is_running = lambda: self.running
         self.thread = Thread(target=self.module_instance.run)
 
     def load(self):
         Module.load(self)
+
+        if self.module_instance is None:
+            return
 
         try:
             # Start the modules' run function in a thread
@@ -170,7 +190,9 @@ class ThreadModule(Module):
             if self.thread.is_alive():
                 self.thread.join(self.module_instance.STOP_TIMEOUT)
             if self.thread.is_alive():
-                logging.error(f"Thread of {repr(self.module_class)} did not end after {self.module_instance.STOP_TIMEOUT} seconds.")
+                logging.error(f"Thread of {repr(self.module_class)} did not end after "
+                              f"{self.module_instance.STOP_TIMEOUT} seconds. Killing it now.")
+                self.kill()
 
         except Exception as e:
             logging.error("Error on stopping threadmodule: " + str(e), exc_info=True)
@@ -178,7 +200,37 @@ class ThreadModule(Module):
         # Handover to Modules unload
         Module.unload(self)
 
-    def sleep(self, seconds):
+    @property
+    def is_alive(self) -> bool:
+        return self.thread.is_alive()
+
+    @property
+    def thread_id(self) -> Optional[int]:
+        return self.thread.native_id
+
+    @property
+    def thread_killid(self) -> int:
+        # return self.thread.ident
+        if hasattr(self.thread, '_thread_id'):
+            return self.thread._thread_id
+        for did, thread in threading._active.items():
+            if thread is self.thread:
+                return did
+
+    def kill(self):
+        if not self.thread.is_alive():
+            return
+
+        thread_id = self.thread_killid
+        print("kill ids should match:", thread_id, self.thread.ident)
+
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, ctypes.py_object(SystemExit))
+        print("Kill result:", res)
+        if res > 1:
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
+            logging.error('Thread Exception raise failure.')
+
+    def sleep(self, seconds) -> bool:
         """
         Sleeps "seconds" but may return earier, if module gets stopped.
         Do not rely on resulting sleep time for timediff calculations!
@@ -193,6 +245,8 @@ class ThreadModule(Module):
         # Sleep remaining fraction of MAX_SLEEP_INTERVAL
         if remain > 0 and self.running:
             sleep(remain)
+
+        return self.running
 
     def __repr__(self):
         return f"<ThreadModule {self.module_class.__name__}[{self.module_instancename}]>"

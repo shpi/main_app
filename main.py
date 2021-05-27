@@ -31,11 +31,12 @@ from hardware.IIO import IIO
 from hardware.InputDevs import InputDevs
 from hardware.Leds import Led
 from hardware.System import SystemInfo
+from interfaces.DemoModules import DemoThreadModule, EndlessThreadModule
 
 # Nuitka stuff
 import files
 
-APP_PATH = Path(__file__).parent
+APP_PATH = Path(sys.argv[0]).parent
 
 if environ.get("QMLDEBUG") not in (None, "0"):
     from PySide2.QtQml import QQmlDebuggingEnablers
@@ -71,16 +72,18 @@ core_modules['inputdevs'] = InputDevs()
 core_modules['backlight'] = Backlight()
 core_modules['wifi'] = Wifi()
 
-httpserver = core_modules['httpserver'] = ThreadModule(HTTPServer)
-httpserver.load()  # Temporary handling until modulemanager works
+core_modules['httpserver'] = ThreadModule(HTTPServer)
+core_modules['demo'] = ThreadModule(DemoThreadModule, "EasyThread")
+core_modules['demo2'] = ThreadModule(EndlessThreadModule, "EndlessThread")
 
-
-core_modules['mlx90615'] = MLX90615(Module.inputs)
+core_modules['mlx90615'] = ThreadModule(MLX90615)
 core_modules['alsamixer'] = AlsaMixer(Module.inputs)
 
 
 for mod_str, core_module in core_modules.items():
-    if not isinstance(core_module, ThreadModule):
+    if isinstance(core_module, ThreadModule):
+        core_module.load()
+    else:
         Module.inputs.add(core_module.get_inputs())
 
 
@@ -126,5 +129,7 @@ exec_returncode = app.exec_()
 
 check_loop_timer.stop()
 
-print(f"Exiting mainapp with code: {exec_returncode}")
+if exec_returncode:
+    print(f"Exiting mainapp with code: {exec_returncode}")
+
 sys.exit(exec_returncode)
