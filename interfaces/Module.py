@@ -2,6 +2,7 @@
 
 from abc import abstractmethod
 from enum import Enum, auto
+from typing import Optional, Iterable
 
 from PySide2.QtCore import QObject
 
@@ -15,19 +16,26 @@ class IgnoreModuleException(BaseException):
 
 
 class ModuleCategories(Enum):
+    _INTERNAL = auto()
+
     LOGIC = auto()
+    HARDWARE = auto()
     INFO = auto()
     UI = auto()
-    CONNECTIONS = auto()
+    USER_MODULE = auto()
 
 
 class ModuleBase(QObject, FakeABC):
-    def __init__(self, instancename: str = None):
+    def __init__(self):
         FakeABC.__init__(self)
         QObject.__init__(self)
-        self.instancename = instancename
 
         # TODO: app reference
+
+    def instancename(self) -> Optional[str]:
+        """
+        A module may read its instance name by this function
+        """
 
     @abstractmethod
     def load(self):
@@ -46,6 +54,13 @@ class ModuleBase(QObject, FakeABC):
         """
         Telling the module to stop and clean up before unload.
         Close connections, destroy instances, free memory, release references.
+        """
+
+    @classmethod
+    @abstractmethod
+    def categories(cls) -> Iterable[ModuleCategories]:
+        """
+        Iterable of categories this module matches
         """
 
     @classmethod
@@ -71,13 +86,19 @@ class ModuleBase(QObject, FakeABC):
         Describe your Module in a sentence.
         """
 
+    @abstractmethod
+    def get_inputs(self) -> list:
+        """
+        Module must provide its inputs by this function
+        """
+
 
 class ThreadModuleBase(ModuleBase):
     MAX_SLEEP_INTERVAL = 2  # Deep sleep at most this amount of seconds
     STOP_TIMEOUT = 10  # Wait at least this seconds on thread stop.
 
-    def __init__(self, instancename: str = None):
-        ModuleBase.__init__(self, instancename)
+    def __init__(self):
+        ModuleBase.__init__(self)
 
     @abstractmethod
     def run(self):

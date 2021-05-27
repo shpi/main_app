@@ -4,28 +4,15 @@ import logging
 import sys
 import time
 import urllib.parse as urlparse
-
-from PySide2.QtCore import QObject
-
 from http.server import BaseHTTPRequestHandler
-
-try:
-    # Python 3.7
-    from http.server import ThreadingHTTPServer
-except ImportError:
-    # Python 3.6
-    from socketserver import ThreadingMixIn
-    from http.server import HTTPServer
-
-    class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
-        daemon_threads = True
 
 from PySide2.QtCore import Signal
 
 from core.DataTypes import Convert
-from core.Toolbox import Pre_5_15_2_fix
+from core.Toolbox import Pre_5_15_2_fix, ThreadingHTTPServer
 from core.Settings import settings
-from interfaces.Module import ThreadModuleBase
+from interfaces.Module import ThreadModuleBase, ModuleCategories
+from core.Module import Module
 
 
 class ServerHandler(BaseHTTPRequestHandler):
@@ -135,15 +122,16 @@ class HTTPServer(ThreadingHTTPServer, ThreadModuleBase):
     allow_maininstance = True
     allow_instances = False
     description = "HTTP Server"
+    categories = (ModuleCategories._INTERNAL, )
 
-    def __init__(self, inputs):
+    def __init__(self):
         # QObject.__init__(self)
         ThreadModuleBase.__init__(self)
 
         self._port = settings.int("httpserver/port", 9000)
         ThreadingHTTPServer.__init__(self, ('0.0.0.0', self._port), ServerHandler)
 
-        ServerHandler.inputs = inputs.entries
+        ServerHandler.inputs = Module.inputs.entries
 
     @Signal
     def port_changed(self):

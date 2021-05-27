@@ -3,7 +3,7 @@
 import logging
 from typing import Optional, Dict, Type, List
 from threading import Thread, enumerate
-from time import sleep
+from time import sleep, time
 
 from interfaces.Module import ModuleBase, ThreadModuleBase
 from core.Inputs import InputsDict
@@ -15,8 +15,42 @@ class Module:
     """
 
     instances_by_cls: Dict[str, Dict[Optional[str], "Module"]] = {}
+    inputs = InputsDict()
 
-    _inputs = InputsDict()
+    # Loop for checking logic regularly
+    _last_update = 0  # to initialize everything
+    _update_running = False
+
+    @classmethod
+    def get_classes(cls) -> List[Type[ModuleBase]]:
+        return []
+
+    @classmethod
+    def check_loop(cls):
+        if cls._update_running:
+            return
+
+        try:
+            cls._update_running = True
+            cls.inputs.update(cls._last_update)
+        except Exception as e:
+            logging.error(f"Error in check_loop: {e!s}", exc_info=True)
+
+        finally:
+            cls._last_update = int(time())
+            cls._update_running = False
+
+    @classmethod
+    def unload_modules(cls):
+        for mcls in list(cls.instances_by_cls.values()):
+            for minst in list(mcls.values()):
+                # Module.inputs.entries[key].set(0)
+                minst.unload()
+
+        # Legacy compatibility
+        for key in Module.inputs.entries:
+            if key.endswith('thread'):
+                Module.inputs.entries[key].set(0)
 
     def __init__(self, module_class: Type[ModuleBase], instancename: str = None):
         logging.info(f"Creating Module instance {instancename!s} of {module_class.__name__}")
@@ -58,11 +92,17 @@ class Module:
         clsinstances[instancename] = self
 
         self.running = False
-        try:
-            # Instantiate the module class
-            self.module_instance = module_class(instancename)
-        except Exception as e:
-            logging.error("Error on __init__ of module: " + str(e), exc_info=True)
+        # Instantiate the module class
+
+        # try:
+        # Handover exceptions from module's init to caller
+        m = self.module_instance = module_class()
+
+        # Link functions and accessors to the module instance
+        m.instancename = lambda: self.module_instancename
+
+        # except Exception as e:
+        #    logging.error("Error on __init__ of module: " + str(e), exc_info=True)
 
     def load(self):
         self.running = True
@@ -99,15 +139,6 @@ class Module:
 class ThreadModule(Module):
     thread_instances: List["ThreadModule"] = []
 
-    @classmethod
-    def kill_threadmodules(cls):
-        print("Kill threads")
-        for tm in cls.thread_instances:
-            Module._inputs.entries[tm.].set(0)
-
-        # Temporary handling until modulemanager works
-        ThreadModule.destroy_module(httpserver)
-
     def __init__(self, module_class: Type[ThreadModuleBase], instancename: str = None, threadname: str = None):
         Module.__init__(self, module_class, instancename=instancename)
 
@@ -118,6 +149,7 @@ class ThreadModule(Module):
             raise RuntimeError(f"threadname '{threadname}' collides with an existing thread name.")
 
         self.module_threadname = threadname
+        self.module_instance.sleep = self.sleep
         self.thread = Thread(target=self.module_instance.run)
 
     def load(self):
@@ -127,7 +159,7 @@ class ThreadModule(Module):
             # Start the modules' run function in a thread
             self.thread.start()
         except Exception as e:
-            logging.error("Error on load() of module: " + str(e), exc_info=True)
+            logging.error("Error on starting thread of module: " + str(e), exc_info=True)
 
     def unload(self):
         # Stop a thread first
@@ -138,7 +170,7 @@ class ThreadModule(Module):
             if self.thread.is_alive():
                 self.thread.join(self.module_instance.STOP_TIMEOUT)
             if self.thread.is_alive():
-                print(f"Thread of {repr(self.module_class)} did not end after {self.module_instance.STOP_TIMEOUT} seconds.")
+                logging.error(f"Thread of {repr(self.module_class)} did not end after {self.module_instance.STOP_TIMEOUT} seconds.")
 
         except Exception as e:
             logging.error("Error on stopping threadmodule: " + str(e), exc_info=True)
