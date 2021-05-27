@@ -1,8 +1,10 @@
 import socket
+import logging
 from re import compile
 from typing import Callable, NamedTuple, Optional, Union
 
 from PySide2.QtCore import Property, __version_info__
+from PySide2.QtCore import QTimer
 
 """
     # Perfect world as with Python's own 'property' (since 5.15.2):
@@ -150,3 +152,58 @@ def netmaskbytes_to_prefixlen(netmask: bytes) -> int:
         bits += valid_maskbytes[b]
 
     return bits
+
+
+class RepeatingTimer:
+    def __init__(self, timeout, func, autostart=True, *args, **kwargs):
+        """
+        Create a timer that is safe against garbage collection and overlapping
+        calls.
+        """
+
+        self.timeout = timeout
+        self.started = False
+
+        t = self.timer = QTimer()
+
+        def _repeatingtimer_event():
+            try:
+                func(*args, **kwargs)
+            except Exception as e:
+                logging.error(f"Error in RepeatingTimer: {e!s}", exc_info=True)
+
+        t.timeout.connect(_repeatingtimer_event)
+
+        if autostart:
+            self.start()
+
+    def start(self):
+        if self.started:
+            logging.info("RepeatingTimer already started!")
+            return
+        self.timer.start(self.timeout)
+        self.started = True
+
+    def stop(self):
+        if not self.started:
+            logging.info("RepeatingTimer already stopped!")
+            return
+        self.timer.stop()
+        self.started = False
+
+    def __del__(self):
+        if self.started:
+            self.stop()
+        del self.timer
+
+
+try:
+    # Python 3.7
+    from http.server import ThreadingHTTPServer
+except ImportError:
+    # Python 3.6
+    from socketserver import ThreadingMixIn
+    from http.server import HTTPServer
+
+    class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
+        daemon_threads = True
