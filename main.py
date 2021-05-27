@@ -16,10 +16,10 @@ from PySide2.QtWidgets import QApplication
 from core.Appearance import Appearance
 from core.Git import Git
 from core.HTTPServer import HTTPServer
-from core.Inputs import InputsDict
 from core.Logger import qml_log, log_model
 
 from interfaces.Module import ModuleBase, ThreadModuleBase
+from core.Module import Module, ThreadModule
 from core.ModuleManager import ModuleManager
 
 from core.MLX90615 import MLX90615
@@ -41,6 +41,7 @@ APP_PATH = Path(__file__).parent
 
 if environ.get("QMLDEBUG") not in (None, "0"):
     from PySide2.QtQml import QQmlDebuggingEnablers
+    debug = QQmlDebuggingEnabler()
 
 
 def _interrupt_handler(signum, frame):  # signum, frame
@@ -87,7 +88,7 @@ def check_loop():
         ready = True
 
 
-inputs = InputsDict()
+# inputs = InputsDict()
 
 core_modules = dict()
 
@@ -102,35 +103,21 @@ core_modules['inputdevs'] = InputDevs()
 core_modules['backlight'] = Backlight()
 core_modules['wifi'] = Wifi()
 
-httpserver = core_modules['httpserver'] = HTTPServer(inputs)
+httpserver = core_modules['httpserver'] = ThreadModule(HTTPServer)
 httpserver.start()  # Temporary handling until modulemanager works
 
 
-core_modules['mlx90615'] = MLX90615(inputs)
-core_modules['alsamixer'] = AlsaMixer(inputs)
+core_modules['mlx90615'] = MLX90615(Module._inputs)
+core_modules['alsamixer'] = AlsaMixer(Module._inputs)
 
 
 for core_module in core_modules:
-    inputs.add(core_modules[core_module].get_inputs())
+    Module._inputs.add(core_modules[core_module].get_inputs())
 
-core_modules['appearance'] = Appearance(inputs)
-inputs.add(core_modules['appearance'].get_inputs())
+core_modules['appearance'] = Appearance(Module._inputs)
+Module._inputs.add(core_modules['appearance'].get_inputs())
 
-modules = ModuleManager(inputs)
-
-
-def killThreads():
-    print("Kill threads")
-    for key in inputs.entries:
-        if key.endswith('thread'):
-            inputs.entries[key].set(0)
-
-    # Temporary handling until modulemanager works
-    ThreadModuleBase.destroy_module(httpserver)
-
-
-if environ.get("QMLDEBUG") not in (None, "0"):
-    debug = QQmlDebuggingEnabler()
+modules = ModuleManager(Module._inputs)
 
 
 app = QApplication(sys.argv)
@@ -139,7 +126,8 @@ QFontDatabase.addApplicationFont("./fonts/dejavu-custom.ttf")
 
 qInstallMessageHandler(qml_log)
 
-app.aboutToQuit.connect(killThreads)
+app.aboutToQuit.connect(ThreadModule.kill_threadmodules)
+
 app.setApplicationName("Main")
 app.setOrganizationName("SHPI GmbH")
 app.setOrganizationDomain("shpi.de")

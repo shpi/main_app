@@ -1,65 +1,47 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from abc import abstractmethod
-from typing import Optional, Dict
+from typing import Optional, Dict, Type, List
 from threading import Thread, enumerate
 from time import sleep
 
-from PySide2.QtCore import QObject
+from interfaces.Module import ModuleBase, ThreadModuleBase
+from core.Inputs import InputsDict
 
-from interfaces.Module import ModuleBase, ThreadModuleBase, ModuleCategories
 
+class Module:
+    """
+    Internal Module class holding the actual module instances.
+    """
 
-class Module(QObject, ModuleBase):
-    instances_by_cls: Dict[str, Dict[Optional[str], "ModuleBase"]] = {}
+    instances_by_cls: Dict[str, Dict[Optional[str], "Module"]] = {}
 
-    @classmethod
-    def destroy_module(cls, modinst: "Module", with_unload=True):
-        modinst.running = False
-        if with_unload:
-            try:
-                modinst.unload()
-            except Exception as e:
-                logging.error("Error on unloading module: " + str(e), exc_info=True)
+    _inputs = InputsDict()
 
-        # Remove from dicts
-        clsstr = modinst.__class__.__name__
-        clsinstances = Module.instances_by_cls[clsstr]
-        clsinstances.pop(modinst.instancename)
-        if not clsinstances:
-            # Remove empty cls instances dict
-            Module.instances_by_cls.pop(clsstr)
-
-        logging.info(f"Destroyed module instance '{modinst.instancename}' of {clsstr}")
-
-    def __init__(self, instancename: str = None):
-        QObject.__init__(self)
-        logging.info(f"Created module instance {instancename!s} of {self.__class__.__name__}")
+    def __init__(self, module_class: Type[ModuleBase], instancename: str = None):
+        logging.info(f"Creating Module instance {instancename!s} of {module_class.__name__}")
+        self.module_class = module_class
 
         if instancename is None:
-            if not self.allow_maininstance:
+            if not module_class.allow_maininstance:
                 raise NotImplementedError(
                     "The module defined not to allow an unnamed main instance. Choose an instancename. "
                     "(allow_maininstance=False)")
         else:
-            if not self.allow_instances:
+            if not module_class.allow_instances:
                 raise NotImplementedError("The module defined not to allow named instances. (allow_instances=False)")
 
             if type(instancename) is str:
                 if "." in instancename:
                     raise ValueError("No dot '.' allowed in instancename.")
 
-            elif type(instancename) is int:  # int allowed
-                instancename = str(instancename)
-
             else:
                 raise ValueError("Type of instancename must be str for individuals or None for main instance.")
 
         # Remember instance name
-        self.instancename = instancename
+        self.module_instancename = instancename
 
-        clsstr = self.__class__.__name__
+        clsstr = module_class.__name__
 
         # Lookup instance dict for specific subclass type
         clsinstances = Module.instances_by_cls.get(clsstr)
@@ -76,41 +58,93 @@ class Module(QObject, ModuleBase):
         clsinstances[instancename] = self
 
         self.running = False
+        try:
+            # Instantiate the module class
+            self.module_instance = module_class(instancename)
+        except Exception as e:
+            logging.error("Error on __init__ of module: " + str(e), exc_info=True)
+
+    def load(self):
+        self.running = True
+        try:
+            self.module_instance.load()
+        except Exception as e:
+            logging.error("Error on load() of module: " + str(e), exc_info=True)
+
+    def unload(self):
+        self.running = False
+
+        try:
+            self.module_instance.unload()
+        except Exception as e:
+            logging.error("Error on unload() of module: " + str(e), exc_info=True)
+
+        # Remove from dicts
+        clsstr = self.module_class.__name__
+        clsinstances = Module.instances_by_cls[clsstr]
+        clsinstances.pop(self.module_instancename)
+        if not clsinstances:
+            # Remove empty cls instances dict
+            Module.instances_by_cls.pop(clsstr)
+
+        # Remove instance
+        del self.module_instance
+
+        logging.info(f"Destroyed module instance '{self.module_instancename}' of {clsstr}")
 
     def __repr__(self):
-        return f"<Module {self.__class__.__name__}[{self.instancename}]>"
+        return f"<Module {self.module_class.__name__}[{self.module_instancename}]>"
 
 
-class ThreadModule(ThreadModuleBase, Thread):
-    MAX_SLEEP_INTERVAL = 2  # Deep sleep at most this amount of seconds
-    STOP_TIMEOUT = 10  # Wait at least this seconds on thread stop.
+class ThreadModule(Module):
+    thread_instances: List["ThreadModule"] = []
 
-    def __init__(self, instancename: str = None, threadname: str = None):
-        ThreadModuleBase.__init__(self, instancename=instancename)
+    @classmethod
+    def kill_threadmodules(cls):
+        print("Kill threads")
+        for tm in cls.thread_instances:
+            Module._inputs.entries[tm.].set(0)
+
+        # Temporary handling until modulemanager works
+        ThreadModule.destroy_module(httpserver)
+
+    def __init__(self, module_class: Type[ThreadModuleBase], instancename: str = None, threadname: str = None):
+        Module.__init__(self, module_class, instancename=instancename)
 
         if not threadname:
-            threadname = self.__class__.__name__ + ("-" + instancename if instancename else "")
+            threadname = module_class.__name__ + ("-" + instancename if instancename else "")
 
         if threadname in (t.name for t in enumerate()):
             raise RuntimeError(f"threadname '{threadname}' collides with an existing thread name.")
 
-        Thread.__init__(self, name=threadname)
+        self.module_threadname = threadname
+        self.thread = Thread(target=self.module_instance.run)
 
-    @classmethod
-    def destroy_module(cls, modinst: "ThreadModule", with_unload=True):
-        # Stop a thread first
-        modinst.running = False
+    def load(self):
+        Module.load(self)
+
         try:
-            modinst.stop()
-            if modinst.is_alive():
-                modinst.join(ThreadModuleBase.STOP_TIMEOUT)
-            if modinst.is_alive():
-                print(f"Thread of {repr(modinst)} did not end after {ThreadModuleBase.STOP_TIMEOUT} seconds.")
+            # Start the modules' run function in a thread
+            self.thread.start()
+        except Exception as e:
+            logging.error("Error on load() of module: " + str(e), exc_info=True)
+
+    def unload(self):
+        # Stop a thread first
+        self.running = False
+
+        try:
+            self.module_instance.stop()
+            if self.thread.is_alive():
+                self.thread.join(self.module_instance.STOP_TIMEOUT)
+            if self.thread.is_alive():
+                print(f"Thread of {repr(self.module_class)} did not end after {self.module_instance.STOP_TIMEOUT} seconds.")
+
         except Exception as e:
             logging.error("Error on stopping threadmodule: " + str(e), exc_info=True)
 
-        # Handover to Modules destroy procedure
-        ThreadModule.destroy_module(modinst=modinst, with_unload=with_unload)
+        # Handover to Modules unload
+        Module.unload(self)
 
     def sleep(self, seconds):
         """
@@ -129,4 +163,4 @@ class ThreadModule(ThreadModuleBase, Thread):
             sleep(remain)
 
     def __repr__(self):
-        return f"<ThreadModule {self.__class__.__name__}[{self.instancename}]>"
+        return f"<ThreadModule {self.module_class.__name__}[{self.module_instancename}]>"

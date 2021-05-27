@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import logging
 from abc import abstractmethod
 from enum import Enum, auto
-from typing import Optional, Dict
-from threading import Thread, enumerate
-from time import sleep
 
 from PySide2.QtCore import QObject
 
 from core.FakeABC import FakeABC
+
+
+class IgnoreModuleException(BaseException):
+    """
+    Raise during load() or __init__ of your module to stop creation
+    """
 
 
 class ModuleCategories(Enum):
@@ -19,16 +21,17 @@ class ModuleCategories(Enum):
     CONNECTIONS = auto()
 
 
-class ModuleBase(FakeABC):
+class ModuleBase(QObject, FakeABC):
     def __init__(self, instancename: str = None):
-        super().__init__()
+        FakeABC.__init__(self)
+        QObject.__init__(self)
         self.instancename = instancename
+
+        # TODO: app reference
 
     @abstractmethod
     def load(self):
         """
-        This method may be called multiple times when this Module is being
-            put into running state again by modulemanager.
         Method to tell a module it's now allowed to load completely.
         self.properties ready.
         imports in required_packages satisfied.
@@ -41,9 +44,7 @@ class ModuleBase(FakeABC):
     @abstractmethod
     def unload(self):
         """
-        This method may be called multiple times when this Module is being
-            put into running state again by modulemanager.
-        Stop and clean up.
+        Telling the module to stop and clean up before unload.
         Close connections, destroy instances, free memory, release references.
         """
 
@@ -71,22 +72,28 @@ class ModuleBase(FakeABC):
         """
 
 
-class ThreadModuleBase(ModuleBase, Thread):
+class ThreadModuleBase(ModuleBase):
     MAX_SLEEP_INTERVAL = 2  # Deep sleep at most this amount of seconds
     STOP_TIMEOUT = 10  # Wait at least this seconds on thread stop.
 
-    def __init__(self, instancename: str = None, threadname: str = None):
+    def __init__(self, instancename: str = None):
         ModuleBase.__init__(self, instancename)
 
+    @abstractmethod
+    def run(self):
+        """
+        Mainthread function of the module.
+        """
 
     @abstractmethod
     def stop(self):
         """
-        Stop the thread and the module
+        Called when a ThreadModule should stop its thread for unloading the module.
         """
 
     def sleep(self, seconds):
         """
+        The ThreadModule should use this interruptable sleep function instead of Python's sleep().
         Sleeps "seconds" but may return earier, if module gets stopped.
-        Do not rely on resulting sleep time for timediff calculations!
+        Do not rely on resulting sleep time for calculations based on timediff!
         """
