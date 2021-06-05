@@ -33,10 +33,11 @@ from hardware.Leds import Led
 from hardware.System import SystemInfo
 from interfaces.DemoModules import DemoThreadModule, EndlessThreadModule
 
-# Nuitka stuff
+# Qt resources
 import files
 
-APP_PATH = Path(sys.argv[0]).parent
+APP_PATH = Path(sys.argv[0]).parent.resolve()
+
 
 if environ.get("QMLDEBUG") not in (None, "0"):
     from PySide2.QtQml import QQmlDebuggingEnablers
@@ -73,8 +74,8 @@ core_modules['backlight'] = Backlight()
 core_modules['wifi'] = Wifi()
 
 core_modules['httpserver'] = ThreadModule(HTTPServer)
-core_modules['demo'] = ThreadModule(DemoThreadModule, "EasyThread")
-core_modules['demo2'] = ThreadModule(EndlessThreadModule, "EndlessThread")
+# core_modules['demo'] = ThreadModule(DemoThreadModule, "EasyThread")
+# core_modules['demo2'] = ThreadModule(EndlessThreadModule, "EndlessThread")
 
 core_modules['mlx90615'] = ThreadModule(MLX90615)
 core_modules['alsamixer'] = AlsaMixer(Module.inputs)
@@ -87,7 +88,7 @@ for mod_str, core_module in core_modules.items():
         Module.inputs.add(core_module.get_inputs())
 
 
-core_modules['appearance'] = Appearance(Module.inputs)
+core_modules['appearance'] = Appearance()
 Module.inputs.add(core_modules['appearance'].get_inputs())
 
 modules = ModuleManager(Module.inputs)
@@ -95,7 +96,7 @@ modules = ModuleManager(Module.inputs)
 
 app = QApplication(sys.argv)
 
-QFontDatabase.addApplicationFont("./fonts/dejavu-custom.ttf")
+QFontDatabase.addApplicationFont("qrc:/fonts/dejavu-custom.ttf")
 
 qInstallMessageHandler(qml_log)
 

@@ -1,6 +1,5 @@
 import logging
 import struct
-import sys
 import time
 from pathlib import Path
 from typing import Generator, Optional
@@ -14,6 +13,7 @@ from core.Property import EntityProperty
 from core.Settings import settings
 from hardware.CPU import CPU
 from interfaces.Module import ThreadModuleBase, ModuleCategories, IgnoreModuleException
+from core.Module import Module
 
 
 class MLX90615(ThreadModuleBase):
@@ -51,6 +51,8 @@ class MLX90615(ThreadModuleBase):
     def __init__(self):
         super().__init__()
 
+        self.inputs = Module.inputs.entries
+
         self.ospath: Optional[Path] = None
 
         devices = list(self.iio_device_paths(name_match='mlx90615'))
@@ -62,11 +64,11 @@ class MLX90615(ThreadModuleBase):
 
         self.ospath = devices[0]  # Use first device. Should be one at maximum.
 
-        self.id = (self.ospath / 'name').read_text().strip()  # iio device name
+        self.iio_devname = self.ospath.name
 
-        self.buffer_enable(0)
+        self.buffer_enable(False)
         self.activate_channel()
-        self.buffer_enable(1)
+        self.buffer_enable(True)
 
         # self.load = os.getloadavg()[2]
         # self.cpu_temp_mean = CPU.get_cpu_temp()
@@ -145,8 +147,8 @@ class MLX90615(ThreadModuleBase):
             logging.info('skipping room temp calculation due to movement')
             return self._temp.value
 
-        if 'core/input_dev/lastinput' in self.inputs.entries and self.inputs.entries[
-            'core/input_dev/lastinput'].last_update + 30 > time.time():
+        if 'core/input_dev/lastinput' in self.inputs and \
+                self.inputs['core/input_dev/lastinput'].last_update + 30 > time.time():
             logging.info('skipping room temp calculation due to input')
             return self._temp.value
 
@@ -195,53 +197,55 @@ class MLX90615(ThreadModuleBase):
         return 'OK'
 
     def get_input_value(self, path):
-        if path not in self.inputs.entries:
+        if path not in self.inputs:
             return 0
         else:
-            return self.inputs.entries[path].value
+            return self.inputs[path].value
 
-    def buffer_enable(self, value):
+    def buffer_enable(self, value: bool):
         if value:
             length_file = self.ospath / 'buffer/length'
-            if length_file.is_file():
-                # with open(self.ospath + '/buffer/length', 'r+') as rf:
-                #     rf.write(str(self.iio_buffer_length))
-                length_file.write_text(str(self.iio_buffer_length))
+            if not length_file.is_file():
+                raise FileNotFoundError("buffer/length missing in FS.")
+            # with open(self.ospath + '/buffer/length', 'r+') as rf:
+            #     rf.write(str(self.iio_buffer_length))
+            length_file.write_text(str(self.iio_buffer_length))
 
-        enable_file = self.ospath / '/buffer/enable'
-        if enable_file.is_file():
-            # with open(self.ospath + '/buffer/enable', 'r+') as rf:
-            #     rf.write(str(value))
-            enable_file.write_text(str(value))
+        enable_file = self.ospath / 'buffer/enable'
+        if not enable_file.is_file():
+            raise FileNotFoundError("buffer/enable missing in FS.")
+        # with open(self.ospath + '/buffer/enable', 'r+') as rf:
+        #     rf.write(str(value))
+        enable_file.write_text(str(int(value)))
 
     def activate_channel(self):
         try:
             # in_temp_ambient_en
             for channel in ('in_temp_object_en', 'in_timestamp_en'):
                 file = self.ospath / 'scan_elements' / channel
-                if file.is_file():
-                    # with open(self.ospath + '/scan_elements/' + channel, 'r+') as rf:
-                    #    rf.write('1')
-                    file.write_text('1')
+                if not file.is_file():
+                    raise FileNotFoundError(str(file))
+                # with open(self.ospath + '/scan_elements/' + channel, 'r+') as rf:
+                #    rf.write('1')
+                file.write_text('1')
 
         except Exception as e:
             logging.error('Cannot activate IIO scan channels for MLX' + str(e), exc_info=True)
 
-    def single_shot(self, channel='in_temp_object_raw'):
+    def single_shot(self, channel='in_temp_object_raw') -> int:
         channel_file = self.ospath / channel
-        if channel_file.is_file():
-            return int(channel_file.read_text().strip())
+        if not channel_file.is_file():
+            raise FileNotFoundError(channel_file)
 
-        return None
+        return int(channel_file.read_text().strip())
 
     def run(self):
         i = 0
         logging.info('starting MLX90615 thread')
 
-        dev_file = Path('/dev') / self.id
+        dev_file = Path('/dev') / self.iio_devname
         if not dev_file.exists():
-            logging.error('File does not exist: ' + str(dev_file))
-            return
+            raise FileNotFoundError('File does not exist: ' + str(dev_file))
 
         with dev_file.open('rb') as devfile:
             while self.module_is_running():
@@ -262,19 +266,17 @@ class MLX90615(ThreadModuleBase):
                 if abs(tempobj - self.object_mean) > self.delta:
                     logging.info('fast temp change: ' + str((self.object_mean - tempobj) * 50 / 1000))
                     self.last_movement = time.time()
-                    for function in self.inputs.entries['module/input_dev/mlx90615'].events:
+                    for function in self.inputs['module/input_dev/mlx90615'].events:
                         function('module/input_dev/mlx90615', abs(self.object_mean - tempobj))
 
                 self.object_mean = (self.object_mean * 9 + tempobj) // 10
 
                 try:
-                    while (time.time() - self.inputs.entries['core/input_dev/lasttouch'].last_update) < 5:
+                    while time.time() - self.inputs['core/input_dev/lasttouch'].last_update < 5:
                         logging.debug('halted mlx90615 thread due touch inputs')
-                        self.buffer_enable(0)
+                        self.buffer_enable(False)
                         time.sleep(6)
 
-                    self.buffer_enable(1)
+                    self.buffer_enable(True)
                 except Exception as e:
-                    exception_type, exception_object, exception_traceback = sys.exc_info()
-                    line_number = exception_traceback.tb_lineno
-                    logging.error(f'error: {e} in line {line_number}')
+                    logging.error(str(e), exc_info=True)

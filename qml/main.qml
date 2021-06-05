@@ -45,7 +45,6 @@ ApplicationWindow {
         caseSensitive: false
         id: folderModel
         folder: "file://" + applicationDirPath + "/backgrounds/"
-
         nameFilters: ["*.png", "*.jpg"]
         onCountChanged: {
             if (folderModel.count > 0)

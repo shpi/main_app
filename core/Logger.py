@@ -3,6 +3,7 @@
 import logging
 from PySide2 import QtCore
 from PySide2.QtCore import Qt, QModelIndex, QAbstractListModel, Slot
+from os import environ
 
 
 class LogModel(QAbstractListModel):
@@ -88,7 +89,7 @@ qt_warning_handler = QtWarningHandler(log_model)
 
 
 logging.basicConfig(
-    level=logging.WARNING,
+    level=logging.DEBUG if environ.get("DEBUG") not in (None, "0") else logging.WARNING,
     format='%(asctime)s.%(msecs)03d %(module)s - %(funcName)s: %(message)s',
     datefmt='%m-%d %H:%M:%S',
     handlers=[

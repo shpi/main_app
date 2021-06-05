@@ -7,4 +7,5 @@ rsync -rpt -v --delete-after \
     --exclude="/.idea/" \
     --exclude="/keymap/keymap" \
     --exclude="/keymap/keymap.o" \
+    --exclude="/qml/" \
     ./ pi@SHPI:/home/pi/main_app_dev/

@@ -6,12 +6,14 @@ import threading
 import time
 from datetime import datetime
 
-from PySide2.QtCore import QObject, Signal, Slot, Property
+from PySide2.QtCore import Signal, Slot, Property
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty
 from core.Toolbox import Pre_5_15_2_fix
 from core.Settings import settings
+from core.Module import Module
+from interfaces.Module import ModuleBase, ModuleCategories
 
 
 class NightModes:
@@ -24,16 +26,20 @@ class NightModes:
 
     @classmethod
     def is_valid(cls, number) -> bool:
-        min_, max_ = cls.__valid_range
-        return min_ <= number <= max_
+        return cls.__valid_range[0] <= number <= cls.__valid_range[1]
 
 
-class Appearance(QObject):
-    def __init__(self, inputs):
+class Appearance(ModuleBase):
+    allow_maininstance = True
+    allow_instances = False
+    description = "Appearance"
+    categories = (ModuleCategories.UI, )
+
+    def __init__(self):
         super().__init__()
 
         self.path = 'appearance'
-        self.inputs = inputs.entries
+        self.inputs = Module.inputs.entries
         self._backlightlevel = 0
         self._blackfilter = 0
         self._module = EntityProperty(parent=self,
@@ -53,8 +59,8 @@ class Appearance(QObject):
         self._min_backlight_night = settings.int("appearance/min_night", 30)
         self._max_backlight_night = settings.int("appearance/max_night", 100)
 
-        self._start_input_key = settings.str("appearance/start_input_key", '')
-        self._stop_input_key = settings.str("appearance/stop_input_key", '')
+        self._start_input_key = settings.str("appearance/start_input_key")
+        self._stop_input_key = settings.str("appearance/stop_input_key")
 
         self._night_mode = settings.int("appearance/night_mode", 0)
         self._night_mode_start = settings.str("appearance/night_mode_start", '00:00')
@@ -68,10 +74,9 @@ class Appearance(QObject):
         self.state = 'ACTIVE'  # Enum('ACTIVE','SLEEP','OFF')
         self._night = False
 
+        self.inputs['core/input_dev/lasttouch'].events.append(self.tinterrupt)
+
         self.possible_devs = list()
-
-        inputs.entries['core/input_dev/lasttouch'].events.append(self.tinterrupt)
-
         for key in self.inputs.keys():
             if key.startswith('module/input_dev') and self.inputs[key].type == DataType.THREAD:
                 logging.debug(f"add to possible_devs: {key}")
@@ -79,14 +84,20 @@ class Appearance(QObject):
                 active = settings.int("appearance/" + key, 1)
                 if active:
                     logging.debug(f"add to dev interrupt: {key}")
-                    inputs.entries[key].events.append(self.interrupt)
+                    self.inputs[key].events.append(self.interrupt)
+
+    def load(self):
+        pass
+
+    def unload(self):
+        pass
 
     @Slot(str, result=str)
     def device_description(self, path) -> str:
         return self.inputs[path].description
 
     @Slot(str, result=bool)
-    def selected_device(self, path) -> str:
+    def selected_device(self, path) -> bool:
         return settings.bool("appearance/" + path, True)
 
     @Signal
@@ -355,9 +366,6 @@ class Appearance(QObject):
         return status
 
     def update(self):
-
-        status = 'OK'
-
         status = self.check_nightmode()
 
         if self.state in ('SLEEP',) and self._off_timer > 0 and (self.lastuserinput + self._off_timer < time.time()):
