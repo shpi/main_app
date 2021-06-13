@@ -163,7 +163,7 @@ class ThreadProperty(ModuleThread):
         self.entity = entity  # usually entity is module name, but some modules provide multiple entities, then we use this for path
         self.description = description  # description
         self._value = value  # value
-        self.type = DataType.THREAD
+        self.type = DataType.UNDEFINED  # TODO
         self.last_update = None
         self.last_change = None
         self._logging = logging

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from typing import Union, Type
 from enum import Enum
+from datetime import datetime, date, time, timedelta
 
 from hardware.iio import ChannelType
 
@@ -18,8 +20,8 @@ class DataType(Enum):
 
     # Generic types
     FLOAT = 1  # any undefined float
-    INT = 2  # any undefined int
-    BOOL = 3  # bool (off/on)
+    INTEGER = 2  # any undefined int
+    BOOLEAN = 3  # bool (off/on)
     STRING = 4  # string representation of a state
 
     # Correct interpretation of datetime objects
@@ -32,12 +34,9 @@ class DataType(Enum):
     # Fix range types
     PERCENT_FLOAT = 10  # float, 0.-100.
     PERCENT_INT = 11  # int, 0-100
-    FRAC = 12  # float 0.-1.
+    FRACTION = 12  # float 0.-1.
     BYTE = 13  # int, 0-255
     WORD = 14  # int, 0-65535
-    ENUM = 15
-    MODULE = 16  # 'ok', 'error', 'not_initialized'
-    THREAD = 17  #
 
     # Special types (from sensors)
     TEMPERATURE = 20  # float, Celsius
@@ -57,8 +56,8 @@ class DataType(Enum):
     CONCENTRATION = 34  # parts per million
     UVINDEX = 35  #
     GRAVITY = 36  #
-    DIRECTION = 37  # degrees 0-360′
-    HEIGHT = 38  # mm
+    DIRECTION = 37  # degrees 0-360°
+    LENGTH = 38  # mm
 
     # Electricity (from sensors)
     CURRENT = 40  # float, Ampere
@@ -66,10 +65,9 @@ class DataType(Enum):
     RESISTANCE = 42  # float, Ohms
     CAPACITANCE = 43  # float, Farad
     INDUCTANCE = 44  # float, Henry
-    POWER = 45  # float, mW (Watts)
+    POWER = 45  # float, W (Watts)
     WORK = 46  # float, Wh (Watt-Hours)
-    ENERGY = 47  # microjoule
-    CONDUCTIVITY = 48  #
+    CONDUCTIVITY = 47  # S/m Siemsns per meter
 
     # Filesystem sizes
     BYTES = 50
@@ -80,124 +78,93 @@ class DataType(Enum):
     LONGITUDE = 53
 
     # Too special
-    WEBREQUEST = 60
+    PROPERTYDICT = 60
 
+    @classmethod
+    def type_to_str(cls, datatype: "DataType"):
+        return datatype.name.lower()
 
-class Convert:
-    @staticmethod
-    def str_to_tight_datatype(value_str):
-        # Convert a number stored as a string to a <float> or an <int>, <str> as fallback
+    @classmethod
+    def str_to_type(cls, datatype: str) -> "DataType":
         try:
-            value = float(value_str)
+            return cls[datatype.upper()]
+        except TypeError:
+            return cls.UNDEFINED
 
-            if value == int(value):
-                return int(value)
+    _to_basic_type = {
+        # default: float
+        INTEGER: int,
+        BOOLEAN: bool,
+        STRING: str,
 
-            return value
+        DATE: date,
+        TIME: time,
+        DATETIME: datetime,
+        TIMERANGE: timedelta,
 
-        except Exception as e:
-            logging.error(str(e))
-            return str(value_str)
+        PERCENT_INT: int,
+        BYTE: int,
+        WORD: int,
 
-    @staticmethod
-    def iio_to_shpi(iio: ChannelType):
-        if iio in Convert._mapping_iio_shpi:
-            return Convert._mapping_iio_shpi[iio]
-        else:
-            return DataType.UNDEFINED
+        PRESENCE: bool,
+        ONOFF: bool,
+        COUNT: int,
 
-    @staticmethod
-    def type_to_str(datatype: DataType):
-        if datatype in Convert._mapping_type_str:
-            return Convert._mapping_type_str[datatype]
-        else:
-            return 'unknown'
-
-    @staticmethod
-    def str_to_type(datatype: str):
-
-        if datatype in Convert._mapping_str_type:
-            return Convert._mapping_str_type[datatype]
-        else:
-            return DataType.UNDEFINED
-
-    _mapping_type_str = {DataType.UNDEFINED: 'undefined',
-                         DataType.THREAD: 'thread',
-                         DataType.MODULE: 'module',
-                         DataType.FLOAT: 'float',
-                         DataType.INT: 'integer',
-                         DataType.BOOL: 'boolean',
-                         DataType.STRING: 'string',
-                         DataType.DATE: 'date',
-                         DataType.ENUM: 'enum',
-                         DataType.TIME: 'time',
-                         DataType.DATETIME: 'datetime',
-                         DataType.TIMERANGE: 'timerange',
-                         DataType.TIMESTAMP: 'timestamp',
-                         DataType.PERCENT_FLOAT: 'percent_float',
-                         DataType.PERCENT_INT: 'percent_int',
-                         DataType.FRAC: 'fracment',
-                         DataType.BYTE: 'byte',
-                         DataType.WORD: 'word',
-                         DataType.TEMPERATURE: 'temperature',
-                         DataType.ILLUMINATION: 'illumination',
-                         DataType.PRESSURE: 'pressure',
-                         DataType.HUMIDITY: 'humidity',
-                         DataType.PRESENCE: 'presence',
-                         # DataType.ONOFF: 'on_off',
-                         # DataType.COUNT: 'count',
-                         DataType.FAN: 'fan',
-                         DataType.ACCELERATION: 'acceleration',
-                         DataType.VELOCITY: 'velocity',
-                         DataType.MAGNETOMETER: 'magnetometer',
-                         DataType.ROTATION: 'rotation',
-                         DataType.PROXIMITY: 'proximity',
-                         DataType.PHINDEX: 'phindex',
-                         DataType.CONCENTRATION: 'concentration',
-                         DataType.UVINDEX: 'uvindex',
-                         DataType.GRAVITY: 'gravity',
-                         DataType.CURRENT: 'current',
-                         DataType.VOLTAGE: 'voltage',
-                         DataType.RESISTANCE: 'resistance',
-                         DataType.CAPACITANCE: 'capacitance',
-                         DataType.INDUCTANCE: 'inductance',
-                         DataType.POWER: 'power',
-                         DataType.WORK: 'work',
-                         DataType.ENERGY: 'energy',
-                         DataType.CONDUCTIVITY: 'conductivity',
-                         # DataType.BYTES: 'bytes',
-                         DataType.GPS_COORDS: 'gps_coordinates',
-                         DataType.LATITUDE: 'latitude',
-                         DataType.LONGITUDE: 'longitude',
-                         DataType.WEBREQUEST: 'webrequest'}
-
-    _mapping_str_type = {value: key for (key, value) in _mapping_type_str.items()}
+        BYTES: int,
+        # GPS_COORDS = 51
+    }
 
     _mapping_iio_shpi = {
-        ChannelType.IIO_VOLTAGE: DataType.VOLTAGE,
-        ChannelType.IIO_CURRENT: DataType.CURRENT,
-        ChannelType.IIO_POWER: DataType.POWER,
-        ChannelType.IIO_ACCEL: DataType.ACCELERATION,
-        ChannelType.IIO_MAGN: DataType.MAGNETOMETER,
-        ChannelType.IIO_LIGHT: DataType.ILLUMINATION,
-        ChannelType.IIO_INTENSITY: DataType.ILLUMINATION,
-        ChannelType.IIO_PROXIMITY: DataType.PROXIMITY,
-        ChannelType.IIO_TEMP: DataType.TEMPERATURE,
-        ChannelType.IIO_ROT: DataType.ROTATION,
-        ChannelType.IIO_ANGL: DataType.ROTATION,
-        ChannelType.IIO_TIMESTAMP: DataType.TIMESTAMP,
-        ChannelType.IIO_CAPACITANCE: DataType.CAPACITANCE,
-        ChannelType.IIO_PRESSURE: DataType.PRESSURE,
-        ChannelType.IIO_HUMIDITYRELATIVE: DataType.HUMIDITY,
-        ChannelType.IIO_STEPS: DataType.INT,
-        ChannelType.IIO_ENERGY: DataType.ENERGY,
-        ChannelType.IIO_DISTANCE: DataType.PROXIMITY,  # ??
-        ChannelType.IIO_VELOCITY: DataType.VELOCITY,
-        ChannelType.IIO_CONCENTRATION: DataType.CONCENTRATION,
-        ChannelType.IIO_RESISTANCE: DataType.RESISTANCE,
-        ChannelType.IIO_PH: DataType.PHINDEX,
-        ChannelType.IIO_UVINDEX: DataType.UVINDEX,
-        ChannelType.IIO_ELECTRICALCONDUCTIVITY: DataType.CONDUCTIVITY,
-        ChannelType.IIO_COUNT: DataType.INT,
-        ChannelType.IIO_GRAVITY: DataType.GRAVITY
+        ChannelType.IIO_VOLTAGE: VOLTAGE,
+        ChannelType.IIO_CURRENT: CURRENT,
+        ChannelType.IIO_POWER: POWER,
+        ChannelType.IIO_ACCEL: ACCELERATION,
+        ChannelType.IIO_MAGN: MAGNETOMETER,
+        ChannelType.IIO_LIGHT: ILLUMINATION,
+        ChannelType.IIO_INTENSITY: ILLUMINATION,
+        ChannelType.IIO_PROXIMITY: PROXIMITY,
+        ChannelType.IIO_TEMP: TEMPERATURE,
+        ChannelType.IIO_ROT: ROTATION,
+        ChannelType.IIO_ANGL: ROTATION,
+        ChannelType.IIO_TIMESTAMP: TIMESTAMP,
+        ChannelType.IIO_CAPACITANCE: CAPACITANCE,
+        ChannelType.IIO_PRESSURE: PRESSURE,
+        ChannelType.IIO_HUMIDITYRELATIVE: HUMIDITY,
+        ChannelType.IIO_STEPS: INTEGER,
+        ChannelType.IIO_ENERGY: WORK,
+        ChannelType.IIO_DISTANCE: LENGTH,
+        ChannelType.IIO_VELOCITY: VELOCITY,
+        ChannelType.IIO_CONCENTRATION: CONCENTRATION,
+        ChannelType.IIO_RESISTANCE: RESISTANCE,
+        ChannelType.IIO_PH: PHINDEX,
+        ChannelType.IIO_UVINDEX: UVINDEX,
+        ChannelType.IIO_ELECTRICALCONDUCTIVITY: CONDUCTIVITY,
+        ChannelType.IIO_COUNT: INTEGER,
+        ChannelType.IIO_GRAVITY: GRAVITY
     }
+
+    @classmethod
+    def iio_to_shpi(cls, iio: ChannelType) -> "DataType":
+        return cls._mapping_iio_shpi.value.get(iio, DataType.UNDEFINED)
+
+    @classmethod
+    def to_basic_type(cls, type_: "DataType") -> Type[Union[int, str, bool, float]]:
+        return cls._to_basic_type.value.get(type_, float)
+
+    @staticmethod
+    def str_to_tight_datatype(numeric: str):
+        try:
+            if "." in numeric:
+                # Seems to be a float.
+                return float(numeric)
+
+            return int(numeric)
+
+        except ValueError:
+            # Use the string
+            return numeric
+
+        # else raise error
+        # except TypeError:
+        #    # No string provided?
+        #    return str(numeric)

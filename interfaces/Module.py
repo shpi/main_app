@@ -2,7 +2,7 @@
 
 from abc import abstractmethod
 from enum import Enum, auto
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Type, Tuple, Iterator, Mapping
 
 from PySide2.QtCore import QObject
 
@@ -16,7 +16,8 @@ class IgnoreModuleException(BaseException):
 
 
 class ModuleCategories(Enum):
-    _INTERNAL = auto()
+    _INTERNAL = auto()  # Hide this module in module manager
+    _AUTOLOAD = auto()  # Automatically loads this module
 
     LOGIC = auto()
     HARDWARE = auto()
@@ -26,15 +27,21 @@ class ModuleCategories(Enum):
 
 
 class ModuleBase(QObject, FakeABC):
-    def __init__(self):
+    def __init__(self, parent: QObject = None):
         FakeABC.__init__(self)
-        QObject.__init__(self)
+        QObject.__init__(self, parent)
 
         # TODO: app reference
 
     def instancename(self) -> Optional[str]:
         """
         A module may read its instance name by this function
+        """
+
+    @classmethod
+    def instances(cls) -> "ModuleInstancesView":
+        """
+        Module class's instance view which contains all loaded instances
         """
 
     @abstractmethod
@@ -47,6 +54,7 @@ class ModuleBase(QObject, FakeABC):
         No special imports in __init__ or on module level.
         Basic builtin python modules are allowed.
         Module may throw IgnoreModuleException here if feature not implemented.
+        A module must specify this function.
         """
 
     @abstractmethod
@@ -54,6 +62,7 @@ class ModuleBase(QObject, FakeABC):
         """
         Telling the module to stop and clean up before unload.
         Close connections, destroy instances, free memory, release references.
+        A module must specify this function.
         """
 
     @classmethod
@@ -61,7 +70,16 @@ class ModuleBase(QObject, FakeABC):
     def categories(cls) -> Iterable[ModuleCategories]:
         """
         Iterable of categories this module matches
+        A module must specify this attibute.
         """
+
+    @classmethod
+    def depends_on(cls) -> Optional[Iterable[Type["ModuleBase"]]]:
+        """
+        An iterable of module classes, on which this module depends on.
+        A module may specify this attibute.
+        """
+        return None
 
     @classmethod
     @abstractmethod
@@ -91,6 +109,26 @@ class ModuleBase(QObject, FakeABC):
         """
         Module must provide its inputs by this function
         """
+
+    def get_instance_names(self) -> Iterable[str]:
+        """
+        This function may be called on the maininstance of the module.
+        It should return a list of string which will be used as instancename.
+
+        Requires allow_instances=True
+        """
+        return ()
+
+
+class ModuleInstancesView(Mapping):
+    def __getitem__(self, instancename: Optional[str]) -> ModuleBase:
+        pass
+
+    def __len__(self) -> int:
+        pass
+
+    def __iter__(self) -> Iterator[ModuleBase]:
+        pass
 
 
 class ThreadModuleBase(ModuleBase):

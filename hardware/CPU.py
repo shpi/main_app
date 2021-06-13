@@ -10,7 +10,7 @@ class CPU:
     CPU_TEMP_PATH = Path('/sys/class/thermal/thermal_zone0/temp')
 
     def __init__(self):
-        self.properties = list()
+        self.properties = []
 
         self.properties.append(EntityProperty(name='cpu_freq',
                                               category='core',
@@ -18,7 +18,7 @@ class CPU:
                                               parent=self,
                                               call=CPU.get_cpu_freq,
                                               description='CPU freq sum over all cores (slow function)',
-                                              type=DataType.INT,
+                                              type=DataType.INTEGER,
                                               interval=60))
 
         self.properties.append(EntityProperty(name='cpu_load',

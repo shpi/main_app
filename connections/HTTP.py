@@ -10,7 +10,6 @@ from urllib.error import HTTPError, URLError
 
 from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
 
-from core.DataTypes import Convert
 from core.DataTypes import DataType
 from core.Inputs import InputListModelDict
 from core.Property import EntityProperty
@@ -97,8 +96,7 @@ class HTTP(QObject):
                 data = response.read().decode('utf-8')
                 data = json.loads(data)
                 for key in data:
-
-                    data[key]['type'] = Convert.str_to_type(data[key].get('type', 'undefined'))
+                    data[key]['type'] = DataType.str_to_type(data[key].get('type', 'undefined'))
 
                     if data[key]['interval'] == -1:
                         data[key]['interval'] = 60
@@ -246,7 +244,7 @@ class HTTP(QObject):
                                                   call=partial(self.get_value, key),
                                                   set=partial(self.set_value, key) if 'set' in self.module_inputs[
                                                       key] else None,
-                                                  type=Convert.str_to_type(self.module_inputs[key]['type']),
+                                                  type=DataType.str_to_type(self.module_inputs[key]['type']),
                                                   description=self.module_inputs[key]['description'],
                                                   interval=60)
             self._vars.append(key)

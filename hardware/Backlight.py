@@ -19,7 +19,7 @@ class Backlight:
                                       entity='core',
                                       name='backlight',
                                       description='Backlight Module',
-                                      type=DataType.MODULE,
+                                      type=DataType.UNDEFINED,  # TODO
                                       interval=-1)
         self._module.value = 'NOT INITIALIZED'
 

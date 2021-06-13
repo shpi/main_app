@@ -102,7 +102,7 @@ class Wifi(QObject):
                                                    name='wifi',
                                                    value='NOT_INITIALIZED',
                                                    description='WIFI WPA supplicant module',
-                                                   type=DataType.MODULE,
+                                                   type=DataType.UNDEFINED,  # TODO
                                                    call=self.read_signal,
                                                    interval=10)
 

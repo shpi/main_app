@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import errno
 import logging
@@ -83,7 +82,7 @@ class AlsaMixer:
                                             value=value,
                                             name='play',
                                             description=card_desc + ' on/off',
-                                            type=DataType.BOOL,
+                                            type=DataType.BOOLEAN,
                                             set=partial(self.power_device, card_name),
                                             interval=-1))
 
@@ -181,7 +180,7 @@ class AlsaMixer:
                     i += 1
 
             elif interface["type"] == b"BOOLEAN":
-                interface['type'] = DataType.BOOL
+                interface['type'] = DataType.BOOLEAN
                 values = []
                 channels = []
                 i = 0
@@ -194,7 +193,7 @@ class AlsaMixer:
                     i += 1
 
             elif interface["type"] == b"INTEGER":
-                interface['type'] = DataType.INT
+                interface['type'] = DataType.INTEGER
                 interface["min"] = int(lines[1].split(
                     b",")[3].replace(b"min=", b""))
                 interface["max"] = int(lines[1].split(

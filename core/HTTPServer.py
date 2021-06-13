@@ -8,7 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from PySide2.QtCore import Signal
 
-from core.DataTypes import Convert
+from core.DataTypes import DataType
 from core.Toolbox import Pre_5_15_2_fix
 from core.Settings import settings
 from interfaces.Module import ThreadModuleBase, ModuleCategories
@@ -42,7 +42,7 @@ class ServerHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 message = '{'
                 # message += '"description":"' + str(value.description) + '",'
-                # message += '"type":"' + Convert.type_to_str(value.type) + '",'
+                # message += '"type":"' + DataType.type_to_str(value.type) + '",'
                 message += '"last_update":' + str(value.last_update) + ','
                 # if 'set' in value: message += '"set": true,'
                 message += '"interval":' + str(value.interval) + ','
@@ -68,7 +68,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
                         message += '"' + key + '":{'
                         message += '"description":"' + str(value.description) + '",'
-                        message += '"type":"' + Convert.type_to_str(value.type) + '",'
+                        message += '"type":"' + DataType.type_to_str(value.type) + '",'
                         message += '"lastupdate":' + str(value.last_update) + ','
                         if value.set is not None:
                             message += '"set": true,'

@@ -19,7 +19,7 @@ class AlsaRecord:
                                        value=1,
                                        name='thread',
                                        description='Microphone thread',
-                                       type=DataType.THREAD,
+                                       type=DataType.UNDEFINED,  # TODO
                                        set=self.control,
                                        call=self.check_process,
                                        interval=60)

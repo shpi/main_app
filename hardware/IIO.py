@@ -5,7 +5,7 @@ import sys
 from functools import partial
 
 import hardware.iio as iio
-from core.DataTypes import Convert, DataType
+from core.DataTypes import DataType
 from core.Property import EntityProperty
 
 
@@ -13,7 +13,7 @@ class IIO:
     """Class for retrieving the requested information."""
 
     def __init__(self):
-        self.properties = dict()
+        self.properties = {}
         self.name = 'iio'
 
         try:
@@ -42,7 +42,7 @@ class IIO:
             with open(f'/sys/bus/iio/devices/{id}/{channel}', 'r') as rf:
                 value = rf.read().rstrip()
                 logging.debug('reading ' + channel + ': ' + str(value))
-                return Convert.str_to_tight_datatype(value)
+                return DataType.str_to_tight_datatype(value)
 
         except Exception as e:
             if retries < 3:
@@ -97,7 +97,7 @@ class IIO:
                                                                              entity=dev.name,
                                                                              name=channel.id,
                                                                              description=dev.name + ' ' + channel.id,
-                                                                             type=Convert.iio_to_shpi(
+                                                                             type=DataType.iio_to_shpi(
                                                                                  channel.type),
                                                                              interval=20)
 
@@ -178,7 +178,6 @@ class IIO:
 
         if len(dev.attrs) > 0:
             for device_attr in dev.attrs:
-
                 if device_attr == 'scale':
                     general_scale = dev.attrs[device_attr].value
 
@@ -189,9 +188,7 @@ class IIO:
                     pass  # not useful for us
 
                 elif device_attr.endswith('_available'):
-
                     # "[min step max]"
-
                     if f'{dev.name}/{channel.id}/{device_attr[:-10]}' not in self.properties:
                         self.properties[
                             f'{dev.name}/{channel.id}/{device_attr[:-10]}'] = EntityProperty(
@@ -229,4 +226,3 @@ class IIO:
 
                     except Exception as e:
                         logging.error(str(e))
-                        pass

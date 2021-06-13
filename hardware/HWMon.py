@@ -4,19 +4,15 @@ import os
 import sys
 from functools import partial
 
-from core.DataTypes import Convert, DataType
+from core.DataTypes import DataType
 from core.Property import EntityProperty
 
 
 class HWMon:
-
     def __init__(self):
-
-        super(HWMon, self).__init__()
-        self._hwmon = list()
+        self._hwmon = []
 
         for sensors in glob.iglob('/sys/class/hwmon/hwmon*', recursive=False):
-
             if os.path.isfile(sensors + '/name'):
                 with open(sensors + '/name', 'r') as rf:
                     sensor_name = (rf.read().rstrip())
@@ -54,9 +50,9 @@ class HWMon:
                             channel_type = DataType.FAN
 
                     if channeltype == 'enable':
-                        channel_type = DataType.BOOL
+                        channel_type = DataType.BOOLEAN
                     if channeltype == 'alarm':
-                        channel_type = DataType.BOOL
+                        channel_type = DataType.BOOLEAN
 
                     self._hwmon.append(EntityProperty(parent=self,
                                                       category='sensor',
@@ -75,7 +71,7 @@ class HWMon:
                     if os.path.isfile(filename + "_label"):
                         with open(filename + "_label", 'r') as rf:
                             channel_desc = (rf.read().rstrip())
-                    channel_type = DataType.BYTE if (channeltype == 'pwm') else DataType.BOOL
+                    channel_type = DataType.BYTE if (channeltype == 'pwm') else DataType.BOOLEAN
                     channel_is_output = (os.stat(filename).st_mode & 0o444 == 0o444)
                     filename = filename.split('/')
                     channel_channel = filename[-1]
@@ -95,7 +91,6 @@ class HWMon:
 
     @staticmethod
     def read_hwmon(channelid, channel):
-
         if not os.path.isfile(f'/sys/class/hwmon/{channelid}/{channel}'):
             return None
 
@@ -103,8 +98,7 @@ class HWMon:
             with open(f'/sys/class/hwmon/{channelid}/{channel}', 'r') as rf:
                 value = rf.read().strip()
                 # logging.debug(f' reading channel: {channel} value: {value}')
-                return Convert.str_to_tight_datatype(value)
-
+                return DataType.str_to_tight_datatype(value)
 
         except Exception as e:
             exception_type, exception_object, exception_traceback = sys.exc_info()

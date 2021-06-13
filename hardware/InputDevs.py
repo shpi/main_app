@@ -4,9 +4,11 @@ import subprocess
 import sys
 from enum import Enum
 from functools import partial
+from typing import Iterable
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty, ThreadProperty
+from interfaces.Module import ThreadModuleBase, ModuleCategories
 
 
 class EvTypes(Enum):
@@ -29,10 +31,7 @@ def test_bit(eventlist, b):
     bit = b % 32
     if len(eventlist) <= index:
         return False
-    if eventlist[index] & (1 << bit):
-        return True
-    else:
-        return False
+    return bool(eventlist[index] & (1 << bit))
 
 
 def EvHexToStr(events):
@@ -50,11 +49,27 @@ def createId(x):
     return x in ('1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')
 
 
-class InputDevs:
+class InputDevs(ThreadModuleBase):
+    description = "Listens to input devices"
+    allow_maininstance = True
+    allow_instances = True
+    categories = ModuleCategories._INTERNAL, ModuleCategories._AUTOLOAD
+
+    def run(self):
+        pass
+
+    def stop(self):
+        pass
+
+    def load(self):
+        pass
+
+    def unload(self):
+        pass
+
     FILENAME = '/proc/bus/input/devices'
 
     def __init__(self):
-
         super(InputDevs, self).__init__()
 
         self.devs = dict()
@@ -77,17 +92,10 @@ class InputDevs:
                                                       interval=-1)
 
         with open(self.FILENAME, 'r') as f:
-
-            while True:
-                line = f.readline()
-
-                if not line:
-                    break
-
+            for line in f:
                 if line.startswith('I: Bus='):
-                    device = dict()
-
-                    id = (''.join(filter(createId, line)))
+                    device = {}
+                    id = ''.join(filter(createId, line))
 
                 if line.startswith('N: Name='):
                     device['name'] = line[len('N: Name='):].strip('"\n')
@@ -104,16 +112,14 @@ class InputDevs:
                         filter(lambda x: x.startswith('event'), events))
 
                     p = subprocess.Popen(["keymap/keymap", ''.join(filter(str.isdigit, str(device['event'])))],
-                                         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                                         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="utf8")
 
-                    keys = p.communicate()[0]
-
-                    keys = set(keys.decode().strip().split('\n'))
+                    keys_output = p.communicate()[0].strip()
+                    keys = set(keys_output.split('\n'))
 
                     device['keys'] = dict()
 
                     for key in keys:
-
                         try:
                             key = key.split(':')
                             # device['keys'][int(key[0])] = keydict
@@ -123,15 +129,13 @@ class InputDevs:
                                 entity=id,
                                 name=str(key[0]),
                                 description=key[1],
-                                type=DataType.INT,
+                                type=DataType.INTEGER,
                                 interval=-1)
 
                         except IndexError:
                             pass
 
                 self.devs[id] = device
-
-        f.close()
 
         for id, subdevice in self.devs.items():
             self.properties[f'{id}/thread'] = ThreadProperty(
@@ -146,11 +150,9 @@ class InputDevs:
             )
 
     def get_inputs(self) -> list:
-
-        return self.properties.values()
+        return list(self.properties.values())
 
     def devloop(self, devpath, id, ismouse=False):
-
         systembits = (struct.calcsize("P") * 8)
         try:
             logging.debug(f'start reading: {devpath}')
@@ -161,9 +163,7 @@ class InputDevs:
                     (timestamp, _id, evtype, keycode, value) = struct.unpack('llHHI', event)
 
                     if evtype == 1:  # type 1 = key, we watch only keys!
-
                         try:
-
                             if ismouse:
                                 self.properties['lasttouch'].value = value
 
@@ -180,7 +180,7 @@ class InputDevs:
                                                                                          entity=id,
                                                                                          name=str(keycode),
                                                                                          description=str(keycode),
-                                                                                         type=DataType.INT,
+                                                                                         type=DataType.INTEGER,
                                                                                          interval=-1)
                             self.properties[f'{id}/key_{str(keycode)}'].value = value
 

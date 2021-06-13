@@ -13,7 +13,6 @@ from PySide2.QtCore import QPointF
 from PySide2.QtGui import QPolygonF
 
 from core.CircularBuffer import CircularBuffer
-from core.DataTypes import Convert
 from core.DataTypes import DataType
 from core.Settings import settings
 
@@ -27,6 +26,17 @@ class InputListModelDict(QAbstractListModel):
     ExposedRole = Qt.UserRole + 1005
     OutputRole = Qt.UserRole + 1006
     LoggingRole = Qt.UserRole + 1007
+
+    _rolenames = {
+        PathRole: b"path",
+        ValueRole: b"value",
+        DescriptionRole: b"description",
+        TypeRole: b"type",
+        IntervalRole: b"interval",
+        ExposedRole: b"exposed",
+        OutputRole: b"output",
+        LoggingRole: b"logging",
+    }
 
     def __init__(self, dictionary, parent=None):
         super().__init__(parent)
@@ -45,129 +55,85 @@ class InputListModelDict(QAbstractListModel):
         keyindex = self.index(self._keys.index(key))
         self.dataChanged.emit(keyindex, keyindex, [self.ValueRole])
 
-    def data(self, index, role=Qt.DisplayRole):
-        if 0 <= index.row() < self.rowCount() and index.isValid():
-            item = self.entries[self._keys[index.row()]]
-            try:
-                if role == InputListModel.PathRole:
-                    return self._keys[index.row()]
-                elif role == InputListModel.ValueRole:
-                    return str(item["value"])
-                elif role == InputListModel.OutputRole:
-                    return '1' if ('set' in item) else '0'
-                elif role == InputListModel.TypeRole:
-                    return Convert.type_to_str(item["type"])
-                elif role == InputListModel.DescriptionRole:
-                    return item["description"]
-                elif role == InputListModel.IntervalRole:
-                    return item["interval"]
-                elif role == InputListModel.ExposedRole:
-                    return item["exposed"]
-                elif role == InputListModel.LoggingRole:
-                    if 'logging' in item:
-                        return item["logging"]
-                    else:
-                        return 0
-                else:
-                    return 'unknown role'
-            except Exception as e:
-                logging.error(str(e))
+    def index_valid(self, index: QModelIndex) -> bool:
+        return 0 <= index.row() < self.rowCount() and index.isValid()
+
+    def data(self, index: QModelIndex, role: int = Qt.DisplayRole):
+        if not self.index_valid(index):
+            return None
+
+        item = self.entries[self._keys[index.row()]]
+        try:
+            if role == self.PathRole:
+                return self._keys[index.row()]
+            elif role == self.ValueRole:
+                return str(item["value"])
+            elif role == self.OutputRole:
+                return '1' if ('set' in item) else '0'
+            elif role == self.TypeRole:
+                return DataType.type_to_str(item["type"])
+            elif role == self.DescriptionRole:
+                return item["description"]
+            elif role == self.IntervalRole:
+                return item["interval"]
+            elif role == self.ExposedRole:
+                return item["exposed"]
+            elif role == self.LoggingRole:
+                if 'logging' in item:
+                    return item["logging"]
+                return 0
+            return 'unknown role'
+        except Exception as e:
+            logging.error(str(e), exc_info=True)
+            return 'exception'
 
     def roleNames(self):
-        roles = dict()
-        roles[InputListModel.PathRole] = b"path"
-        roles[InputListModel.ValueRole] = b"value"
-        roles[InputListModel.DescriptionRole] = b"description"
-        roles[InputListModel.TypeRole] = b"type"
-        roles[InputListModel.IntervalRole] = b"interval"
-        roles[InputListModel.ExposedRole] = b"exposed"
-        roles[InputListModel.OutputRole] = b"output"
-        roles[InputListModel.LoggingRole] = b"logging"
-        return roles
+        return self._rolenames
 
 
-class InputListModel(QAbstractListModel):
-    PathRole = Qt.UserRole + 1000
-    ValueRole = Qt.UserRole + 1001
-    DescriptionRole = Qt.UserRole + 1002
-    TypeRole = Qt.UserRole + 1003
-    IntervalRole = Qt.UserRole + 1004
-    ExposedRole = Qt.UserRole + 1005
-    OutputRole = Qt.UserRole + 1006
-    LoggingRole = Qt.UserRole + 1007
+class InputListModel(InputListModelDict):
     AvailableRole = Qt.UserRole + 1008
     MinRole = Qt.UserRole + 1009
     MaxRole = Qt.UserRole + 1010
     StepRole = Qt.UserRole + 1011
 
-    def __init__(self, dictionary, parent=None):
-        super().__init__(parent)
-        self.entries = dictionary
-        self._keys = list(self.entries.keys())
-
-    def updateKeys(self):
-        self._keys = list(self.entries.keys())
+    _rolenames = InputListModelDict._rolenames.copy()
+    _rolenames.update({
+        AvailableRole: b"available",
+        MinRole: b"min",
+        MaxRole: b"max",
+        StepRole: b"step",
+    })
 
     def rowCount(self, parent=None):
         # if parent.isValid():
         #    return 0
         return len(self.entries)
 
-    def updateListView(self, key):
-        keyindex = self.index(self._keys.index(key))
-        self.dataChanged.emit(keyindex, keyindex, [self.ValueRole])
+    def data(self, index: QModelIndex, role=Qt.DisplayRole):
+        if not self.index_valid(index):
+            return None
 
-    def data(self, index, role=Qt.DisplayRole):
-        if 0 <= index.row() < self.rowCount() and index.isValid():
-            item = self.entries[self._keys[index.row()]]
-            try:
-                if role == InputListModel.PathRole:
-                    return self._keys[index.row()]
-                elif role == InputListModel.ValueRole:
-                    return str(item.value)
-                elif role == InputListModel.OutputRole:
-                    return item.is_output
-                elif role == InputListModel.TypeRole:
-                    return Convert.type_to_str(item.type)
-                elif role == InputListModel.DescriptionRole:
-                    return item.description
-                elif role == InputListModel.IntervalRole:
-                    return item.interval
-                elif role == InputListModel.ExposedRole:
-                    return item.exposed
-                elif role == InputListModel.LoggingRole:
-                    return item.logging
-                elif role == InputListModel.AvailableRole:
-                    return item.available
-                elif role == InputListModel.MinRole:
-                    return item.min
-                elif role == InputListModel.MaxRole:
-                    return item.max
-                elif role == InputListModel.StepRole:
-                    return item.step
-                else:
-                    return 'unknown role'
+        result = super().data(index, role)
 
-            except Exception as e:
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                line_number = exception_traceback.tb_lineno
-                logging.error(f'{self._keys[index.row()]} error {exception_type}: {e} in line {line_number}')
+        if result != 'unknown role':
+            return result
 
-    def roleNames(self):
-        roles = dict()
-        roles[InputListModel.PathRole] = b"path"
-        roles[InputListModel.ValueRole] = b"value"
-        roles[InputListModel.DescriptionRole] = b"description"
-        roles[InputListModel.TypeRole] = b"type"
-        roles[InputListModel.IntervalRole] = b"interval"
-        roles[InputListModel.ExposedRole] = b"exposed"
-        roles[InputListModel.OutputRole] = b"output"
-        roles[InputListModel.LoggingRole] = b"logging"
-        roles[InputListModel.AvailableRole] = b"available"
-        roles[InputListModel.MinRole] = b"min"
-        roles[InputListModel.MaxRole] = b"max"
-        roles[InputListModel.StepRole] = b"step"
-        return roles
+        item = self.entries[self._keys[index.row()]]
+        try:
+            if role == InputListModel.AvailableRole:
+                return item.available
+            elif role == InputListModel.MinRole:
+                return item.min
+            elif role == InputListModel.MaxRole:
+                return item.max
+            elif role == InputListModel.StepRole:
+                return item.step
+            return 'unknown role'
+
+        except Exception as e:
+            logging.error(str(e), exc_info=True)
+            return 'exception'
 
 
 class InputsDict(QObject):
@@ -422,9 +388,9 @@ class InputsDict(QObject):
         if key in self.entries and self.entries[key].is_output:
             if self.entries[key].type == DataType.PERCENT_INT:
                 self.entries[key].set(float(value))
-            elif self.entries[key].type == DataType.INT:
+            elif self.entries[key].type == DataType.INTEGER:
                 self.entries[key].set(int(value))
-            elif self.entries[key].type == DataType.BOOL:
+            elif self.entries[key].type == DataType.BOOLEAN:
                 self.entries[key].set(int(value))
             elif self.entries[key].type == DataType.THREAD:
                 self.entries[key].set(int(value))

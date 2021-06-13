@@ -13,8 +13,6 @@ from core.Constants import GIT_CLONE_PATH
 
 
 class Git(QObject):
-    version = "1.0"
-    required_packages = None
     allow_instances = False
     allow_maininstance = True
     description = "Git module for managing sofware updates"
@@ -23,14 +21,14 @@ class Git(QObject):
         super().__init__()
         self.app_path = app_path
         self.git_dir = app_path / '.git'
-        self.properties = dict()
+        self.properties = {}
         self.properties['module'] = EntityProperty(parent=self,
                                                    category='module',
                                                    entity='core',
                                                    name='git',
                                                    value='NOT_INITIALIZED',
                                                    description='Git update module',
-                                                   type=DataType.MODULE,
+                                                   type=DataType.EXECUTE_ONLY,
                                                    call=self.update,
                                                    interval=6000)
 

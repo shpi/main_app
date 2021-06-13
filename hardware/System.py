@@ -10,13 +10,13 @@ from interfaces.Module import ModuleBase, ModuleCategories
 class SystemInfo(ModuleBase):
     allow_maininstance = True
     allow_instances = False
-    description = "HTTP Server"
-    categories = (ModuleCategories._INTERNAL, ModuleCategories.INFO)
+    description = "System Info"
+    categories = ModuleCategories._INTERNAL, ModuleCategories._AUTOLOAD, ModuleCategories.INFO
 
     def __init__(self):
         ModuleBase.__init__(self)
 
-        self.properties = list()
+        self.properties = []
         # self.name = 'system'
 
         self.properties.append(StaticProperty(name='is64bit',
@@ -25,7 +25,7 @@ class SystemInfo(ModuleBase):
                                               parent=self,
                                               value=SystemInfo.is64bit(),
                                               description='is 64bit System?',
-                                              type=DataType.BOOL,
+                                              type=DataType.BOOLEAN,
                                               exposed=False))
 
         self.properties.append(StaticProperty(name='ram_amount',
@@ -34,7 +34,7 @@ class SystemInfo(ModuleBase):
                                               parent=self,
                                               value=SystemInfo.ram_amount(),
                                               description='installed ram in MB',
-                                              type=DataType.INT,
+                                              type=DataType.INTEGER,
                                               exposed=False))
 
         self.properties.append(EntityProperty(name='ram_used',
@@ -43,7 +43,7 @@ class SystemInfo(ModuleBase):
                                               parent=self,
                                               call=SystemInfo.ram_used,
                                               description='used ram in MB',
-                                              type=DataType.INT,
+                                              type=DataType.INTEGER,
                                               interval=60))
 
         self.properties.append(EntityProperty(name='ram_free',
@@ -52,7 +52,7 @@ class SystemInfo(ModuleBase):
                                               parent=self,
                                               call=SystemInfo.ram_free,
                                               description='used ram in MB',
-                                              type=DataType.INT,
+                                              type=DataType.INTEGER,
                                               interval=60))
 
         self.properties.append(EntityProperty(name='ram_buff',
@@ -61,7 +61,7 @@ class SystemInfo(ModuleBase):
                                               parent=self,
                                               call=SystemInfo.ram_buff,
                                               description='used ram as buffer in MB',
-                                              type=DataType.INT,
+                                              type=DataType.INTEGER,
                                               interval=60))
 
         self.properties.append(EntityProperty(name='uptime',
@@ -70,7 +70,7 @@ class SystemInfo(ModuleBase):
                                               parent=self,
                                               call=SystemInfo.get_uptime,
                                               description='uptime in seconds',
-                                              type=DataType.INT,
+                                              type=DataType.INTEGER,
                                               interval=60))
 
     def get_inputs(self) -> list:

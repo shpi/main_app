@@ -33,7 +33,8 @@ class Appearance(ModuleBase):
     allow_maininstance = True
     allow_instances = False
     description = "Appearance"
-    categories = (ModuleCategories.UI, )
+    categories = ModuleCategories.UI, ModuleCategories._AUTOLOAD, ModuleCategories._INTERNAL
+    depends = None
 
     def __init__(self):
         super().__init__()
@@ -48,7 +49,7 @@ class Appearance(ModuleBase):
                                       name='appearance',
                                       value='NOT_INITIALIZED',
                                       description='Appearance Module for Backlight / Nightmode etc.',
-                                      type=DataType.MODULE,
+                                      type=DataType.UNDEFINED,  # TODO
                                       call=self.update,
                                       interval=settings.int("appearance/interval", 5),
                                       )
@@ -76,7 +77,7 @@ class Appearance(ModuleBase):
 
         self.inputs['core/input_dev/lasttouch'].events.append(self.tinterrupt)
 
-        self.possible_devs = list()
+        self.possible_devs = []
         for key in self.inputs.keys():
             if key.startswith('module/input_dev') and self.inputs[key].type == DataType.THREAD:
                 logging.debug(f"add to possible_devs: {key}")

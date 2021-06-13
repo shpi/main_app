@@ -2,21 +2,39 @@
 
 import logging
 import ctypes
-from typing import Optional, Dict, Type, List
+from typing import Optional, Dict, Type, List, Iterator
 import threading
 from threading import Thread, enumerate
 from time import sleep, time
 
-from interfaces.Module import ModuleBase, ThreadModuleBase, IgnoreModuleException
+from PySide2.QtCore import QObject
+
+from interfaces.Module import ModuleBase, ThreadModuleBase, IgnoreModuleException, ModuleInstancesView
 from core.Inputs import InputsDict
+
+
+class ModuleInstancesViewer(ModuleInstancesView):
+    def __init__(self, module_class: Type[ModuleBase], content_dict: dict):
+        self._class = module_class
+        self._instances: Dict[Optional[str], ModuleBase] = content_dict
+
+    def __getitem__(self, instancename: Optional[str]) -> ModuleBase:
+        return self._instances[instancename]
+
+    def __len__(self) -> int:
+        return len(self._instances)
+
+    def __iter__(self) -> Iterator[Optional[str]]:
+        return iter(self._instances)
 
 
 class Module:
     """
     Internal Module class holding the actual module instances.
     """
-
-    instances_by_cls: Dict[str, Dict[Optional[str], "Module"]] = {}
+    modules_classes: Dict[str, Type[ModuleBase]] = {}
+    instancesviewer_by_cls: Dict[str, ModuleInstancesViewer] = {}
+    instancesdict_by_cls: Dict[str, Dict[Optional[str], ModuleBase]] = {}
     instances_in_loadorder: List["Module"] = []
 
     inputs = InputsDict()
@@ -55,7 +73,7 @@ class Module:
             if key.endswith('thread'):
                 Module.inputs.entries[key].set(0)
 
-    def __init__(self, module_class: Type[ModuleBase], instancename: str = None):
+    def __init__(self, module_class: Type[ModuleBase], instancename: str = None, parent: QObject = None):
         logging.info(f"Creating Module instance {instancename!s} of {module_class.__name__}")
         self.module_class = module_class
 
@@ -82,33 +100,33 @@ class Module:
         self.running = False
         clsstr = module_class.__name__
 
+        self.module_instance: Optional[ModuleBase] = None  # Default on failures for checking in subclasses
         try:
             # Instantiate the module class
-            self.module_instance = None  # Default for checking in subclasses
-            self.module_instance = module_class()
+            self.module_instance = module_class(parent)
+
         except IgnoreModuleException as e:
             logging.error(f"Module instance of {clsstr} denies instantiation: " + str(e))
             return
-        except Exception as e:
-            # Handover other exceptions from module's init to caller
-            raise e
 
         # Link functions and accessors to the module instance
         self.module_instance.instancename = lambda: self.module_instancename
 
         # Lookup instance dict for specific subclass type
-        clsinstances = Module.instances_by_cls.get(clsstr)
+        viewer = Module.instancesviewer_by_cls.get(clsstr)
+        instances = Module.instancesdict_by_cls.get(clsstr)
 
-        if clsinstances is None:
-            # It's the first instance of that subclass.
-            # Create a new dictionary for this subclass based on instancename.
-            clsinstances = Module.instances_by_cls[clsstr] = {}
+        if viewer is None:
+            # It's the first instance of that module subclass.
+            instances = Module.instancesdict_by_cls[clsstr] = {}
+            viewer = Module.instancesviewer_by_cls[clsstr] = ModuleInstancesViewer(module_class, instances)
+            module_class.instances = viewer
 
-        if instancename in clsinstances:
-            raise ValueError(f"There is already an instancename of {instancename} for class {clsstr}")
+        if instancename in viewer:
+            raise ValueError(f"There is already an instancename of {instancename!s} for class {clsstr}")
 
         # Store new instance by instancename
-        clsinstances[instancename] = self
+        instances[instancename] = self.module_instance
 
         Module.instances_in_loadorder.append(self)
 
@@ -133,11 +151,9 @@ class Module:
 
         # Remove from dicts
         clsstr = self.module_class.__name__
-        clsinstances = Module.instances_by_cls[clsstr]
-        clsinstances.pop(self.module_instancename)
-        if not clsinstances:
-            # Remove empty cls instances dict
-            Module.instances_by_cls.pop(clsstr)
+
+        instances = Module.instancesdict_by_cls[clsstr]
+        instances.pop(self.module_instancename)
 
         # Remove instance
         del self.module_instance
