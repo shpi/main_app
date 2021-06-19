@@ -13,7 +13,7 @@ from PySide2.QtCore import QPointF
 from PySide2.QtGui import QPolygonF
 
 from core.CircularBuffer import CircularBuffer
-from core.DataTypes import DataType
+from interfaces.DataTypes import DataType
 from core.Settings import settings
 
 

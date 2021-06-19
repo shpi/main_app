@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from PySide2.QtCore import QSettings, QObject
-from typing import List
-from core.DataTypes import DataType
+from typing import List, Optional
+from interfaces.DataTypes import DataType
 
 # Settings functions shadow internal classes :(
 _int = int
@@ -20,26 +20,38 @@ class Settings(QSettings):
     def get(self, key: str, default, datatype: DataType):
         # Get value and convert.
         basic_type = DataType.to_basic_type(datatype)
-        return self._read_funcs[basic_type](key, default)
+        return self._read_funcs[basic_type](self, key, default)
         # or KeyError("<type>")
 
-    def int(self, key: str, default=0) -> int:
+    def int(self, key: str, default=0) -> Optional[int]:
         # get value with int conversion
         # noinspection PyTypeChecker
-        return int(self.value(key, default))
+        v = self.value(key, default)
+        if v is None:
+            return None
+        return int(v)
 
-    def float(self, key: str, default=0.) -> float:
+    def float(self, key: str, default=0.) -> Optional[float]:
         # get value with float conversion
         # noinspection PyTypeChecker
-        return float(self.value(key, default))
+        v = self.value(key, default)
+        if v is None:
+            return None
+        return float(v)
 
-    def str(self, key: str, default="") -> str:
+    def str(self, key: str, default="") -> Optional[str]:
         # get value with str conversion
-        return str(self.value(key, default))
+        v = self.value(key, default)
+        if v is None:
+            return None
+        return str(v)
 
-    def bool(self, key: str, default=False) -> bool:
+    def bool(self, key: str, default=False) -> Optional[bool]:
         # get value with bool conversion
-        return self.value(key) in (True, "true", 1, "1") or default
+        v = self.value(key, default)
+        if v is None:
+            return None
+        return v in {True, "true", 1, "1"} or default
 
     def list(self, key: str, default: list = None, none_to_empty_list=True) -> List[str]:
         # get list of strings
@@ -59,24 +71,25 @@ class Settings(QSettings):
     def set(self, key: str, value, datatype: DataType):
         # Get value and convert.
         basic_type = DataType.to_basic_type(datatype)
-        self._write_funcs[basic_type](key, value)
+        self._write_funcs[basic_type](self, key, value)
         # or KeyError("<type>")
 
-    def setint(self, key: str, value: int):
+    def setint(self, key: str, value: Optional[int]):
         # simple set value as int
-        self.setValue(key, int(value))  # will be string
+        pass
+        self.setValue(key, None if value is None else int(value))  # will be string
 
-    def setfloat(self, key: str, value: float):
+    def setfloat(self, key: str, value: Optional[float]):
         # simple set value as float
-        self.setValue(key, str(float(value)))  # will be string anyway. Include dot.
+        self.setValue(key, None if value is None else str(float(value)))  # will be string anyway. Include dot.
 
-    def setstr(self, key: str, value: str):
+    def setstr(self, key: str, value: Optional[str]):
         # simple set value as str
-        self.setValue(key, str(value))  # str() to not create complex types
+        self.setValue(key, None if value is None else str(value))  # str() to not create complex types
 
-    def setbool(self, key: str, value: bool):
+    def setbool(self, key: str, value: Optional[bool]):
         # simple set value as bool
-        self.setValue(key, bool(value))  # will be string
+        self.setValue(key, None if value is None else bool(value))  # will be string
 
     _read_funcs = {
         _int: int,

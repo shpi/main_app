@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import logging
+from logging import getLogger
 import os
 import threading
 import time
@@ -8,12 +8,14 @@ from datetime import datetime
 
 from PySide2.QtCore import Signal, Slot, Property
 
-from core.DataTypes import DataType
+from interfaces.DataTypes import DataType
 from core.Property import EntityProperty
 from core.Toolbox import Pre_5_15_2_fix
 from core.Settings import settings
-from core.Module import Module
 from interfaces.Module import ModuleBase, ModuleCategories
+
+
+logger = getLogger(__name__)
 
 
 class NightModes:
@@ -32,15 +34,13 @@ class NightModes:
 class Appearance(ModuleBase):
     allow_maininstance = True
     allow_instances = False
-    description = "Appearance"
+    description = "Appearance control"
     categories = ModuleCategories.UI, ModuleCategories._AUTOLOAD, ModuleCategories._INTERNAL
-    depends = None
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent, instancename: str = None):
+        super().__init__(parent=parent, instancename=instancename)
 
         self.path = 'appearance'
-        self.inputs = Module.inputs.entries
         self._backlightlevel = 0
         self._blackfilter = 0
         self._module = EntityProperty(parent=self,

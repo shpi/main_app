@@ -1,7 +1,7 @@
 import os
 from functools import partial
 
-from core.DataTypes import DataType
+from interfaces.DataTypes import DataType
 from core.Property import EntityProperty
 
 

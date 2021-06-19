@@ -4,9 +4,8 @@ import subprocess
 import sys
 from enum import Enum
 from functools import partial
-from typing import Iterable
 
-from core.DataTypes import DataType
+from interfaces.DataTypes import DataType
 from core.Property import EntityProperty, ThreadProperty
 from interfaces.Module import ThreadModuleBase, ModuleCategories
 
@@ -69,8 +68,8 @@ class InputDevs(ThreadModuleBase):
 
     FILENAME = '/proc/bus/input/devices'
 
-    def __init__(self):
-        super(InputDevs, self).__init__()
+    def __init__(self, parent, instancename: str = None):
+        ThreadModuleBase.__init__(self, parent=parent, instancename=instancename)
 
         self.devs = dict()
         self.properties = dict()

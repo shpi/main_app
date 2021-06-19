@@ -2,84 +2,52 @@ import logging
 import struct
 import time
 from pathlib import Path
-from typing import Generator, Optional
+from typing import Optional
 
 import numpy as np
 
 # from ufunclab import minmax # https://github.com/WarrenWeckesser/ufunclab
 # from core.CircularBuffer import CircularBuffer
-from core.DataTypes import DataType
-from core.Property import EntityProperty
+from interfaces.DataTypes import DataType
 from core.Settings import settings
 from hardware.CPU import CPU
+from hardware.IIO import IIO
+from core.Appearance import Appearance
 from interfaces.Module import ThreadModuleBase, ModuleCategories, IgnoreModuleException
-from core.Module import Module
+from interfaces.PropertySystem import PropertyDict, FunctionProperty, IntervalProperty, Property
 
 
-class MLX90615(ThreadModuleBase):
+class MLX90615(ThreadModuleBase):  # Non Thread?
     allow_maininstance = True
     allow_instances = False
-    description = "MLX90615"
-    categories = (ModuleCategories.HARDWARE, )
+    description = "MLX90615 temperature sensor"
+    categories = ModuleCategories.HARDWARE,
+    depends_on = Appearance, IIO, CPU
 
     TEMP_RANGE_MIN = 0.1
     TEMP_RANGE_MAX = 45.
-
     iio_buffer_length = 100
     delta = 0.5 * 50
     fan_speed_mean = 1900
 
-    @classmethod
-    def iio_device_paths(cls, with_name_file=True, name_match: str = None) -> Generator[Path, None, None]:
-        """Generator to iterate over iio devices by filesystem"""
-        iio_devices = Path('/sys/bus/iio/devices')
+    def __init__(self, parent, instancename: str = None):
+        ThreadModuleBase.__init__(self, parent=parent, instancename=instancename)
 
-        if not iio_devices.is_dir():
-            return
-
-        for device in iio_devices.iterdir():
-            namefile = device / 'name'
-
-            if name_match:
-                if namefile.is_file():
-                    if namefile.read_text().strip() == name_match:
-                        yield device
-            else:
-                if namefile.is_file() or not with_name_file:
-                    yield device
-
-    def __init__(self):
-        super().__init__()
-
-        self.inputs = Module.inputs.entries
-
-        self.ospath: Optional[Path] = None
-
-        devices = list(self.iio_device_paths(name_match='mlx90615'))
+        devices = list(IIO.iio_find_device_paths(name_match='mlx90615'))
         if not devices:
             raise IgnoreModuleException("Hardware not found.")
 
         if len(devices) > 1:
             logging.warning('Multiple MLX90615 device found? Using first.')
 
-        self.ospath = devices[0]  # Use first device. Should be one at maximum.
+        self.iio_device_file = devices[0]  # Use first device. Should be one at maximum.
+        self.iio_device_file_name = self.iio_device_file.name
+        self.dev_file = Path('/dev') / self.iio_device_file_name
 
-        self.iio_devname = self.ospath.name
-
-        self.buffer_enable(False)
-        self.activate_channel()
-        self.buffer_enable(True)
-
-        # self.load = os.getloadavg()[2]
-        # self.cpu_temp_mean = CPU.get_cpu_temp()
-
-        self._backlight_path = settings.str('mlx/backlight_path', 'core/backlight/brightness')
+        self._backlight_brightness: Optional[Property] = None  # settings.str('mlx/backlight_path', 'core/backlight/brightness')
 
         self.backlight_level_mean = self.get_input_value(self._backlight_path)
         self._fan_path = settings.str('mlx/fan_path', 'sensor/shpi/fan1_input')
-
-        # self._backup_sensor_path = settings.str("mlx/" + self.name + '/backup_sensor_path')
-        # self._current_sensor_path = settings.str("mlx/" + self.name + '/current_path')
 
         self.last_movement = 0
 
@@ -95,40 +63,26 @@ class MLX90615(ThreadModuleBase):
 
         self.buffer = self._data = np.full(6000, self.object_temperature, dtype=np.int16)
 
-        # np.full(self.buffer_size,fill_value=self.object_temperature, dtype=np.int16)
-        # data = [startvalue] * size
+        self._interval = IntervalProperty(self.update, 10., desc="")
 
-        self._module = EntityProperty(parent=self,
-                                      category='module',
-                                      entity='sensor',
-                                      name='mlx90615',
-                                      value='NOT_INITIALIZED',
-                                      description='Room temperature compensation module',
-                                      type=DataType.MODULE,
-                                      call=self.update,
-                                      interval=10)
+        self._temp = FunctionProperty(
+            datatype=DataType.TEMPERATURE,
+            getterfunc=self.calc_temp,
+            maxage=60.,
+            desc='Room temperature stabilized'
+        )
 
-        # self._thread = ThreadProperty(entity='input_dev',
-        #                              name='mlx90615',
-        #                              category='module',
-        #                              parent=self,
-        #                              value=1,
-        #                              description='Thread for MLX90615',
-        #                              interval=60,
-        #                              function=self.mlx_thread)
-
-        self._temp = EntityProperty(parent=self,
-                                    category='sensor',
-                                    entity='mlx90615',
-                                    name='room_temperature',
-                                    value=self.object_temperature,
-                                    description='Room temperature stabilized',
-                                    type=DataType.TEMPERATURE,
-                                    call=self.calc_temp,
-                                    interval=60)
+        self.properties = PropertyDict(
+            room_temperature=self._temp,
+            interval=self._interval
+        )
 
     def load(self):
-        pass
+        self._backlight_brightness = self.properties['Appearance/backlight/now']
+
+        self.buffer_enable(False)
+        self.activate_channel()
+        self.buffer_enable(True)
 
     def unload(self):
         pass
@@ -193,14 +147,6 @@ class MLX90615(ThreadModuleBase):
         self.backlight_level_mean += self.get_input_value(self._backlight_path)
         self.backlight_level_mean /= 10
         logging.debug('backlight mean: ' + str(self.backlight_level_mean))
-
-        return 'OK'
-
-    def get_input_value(self, path):
-        if path not in self.inputs:
-            return 0
-        else:
-            return self.inputs[path].value
 
     def buffer_enable(self, value: bool):
         if value:

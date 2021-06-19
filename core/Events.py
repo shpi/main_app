@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import logging
 from typing import NoReturn, Callable, Any, Dict, Iterable, Set
 from threading import Event
@@ -5,7 +7,7 @@ from threading import Event
 callback_function = Callable[[Any], NoReturn]
 
 
-class SubscriptionManager:
+class EventManager:
     __slots__ = "_source", "_emit_fncs", "_is_emitting", "_waitable_events"
 
     def __init__(self, source_element: Any, eventids: Iterable):
@@ -52,6 +54,7 @@ class SubscriptionManager:
         finally:
             self._is_emitting[eventid] = False
 
+        # Trigger waiting threads
         e = self._waitable_events[eventid]
         e.set()
         e.clear()

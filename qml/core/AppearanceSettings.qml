@@ -51,12 +51,13 @@ Item {
             RangeSlider {
                 id: backlightslider
                 from: 0
+                to: 100
                 height: 100
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width - 130
 
-                to: 100
                 stepSize: 1
+                snapMode: RangeSlider.SnapAlways
                 first.value: appearance.minbacklight
                 second.value: appearance.maxbacklight
                 second.onMoved: appearance.maxbacklight = second.value
@@ -83,13 +84,13 @@ Item {
 
                 Label {
                     anchors.horizontalCenter: parent.first.handle.horizontalCenter
-                    text: parent.first.value
+                    text: appearance.minbacklight
                     color: Colors.black
                 }
 
                 Label {
                     anchors.horizontalCenter: parent.second.handle.horizontalCenter
-                    text: parent.second.value
+                    text: appearance.maxbacklight
                     color: Colors.black
                 }
 
@@ -401,13 +402,13 @@ Item {
             RangeSlider {
                 id: backlightslider_night
                 from: 0
+                to: 100
                 height: 100
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width - 130
 
-                to: 100
-
                 stepSize: 1
+                snapMode: RangeSlider.SnapAlways
                 first.value: appearance.minbacklight_night
                 second.value: appearance.maxbacklight_night
                 second.onMoved: appearance.maxbacklight_night = second.value
@@ -435,13 +436,13 @@ Item {
 
                 Label {
                     anchors.horizontalCenter: parent.first.handle.horizontalCenter
-                    text: parent.first.value
+                    text: appearance.minbacklight_night
                     color: Colors.black
                 }
 
                 Label {
                     anchors.horizontalCenter: parent.second.handle.horizontalCenter
-                    text: parent.second.value
+                    text: appearance.maxbacklight_night
                     color: Colors.black
                 }
 

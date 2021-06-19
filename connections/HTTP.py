@@ -10,7 +10,7 @@ from urllib.error import HTTPError, URLError
 
 from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
 
-from core.DataTypes import DataType
+from interfaces.DataTypes import DataType
 from core.Inputs import InputListModelDict
 from core.Property import EntityProperty
 from core.Toolbox import Pre_5_15_2_fix

@@ -5,7 +5,7 @@ import os
 from functools import partial
 from subprocess import call, Popen, PIPE, DEVNULL
 
-from core.DataTypes import DataType
+from interfaces.DataTypes import DataType
 from core.Property import EntityProperty
 from core.Settings import settings
 from hardware.AlsaRecord import AlsaRecord

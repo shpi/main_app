@@ -1,7 +1,7 @@
 import os
 import sys
 
-from core.DataTypes import DataType
+from interfaces.DataTypes import DataType
 from core.Property import EntityProperty, StaticProperty
 
 from interfaces.Module import ModuleBase, ModuleCategories
@@ -13,8 +13,8 @@ class SystemInfo(ModuleBase):
     description = "System Info"
     categories = ModuleCategories._INTERNAL, ModuleCategories._AUTOLOAD, ModuleCategories.INFO
 
-    def __init__(self):
-        ModuleBase.__init__(self)
+    def __init__(self, parent, instancename: str = None):
+        ModuleBase.__init__(self, parent=parent, instancename=instancename)
 
         self.properties = []
         # self.name = 'system'

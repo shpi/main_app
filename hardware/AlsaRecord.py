@@ -3,7 +3,7 @@ from subprocess import Popen, PIPE
 from threading import Thread
 
 # import socket for later audio intercom
-from core.DataTypes import DataType
+from interfaces.DataTypes import DataType
 from core.Property import EntityProperty
 
 

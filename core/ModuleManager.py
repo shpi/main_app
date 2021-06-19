@@ -11,10 +11,11 @@ from core.Constants import STANDARD_MODULES
 
 
 class ModuleManager(QObject):
-    def __init__(self, inputs):
+    def __init__(self, mainapp):
         super().__init__()
 
-        self.inputs = inputs
+        self.mainapp = mainapp
+
         self.available_modules = STANDARD_MODULES
 
         self._modules = dict()  # saves names of loaded instances

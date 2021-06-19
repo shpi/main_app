@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import logging
+from os import environ
+from typing import Optional, Any, Union
+
 from PySide2 import QtCore
 from PySide2.QtCore import Qt, QModelIndex, QAbstractListModel, Slot
-from os import environ
 
 
 class LogModel(QAbstractListModel):
@@ -100,7 +102,7 @@ logging.basicConfig(
 )
 
 
-def qml_log(mode, context, message):
+def qt_message_handler(mode, context, message):
     if mode == QtCore.QtInfoMsg:
         logging.info("%s (%d, %s)" % (message, context.line, context.file))
     elif mode == QtCore.QtWarningMsg:
@@ -111,3 +113,33 @@ def qml_log(mode, context, message):
         logging.error("%s (%d, %s)" % (message, context.line, context.file))
     else:
         logging.debug("%s (%d, %s)" % (message, context.line, context.file))
+
+
+class LogCall:
+    """
+    Runs a function and writes exceptions to the given logger.
+
+    Usage:
+
+    import logging
+    from core.Logger import LogCall
+    logger = logging.getLogger(__name__)
+    logcall = LogCall(logger)
+
+    logcall(func, errmsg="Something went wrong: %s")
+    """
+    def __init__(self, logger: logging.Logger):
+        self._logger = logger
+
+    def __call__(self,
+                 func,
+                 errmsg="Exception during calling function: %s",
+                 *args,
+                 catch_exceptions=(Exception,),
+                 stack_trace=False,
+                 **kwargs) -> Union[Any, BaseException]:
+        try:
+            return func(*args, **kwargs)
+        except catch_exceptions as e:
+            self._logger.error(errmsg, (repr(e), ), exc_info=stack_trace)
+            return e

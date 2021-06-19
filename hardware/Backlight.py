@@ -3,7 +3,7 @@ import os
 import sys
 from typing import Union
 
-from core.DataTypes import DataType
+from interfaces.DataTypes import DataType
 from core.Property import EntityProperty
 
 

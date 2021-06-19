@@ -1,0 +1,7 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+<file>fonts/Colors.qml</file>
+<file>fonts/Icons.qml</file>
+<file>fonts/qmldir</file>
+</qresource>
+</RCC>

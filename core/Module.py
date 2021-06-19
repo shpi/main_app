@@ -10,7 +10,13 @@ from time import sleep, time
 from PySide2.QtCore import QObject
 
 from interfaces.Module import ModuleBase, ThreadModuleBase, IgnoreModuleException, ModuleInstancesView
-from core.Inputs import InputsDict
+from interfaces.PropertySystem import PropertyDict
+# from core.Inputs import InputsDict
+from core.Logger import LogCall
+
+
+logger = logging.getLogger(__name__)
+logcall = LogCall(logger)
 
 
 class ModuleInstancesViewer(ModuleInstancesView):
@@ -37,41 +43,39 @@ class Module:
     instancesdict_by_cls: Dict[str, Dict[Optional[str], ModuleBase]] = {}
     instances_in_loadorder: List["Module"] = []
 
-    inputs = InputsDict()
+    ROOT_PROPERTY_DICT = PropertyDict()
 
     # Loop for checking logic regularly
-    _last_update = 0  # to initialize everything
-    _update_running = False
+    # _last_update = 0  # to initialize everything
+    # _update_running = False
 
     @classmethod
     def get_classes(cls) -> List[Type[ModuleBase]]:
         return []
 
-    @classmethod
-    def check_loop(cls):
-        if cls._update_running:
-            return
-
-        try:
-            cls._update_running = True
-            cls.inputs.update(cls._last_update)
-        except Exception as e:
-            logging.error(f"Error in check_loop: {e!s}", exc_info=True)
-
-        finally:
-            cls._last_update = int(time())
-            cls._update_running = False
+    # @classmethod
+    # def check_loop(cls):
+    #    if cls._update_running:
+    #        return##
+    #    try:
+    #        cls._update_running = True
+    #        cls.inputs.update(cls._last_update)
+    #    except Exception as e:
+    #        logging.error(f"Error in check_loop: {e!s}", exc_info=True)
+    #    finally:
+    #        cls._last_update = int(time())
+    #        cls._update_running = False
 
     @classmethod
     def unload_modules(cls):
         # Unload in reverse order
         for minst in reversed(list(Module.instances_in_loadorder)):
-            minst.unload()
+            logcall(minst.unload)
 
         # Legacy compatibility
-        for key in Module.inputs.entries:
-            if key.endswith('thread'):
-                Module.inputs.entries[key].set(0)
+        # for key in Module.inputs.entries:
+        #    if key.endswith('thread'):
+        #        Module.inputs.entries[key].set(0)
 
     def __init__(self, module_class: Type[ModuleBase], instancename: str = None, parent: QObject = None):
         logging.info(f"Creating Module instance {instancename!s} of {module_class.__name__}")
@@ -103,7 +107,7 @@ class Module:
         self.module_instance: Optional[ModuleBase] = None  # Default on failures for checking in subclasses
         try:
             # Instantiate the module class
-            self.module_instance = module_class(parent)
+            self.module_instance = module_class(parent, instancename)
 
         except IgnoreModuleException as e:
             logging.error(f"Module instance of {clsstr} denies instantiation: " + str(e))

@@ -4,7 +4,7 @@ import shutil
 import time
 from pathlib import Path
 
-from core.DataTypes import DataType
+from interfaces.DataTypes import DataType
 from core.Property import EntityProperty, StaticProperty
 
 

@@ -5,60 +5,73 @@ import signal
 import sys
 from os import environ
 from pathlib import Path
+from logging import getLogger
 
 from PySide2.QtCore import qInstallMessageHandler
 from PySide2.QtGui import QFont, QFontDatabase
 from PySide2.QtQml import QQmlApplicationEngine
-from PySide2.QtWidgets import QApplication
 
+from interfaces.MainApp import MainAppBase
 from core.Appearance import Appearance
 from core.Git import Git
 from core.HTTPServer import HTTPServer
-from core.Logger import qml_log, log_model
-from core.Toolbox import RepeatingTimer
-
+from core.Logger import qt_message_handler, log_model
 from core.Module import Module, ThreadModule
 from core.ModuleManager import ModuleManager
-
-from core.MLX90615 import MLX90615
-from core.Wifi import Wifi
-from hardware.Alsa import AlsaMixer
-from hardware.Backlight import Backlight
-from hardware.CPU import CPU
-from hardware.Disk import DiskStats
-from hardware.HWMon import HWMon
-from hardware.IIO import IIO
-from hardware.InputDevs import InputDevs
-from hardware.Leds import Led
-from hardware.System import SystemInfo
-from interfaces.DemoModules import DemoThreadModule, EndlessThreadModule
 
 # Qt resources
 import files
 
-APP_PATH = Path(sys.argv[0]).parent.resolve()
-
+logger = getLogger(__name__)
 
 if environ.get("QMLDEBUG") not in (None, "0"):
-    from PySide2.QtQml import QQmlDebuggingEnablers
+    from PySide2.QtQml import QQmlDebuggingEnabler
     debug = QQmlDebuggingEnabler()
 
 
-def _interrupt_handler(signum, frame):  # signum, frame
-    """Handle KeyboardInterrupt: quit application."""
-    app.quit()
-    app.exit()
-    sys.exit(0)
+QFontDatabase.addApplicationFont("qrc:/fonts/dejavu-custom.ttf")
+qInstallMessageHandler(qt_message_handler)
 
 
-check_loop_timer = RepeatingTimer(1000, Module.check_loop, autostart=False)
+class MainApp(MainAppBase):
+    def __init__(self):
+        MainAppBase.__init__(self, sys.argv)
 
+        self.APP_PATH = Path(sys.argv[0]).parent.resolve()
+        signal.signal(signal.SIGINT, self.interrupt_handler)
 
-def setup_interrupt_handling():
-    """Setup handling of KeyboardInterrupt (Ctrl-C) for PyQt."""
-    signal.signal(signal.SIGINT, _interrupt_handler)
-    check_loop_timer.start()
-    # safe_timer(1000, Module.check_loop)  # not below 1000, because timeschedule in input class works with integers
+        self.setApplicationName("Main")
+        self.setOrganizationName("SHPI GmbH")
+        self.setOrganizationDomain("shpi.de")
+        self.setFont(QFont('Dejavu', 11))
+        self.aboutToQuit.connect(self._unload)
+
+        self.modulemanager = ModuleManager(self)
+
+        self.engine = QQmlApplicationEngine()
+        root_context = self.engine.rootContext()
+        root_context.setContextProperty("applicationDirPath", str(self.APP_PATH))
+        root_context.setContextProperty("logs", log_model)
+
+        # root_context.setContextProperty("inputs", Module.inputs)
+        root_context.setContextProperty('wifi', core_modules['wifi'])
+        root_context.setContextProperty('git', core_modules['git'])
+        root_context.setContextProperty("appearance", core_modules['appearance'])
+        # root_context.setContextProperty("modules", modules)
+
+        self.engine.load("qrc:/qml/main.qml")
+        if not self.engine.rootObjects():
+            sys.exit(-1)
+
+    def _unload(self):
+        Module.unload_modules()
+        del self.engine
+
+    def interrupt_handler(self, signum, frame):  # signum, frame
+        """Handle KeyboardInterrupt: quit application."""
+        self.quit()
+        self.exit()
+        sys.exit(0)
 
 
 core_modules = dict()
@@ -81,56 +94,16 @@ core_modules['mlx90615'] = ThreadModule(MLX90615)
 core_modules['alsamixer'] = AlsaMixer(Module.inputs)
 
 
-for mod_str, core_module in core_modules.items():
-    if isinstance(core_module, ThreadModule):
-        core_module.load()
-    else:
-        Module.inputs.add(core_module.get_inputs())
-
-
 core_modules['appearance'] = Appearance()
 Module.inputs.add(core_modules['appearance'].get_inputs())
 
-modules = ModuleManager(Module.inputs)
+if __name__ == '__main__':
+    # Create main app
+    app = MainApp()
+    exec_returncode = app.exec_()
+    # main app exited.
 
+    if exec_returncode:
+        logger.warning(f"Exiting mainapp with code: {exec_returncode}")
 
-app = QApplication(sys.argv)
-
-QFontDatabase.addApplicationFont("qrc:/fonts/dejavu-custom.ttf")
-
-qInstallMessageHandler(qml_log)
-
-app.aboutToQuit.connect(Module.unload_modules)
-
-app.setApplicationName("Main")
-app.setOrganizationName("SHPI GmbH")
-app.setOrganizationDomain("shpi.de")
-
-app.setFont(QFont('Dejavu', 11))
-
-engine = QQmlApplicationEngine()
-root_context = engine.rootContext()
-root_context.setContextProperty("applicationDirPath", str(APP_PATH))
-root_context.setContextProperty("logs", log_model)
-root_context.setContextProperty("inputs", Module.inputs)
-root_context.setContextProperty('wifi', core_modules['wifi'])
-root_context.setContextProperty('git', core_modules['git'])
-root_context.setContextProperty("appearance", core_modules['appearance'])
-root_context.setContextProperty("modules", modules)
-
-setup_interrupt_handling()
-
-engine.load("qrc:/qml/main.qml")
-
-if not engine.rootObjects():
-    sys.exit(-1)
-
-
-exec_returncode = app.exec_()
-
-check_loop_timer.stop()
-
-if exec_returncode:
-    print(f"Exiting mainapp with code: {exec_returncode}")
-
-sys.exit(exec_returncode)
+    sys.exit(exec_returncode)

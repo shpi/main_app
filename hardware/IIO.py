@@ -3,14 +3,36 @@
 import logging
 import sys
 from functools import partial
+from pathlib import Path
+from typing import Generator
 
 import hardware.iio as iio
-from core.DataTypes import DataType
+from interfaces.DataTypes import DataType
 from core.Property import EntityProperty
 
 
 class IIO:
     """Class for retrieving the requested information."""
+
+    _iio_devices_path = Path('/sys/bus/iio/devices')
+
+    @classmethod
+    def iio_find_device_paths(cls, with_name_file=True, name_match: str = None) -> Generator[Path, None, None]:
+        """Generator to iterate over iio devices by filesystem"""
+
+        if not cls._iio_devices_path.is_dir():
+            return
+
+        for device in cls._iio_devices_path.iterdir():
+            namefile = device / 'name'
+
+            if name_match:
+                if namefile.is_file():
+                    if namefile.read_text().strip() == name_match:
+                        yield device
+            else:
+                if namefile.is_file() or not with_name_file:
+                    yield device
 
     def __init__(self):
         self.properties = {}

@@ -4,7 +4,7 @@ import time
 
 from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 
-from core.DataTypes import DataType
+from interfaces.DataTypes import DataType
 from core.Property import EntityProperty
 from core.Toolbox import Pre_5_15_2_fix
 

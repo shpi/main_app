@@ -9,9 +9,8 @@ class DemoThreadModule(ThreadModuleBase):
     description = "Demo thread module"
     categories = (ModuleCategories.USER_MODULE, )
 
-    def __init__(self):
-        # QObject.__init__(self)
-        ThreadModuleBase.__init__(self)
+    def __init__(self, parent, instancename: str = None):
+        ThreadModuleBase.__init__(self, parent=parent, instancename=instancename)
 
     def load(self):
         print("Loading...")

@@ -8,7 +8,7 @@ from subprocess import check_output, Popen, PIPE, DEVNULL
 
 from PySide2.QtCore import Qt, QModelIndex, QAbstractListModel, Property, Signal, Slot, QObject
 
-from core.DataTypes import DataType
+from interfaces.DataTypes import DataType
 from core.Property import EntityProperty
 from core.Settings import settings
 

@@ -3,7 +3,7 @@ import logging
 import threading
 import time
 
-from core.DataTypes import DataType
+from interfaces.DataTypes import DataType
 
 
 class ModuleThread(threading.Thread):

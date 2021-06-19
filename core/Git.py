@@ -6,7 +6,7 @@ from pathlib import Path
 
 from PySide2.QtCore import Property, Signal, Slot, QObject
 
-from core.DataTypes import DataType
+from interfaces.DataTypes import DataType
 from core.Property import EntityProperty
 from core.Settings import settings
 from core.Constants import GIT_CLONE_PATH

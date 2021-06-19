@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import logging
 from typing import Union, Type
 from enum import Enum
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, date, time
 
 from hardware.iio import ChannelType
 
@@ -28,7 +27,7 @@ class DataType(Enum):
     DATE = 5  # date object (without time)
     TIME = 6  # time object (without date)
     DATETIME = 7  # datetime object
-    TIMERANGE = 8  # Range between two times (timedelta)
+    TIMERANGE = 8  # Range between two times (seconds, float)
     TIMESTAMP = 9  # Seconds since poch
 
     # Fix range types
@@ -100,7 +99,6 @@ class DataType(Enum):
         DATE: date,
         TIME: time,
         DATETIME: datetime,
-        TIMERANGE: timedelta,
 
         PERCENT_INT: int,
         BYTE: int,
@@ -145,11 +143,11 @@ class DataType(Enum):
 
     @classmethod
     def iio_to_shpi(cls, iio: ChannelType) -> "DataType":
-        return cls._mapping_iio_shpi.value.get(iio, DataType.UNDEFINED)
+        return cls._mapping_iio_shpi.value.get(iio.value, DataType.UNDEFINED)
 
     @classmethod
     def to_basic_type(cls, type_: "DataType") -> Type[Union[int, str, bool, float]]:
-        return cls._to_basic_type.value.get(type_, float)
+        return cls._to_basic_type.value.get(type_.value, float)
 
     @staticmethod
     def str_to_tight_datatype(numeric: str):

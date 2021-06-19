@@ -2,11 +2,13 @@
 
 from abc import abstractmethod
 from enum import Enum, auto
-from typing import Optional, Iterable, Type, Tuple, Iterator, Mapping
+from typing import Optional, Iterable, Type, Iterator, Mapping, Union
 
 from PySide2.QtCore import QObject
 
 from core.FakeABC import FakeABC
+from interfaces.PropertySystem import PropertyDict
+from interfaces.MainApp import MainAppBase
 
 
 class IgnoreModuleException(BaseException):
@@ -17,7 +19,7 @@ class IgnoreModuleException(BaseException):
 
 class ModuleCategories(Enum):
     _INTERNAL = auto()  # Hide this module in module manager
-    _AUTOLOAD = auto()  # Automatically loads this module
+    _AUTOLOAD = auto()  # Automatically loads this internal module
 
     LOGIC = auto()
     HARDWARE = auto()
@@ -27,28 +29,51 @@ class ModuleCategories(Enum):
 
 
 class ModuleBase(QObject, FakeABC):
-    def __init__(self, parent: QObject = None):
-        FakeABC.__init__(self)
+    app: MainAppBase
+
+    def __init__(self, parent: QObject = None, instancename: str = None):
+        """
+        A module instance identified by instancename is being created.
+        instancename may be None, if allow_maininstance is defined as True.
+
+        If instancename is a string this instance represents a specific, named
+        instance of this module, if allow_instances is defined as True.
+
+        The instancename must not be saved and may be aqcuired by calling self.instancename() later.
+
+        Each module instance should create a new PropertyDict containing its Properties.
+        Do not read or write from Properties during __init__ because it's path and dependencies are not ready.
+
+        Save the populated PropertyDict instance into self.properties.
+        You may access properties by self.properties["propname"] later or additionally save specific properties into
+        self directly for speedups.
+        """
+
+        FakeABC.__init__(self)  # Manual check for matching all abstract base classes.
         QObject.__init__(self, parent)
 
         # TODO: app reference
 
     def instancename(self) -> Optional[str]:
         """
-        A module may read its instance name by this function
+        A module may read its assigned instance name by this function.
+        This function is only available after completing __init__.
+        During __init__, use given argument "instancename".
         """
+        raise NotImplementedError("Function called too early. Don't use it in __init__.")
 
     @classmethod
     def instances(cls) -> "ModuleInstancesView":
         """
-        Module class's instance view which contains all loaded instances
+        Module class's instance view which contains all loaded instances.
         """
+        raise NotImplementedError("Function called too early. Don't use it in __init__.")
 
     @abstractmethod
     def load(self):
         """
         Method to tell a module it's now allowed to load completely.
-        self.properties ready.
+        self.properties are ready then.
         imports in required_packages satisfied.
         Do not use imports defined in required_packages until this call.
         No special imports in __init__ or on module level.
@@ -61,7 +86,7 @@ class ModuleBase(QObject, FakeABC):
     def unload(self):
         """
         Telling the module to stop and clean up before unload.
-        Close connections, destroy instances, free memory, release references.
+        Close connections, destroy created instances, free memory, release other references.
         A module must specify this function.
         """
 
@@ -85,8 +110,8 @@ class ModuleBase(QObject, FakeABC):
     @abstractmethod
     def allow_maininstance(cls) -> bool:
         """
-        Allow creation of unnamed main instance.
-        Yourclass()
+        Allow creation of an unnamed main instance.
+        A module must specify this attibute.
         """
 
     @classmethod
@@ -94,7 +119,7 @@ class ModuleBase(QObject, FakeABC):
     def allow_instances(cls) -> bool:
         """
         Allow creation of named instances.
-        Yourclass(instancename="instance_xyz")
+        A module must specify this attibute.
         """
 
     @classmethod
@@ -102,22 +127,20 @@ class ModuleBase(QObject, FakeABC):
     def description(cls) -> str:
         """
         Describe your Module in a sentence.
+        A module must specify this attibute.
         """
 
-    @abstractmethod
-    def get_inputs(self) -> list:
-        """
-        Module must provide its inputs by this function
-        """
-
-    def get_instance_names(self) -> Iterable[str]:
+    def get_instance_names(self) -> Optional[Iterable[str]]:
         """
         This function may be called on the maininstance of the module.
-        It should return a list of string which will be used as instancename.
+        It may return an iterable of strings which will be used as instancenames and offered in the UI.
 
         Requires allow_instances=True
+
+        If None, the user must specify instancenames.
+        If list of strings, provided instancenames may be offered in the UI.
         """
-        return ()
+        return None
 
 
 class ModuleInstancesView(Mapping):
@@ -135,8 +158,8 @@ class ThreadModuleBase(ModuleBase):
     MAX_SLEEP_INTERVAL = 2  # Deep sleep at most this amount of seconds
     STOP_TIMEOUT = 10  # Wait at least this seconds on thread stop.
 
-    def __init__(self):
-        ModuleBase.__init__(self)
+    def __init__(self, parent: QObject, instancename: str = None):
+        ModuleBase.__init__(self, parent=parent, instancename=instancename)
 
     @abstractmethod
     def run(self):
@@ -150,7 +173,7 @@ class ThreadModuleBase(ModuleBase):
         Called when a ThreadModule should stop its thread for unloading the module.
         """
 
-    def sleep(self, seconds) -> bool:
+    def sleep(self, seconds: Union[int, float]) -> bool:
         """
         The ThreadModule should use this interruptable sleep function instead of Python's sleep().
         Sleeps "seconds" but may return earier, if module gets stopped.
@@ -159,6 +182,7 @@ class ThreadModuleBase(ModuleBase):
         Returns True on normal sleep exit.
         Returns False if module is stopping and sleep may have been interrupted earlier.
         """
+        raise NotImplementedError("Function called too early. Don't use it in __init__.")
 
     def module_is_running(self) -> bool:
         """
