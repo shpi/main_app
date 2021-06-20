@@ -3,8 +3,12 @@
 from typing import Union, Type
 from enum import Enum
 from datetime import datetime, date, time
+from re import compile
+
 
 from hardware.iio import ChannelType
+
+_re_time_str = compile(r'(2[0-3]|[01]?[0-9]):([0-5]?[0-9])')
 
 
 class DataType(Enum):
@@ -26,16 +30,18 @@ class DataType(Enum):
     # Correct interpretation of datetime objects
     DATE = 5  # date object (without time)
     TIME = 6  # time object (without date)
-    DATETIME = 7  # datetime object
-    TIMERANGE = 8  # Range between two times (seconds, float)
-    TIMESTAMP = 9  # Seconds since poch
+    TIME_STR = 7  # time as string "14:00"
+    DATETIME = 8  # datetime object
+    TIMERANGE = 9  # Range between two times (seconds, float)
+    TIMERANGE_INT = 10  # Range between two times (seconds, int)
+    TIMESTAMP = 11  # Seconds since unix epoch (float)
 
     # Fix range types
-    PERCENT_FLOAT = 10  # float, 0.-100.
-    PERCENT_INT = 11  # int, 0-100
-    FRACTION = 12  # float 0.-1.
-    BYTE = 13  # int, 0-255
-    WORD = 14  # int, 0-65535
+    PERCENT_FLOAT = 15  # float, 0.-100.
+    PERCENT_INT = 16  # int, 0-100
+    FRACTION = 17  # float 0.-1.
+    BYTE = 18  # int, 0-255
+    WORD = 19  # int, 0-65535
 
     # Special types (from sensors)
     TEMPERATURE = 20  # float, Celsius
@@ -66,7 +72,7 @@ class DataType(Enum):
     INDUCTANCE = 44  # float, Henry
     POWER = 45  # float, W (Watts)
     WORK = 46  # float, Wh (Watt-Hours)
-    CONDUCTIVITY = 47  # S/m Siemsns per meter
+    CONDUCTIVITY = 47  # S/m Siemens per meter
 
     # Filesystem sizes
     BYTES = 50
@@ -98,7 +104,10 @@ class DataType(Enum):
 
         DATE: date,
         TIME: time,
+        TIME_STR: str,
         DATETIME: datetime,
+
+        TIMERANGE_INT: int,
 
         PERCENT_INT: int,
         BYTE: int,
@@ -141,12 +150,22 @@ class DataType(Enum):
         ChannelType.IIO_GRAVITY: GRAVITY
     }
 
+    _valid_check = {
+        TIME_STR: _re_time_str.fullmatch,
+        PERCENT_FLOAT: lambda x: 0. <= x <= 100.,
+        PERCENT_INT: lambda x: x in range(101),
+        FRACTION: lambda x: 0. <= x <= 1.,
+        BYTE: lambda x: x in range(256),
+        WORD: lambda x: x in range(65536),
+        BYTES: lambda x: x >= 0,
+    }
+
     @classmethod
     def iio_to_shpi(cls, iio: ChannelType) -> "DataType":
         return cls._mapping_iio_shpi.value.get(iio.value, DataType.UNDEFINED)
 
     @classmethod
-    def to_basic_type(cls, type_: "DataType") -> Type[Union[int, str, bool, float]]:
+    def to_basic_type(cls, type_: "DataType") -> Type[Union[int, str, bool, float, date, time, datetime]]:
         return cls._to_basic_type.value.get(type_.value, float)
 
     @staticmethod

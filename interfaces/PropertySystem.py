@@ -21,6 +21,10 @@ Properties considered as Module "inputs"
     - IntervalProperty
         Contains a float value which represents the intervall to call a function.
 
+    - TimeoutProperty
+        Contains a float which represents a timeout that can be started by restart() and stopped with stop()
+        On timeout, the function is being called once unless restarted again.
+
 
 Properties considered as Module "outputs"
 "Output" means, the Module itself modifies its property values.
@@ -36,17 +40,17 @@ Properties considered as Module "outputs"
 """
 import datetime
 import logging
-from typing import Optional, Union, Any, Callable, Iterable, Dict
+from typing import Optional, Union, Any, Callable, Iterable, Dict, ValuesView, ItemsView, KeysView
 from time import time
 from threading import Lock, RLock
 from re import compile
-import decimal
-from PySide2.QtCore import QObject, Property as QtProperty, Signal
-# from PySide2.QtCore import Signal, Slot
+from contextlib import suppress
 
+from PySide2.QtCore import Property as QtProperty, Signal
+
+from interfaces.DataTypes import DataType
 from core.Events import EventManager
 from core.EventTable import EventTable
-from interfaces.DataTypes import DataType
 from core.Settings import settings
 from core.Logger import LogCall
 
@@ -62,7 +66,7 @@ class PropertyException(BaseException):
     pass
 
 
-class PropertyDict:  # QObject
+class PropertyDict:
     """
     Holds key, value structured properties.
     Contains inherited classes of Property which wrap any data type or even sub PropertyDicts.
@@ -81,6 +85,8 @@ class PropertyDict:  # QObject
 
     path_sep = '/'
 
+    CHANGED = object()
+
     @classmethod
     def root(cls, allowcreate=False) -> Optional["PropertyDict"]:
         """Get root PropertyDict and allow creation if it does not yet exist."""
@@ -91,7 +97,7 @@ class PropertyDict:  # QObject
         # Get root instance
         return cls._root_instance
 
-    def __init__(self, parent: QObject = None, **kwargs):
+    def __init__(self, **kwargs):
         """
         Initializes a new PropertyDict object.
 
@@ -150,6 +156,11 @@ class PropertyDict:  # QObject
         else:
             # Not part of an official path hierarchy.
             return self.path_sep
+
+    def get(self, path: str, default: "Property" = None) -> Optional["Property"]:
+        with suppress(KeyError):
+            return self[path]
+        return default
 
     def __getitem__(self, key: str) -> "Property":
         """
@@ -213,6 +224,9 @@ class PropertyDict:  # QObject
         if self._loaded:
             logcall(item.load, errmsg="Exception on calling Property.load(): %s")
 
+        if self.parentproperty:
+            self.parentproperty.events.emit(self.CHANGED)
+
     def __delitem__(self, key: str):
         delitem: Property = self._data.get(key)
 
@@ -221,6 +235,18 @@ class PropertyDict:  # QObject
 
         logcall(delitem.unload, errmsg="Exception on unloading Property: %s")
         self._data.pop(key)
+
+        if self.parentproperty and self.parentproperty.events:
+            self.parentproperty.events.emit(self.CHANGED)
+
+    def items(self) -> ItemsView[str, "Property"]:
+        return self._data.items()
+
+    def keys(self) -> KeysView[str]:
+        return self._data.keys()
+
+    def values(self) -> ValuesView["Property"]:
+        return self._data.values()
 
     def __repr__(self):
         if self.is_root:
@@ -264,18 +290,31 @@ class Property:  # QObject
     """
 
     __slots__ = "_value", "parentdict", "_path", "_id", "desc", "_lock", "_valuepool", "_event_manager", \
-                "_datatype", "_is_persistent", "_default_value", "_loaded", "_key", "_native_datatype"
+                "_datatype", "_is_persistent", "_default_value", "_loaded", "_key", "_native_datatype", "_changetime"
 
     _classlock = Lock()  # For incrementing instance counters
     _last_id = 0
     _instances_by_id: Dict[int, "Property"] = {}
+    _changed_properties = set()
+    _changed_properties_save_timeout = 5.
 
     # For storing meta information beyond the persistent value of the property.
     namespace_sep = ':'
 
     UPDATED = object()
     UPDATED_AND_CHANGED = object()
-    _eventids = {UPDATED, UPDATED_AND_CHANGED}
+    _eventids = {UPDATED, UPDATED_AND_CHANGED, PropertyDict.CHANGED}
+
+    @classmethod
+    def check_unsaved_changes(cls):
+        if not Property._changed_properties:
+            return
+
+        for p in Property._changed_properties.copy():  # type: Property
+            if p._changetime is None or time() >= p._changetime + Property._changed_properties_save_timeout:
+                p.save_setting(p._value, p._datatype, ensure_path_absolute=False)
+                p._changetime = None
+                Property._changed_properties.remove(p)
 
     @classmethod
     def get_by_id(cls, pr_id: int) -> Optional["Property"]:
@@ -305,11 +344,11 @@ class Property:  # QObject
         self._loaded = False
         self._key: Optional[str] = None  # Cache attribute
         self._path: Optional[str] = None  # Cache attribute
-        self.desc: str = desc
+        self.desc: Optional[str] = desc
         self.parentdict: Optional[PropertyDict] = None  # ToDo: Use QObject.parent only?
         self._valuepool = valuepool
         self._event_manager: Optional[EventManager] = EventManager(self, self._eventids) if self._eventids else None
-        self._is_persistent = persistent
+        self._changetime: Optional[float] = None
 
         with Property._classlock:
             # Unique numeric ID for fast access and easier identification
@@ -318,27 +357,31 @@ class Property:  # QObject
             # Collect all instances
             Property._instances_by_id[self._id] = self
 
-        if isinstance(initial_value, PropertyDict):
+        if datatype is DataType.PROPERTYDICT or isinstance(initial_value, PropertyDict):
             # This Property contains a subordinal PropertyDict.
-            if persistent:
-                raise ValueError("Setting persistency is not allowed with PropertyDicts as value.")
-
+            self._is_persistent = False  # Force
             self._datatype = DataType.PROPERTYDICT  # Force
             self._native_datatype = None
             self._value = initial_value  # Collect PropertyDict
+            self._default_value = None
+
+            if not isinstance(initial_value, PropertyDict):
+                raise PropertyException('If providing datatype as PROPERTYDICT you also have to provide '
+                                        'a new instance of PropertyDict.')
+
             if initial_value.parentproperty is not None:
                 raise ValueError("PropertyDict already contained by other Property.")
             initial_value.parentproperty = self
 
-            self._default_value = None
         else:
             # Any other value
             self._datatype = datatype
             self._native_datatype = DataType.to_basic_type(datatype)
+            self._is_persistent = persistent
             if persistent:
                 # Property with default but load from settings
                 self._default_value = initial_value
-                self._value = NotLoaded  # Load on first read (when path has been built)
+                self._value = NotLoaded  # May load on first read (when path has been built)
             else:
                 # Property which has some value
                 self._default_value = initial_value
@@ -406,9 +449,7 @@ class Property:  # QObject
         if namespace is not None:
             path = f"{path}{self.namespace_sep}{namespace}"
 
-        print("saving", value, type(value))
-        settings.setValue("appearance/min", str(value))
-        # settings.set(path, value, datatype)
+        settings.set(path, value, datatype)
 
     def value_to_default(self):
         self.value = self._default_value
@@ -442,7 +483,9 @@ class Property:  # QObject
                 if not self.path_is_absolute:
                     logger.error(f"Could not save new value of Property because path is not yet defined: {self!r}")
                     return
-                self.save_setting(newvalue, self._datatype, ensure_path_absolute=False)
+
+                self._changetime = time()
+                # self.save_setting(newvalue, self._datatype, ensure_path_absolute=False)
 
     @property
     def key(self) -> Optional[str]:
@@ -585,7 +628,9 @@ class SelectProperty(Property):
 
     @selected_path.setter
     def selected_path(self, newpath: Optional[str]):
-        self.selected_property = PropertyDict.find_property(newpath) if newpath else None
+        self.selected_property = PropertyDict.root().get(newpath) if newpath else None
+        if newpath and self._selected_property is None:
+            logger.warning('Path for selection does not exist (anymore): "%s". Selection has been removed.', (newpath,))
 
     @property
     def selected_property(self) -> Optional[Property]:
@@ -654,7 +699,8 @@ class ROProperty(Property):
     """
     __slots__ = "_locked",
 
-    _eventids = None
+    DEFINED = object()
+    _eventids = {DEFINED}
 
     def __init__(
             self,
@@ -685,6 +731,10 @@ class ROProperty(Property):
         self._locked = locknow
 
     @property
+    def is_defined(self) -> bool:
+        return self._locked
+
+    @property
     def value(self):
         # Getter
         if not self._locked:
@@ -702,6 +752,8 @@ class ROProperty(Property):
 
         # Disallow further value sets
         self._locked = True
+        if self.events:
+            self.events.emit(self.DEFINED)
 
     def __repr__(self):
         ret = super().__repr__()[:-1]
@@ -720,6 +772,9 @@ class FunctionProperty(Property):
     Has caching capabilities.
     """
     __slots__ = "_func", "_maxage", "_time", "args", "kwargs"
+
+    BEFORE_FUNC_CALL = object()
+    _eventids = Property._eventids | {BEFORE_FUNC_CALL}
 
     def __init__(
             self,
@@ -764,13 +819,16 @@ class FunctionProperty(Property):
     def value(self):
         # Value requested
 
-        if self.cachevalid:
-            return self._value
-
-        # Cache is outdated
-
         with self._lock:
             # Call one by one because we're caching and calling functions.
+
+            if self.cachevalid:
+                return self._value
+
+            # Cache is outdated
+
+            if self.events:
+                self.events.emit(self.BEFORE_FUNC_CALL)
 
             # Call the function
             newvalue = logcall(
@@ -832,8 +890,6 @@ class IntervalProperty(Property):
             self,
             callback_func,
             default_interval=1.,
-            args: list = None,
-            kwargs: dict = None,
             desc: str = None,
             persistent_interval=True,
     ):
@@ -845,9 +901,6 @@ class IntervalProperty(Property):
             desc=desc,
             persistent=persistent_interval
         )
-
-        self.args = list(args) if args else []
-        self.kwargs = dict(kwargs) if kwargs else {}
 
         self._func = callback_func
         self._event = self._event_table.create_event(func=self._exec)
@@ -879,11 +932,7 @@ class IntervalProperty(Property):
 
     @value.setter
     def value(self, newvalue: Any):
-        if newvalue is None:
-            newvalue = 0.
-        else:
-            newvalue = float(newvalue)
-
+        newvalue = 0. if newvalue is None else float(newvalue)
         Property.value.__set__(self, newvalue)
 
         if newvalue == 0.:
@@ -893,29 +942,81 @@ class IntervalProperty(Property):
             self._event.reschedule(now, newvalue)
 
 
-class ClassProperty(QtProperty):
-    def __init__(self, datatype: DataType, path: str, notify: Signal = None):
-        QtProperty.__init__(self, type=DataType.to_basic_type(datatype), fget=self.f_get, fset=self.f_set, notify=notify, constant=notify is None)
-        # self._prop = prop
+class TimeoutProperty(IntervalProperty):
+    _event_table = EventTable()
+
+    def __init__(
+            self,
+            timeout_func,
+            default_timeout=1.,
+            desc: str = None,
+            persistent_timeout=True,
+    ):
+
+        IntervalProperty.__init__(
+            self,
+            callback_func=timeout_func,
+            default_interval=default_timeout,
+            desc=desc,
+            persistent_interval=persistent_timeout,
+        )
+
+    def _exec(self, on_time: datetime.datetime):  # on_time is the planned time!
+        # Call the function once
+        logcall(self._func)
+
+    def stop(self):
+        self._event.deactivate()
+
+    def restart(self):
+        now = datetime.datetime.now()
+        if self.value is None:
+            # Timeout deactivated
+            return
+
+        self._event.reschedule(now, self._value)
+
+    @property
+    def value(self) -> Optional[float]:
+        return self._value
+
+    @value.setter
+    def value(self, newvalue: Optional[float]):
+        newvalue = None if newvalue is None else float(newvalue)
+        Property.value.__set__(self, newvalue)
+        if self._event.on_time:
+            self.restart()
+
+    @property
+    def timeout_active(self) -> bool:
+        return self._event.on_time is not None
+
+
+class QtPropLink(QtProperty):
+    def __init__(self, datatype, path: str, notify: Signal = None):
+        """
+        datatype: Datatype in Qt format
+        path: Path to linked Property relative to Module class
+            "instancename/propertykey" or for main instance: "propertykey"
+        notify: Signal to notify or None for constant properties
+        """
+        QtProperty.__init__(
+            self,
+            type=datatype,
+            fget=self.f_get,
+            fset=self.f_set,
+            notify=notify,
+            constant=notify is None
+        )
         self._notify = notify
         self._path = path
 
     def f_get(self, modinst):
-        v = modinst.properties[self._path].value
-        print("get", self._path, v)
-        return v
+        return modinst.properties[self._path].value
 
     def f_set(self, modinst, newvalue):
         # Get signal from parent with has the emit function.
         prop = modinst.properties[self._path]
-
-        old = prop.value
         prop.value = newvalue
-        changed = prop.value != newvalue or prop.value != old
-
-        if changed:
-            notify = getattr(modinst, str(self._notify)[:-2])
-            notify.emit()
-            print("set changed", self._path, "new=", newvalue, "old=", old, "stored=", prop.value)
-        else:
-            print("set not changed", self._path, newvalue)
+        notify = getattr(modinst, str(self._notify)[:-2])
+        notify.emit()

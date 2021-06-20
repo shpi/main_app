@@ -3,7 +3,7 @@ from PySide2.QtCore import QObject
 from PySide2.QtQml import QQmlApplicationEngine
 from PySide2.QtCore import Signal, Property as QtProperty
 
-from interfaces.PropertySystem import PropertyDict, Property, ClassProperty
+from interfaces.PropertySystem import PropertyDict, Property, QtPropLink
 from interfaces.DataTypes import DataType
 
 # from PySide2.QtQml import QQmlDebuggingEnabler
@@ -20,8 +20,8 @@ class Appearance(QObject):
     maxChanged = Signal()
     nightChanged = Signal()
 
-    minbacklight = ClassProperty(datatype=DataType.INTEGER, path="min", notify=minChanged)
-    maxbacklight = ClassProperty(datatype=DataType.INTEGER, path="max", notify=maxChanged)
+    minbacklight = QtPropLink(datatype=DataType.INTEGER, path="min", notify=minChanged)
+    maxbacklight = QtPropLink(datatype=DataType.INTEGER, path="max", notify=maxChanged)
 
     def __init__(self):
         QObject.__init__(self)

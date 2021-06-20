@@ -495,10 +495,9 @@ Item {
             }
 
             Repeater {
-
                 model: appearance.devices
                 CheckBox {
-                    checked: appearance.selected_device(modelData)
+                    checked: appearance.is_device_selected(modelData)
                     Text {
                         anchors.left: parent.right
                         anchors.leftMargin: 10
@@ -506,7 +505,7 @@ Item {
                         text: appearance.device_description(modelData)
                     }
                     onCheckStateChanged: {
-                        appearance.setDeviceTrack(modelData, this.checked)
+                        appearance.set_device_selected(modelData, this.checked)
                     }
                 }
             }

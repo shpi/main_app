@@ -2,19 +2,20 @@
 
 import logging
 from typing import NoReturn, Callable, Any, Dict, Iterable, Set
-from threading import Event
+from threading import Event, Lock
 
 callback_function = Callable[[Any], NoReturn]
 
 
 class EventManager:
-    __slots__ = "_source", "_emit_fncs", "_is_emitting", "_waitable_events"
+    __slots__ = "_source", "_emit_fncs", "_is_emitting", "_waitable_events", "_lock"
 
     def __init__(self, source_element: Any, eventids: Iterable):
         self._source = source_element
         self._emit_fncs: Dict[Any, Set[callback_function]] = {evid: set() for evid in eventids}
         self._is_emitting: Dict[Any, bool] = {evid: False for evid in eventids}
-        self._waitable_events: Dict[Any, Event] = {evid: Event() for evid in eventids}
+        self._waitable_events: Dict[Any, Event] = {}
+        self._lock = Lock()
 
     def subscribe(self, fnc: callback_function, eventid):
         if eventid not in self._emit_fncs:
@@ -49,15 +50,16 @@ class EventManager:
                 try:
                     fnc(self._source)
                 except Exception as e:
-                    logging.error(f"Exception while calling of event {eventid!s} at function {fnc} subscribed"
-                                  f" for {self._source!r}: {e}")
+                    logging.error(f"Exception while calling event {eventid!s} during calling function {fnc!r} which"
+                                  f" has subscribed for {self._source!r}: {e}")
         finally:
             self._is_emitting[eventid] = False
 
-        # Trigger waiting threads
-        e = self._waitable_events[eventid]
-        e.set()
-        e.clear()
+        e = self._waitable_events.get(eventid)
+        if e:
+            # Trigger waiting threads
+            e.set()
+            e.clear()
 
     def wait_for_event(self, eventid, timeout) -> bool:
         """
@@ -70,7 +72,14 @@ class EventManager:
         :param timeout: Timeout in seconds after this method exits at least.
         :returns: True if value has changed or False on timeout.
         """
-        return self._waitable_events[eventid].wait(timeout)
+
+        with self._lock:
+            if eventid in self._waitable_events:
+                event = self._waitable_events[eventid]
+            else:
+                event = self._waitable_events[eventid] = Event()
+
+        return event.wait(timeout)
 
     def unload(self):
         del self._source

@@ -4,10 +4,39 @@ import subprocess
 import sys
 from enum import Enum
 from functools import partial
+from pathlib import Path
+from re import compile, Match
+from typing import Set
 
 from interfaces.DataTypes import DataType
-from core.Property import EntityProperty, ThreadProperty
-from interfaces.Module import ThreadModuleBase, ModuleCategories
+from interfaces.Module import ModuleBase, ModuleCategories, IgnoreModuleException
+from interfaces.PropertySystem import Property, PropertyDict
+
+
+_re_id = compile(r'I: Bus=([0-9a-f]{4}) Vendor=([0-9a-f]{4}) Product=([0-9a-f]{4}) Version=([0-9a-f]{4})')
+_re_name = compile(r'N: Name="(.*)"')
+_re_ev = compile(r'B: EV=(.*)')
+_re_handlers_input_nr = compile(r'H: Handlers=.*event(\d+)')
+
+
+def id_from_id_match(m: Match) -> str:
+    return ''.join(m.group(x) for x in range(4))
+
+
+class InputDeviceProperty(PropertyDict):
+    # _eventids = Property._eventids |
+
+    def __init__(self, desc: str, ev: Set, handler: int, keymap: str):
+        Property.__init__(self, datatype=DataType.BOOLEAN, initial_value=True, desc=desc)
+        self._devpath = Path('/dev/input' + str(handler))
+
+    @property
+    def use_device(self) -> bool:
+        return self.value
+
+    @use_device.setter
+    def use_device(self, use: bool):
+        self.value = use
 
 
 class EvTypes(Enum):
@@ -25,54 +54,19 @@ class EvTypes(Enum):
     EV_FF_STATUS = 0x17
 
 
-def test_bit(eventlist, b):
-    index = b // 32
-    bit = b % 32
-    if len(eventlist) <= index:
-        return False
-    return bool(eventlist[index] & (1 << bit))
-
-
-def EvHexToStr(events):
-    s = []
-
-    for key in EvTypes:
-        #print(key.value)
-        if test_bit(events, key.value):
-            s.append(key.name)
-
-    return s
-
-
-def createId(x):
-    return x in ('1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')
-
-
-class InputDevs(ThreadModuleBase):
-    description = "Listens to input devices"
+class InputDevs(ModuleBase):
+    description = "Manages input devices"
     allow_maininstance = True
-    allow_instances = True
-    categories = ModuleCategories._INTERNAL, ModuleCategories._AUTOLOAD
+    allow_instances = False
+    categories = ModuleCategories._INTERNAL,
 
-    def run(self):
-        pass
-
-    def stop(self):
-        pass
-
-    def load(self):
-        pass
-
-    def unload(self):
-        pass
-
-    FILENAME = '/proc/bus/input/devices'
+    _INFOFILE = Path('/proc/bus/input/devices')
 
     def __init__(self, parent, instancename: str = None):
-        ThreadModuleBase.__init__(self, parent=parent, instancename=instancename)
+        if not self._INFOFILE.is_file():
+            raise IgnoreModuleException('File not found: %s', (self._INFOFILE,))
 
-        self.devs = dict()
-        self.properties = dict()
+        ModuleBase.__init__(self, parent=parent, instancename=instancename)
 
         self.properties['lastinput'] = EntityProperty(parent=self,
                                                       category='core',
@@ -90,25 +84,20 @@ class InputDevs(ThreadModuleBase):
                                                       type=DataType.STRING,
                                                       interval=-1)
 
-        with open(self.FILENAME, 'r') as f:
-            for line in f:
-                if line.startswith('I: Bus='):
-                    device = {}
-                    id = ''.join(filter(createId, line))
+        self._pr_last_input = Property()
+        self._pr_last_touch = Property()
 
-                if line.startswith('N: Name='):
-                    device['name'] = line[len('N: Name='):].strip('"\n')
+        self._pd_available_devices = PropertyDict()
+        self.properties = PropertyDict(
+            last_input=self._pr_last_input,
+            last_touch=self._pr_last_touch,
+            available_devices=Property(
+                DataType.PROPERTYDICT,
+                self._pd_available_devices,
+                desc='Contains all available input devices',
+            ),
+        )
 
-                if line.startswith('B: EV'):
-                    eventsHex = [int(x, base=16) for x in line[6:].split()]
-                    eventsHex.reverse()
-                    device['EV'] = EvHexToStr(eventsHex)
-
-                if line.startswith('H: Handlers='):
-                    events = list(
-                        line[len('H: Handlers='):].rstrip().split(' '))
-                    device['event'] = list(
-                        filter(lambda x: x.startswith('event'), events))
 
                     p = subprocess.Popen(["keymap/keymap", ''.join(filter(str.isdigit, str(device['event'])))],
                                          stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, encoding="utf8")
@@ -148,8 +137,66 @@ class InputDevs(ThreadModuleBase):
                 function=partial(self.devloop, f"/dev/input/{subdevice['event'][0]}", id, 'EV_ABS' in subdevice['EV'])
             )
 
-    def get_inputs(self) -> list:
-        return list(self.properties.values())
+    def load(self):
+        self._check_inputdev_file()
+
+    def unload(self):
+        pass
+
+    def check_inputdev_file(self):
+        found: Set[str] = set()
+
+        with self._INFOFILE.open(encoding="utf8") as file:
+            input_id = None
+            name = None
+            ev = None
+            handler = None
+            keymap = None
+            for line in file:
+                match_idline = _re_id.fullmatch(line)
+                # Next device?
+                if match_idline:
+                    if input_id:
+                        # Device complete
+                        self._pd_available_devices[input_id] = InputDeviceProperty(desc=name, ev=ev, handler=handler, keymap=keymap)
+
+                    # Next device
+                    input_id = id_from_id_match(match_idline)
+
+                    # Reset vars
+                    name = None
+                    ev = None
+                    handler = None
+                    keymap = None
+                    found.add(input_id)
+                    if input_id in self._pd_available_devices:
+                        # Skip it. Already in PropertyDict
+                        input_id = None
+
+                elif input_id is None:
+                    # Line is obsolete
+                    continue
+
+                # Line could be relevant
+
+                match_name = _re_name.fullmatch(line)
+                if match_name:
+                    name = match_name.group(1)
+
+                match_ev = _re_ev.fullmatch(line)
+                if match_ev:
+                    ev = int(match_ev.group(1), 16)
+
+                match_handler_num = _re_handlers_input_nr.match(line)
+                if match_handler_num:
+                    handler = int(match_handler_num.group(1))
+                    p = subprocess.Popen(
+                        ["keymap/keymap", str(handler)],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.DEVNULL,
+                        encoding="utf8"
+                    )
+                    keymap = p.communicate()[0].strip()
 
     def devloop(self, devpath, id, ismouse=False):
         systembits = (struct.calcsize("P") * 8)

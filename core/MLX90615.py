@@ -44,7 +44,6 @@ class MLX90615(ThreadModuleBase):  # Non Thread?
         self.iio_device_file_name = self.iio_device_file.name
         self.dev_file = Path('/dev') / self.iio_device_file_name
 
-        self._backlight_brightness: Optional[Property] = None  # settings.str('mlx/backlight_path', 'core/backlight/brightness')
 
         self.backlight_level_mean = self.get_input_value(self._backlight_path)
         self._fan_path = settings.str('mlx/fan_path', 'sensor/shpi/fan1_input')
@@ -63,9 +62,8 @@ class MLX90615(ThreadModuleBase):  # Non Thread?
 
         self.buffer = self._data = np.full(6000, self.object_temperature, dtype=np.int16)
 
-        self._interval = IntervalProperty(self.update, 10., desc="")
-
-        self._temp = FunctionProperty(
+        self._pr_interval = IntervalProperty(self.update, 10., desc="")
+        self._pr_temp = FunctionProperty(
             datatype=DataType.TEMPERATURE,
             getterfunc=self.calc_temp,
             maxage=60.,
@@ -73,12 +71,13 @@ class MLX90615(ThreadModuleBase):  # Non Thread?
         )
 
         self.properties = PropertyDict(
-            room_temperature=self._temp,
-            interval=self._interval
+            room_temperature=self._pr_temp,
+            interval=self._pr_interval
         )
+        self._epr_backlight_brightness: Optional[Property] = None
 
     def load(self):
-        self._backlight_brightness = self.properties['Appearance/backlight/now']
+        self._epr_backlight_brightness = self.properties.root().get('Appearance/brightness_out')
 
         self.buffer_enable(False)
         self.activate_channel()

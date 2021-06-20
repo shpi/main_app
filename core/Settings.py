@@ -1,27 +1,41 @@
 # -*- coding: utf-8 -*-
 
-from PySide2.QtCore import QSettings, QObject
 from typing import List, Optional
-from interfaces.DataTypes import DataType
+from datetime import datetime, date, time
 
-# Settings functions shadow internal classes :(
-_int = int
-_str = str
-_bool = bool
-_float = float
+from PySide2.QtCore import QSettings, QObject
+
+from interfaces.DataTypes import DataType
 
 
 class Settings(QSettings):
     def __init__(self, filename: str, fmt: QSettings.Format, parent: QObject = None):
         super().__init__(filename, fmt, parent)
+        self._read_funcs = {
+            int: self.int,
+            str: self.str,
+            bool: self.bool,
+            float: self.float,
+        }
+
+        self._write_funcs = {
+            int: self.setint,
+            str: self.setstr,
+            bool: self.setbool,
+            float: self.setfloat,
+        }
 
     # ---- get functions
 
     def get(self, key: str, default, datatype: DataType):
         # Get value and convert.
         basic_type = DataType.to_basic_type(datatype)
-        return self._read_funcs[basic_type](self, key, default)
+        return self._read_funcs.get(basic_type, self.get_raw)(key, default)
         # or KeyError("<type>")
+
+    def get_raw(self, key: str, default):
+        # Get value for supported data types without conversion
+        return self.value(key, default)
 
     def int(self, key: str, default=0) -> Optional[int]:
         # get value with int conversion
@@ -71,12 +85,15 @@ class Settings(QSettings):
     def set(self, key: str, value, datatype: DataType):
         # Get value and convert.
         basic_type = DataType.to_basic_type(datatype)
-        self._write_funcs[basic_type](self, key, value)
+        self._write_funcs.get(basic_type, self.set_raw)(key, value)
         # or KeyError("<type>")
+
+    def set_raw(self, key: str, value):
+        # Raw set value for supported types
+        self.setValue(key, value)
 
     def setint(self, key: str, value: Optional[int]):
         # simple set value as int
-        pass
         self.setValue(key, None if value is None else int(value))  # will be string
 
     def setfloat(self, key: str, value: Optional[float]):
@@ -90,20 +107,6 @@ class Settings(QSettings):
     def setbool(self, key: str, value: Optional[bool]):
         # simple set value as bool
         self.setValue(key, None if value is None else bool(value))  # will be string
-
-    _read_funcs = {
-        _int: int,
-        _str: str,
-        _bool: bool,
-        _float: float,
-    }
-
-    _write_funcs = {
-        _int: setint,
-        _str: setstr,
-        _bool: setbool,
-        _float: setfloat,
-    }
 
 
 settings = Settings('settings.ini', QSettings.IniFormat)

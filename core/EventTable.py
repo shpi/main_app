@@ -4,6 +4,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Optional, Callable, Any, Union, Iterator
 from time import sleep
+from threading import Event as _Event
 
 from core.Logger import LogCall
 
@@ -65,6 +66,7 @@ class Event:
         self._table.schedule_event(self)
 
     def deactivate(self):
+        self._on_time = None
         self._table.remove_event(self)
 
     def unload(self):
@@ -86,12 +88,11 @@ def _get_time(e: Event) -> datetime:
 
 
 class EventTable:
-    __slots__ = "_active_events", "_all_events", "_event_loop_running"
-
     def __init__(self):
         self._active_events: List[Event] = []
         self._all_events: List[Event] = []
         self._event_loop_running = False
+        self._t_event = _Event()
 
     def __iter__(self) -> Iterator[Event]:
         return iter(self._all_events)
@@ -107,6 +108,7 @@ class EventTable:
 
         if now is not None:
             self._active_events.append(e)
+            self._t_event.set()  # Trigger eventloop wait to restart.
 
         return e
 
@@ -114,6 +116,7 @@ class EventTable:
         # Prevent from emitting anyway. Remove from queue.
         if event in self._active_events:
             self._active_events.remove(event)
+            self._t_event.set()  # Trigger eventloop wait to restart.
 
         if full:
             # Remove event completely
@@ -135,6 +138,7 @@ class EventTable:
             raise AttributeError("Event does not have a scheduled time.")
 
         self._active_events.append(event)
+        self._t_event.set()  # Trigger eventloop wait to restart.
 
     def get_next_event(self) -> Optional[Event]:
         if not self._active_events:
@@ -169,11 +173,18 @@ class EventTable:
         if e.on_time <= now:
             # Not rescheduled. Remove it.
             self.remove_event(e)
+        else:
+            self._t_event.set()  # Trigger eventloop wait to restart.
 
     def event_loop_stop(self):
         self._event_loop_running = False
+        self._t_event.set()  # Trigger eventloop wait to restart.
 
     def event_loop_start(self):
+        """
+        Should be called in own thread.
+        """
+
         if self._event_loop_running:
             raise RecursionError("event_loop already running.")
 
@@ -183,15 +194,21 @@ class EventTable:
             while self._event_loop_running:
                 e = self.get_next_event()
                 if e is None:
-                    # No events. Sleep a little bit.
-                    sleep(1.)
+                    # No events. Sleep a little bit or wakeup on event changes
+                    if self._t_event.wait(10.):
+                        # wait was interrupted. Events changed.
+                        self._t_event.clear()
                     continue
 
                 # Remaining time
-                diff = e.on_time - datetime.now()
-
-                # Event may be late
-                sleep(max(diff.total_seconds(), 0.))
+                diff = (e.on_time - datetime.now()).total_seconds()
+                if diff > 0.:
+                    # Still time to wait.
+                    if self._t_event.wait(diff):
+                        # Events changed. Maybe some event must be emitted ealier. Restart loop.
+                        self._t_event.clear()
+                        continue
+                    # else: We waited the exact time to emit the event.
 
                 self._handle_event(e)
 
