@@ -12,6 +12,9 @@ from hardware.IIO import IIO
 from hardware.InputDevs import InputDevs
 from hardware.Leds import Led
 from hardware.System import SystemInfo
+from core.Appearance import Appearance
+from core.Git import Git
+from core.HTTPServer import HTTPServer
 # from interfaces.DemoModules import DemoThreadModule, EndlessThreadModule
 
 # Other imports
@@ -22,7 +25,8 @@ from interfaces.Module import ModuleBase
 
 # Collect all ModuleBase classes.
 # Classes are callable, filter simple variables.
-_module_classes = tuple(cls for cls in locals().values() if inspect.isclass(cls) and issubclass(cls, ModuleBase) and cls is not ModuleBase)
+_module_classes = tuple(cls for cls in locals().values()
+                        if inspect.isclass(cls) and issubclass(cls, ModuleBase) and cls is not ModuleBase)
 
 
 def internal_modules() -> Set[Type[ModuleBase]]:

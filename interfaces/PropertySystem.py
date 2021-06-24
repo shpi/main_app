@@ -38,13 +38,15 @@ Properties considered as Module "outputs"
     - FunctionProperty
         Value will be gathered or updated from a function defined in the module if its cached value is outdated.
 """
+
 import datetime
 import logging
-from typing import Optional, Union, Any, Callable, Iterable, Dict, ValuesView, ItemsView, KeysView
+from typing import Optional, Union, Any, Callable, Iterable, Dict, ValuesView, ItemsView, KeysView, Generator, Set
 from time import time
 from threading import Lock, RLock
 from re import compile
 from contextlib import suppress
+from enum import EnumMeta
 
 from PySide2.QtCore import Property as QtProperty, Signal
 
@@ -248,6 +250,12 @@ class PropertyDict:
     def values(self) -> ValuesView["Property"]:
         return self._data.values()
 
+    def paths(self) -> Generator[str, None, None]:
+        path = (self.parentproperty.path if isinstance(self.parentproperty, Property) else '') or ''
+
+        for key in self._data.keys():
+            yield f'{path}{self.path_sep}{key}'
+
     def __repr__(self):
         if self.is_root:
             return f"<PropertyDict ROOT ({len(self._data)} elements)>"
@@ -295,7 +303,7 @@ class Property:  # QObject
     _classlock = Lock()  # For incrementing instance counters
     _last_id = 0
     _instances_by_id: Dict[int, "Property"] = {}
-    _changed_properties = set()
+    _changed_properties: Set["Property"] = set()
     _changed_properties_save_timeout = 5.
 
     # For storing meta information beyond the persistent value of the property.
@@ -307,14 +315,11 @@ class Property:  # QObject
 
     @classmethod
     def check_unsaved_changes(cls):
-        if not Property._changed_properties:
-            return
-
         for p in Property._changed_properties.copy():  # type: Property
             if p._changetime is None or time() >= p._changetime + Property._changed_properties_save_timeout:
                 p.save_setting(p._value, p._datatype, ensure_path_absolute=False)
                 p._changetime = None
-                Property._changed_properties.remove(p)
+                Property._changed_properties.discard(p)
 
     @classmethod
     def get_by_id(cls, pr_id: int) -> Optional["Property"]:
@@ -325,7 +330,7 @@ class Property:  # QObject
             self,
             datatype: DataType,
             initial_value: Any = None,
-            valuepool: Union[Iterable, Dict[Any, str]] = None,
+            valuepool: Optional[Dict[Any, str]] = None,
             desc: str = None,
             persistent=True,
     ):
@@ -377,15 +382,18 @@ class Property:  # QObject
             # Any other value
             self._datatype = datatype
             self._native_datatype = DataType.to_basic_type(datatype)
+            self._default_value = initial_value
             self._is_persistent = persistent
-            if persistent:
-                # Property with default but load from settings
-                self._default_value = initial_value
-                self._value = NotLoaded  # May load on first read (when path has been built)
-            else:
-                # Property which has some value
-                self._default_value = initial_value
-                self._value = initial_value  # Directly cache this value
+            self._value = NotLoaded if persistent else initial_value
+
+            if self._datatype is DataType.ENUM:
+                if not isinstance(type(initial_value), EnumMeta):
+                    raise ValueError('DataType.ENUM requires initial_value to be a member of an enum.')
+
+                if valuepool is None:
+                    # Create valuepool from Enum
+                    enum = type(initial_value)
+                    self._valuepool = {e: e.value for e in enum}
 
     @property
     def id(self) -> int:
@@ -397,7 +405,7 @@ class Property:  # QObject
         return self._event_manager
 
     @property
-    def valuepool(self) -> Union[Iterable, Dict[Any, str], None]:
+    def valuepool(self) -> Optional[Dict[Any, str]]:
         return self._valuepool
 
     @property
@@ -432,13 +440,23 @@ class Property:  # QObject
         if ensure_path_absolute:
             self.ensure_path_absolute()
 
-        if self._datatype is DataType.PROPERTYDICT:
+        if isinstance(self._value, PropertyDict) or self._datatype is DataType.PROPERTYDICT:
             self._value.load()
             return
 
         if self._is_persistent:
             # Set value from settings
-            self.value = settings.get(self.path, self._default_value, self._datatype)
+            if self._datatype is DataType.ENUM:
+                # Convert str to enum member
+                value_str = settings.str(self.path, self._default_value.name)
+                enum = type(self._default_value)
+                try:
+                    self.value = enum[value_str]
+                except KeyError:
+                    logger.warning('Found unknown enum member in settings. Reverting to default for %r.', (self,))
+                    self.value_to_default()
+            else:
+                self.value = settings.get(self.path, self._default_value, self._datatype)
 
     def save_setting(self, value, datatype: DataType, namespace: str = None, ensure_path_absolute=True):
         # Default implementation for loading values.
@@ -448,6 +466,12 @@ class Property:  # QObject
 
         if namespace is not None:
             path = f"{path}{self.namespace_sep}{namespace}"
+
+        if datatype is DataType.ENUM:
+            if type(type(value)) is not EnumMeta:
+                raise TypeError('Enum settings require an enum member as value.')
+
+            value = value.name
 
         settings.set(path, value, datatype)
 
@@ -464,9 +488,18 @@ class Property:  # QObject
 
     @value.setter
     def value(self, newvalue: Any):
+        if self._datatype is DataType.PROPERTYDICT:
+            raise ValueError('Setting a new value on a Property containing a PropertyDict is not allowed.')
+
         with self._lock:
-            if self._native_datatype is int and type(newvalue) is not int:
+            if self._native_datatype is int and type(newvalue) is float:
+                # Wrong datatype. Round float to in correctly.
                 newvalue = round(newvalue)
+
+            if self._datatype is DataType.ENUM and type(newvalue) is str:
+                # Convert string (from qml) back to enum.
+                enum = type(self._default_value)
+                newvalue = enum[newvalue]
 
             # Also check if value has really changed.
             changed = self._value != newvalue
@@ -484,14 +517,14 @@ class Property:  # QObject
                     logger.error(f"Could not save new value of Property because path is not yet defined: {self!r}")
                     return
 
+                # Mark as unsaved
                 self._changetime = time()
-                # self.save_setting(newvalue, self._datatype, ensure_path_absolute=False)
+                Property._changed_properties.add(self)
 
     @property
     def key(self) -> Optional[str]:
         """Returns the key as string or None if not set."""
         return self._key
-        # return self.objectName() or None  # Emtpy string to None
 
     @property
     def path(self) -> Optional[str]:
@@ -552,7 +585,7 @@ class Property:  # QObject
             logger.warning("My id was not found in _instances_by_id for removal.")
 
     def __repr__(self):
-        ret = f"<{self.__class__.__name__} key='{self.key}', type={self._datatype}, default={self._default_value}"
+        ret = f"<{self.__class__.__name__} key='{self.key}', type={self._datatype}, default={self._default_value}, desc='{self.desc}'"
 
         if self.parentdict is not None:
             ret += f", bound to {self.parentdict!r}"
@@ -567,6 +600,9 @@ class Property:  # QObject
 
     def __getitem__(self, key: str):
         return self.value[key]
+
+    def __delitem__(self, key: str):
+        del self.value[key]
 
     def __bool__(self):
         return bool(self.value)
@@ -1011,11 +1047,20 @@ class QtPropLink(QtProperty):
         self._notify = notify
         self._path = path
 
+        # ToDo: Property-Changes -> Qt-Notify
+
     def f_get(self, modinst):
-        return modinst.properties[self._path].value
+        prop: Property = modinst.properties[self._path]
+
+        if prop.datatype is DataType.ENUM:
+            # Convert Enum to str for Qml
+            return prop.value.name
+
+        # Return bare value
+        return prop.value
 
     def f_set(self, modinst, newvalue):
-        # Get signal from parent with has the emit function.
+        # Get signal from parent which has the emit function.
         prop = modinst.properties[self._path]
         prop.value = newvalue
         notify = getattr(modinst, str(self._notify)[:-2])

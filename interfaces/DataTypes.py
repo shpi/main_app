@@ -5,7 +5,6 @@ from enum import Enum
 from datetime import datetime, date, time
 from re import compile
 
-
 from hardware.iio import ChannelType
 
 _re_time_str = compile(r'(2[0-3]|[01]?[0-9]):([0-5]?[0-9])')
@@ -84,6 +83,7 @@ class DataType(Enum):
 
     # Too special
     PROPERTYDICT = 60
+    ENUM = 61  # Value should be displayable text.
 
     @classmethod
     def type_to_str(cls, datatype: "DataType"):
@@ -118,7 +118,7 @@ class DataType(Enum):
         COUNT: int,
 
         BYTES: int,
-        # GPS_COORDS = 51
+        ENUM: str,
     }
 
     _mapping_iio_shpi = {

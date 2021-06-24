@@ -53,7 +53,7 @@ class Settings(QSettings):
             return None
         return float(v)
 
-    def str(self, key: str, default="") -> Optional[str]:
+    def str(self, key: str, default='') -> Optional[str]:
         # get value with str conversion
         v = self.value(key, default)
         if v is None:

@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import ctypes
 from typing import Optional, Dict, Type, List, Iterator
-import threading
 from threading import Thread, enumerate
-from time import sleep, time
+from time import sleep
 
 from PySide2.QtCore import QObject
 
+from core.Toolbox import thread_kill
 from interfaces.Module import ModuleBase, ThreadModuleBase, IgnoreModuleException, ModuleInstancesView
 from interfaces.PropertySystem import PropertyDict
-# from core.Inputs import InputsDict
 from core.Logger import LogCall
 
 
@@ -45,37 +43,15 @@ class Module:
 
     ROOT_PROPERTY_DICT = PropertyDict()
 
-    # Loop for checking logic regularly
-    # _last_update = 0  # to initialize everything
-    # _update_running = False
-
     @classmethod
     def get_classes(cls) -> List[Type[ModuleBase]]:
         return []
-
-    # @classmethod
-    # def check_loop(cls):
-    #    if cls._update_running:
-    #        return##
-    #    try:
-    #        cls._update_running = True
-    #        cls.inputs.update(cls._last_update)
-    #    except Exception as e:
-    #        logging.error(f"Error in check_loop: {e!s}", exc_info=True)
-    #    finally:
-    #        cls._last_update = int(time())
-    #        cls._update_running = False
 
     @classmethod
     def unload_modules(cls):
         # Unload in reverse order
         for minst in reversed(list(Module.instances_in_loadorder)):
             logcall(minst.unload)
-
-        # Legacy compatibility
-        # for key in Module.inputs.entries:
-        #    if key.endswith('thread'):
-        #        Module.inputs.entries[key].set(0)
 
     def __init__(self, module_class: Type[ModuleBase], instancename: str = None, parent: QObject = None):
         logging.info(f"Creating Module instance {instancename!s} of {module_class.__name__}")
@@ -142,7 +118,7 @@ class Module:
         try:
             self.module_instance.load()
         except Exception as e:
-            logging.error("Error on load() of module: " + str(e), exc_info=True)
+            logging.error("Error on load() of module: %s", (e,), exc_info=True)
 
     def unload(self):
         self.running = False
@@ -151,7 +127,7 @@ class Module:
             self.module_instance.unload()
             self.instances_in_loadorder.remove(self)
         except Exception as e:
-            logging.error("Error on unload() of module: " + str(e), exc_info=True)
+            logging.error("Error on unload() of module: %s", (e,), exc_info=True)
 
         # Remove from dicts
         clsstr = self.module_class.__name__
@@ -224,31 +200,11 @@ class ThreadModule(Module):
     def is_alive(self) -> bool:
         return self.thread.is_alive()
 
-    @property
-    def thread_id(self) -> Optional[int]:
-        return self.thread.native_id
-
-    @property
-    def thread_killid(self) -> int:
-        # return self.thread.ident
-        if hasattr(self.thread, '_thread_id'):
-            return self.thread._thread_id
-        for did, thread in threading._active.items():
-            if thread is self.thread:
-                return did
-
     def kill(self):
         if not self.thread.is_alive():
             return
 
-        thread_id = self.thread_killid
-        print("kill ids should match:", thread_id, self.thread.ident)
-
-        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, ctypes.py_object(SystemExit))
-        print("Kill result:", res)
-        if res > 1:
-            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
-            logging.error('Thread Exception raise failure.')
+        thread_kill(self)
 
     def sleep(self, seconds) -> bool:
         """

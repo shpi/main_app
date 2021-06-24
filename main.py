@@ -12,9 +12,6 @@ from PySide2.QtGui import QFont, QFontDatabase
 from PySide2.QtQml import QQmlApplicationEngine
 
 from interfaces.MainApp import MainAppBase
-from core.Appearance import Appearance
-from core.Git import Git
-from core.HTTPServer import HTTPServer
 from core.Logger import qt_message_handler, log_model
 from core.Module import Module, ThreadModule
 from core.ModuleManager import ModuleManager
@@ -53,12 +50,6 @@ class MainApp(MainAppBase):
         root_context.setContextProperty("applicationDirPath", str(self.APP_PATH))
         root_context.setContextProperty("logs", log_model)
 
-        # root_context.setContextProperty("inputs", Module.inputs)
-        root_context.setContextProperty('wifi', core_modules['wifi'])
-        root_context.setContextProperty('git', core_modules['git'])
-        root_context.setContextProperty("appearance", core_modules['appearance'])
-        # root_context.setContextProperty("modules", modules)
-
         self.engine.load("qrc:/qml/main.qml")
         if not self.engine.rootObjects():
             sys.exit(-1)
@@ -73,29 +64,6 @@ class MainApp(MainAppBase):
         self.exit()
         sys.exit(0)
 
-
-core_modules = dict()
-core_modules['systeminfo'] = SystemInfo()
-core_modules['cpu'] = CPU()
-core_modules['iio'] = IIO()
-core_modules['leds'] = Led()
-core_modules['hwmon'] = HWMon()
-core_modules['git'] = Git(APP_PATH)
-core_modules['disk'] = DiskStats()
-core_modules['inputdevs'] = InputDevs()
-core_modules['backlight'] = Backlight()
-core_modules['wifi'] = Wifi()
-
-core_modules['httpserver'] = ThreadModule(HTTPServer)
-# core_modules['demo'] = ThreadModule(DemoThreadModule, "EasyThread")
-# core_modules['demo2'] = ThreadModule(EndlessThreadModule, "EndlessThread")
-
-core_modules['mlx90615'] = ThreadModule(MLX90615)
-core_modules['alsamixer'] = AlsaMixer(Module.inputs)
-
-
-core_modules['appearance'] = Appearance()
-Module.inputs.add(core_modules['appearance'].get_inputs())
 
 if __name__ == '__main__':
     # Create main app

@@ -3,7 +3,6 @@
 import logging
 from datetime import datetime, timedelta
 from typing import List, Optional, Callable, Any, Union, Iterator
-from time import sleep
 from threading import Event as _Event
 
 from core.Logger import LogCall

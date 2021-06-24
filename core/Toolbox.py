@@ -1,96 +1,14 @@
+# -*- coding: utf-8 -*-
+
 import socket
 import logging
+import ctypes
 from re import compile
-from typing import Callable, NamedTuple, Optional, Union
+from typing import NamedTuple, Optional, Union
+from threading import Thread
+import os
 
-from PySide2.QtCore import Property, __version_info__
 from PySide2.QtCore import QTimer
-
-"""
-    # Perfect world as with Python's own 'property' (since 5.15.2):
-    @Property(int, notify=nightmodeChanged)
-    def function(self):
-        getter_code
-
-    @function.setter
-    def function(self, value):
-        setter_code
-
-
-    # Setter layout until 5.15.1 (different function name required)
-    @function.setter
-    def set_function(self, value):
-        setter_code
-
-
-    # Fix for all versions
-    def function(self):
-        getter_code
-
-    @Pre_5_15_2_fix(function, int, notify=nightmodeChanged)
-    def function(self, value):
-        setter_code
-
-
-    Use this decorator only on setter functions which have the same name. Keep getter function undecorated.
-    
-    For read only properties just use regular @Property on getter as usual.
-"""
-
-
-def Pre_5_15_2_fix(type: type,
-                   fget: Callable = None,
-                   freset: Callable = None,
-                   fdel: Callable = None,
-                   doc='',
-                   notify: Callable = None,
-                   designable=True,
-                   scriptable=True,
-                   stored=True,
-                   user=False,
-                   constant=False,
-                   final=False
-                   ):
-    """
-    Use this decorator only on setter functions which have the same name.
-    Keep getter function undecorated.
-
-    For read only properties just use regular @Property on getter as usual.
-    """
-
-    def setter_fix(setter_func):
-        if __version_info__ < (5, 15, 2):  # PySide2 < (5, 15, 2):
-            # Function name MUST be DIFFERENT from getter's name
-            # Create new function which has another name
-            def dummy_function_with_other_name(*args, **kwargs):
-                # Call setter function
-                setter_func(*args, **kwargs)
-
-            fset = dummy_function_with_other_name
-
-        else:  # PySide2 >= (5, 15, 2)
-            # Function name MUST be EQUAL to getter's name.
-            # Passthrough original setter_func
-            fset = setter_func
-
-        # Create full Property in just one call!
-        return Property(
-            type=type,
-            fget=fget,
-            fset=fset,
-            freset=freset,
-            fdel=fdel,
-            doc=doc,
-            notify=notify,
-            designable=designable,
-            scriptable=scriptable,
-            stored=stored,
-            user=user,
-            constant=constant,
-            final=final
-        )
-
-    return setter_fix
 
 
 SIOCGIFNETMASK = 0x891b
@@ -195,3 +113,40 @@ class RepeatingTimer:
         if self.started:
             self.stop()
         del self.timer
+
+
+def thread_kill(thread: Thread, join_timeout: int = None) -> bool:
+    if not thread.is_alive():
+        logging.warning('Thread has already stopped.')
+        return False
+
+    thread_id = ctypes.c_long(thread.ident)
+    exc = ctypes.py_object(SystemExit)
+
+    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, exc)
+    if res > 1:
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
+        logging.error('Thread Exception raise failure.')
+
+    join_timeout = float(join_timeout) if join_timeout else None
+
+    if res == 1 and join_timeout:
+        thread.join(join_timeout)
+        return not thread.is_alive()
+
+    return res == 1
+
+
+class Pipe:
+    def __init__(self):
+        self.read_fd, self.write_fd = os.pipe()
+
+    def write(self, data: bytes):
+        os.write(self.write_fd, data)
+
+    def __del__(self):
+        os.close(self.read_fd)
+        os.close(self.write_fd)
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} read={self.read_fd} write={self.write_fd}>"
