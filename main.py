@@ -13,11 +13,10 @@ from PySide2.QtQml import QQmlApplicationEngine
 
 from interfaces.MainApp import MainAppBase
 from core.Logger import qt_message_handler, log_model
-from core.Module import Module, ThreadModule
-from core.ModuleManager import ModuleManager
+from core.ModuleManager import Modules
 
 # Qt resources
-import files
+import qtres
 
 logger = getLogger(__name__)
 
@@ -31,10 +30,11 @@ qInstallMessageHandler(qt_message_handler)
 
 
 class MainApp(MainAppBase):
+    APP_PATH = Path(sys.argv[0]).parent.resolve()
+
     def __init__(self):
         MainAppBase.__init__(self, sys.argv)
 
-        self.APP_PATH = Path(sys.argv[0]).parent.resolve()
         signal.signal(signal.SIGINT, self.interrupt_handler)
 
         self.setApplicationName("Main")
@@ -43,9 +43,9 @@ class MainApp(MainAppBase):
         self.setFont(QFont('Dejavu', 11))
         self.aboutToQuit.connect(self._unload)
 
-        self.modulemanager = ModuleManager(self)
-
         self.engine = QQmlApplicationEngine()
+        self.modules = Modules(self)
+
         root_context = self.engine.rootContext()
         root_context.setContextProperty("applicationDirPath", str(self.APP_PATH))
         root_context.setContextProperty("logs", log_model)
@@ -55,7 +55,8 @@ class MainApp(MainAppBase):
             sys.exit(-1)
 
     def _unload(self):
-        Module.unload_modules()
+        self.modules.unload()
+        del self.modules
         del self.engine
 
     def interrupt_handler(self, signum, frame):  # signum, frame

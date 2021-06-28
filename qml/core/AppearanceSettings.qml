@@ -32,6 +32,13 @@ Item {
         return 0
     }
 
+    function getTimeStr(htumbler, mtumbler) {
+        h = htumbler.currentIndex.toString()
+        m = mtumbler.currentIndex.toString()
+
+        return ('00' + h).substr(-2) + ':' + ('00' + m).substr(-2)
+    }
+
     Flickable {
         anchors.fill: parent
         contentHeight: settingscolumn.implicitHeight
@@ -154,10 +161,10 @@ Item {
             }
 
             SpinBox {
-                value: appearance.jump_timer
+                value: appearance.jump_home_timer
                 anchors.horizontalCenter: parent.horizontalCenter
                 stepSize: 1
-                onValueChanged: appearance.jump_timer = this.value
+                onValueChanged: appearance.jump_home_timer = this.value
                 from: 0
                 to: 1000
                 Label {
@@ -200,10 +207,10 @@ Item {
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
                 RadioButton {
-                    checked: appearance.night_mode === 0
+                    checked: appearance.night_mode === "Off"
                     onReleased: {
                         if (this.checked)
-                            appearance.night_mode = 0
+                            appearance.night_mode = "Off"
                     }
 
                     text: qsTr("off")
@@ -217,10 +224,10 @@ Item {
                 }
 
                 RadioButton {
-                    checked: appearance.night_mode === 1
+                    checked: appearance.night_mode === "On"
                     onReleased: {
                         if (this.checked)
-                            appearance.night_mode = 1
+                            appearance.night_mode = "On"
                     }
 
                     text: qsTr("on")
@@ -234,15 +241,12 @@ Item {
                 }
 
                 RadioButton {
-                    checked: appearance.night_mode === 2
+                    checked: appearance.night_mode === "FixTimeRange"
                     onReleased: {
                         if (this.checked)
-                            appearance.night_mode = 2
-
-                        appearance.night_mode_start = hoursTumbler.currentIndex.toString(
-                                    ) + ':' + minutesTumbler.currentIndex.toString()
-                        appearance.night_mode_end = hoursTumbler2.currentIndex.toString(
-                                    ) + ':' + minutesTumbler2.currentIndex.toString()
+                            appearance.night_mode = "FixTimeRange"
+                        appearance.night_mode_start = getTimeStr(hoursTumbler, minutesTumbler)
+                        appearance.night_mode_end = getTimeStr(hoursTumbler2, minutesTumbler2)
                     }
 
                     text: qsTr("during timerange")
@@ -256,10 +260,10 @@ Item {
                 }
 
                 RadioButton {
-                    checked: appearance.night_mode === 3
+                    checked: appearance.night_mode === "DynamicTimeRange"
                     onReleased: {
                         if (this.checked)
-                            appearance.night_mode = 3
+                            appearance.night_mode = "DynamicTimeRange"
                     }
 
                     text: qsTr("dynamic timerange")
@@ -276,7 +280,7 @@ Item {
             Frame {
                 padding: 0
                 anchors.horizontalCenter: parent.horizontalCenter
-                visible: appearance.night_mode === 2
+                visible: appearance.night_mode === "FixTimeRange"
                 Row {
                     Tumbler {
                         id: hoursTumbler
@@ -286,10 +290,8 @@ Item {
                         visibleItemCount: 3
                         height: 100
                         onCurrentIndexChanged: {
-                            //console.log('onCurrentItemChanged called')
-                            if (appearance.night_mode === 2)
-                                appearance.night_mode_start = hoursTumbler.currentIndex.toString(
-                                            ) + ':' + minutesTumbler.currentIndex.toString()
+                            if (appearance.night_mode === "FixTimeRange")
+                                appearance.night_mode_start = getTimeStr(hoursTumbler, minutesTumbler)
                         }
                     }
                     Text {
@@ -308,9 +310,8 @@ Item {
                         height: 100
 
                         onCurrentIndexChanged: {
-                            if (appearance.night_mode === 2)
-                                appearance.night_mode_start = hoursTumbler.currentIndex.toString(
-                                            ) + ':' + minutesTumbler.currentIndex.toString()
+                            if (appearance.night_mode === "FixTimeRange")
+                                appearance.night_mode_start = getTimeStr(hoursTumbler, minutesTumbler)
                         }
                     }
 
@@ -331,9 +332,8 @@ Item {
                         visibleItemCount: 3
                         height: 100
                         onCurrentIndexChanged: {
-                            if (appearance.night_mode === 2)
-                                appearance.night_mode_end = hoursTumbler2.currentIndex.toString(
-                                            ) + ':' + minutesTumbler2.currentIndex.toString()
+                            if (appearance.night_mode === "FixTimeRange")
+                                appearance.night_mode_end = getTimeStr(hoursTumbler2, minutesTumbler2)
                         }
                     }
 
@@ -351,9 +351,8 @@ Item {
                         visibleItemCount: 3
                         height: 100
                         onCurrentIndexChanged: {
-                            if (appearance.night_mode === 2)
-                                appearance.night_mode_end = hoursTumbler2.currentIndex.toString(
-                                            ) + ':' + minutesTumbler2.currentIndex.toString()
+                            if (appearance.night_mode === "FixTimeRange")
+                                appearance.night_mode_end = getTimeStr(hoursTumbler2, minutesTumbler2)
                         }
                     }
                 }
@@ -361,7 +360,7 @@ Item {
 
             ComboBox {
                 id: combo_night_mode_start
-                visible: appearance.night_mode === 3
+                visible: appearance.night_mode === "DynamicTimeRange"
                 Label {
                     anchors.right: parent.left
                     anchors.rightMargin: 10
@@ -373,12 +372,12 @@ Item {
                 width: 600
                 model: inputs.typeList
                 textRole: 'path'
-                onActivated: appearance.start_input_key = this.currentText
+                onActivated: appearance.night_mode_start_select = this.currentText
             }
 
             ComboBox {
                 id: combo_night_mode_end
-                visible: appearance.night_mode === 3
+                visible: appearance.night_mode === "DynamicTimeRange"
                 Label {
                     anchors.right: parent.left
                     anchors.rightMargin: 10
@@ -389,7 +388,7 @@ Item {
                 width: 600
                 model: inputs.typeList
                 textRole: 'path'
-                onActivated: appearance.stop_input_key = this.currentText
+                onActivated: appearance.night_mode_end_select = this.currentText
             }
 
             Text {
@@ -461,7 +460,6 @@ Item {
                 }
             }
 
-
             /* CheckBox { checked: appearance.invert_at_night === 1 ? true : false
                Text {
                anchors.left: parent.right
@@ -483,7 +481,7 @@ Item {
                 Component.onCompleted: this.checked = appearance.background_night
 
                 onCheckStateChanged: {
-                    appearance.background_night = this.checked ? 1 : 0
+                    appearance.background_night = this.checked
                 }
             }
 
@@ -513,14 +511,13 @@ Item {
     }
 
     Component.onCompleted: {
-
         inputs.set_typeList('time')
 
-        if (appearance.night_mode === 3) {
+        if (appearance.night_mode === "DynamicTimeRange") {
             combo_night_mode_end.currentIndex = getIndex(
-                        appearance.stop_input_key, inputs.typeList)
+                        appearance.night_mode_end_select, inputs.typeList)
             combo_night_mode_start.currentIndex = getIndex(
-                        appearance.start_input_key, inputs.typeList)
+                        appearance.night_mode_start_select, inputs.typeList)
         }
     }
 }

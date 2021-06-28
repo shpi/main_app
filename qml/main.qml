@@ -58,8 +58,7 @@ ApplicationWindow {
         id: bg
         source: ""
         fillMode: Image.Stretch
-        visible: appearance.night === 0
-                 || appearance.background_night > 0 ? true : false
+        visible: appearance.night_active === false || appearance.background_night
 
         RadialGradient {
             angle: 30
@@ -67,6 +66,8 @@ ApplicationWindow {
             verticalOffset: 0
             horizontalRadius: parent.height
             verticalRadius: parent.height
+            id: mask
+            anchors.fill: parent
 
             Behavior on angle {
                 PropertyAnimation {
@@ -86,8 +87,6 @@ ApplicationWindow {
                 }
             }
 
-            id: mask
-            anchors.fill: parent
             gradient: Gradient {
                 GradientStop {
                     position: -0.10
@@ -123,9 +122,8 @@ ApplicationWindow {
         }
 
         Rectangle {
-
             id: drawerheader
-            color: appearance.night ? "#222222" : Colors.white
+            color: appearance.night_active ? "#222222" : Colors.white
             opacity: 0.9
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width - 20
@@ -231,7 +229,7 @@ ApplicationWindow {
         }
 
         Rectangle {
-            color: appearance.night ? "#222222" : Colors.white
+            color: appearance.night_active ? "#222222" : Colors.white
             opacity: 0.9
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width - 20
@@ -319,23 +317,17 @@ ApplicationWindow {
 
     Connections {
         target: appearance
-        function onJump_stateChanged() {
-            if (appearance.jump_state) {
-                view.currentIndex = 1
-                //console.log('JumpState: ' + appearance.jump_state)
-            }
+        function onjump_home() {
+            view.currentIndex = 1
         }
     }
 
     Timer {
-
         interval: 30000
         repeat: true
-        running: (appearance.jump_state
-                  && appearance.backlightlevel > 0) //to make ui more fluent
+        running: (view.currentIndex === 1
+                  && appearance.backlightlevel > 0)  // to make ui more fluent
         onTriggered: {
-
-
             mask.angle = Math.random() * 180
 
             mask.verticalOffset = -mask.height / 4 + (Math.random(
@@ -343,7 +335,8 @@ ApplicationWindow {
             mask.horizontalOffset = -mask.width / 4 + (Math.random(
                                                            ) * mask.width) / 2
 
-            if (appearance.night === 0 || appearance.background_night > 0) {
+            if (!appearance.night_active || appearance.background_night) {
+                // Set random background
                 if (Math.random() > 0.7)
                     bg.source = folderModel.get(Math.random() * Math.floor(
                                                     folderModel.count),
@@ -353,12 +346,10 @@ ApplicationWindow {
     }
 
     Component.onCompleted: {
-
-        Colors.night = appearance.night
+        Colors.night = appearance.night_active
     }
 
     Popup {
-
         id: graphPopup
         width: parent.width
         height: parent.height

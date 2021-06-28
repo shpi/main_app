@@ -3,27 +3,30 @@
 import importlib
 import logging
 
-from PySide2.QtCore import QObject, Property, Signal, Slot
+from PySide2.QtCore import Property, Signal, Slot
 
-from core.Toolbox import Pre_5_15_2_fix
 from core.Settings import settings
-from core.Constants import STANDARD_MODULES
+from core.Constants import internal_modules, external_modules
+from interfaces.Module import ModuleBase, ThreadModuleBase, ModuleCategories
+from interfaces.PropertySystem import PersistentPropertyDict, Property
+from core.Module import Module, ThreadModule
 
 
-class ModuleManager(QObject):
+class Modules(ModuleBase):
+    allow_maininstance = True
+    allow_instances = False
+    description = "Module manager"
+    categories = ModuleCategories._INTERNAL,
+
     def __init__(self, mainapp):
-        super().__init__()
+        ModuleBase.__init__(self, parent=mainapp, instancename=None)
 
         self.mainapp = mainapp
+        self.all_modules_classes = internal_modules() | external_modules()
 
-        self.available_modules = STANDARD_MODULES
+        self.pages = settings.list('pages', ['Home'])
 
-        self._modules = dict()  # saves names of loaded instances
-        self._instances = dict()  # instances itself
-
-        self._available_rooms = settings.list('available_rooms', ['Screensaver'])
-
-        self._rooms = dict()  # saves instance names per room / category
+        self._pages = dict()  # saves instance names per page / category
 
         for room in self._available_rooms:
             self._rooms[room] = settings.list(f"room/{room}", [])
@@ -50,21 +53,11 @@ class ModuleManager(QObject):
                         # except Exception as e:
                         #    logging.debug('here:' + str(e))
 
-    """
+    def load(self):
+        pass
 
-    We use time scheduler of inputs class and register module as input vars,
-    this approach uses fewer ressources and modules should be event driven, if possible
-
-    def update(self):
-        for category in self._instances:
-            for classname in self._instances[category]:
-                for instance in self._instances[category][classname]:
-                    try:
-                        logging.debug(f'calling update function of {category}:{classname}:{instance}')
-                        self._instances[category][classname][instance].update()
-                    except AttributeError:
-                        pass
-    """
+    def unload(self):
+        pass
 
     @Signal
     def modulesChanged(self):
@@ -77,17 +70,6 @@ class ModuleManager(QObject):
     @Property('QVariantMap', notify=roomsChanged)
     def rooms(self) -> dict:
         return self._rooms
-
-    """ @Slot(str, list)
-    def set_rooms(self, roomname, rooms):
-
-        if isinstance(rooms, str):
-            rooms = [rooms]
-
-        self._rooms[roomname] = rooms
-        settings.set(f"room/{roomname}", rooms)
-        self.roomsChanged.emit()
-    """
 
     @Slot(str, str)
     def add_to_room(self, roomname, room):

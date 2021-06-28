@@ -41,7 +41,7 @@ Properties considered as Module "outputs"
 
 import datetime
 import logging
-from typing import Optional, Union, Any, Callable, Iterable, Dict, ValuesView, ItemsView, KeysView, Generator, Set
+from typing import Optional, Union, Any, Callable, Iterable, Dict, ValuesView, ItemsView, KeysView, Generator, Set, Type
 from time import time
 from threading import Lock, RLock
 from re import compile
@@ -53,7 +53,7 @@ from PySide2.QtCore import Property as QtProperty, Signal
 from interfaces.DataTypes import DataType
 from core.Events import EventManager
 from core.EventTable import EventTable
-from core.Settings import settings
+from core.Settings import settings, new_settings_instance, Settings
 from core.Logger import LogCall
 
 
@@ -64,7 +64,7 @@ NotLoaded = object()
 _valid_key = compile(r"[a-zA-Z0-9_]+")
 
 
-class PropertyException(BaseException):
+class PropertyException(Exception):
     pass
 
 
@@ -224,12 +224,21 @@ class PropertyDict:
         item._key = key
 
         if self._loaded:
+            # Late load instantly
             logcall(item.load, errmsg="Exception on calling Property.load(): %s")
 
         if self.parentproperty:
-            self.parentproperty.events.emit(self.CHANGED)
+            self.parentproperty.events.emit(self.CHANGED)  # ToDo: context manager for event emit
 
     def __delitem__(self, key: str):
+        # Deep deletes allowed (key = relative path)
+
+        if self.path_sep in key:
+            # Delegate deep delete
+            pd_path, key = key.rsplit(self.path_sep, 1)
+            del self[pd_path][key]
+            return
+
         delitem: Property = self._data.get(key)
 
         if delitem is None:
@@ -239,7 +248,7 @@ class PropertyDict:
         self._data.pop(key)
 
         if self.parentproperty and self.parentproperty.events:
-            self.parentproperty.events.emit(self.CHANGED)
+            self.parentproperty.events.emit(self.CHANGED)  # ToDo: context manager for event emit
 
     def items(self) -> ItemsView[str, "Property"]:
         return self._data.items()
@@ -258,20 +267,21 @@ class PropertyDict:
 
     def __repr__(self):
         if self.is_root:
-            return f"<PropertyDict ROOT ({len(self._data)} elements)>"
+            return f"<{self.__class__.__name__} ROOT ({len(self._data)} elements)>"
 
         if isinstance(self.parentproperty, Property):
-            return f"<PropertyDict key='{self.parentproperty.key}' ({len(self._data)} elements)>"
+            return f"<{self.__class__.__name__} key='{self.parentproperty.key}' ({len(self._data)} elements)>"
 
-        return f"PropertyDict ORPHAN ({len(self._data)} elements)"
+        return f"{self.__class__.__name__} ORPHAN ({len(self._data)} elements)"
 
     def load(self):
         if self._loaded:
             return
 
         for prop in self._data.values():
-            if isinstance(prop, Property):
-                logcall(prop.load, errmsg=f"Exception on calling PropertyDict.load():Property.load() [{prop!r}]: %s")
+            if not isinstance(prop, Property):
+                continue
+            logcall(prop.load, errmsg=f"Exception on {self.__class__!s}.load():Property.load() [{prop!r}]: %s")
         self._loaded = True
 
     def unload(self):
@@ -285,6 +295,78 @@ class PropertyDict:
         if isinstance(self.parentproperty, Property):
             self.parentproperty.value = None  # remove me there
         self.parentproperty = None
+
+
+class PersistentPropertyDict(PropertyDict):
+    __slots__ = "_child_property_class", "_settings_group",
+
+    def __init__(self, child_property_class: Type["Property"]):
+        PropertyDict.__init__(self)
+        self._child_property_class = child_property_class
+        self._settings_group: Optional[Settings] = None
+
+    def load(self):
+        if self._loaded:
+            return
+
+        if not (self.parentproperty and self.parentproperty.path_is_absolute):
+            raise PropertyException('Called load() too early on: {pd!r}'.format(pd=self))
+
+        self._loaded = True
+
+        # Begin group on new QSettings instance
+        self._settings_group = new_settings_instance(self.path)
+
+        sections = self._settings_group.childKeys(), self._settings_group.childGroups()
+        for section in sections:
+            for key in section:
+                if self._child_property_class.namespace_sep in key:
+                    # Skip namespace attributes
+                    continue
+
+                # Create new Property by given children class
+                prop = self._child_property_class(key)
+
+                # Collect item by base class
+                PropertyDict.__setitem__(self, key, prop)
+
+    def __delitem__(self, key: str):
+        # Only deleting direct children allowed.
+        delitem: Property = self._data.get(key)
+
+        if delitem is None:
+            raise KeyError(f"Property '{key}' not found.")
+
+        deletekey = key if delitem.path_is_absolute else None
+
+        PropertyDict.__delitem__(self, key)
+
+        if deletekey:
+            # Remove all related settings
+            self._settings_group.remove(deletekey)
+
+    def delete(self, key: str):
+        del self[key]
+
+    def __setitem__(self, key, item):
+        raise KeyError('Setting an item in PersistentPropertyDict is not supported. Use add() instead.')
+
+    def add(self, key: str):
+        if type(key) is not str:
+            raise TypeError("Key must be a string.")
+
+        if not _valid_key.fullmatch(key):
+            raise TypeError("Invalid chars in key. Allowed characters for keys: A-Z, a-z, 0-9, '_'")
+
+        if key in self._data:
+            raise TypeError("Key already present in PersistentPropertyDict.")
+
+        # Create new Property by given children class
+        prop = self._child_property_class(key)
+
+        # Collect item by base class
+        PropertyDict.__setitem__(self, key, prop)
+        # load() should have set a value which also should be saved now.
 
 
 class Property:  # QObject
@@ -355,13 +437,6 @@ class Property:  # QObject
         self._event_manager: Optional[EventManager] = EventManager(self, self._eventids) if self._eventids else None
         self._changetime: Optional[float] = None
 
-        with Property._classlock:
-            # Unique numeric ID for fast access and easier identification
-            self._id = Property._last_id = Property._last_id + 1
-
-            # Collect all instances
-            Property._instances_by_id[self._id] = self
-
         if datatype is DataType.PROPERTYDICT or isinstance(initial_value, PropertyDict):
             # This Property contains a subordinal PropertyDict.
             self._is_persistent = False  # Force
@@ -394,6 +469,13 @@ class Property:  # QObject
                     # Create valuepool from Enum
                     enum = type(initial_value)
                     self._valuepool = {e: e.value for e in enum}
+
+        with Property._classlock:
+            # Unique numeric ID for fast access and easier identification
+            self._id = Property._last_id = Property._last_id + 1
+
+            # Collect all instances
+            Property._instances_by_id[self._id] = self
 
     @property
     def id(self) -> int:
@@ -483,6 +565,10 @@ class Property:  # QObject
         return self._default_value
 
     @property
+    def is_persistent(self) -> bool:
+        return self._is_persistent
+
+    @property
     def value(self) -> Any:
         return self._value
 
@@ -493,7 +579,7 @@ class Property:  # QObject
 
         with self._lock:
             if self._native_datatype is int and type(newvalue) is float:
-                # Wrong datatype. Round float to in correctly.
+                # Wrong datatype. Round float to int correctly.
                 newvalue = round(newvalue)
 
             if self._datatype is DataType.ENUM and type(newvalue) is str:
@@ -945,8 +1031,10 @@ class IntervalProperty(Property):
         # Call the function
         logcall(self._func)
 
-        if self._value:  # Still active
-            interval = datetime.timedelta(seconds=self._value)
+        v = self.value
+
+        if v:  # Still active
+            interval = datetime.timedelta(seconds=v)
 
             # Get time after function finish
             now = datetime.datetime.now()
@@ -1044,7 +1132,7 @@ class QtPropLink(QtProperty):
             notify=notify,
             constant=notify is None
         )
-        self._notify = notify
+        self._notify = str(notify)[:-2]  # Remember name of signal only
         self._path = path
 
         # ToDo: Property-Changes -> Qt-Notify
@@ -1052,16 +1140,42 @@ class QtPropLink(QtProperty):
     def f_get(self, modinst):
         prop: Property = modinst.properties[self._path]
 
-        if prop.datatype is DataType.ENUM:
-            # Convert Enum to str for Qml
-            return prop.value.name
-
         # Return bare value
         return prop.value
 
     def f_set(self, modinst, newvalue):
         # Get signal from parent which has the emit function.
-        prop = modinst.properties[self._path]
+        prop: Property = modinst.properties[self._path]
         prop.value = newvalue
-        notify = getattr(modinst, str(self._notify)[:-2])
+
+        # Notify change
+        notify = getattr(modinst, self._notify)
+        notify.emit()
+
+
+class QtPropLinkEnum(QtPropLink):
+    def f_get(self, modinst):
+        prop: Property = modinst.properties[self._path]
+        # Convert Enum to str for Qml
+        return prop.value.name
+
+    # Property.setter will convert string to enum.
+
+
+class QtPropLinkSelect(QtPropLink):
+    def f_get(self, modinst):
+        prop: SelectProperty = modinst.properties[self._path]
+
+        # Qml uses path only
+        return prop.selected_path
+
+    def f_set(self, modinst, newvalue):
+        # Get signal from parent which has the emit function.
+        prop: SelectProperty = modinst.properties[self._path]
+
+        # Set new path
+        prop.selected_path = newvalue
+
+        # Notify change
+        notify = getattr(modinst, self._notify)
         notify.emit()

@@ -109,4 +109,11 @@ class Settings(QSettings):
         self.setValue(key, None if value is None else bool(value))  # will be string
 
 
-settings = Settings('settings.ini', QSettings.IniFormat)
+def new_settings_instance(section: str = None) -> Settings:
+    s = Settings('settings.ini', QSettings.IniFormat)
+    if section:
+        s.beginGroup(section)
+    return s
+
+
+settings = new_settings_instance()

@@ -5,7 +5,6 @@ import Qt.labs.folderlistmodel 1.0
 import "qrc:/fonts"
 
 Item {
-
     GridView {
         anchors.fill: parent
         cellWidth: 380
@@ -37,7 +36,6 @@ Item {
                 source: folderModel.folder + "/" + fileName
 
                 RoundButton {
-
                     anchors.right: parent.right
                     anchors.rightMargin: -20
                     anchors.bottom: parent.bottom
@@ -51,6 +49,7 @@ Item {
                     onClicked: appearance.delete_file('backgrounds/' + fileName)
                 }
             }
+
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: fileName

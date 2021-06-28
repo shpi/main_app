@@ -18,7 +18,7 @@ source_defs = 'fonts/*',\
               'qml/keyboard/*.qml',\
               'qml/thermostat/*.qml'
 
-destfile = Path('files.qrc')
+destfile = Path('qtres.qrc')
 
 
 this_dir = Path()

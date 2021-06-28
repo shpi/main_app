@@ -14,11 +14,8 @@ Rectangle {
     property bool iconview: parent.iconview !== undefined ? parent.iconview : false
 
     Rectangle {
-
         property bool iconview2: shutterFrame.iconview
-
         id: shutterObject
-
         height: parent.height * 0.75
         width: height * 0.7
         border.width: 1
@@ -27,35 +24,28 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
 
         RoundButton {
-
-
-        height: control.height / 2.1
-        width: 70
-        onClicked:  modules.loaded_instances['Logic']['Shutter'][instancename].set_desired_position(100)
-        text:  Icons.arrow
-        visible: shutterObject.iconview2 ? false : true
-        anchors.top: control.top
-        anchors.left: control.right
-        anchors.leftMargin: 20
-        font.pixelSize: 60
-        rotation: 180
-
-
+            height: control.height / 2.1
+            width: 70
+            onClicked:  modules.loaded_instances['Logic']['Shutter'][instancename].set_desired_position(100)
+            text:  Icons.arrow
+            visible: shutterObject.iconview2 ? false : true
+            anchors.top: control.top
+            anchors.left: control.right
+            anchors.leftMargin: 20
+            font.pixelSize: 60
+            rotation: 180
         }
 
-
         RoundButton {
-
-
-        height: control.height / 2.1
-        width: 70
-        onClicked:  modules.loaded_instances['Logic']['Shutter'][instancename].set_desired_position(0)
-        text:  Icons.arrow
-        visible: shutterObject.iconview2 ? false : true
-        anchors.bottom: control.bottom
-        anchors.left: control.right
-        anchors.leftMargin: 20
-        font.pixelSize: 60
+            height: control.height / 2.1
+            width: 70
+            onClicked:  modules.loaded_instances['Logic']['Shutter'][instancename].set_desired_position(0)
+            text:  Icons.arrow
+            visible: shutterObject.iconview2 ? false : true
+            anchors.bottom: control.bottom
+            anchors.left: control.right
+            anchors.leftMargin: 20
+            font.pixelSize: 60
         }
 
         Slider {
@@ -107,18 +97,15 @@ Rectangle {
                 anchors.verticalCenterOffset: parent.value > 50 ? parent.height
                                                                   * 0.3 : -parent.height * 0.3
                 fontSizeMode: Text.Fit
-
-
             }
 
             background: Rectangle {
-
                 width: control.width
                 height: control.height
                 border.width: 1
                 border.color: Colors.grey
 
-                color: appearance.night === 1 ? "#333" : "#ddd"
+                color: appearance.night_active ? "#333" : "#ddd"
 
                 Column {
                     spacing: parent.height / 10
@@ -135,16 +122,12 @@ Rectangle {
                 }
 
                 Rectangle {
-
-
                     anchors.bottom: parent.bottom
                     height: parent.height - (control.visualPosition * parent.height)
                     width: control.width
                     border.width: 1
                     border.color: Colors.grey
-                    color: appearance.night === 1 ? "#117" : "#99f"
-
-
+                    color: appearance.night_active ? "#117" : "#99f"
 
                     /* LinearGradient {
                     anchors.fill: parent
@@ -183,10 +166,7 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
             }
 
-
-
             handle: Rectangle {
-
                 //y: control.topPadding + control.visualPosition * (control.availableHeight - height)
                 y: (control.visualPosition * control.height) - height / 2
                 width: parent.width * 1.1
@@ -211,12 +191,6 @@ Rectangle {
             }
         }
     }
-
-
-
-
-
-
 
     MouseArea {
         anchors.fill: parent
@@ -243,13 +217,11 @@ Rectangle {
             color: Colors.white
         }
 
-
         Rectangle {
-        anchors.fill: parent
-        color: "transparent"
-        id: shutterPopup
+            anchors.fill: parent
+            color: "transparent"
+            id: shutterPopup
         }
-
 
         RoundButton {
             anchors.top: parent.top
@@ -262,22 +234,7 @@ Rectangle {
             palette.buttonText: "white"
             font.pixelSize: 50
             font.family: localFont.name
-            onClicked:  { shutterObject.iconview2 = true; shutterObject.parent = shutterFrame; popupShutter.close() }
-
+            onClicked: { shutterObject.iconview2 = true; shutterObject.parent = shutterFrame; popupShutter.close() }
         }
-
-
-
     }
-
-
-
-
-
-
-
-
-
-
-
 }

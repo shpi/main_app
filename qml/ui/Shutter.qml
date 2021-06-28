@@ -5,20 +5,15 @@ import "qrc:/fonts"
 
 Rectangle {
     id: shutterFrame
-
     height: parent.height
     width: height * 0.7
     radius: 10
     color: Colors.whitetrans
     clip: true
     property string instancename: parent.instancename != undefined ? parent.instancename : modules.modules['UI']['Shutter'][0]
-
     property bool iconview: parent.iconview !== undefined ? parent.iconview : false
 
-
-
     Rectangle {
-
         id: shutterObject
         property bool iconview2: shutterFrame.iconview
 
@@ -67,13 +62,12 @@ Rectangle {
             }
 
             background: Rectangle {
-
                 width: control.width
                 height: control.height
                 border.width: 1
                 border.color: Colors.grey
 
-                color: appearance.night === 1 ? "#333" : "#ddd"
+                color: appearance.night_active ? "#333" : "#ddd"
 
                 Column {
                     spacing: parent.height / 10
@@ -90,14 +84,12 @@ Rectangle {
                 }
 
                 Rectangle {
-
                     anchors.bottom: parent.bottom
                     height: parent.height - (control.visualPosition * parent.height)
                     width: control.width
                     border.width: 1
                     border.color: Colors.grey
-                    color: appearance.night === 1 ? "#117" : "#99f"
-
+                    color: appearance.night_active ? "#117" : "#99f"
 
                     /* LinearGradient {
                     anchors.fill: parent
@@ -137,7 +129,6 @@ Rectangle {
             }
 
             handle: Rectangle {
-
                 //y: control.topPadding + control.visualPosition * (control.availableHeight - height)
                 y: (control.visualPosition * control.height) - height / 2
                 width: parent.width * 1.1
@@ -162,9 +153,6 @@ Rectangle {
             }
         }
     }
-
-
-
 
     MouseArea {
         anchors.fill: parent
@@ -191,13 +179,11 @@ Rectangle {
             color: Colors.white
         }
 
-
         Rectangle {
-        anchors.fill: parent
-        color: "transparent"
-        id: shutterPopup
+            anchors.fill: parent
+            color: "transparent"
+            id: shutterPopup
         }
-
 
         RoundButton {
             anchors.top: parent.top
@@ -210,14 +196,8 @@ Rectangle {
             palette.buttonText: "white"
             font.pixelSize: 50
             font.family: localFont.name
-            onClicked:  { shutterObject.iconview2 = true; shutterObject.parent = shutterFrame; popupShutter.close() }
+            onClicked: { shutterObject.iconview2 = true; shutterObject.parent = shutterFrame; popupShutter.close() }
 
         }
-
-
-
     }
-
-
-
 }

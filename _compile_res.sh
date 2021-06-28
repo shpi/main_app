@@ -1,1 +1,1 @@
-pyside2-rcc files.qrc -o files.py --compress 9 --threshold 9
+pyside2-rcc qtres.qrc -o qtres.py --compress 9 --threshold 9
