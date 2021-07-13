@@ -2,12 +2,12 @@
 
 from abc import abstractmethod
 from enum import Enum, auto
-from typing import Optional, Iterable, Type, Iterator, Mapping, Union
+from typing import Optional, Iterable, Type, Iterator, Mapping, Union, Dict, Any
 
 from PySide2.QtCore import QObject
 
 from core.FakeABC import FakeABC
-from interfaces.PropertySystem import PropertyDict
+from interfaces.PropertySystem import PropertyDict, ModuleInstancePropertyDict
 from interfaces.MainApp import MainAppBase
 
 
@@ -17,20 +17,17 @@ class IgnoreModuleException(BaseException):
     """
 
 
-class ModuleCategories(Enum):
-    _INTERNAL = auto()  # Hide this module in module manager
-    _AUTOLOAD = auto()  # Automatically loads this internal module
-
-    LOGIC = auto()
-    HARDWARE = auto()
-    INFO = auto()
-    UI = auto()
-    USER_MODULE = auto()
+# class ModuleCategories(Enum):
+#    _INTERNAL = auto()  # Hide this module in module manager
+#    _AUTOLOAD = auto()  # Automatically loads this internal module
+#    LOGIC = auto()
+#    HARDWARE = auto()
+#    INFO = auto()
+#    UI = auto()
+#    USER_MODULE = auto()
 
 
 class ModuleBase(QObject, FakeABC):
-    app: MainAppBase
-
     def __init__(self, parent: QObject = None, instancename: str = None):
         """
         A module instance identified by instancename is being created.
@@ -41,24 +38,42 @@ class ModuleBase(QObject, FakeABC):
 
         The instancename must not be saved and may be aqcuired by calling self.instancename() later.
 
-        Each module instance should create a new PropertyDict containing its Properties.
+        Each module instance should create a new ModuleInstancePropertyDict containing its Properties.
         Do not read or write from Properties during __init__ because it's path and dependencies are not ready.
 
-        Save the populated PropertyDict instance into self.properties.
+        Save the populated ModuleInstancePropertyDict instance into self.properties.
         You may access properties by self.properties["propname"] later or additionally save specific properties into
-        self directly for speedups.
+        'self' directly for speedups.
         """
 
         FakeABC.__init__(self)  # Manual check for matching all abstract base classes.
         QObject.__init__(self, parent)
 
+        self.properties = ModuleInstancePropertyDict()
+
         # TODO: app reference
+
+    @classmethod
+    def available(cls) -> bool:
+        """
+        Class may tell here if it is avaliable for instantiation.
+        Missing hardware etc. should return False.
+        Default: True
+        """
+        return True
 
     def instancename(self) -> Optional[str]:
         """
         A module may read its assigned instance name by this function.
         This function is only available after completing __init__.
         During __init__, use given argument "instancename".
+        """
+        raise NotImplementedError("Function called too early. Don't use it in __init__.")
+
+    def modulename(self) -> str:
+        """
+        modulename refers to class name of module.
+        This function is only available after completing __init__.
         """
         raise NotImplementedError("Function called too early. Don't use it in __init__.")
 
@@ -92,7 +107,7 @@ class ModuleBase(QObject, FakeABC):
 
     @classmethod
     @abstractmethod
-    def categories(cls) -> Iterable[ModuleCategories]:
+    def categories(cls) -> Iterable[str]:
         """
         Iterable of categories this module matches
         A module must specify this attibute.
@@ -140,6 +155,9 @@ class ModuleBase(QObject, FakeABC):
         If None, the user must specify instancenames.
         If list of strings, provided instancenames may be offered in the UI.
         """
+        return None
+
+    def qml_context_properties(self) -> Optional[Dict[str, Any]]:
         return None
 
 

@@ -40,10 +40,11 @@ Properties considered as Module "outputs"
 """
 
 import datetime
-import logging
-from typing import Optional, Union, Any, Callable, Iterable, Dict, ValuesView, ItemsView, KeysView, Generator, Set, Type
-from time import time
-from threading import Lock, RLock
+from logging import getLogger
+from typing import Optional, Union, Any, Callable, Iterable, Dict, ValuesView, ItemsView, KeysView, Generator, Set, \
+    Type, List, Tuple
+from time import time, sleep
+from threading import Lock, RLock, Thread
 from re import compile
 from contextlib import suppress
 from enum import EnumMeta
@@ -57,7 +58,7 @@ from core.Settings import settings, new_settings_instance, Settings
 from core.Logger import LogCall
 
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 logcall = LogCall(logger)
 
 NotLoaded = object()
@@ -111,10 +112,6 @@ class PropertyDict:
         self._loaded = False
 
         self.parentproperty: Optional["Property"] = None  # Parent property if set
-
-        if PropertyDict._root_instance is None:
-            # First instance of PropertyDict becomes root
-            PropertyDict._root_instance = self
 
         for key, prop in kwargs.items():
             if not _valid_key.fullmatch(key):
@@ -182,7 +179,13 @@ class PropertyDict:
         if self.path_sep in key:
             # Dig deeper in tree structure.
             keys = key.split(self.path_sep, maxsplit=1)
-            return self[keys[0]][keys[1]]
+
+            if keys[0]:
+                # Below this PropertyDict
+                return self[keys[0]][keys[1]]
+
+            # Relative to root
+            return self.root()[keys[1]]
 
         return self._data[key]  # Or KeyError
 
@@ -205,9 +208,9 @@ class PropertyDict:
             raise TypeError("Key already present in PropertyDict.")
 
         if isinstance(item, PropertyDict):
-            # Wrap in Property
+            # Wrap PropertyDict in Property
             item.parentproperty = item = Property(datatype=DataType.PROPERTYDICT, initial_value=item,
-                                                  desc="Nested PropertyDict (automatically wrapped)", persistent=False)
+                                                  desc="Nested PropertyDict (automatically wrapped)")
 
         if not isinstance(item, Property):
             # Not allowed. Wrap object in new simple Property
@@ -234,7 +237,7 @@ class PropertyDict:
         # Deep deletes allowed (key = relative path)
 
         if self.path_sep in key:
-            # Delegate deep delete
+            # Delegate deeper delete
             pd_path, key = key.rsplit(self.path_sep, 1)
             del self[pd_path][key]
             return
@@ -279,9 +282,8 @@ class PropertyDict:
             return
 
         for prop in self._data.values():
-            if not isinstance(prop, Property):
-                continue
-            logcall(prop.load, errmsg=f"Exception on {self.__class__!s}.load():Property.load() [{prop!r}]: %s")
+            if isinstance(prop, Property):
+                logcall(prop.load, errmsg=f"Exception in PropertyDict {self.__class__!s}.load()->{prop!r}.load(): %s", stack_trace=True)
         self._loaded = True
 
     def unload(self):
@@ -293,7 +295,7 @@ class PropertyDict:
         del self._data
 
         if isinstance(self.parentproperty, Property):
-            self.parentproperty.value = None  # remove me there
+            self.parentproperty._value = None  # remove me there
         self.parentproperty = None
 
 
@@ -395,13 +397,37 @@ class Property:  # QObject
     UPDATED_AND_CHANGED = object()
     _eventids = {UPDATED, UPDATED_AND_CHANGED, PropertyDict.CHANGED}
 
+    _run_save_thread = False
+    _check_unsaved_changes_thread = None
+
     @classmethod
-    def check_unsaved_changes(cls):
-        for p in Property._changed_properties.copy():  # type: Property
-            if p._changetime is None or time() >= p._changetime + Property._changed_properties_save_timeout:
-                p.save_setting(p._value, p._datatype, ensure_path_absolute=False)
-                p._changetime = None
-                Property._changed_properties.discard(p)
+    def quit(cls):
+        for p in cls._changed_properties:
+            # Schedule immediate save
+            p._changetime = None
+        cls._run_save_thread = False
+        cls._check_unsaved_changes_thread.join(2)
+
+    @classmethod
+    def init_class(cls):
+        if cls._run_save_thread:
+            raise RuntimeError('Save thread already running.')
+        cls._run_save_thread = True
+        cls._check_unsaved_changes_thread = Thread(target=cls.check_unsaved, name='Property_thread', daemon=True)
+        cls._check_unsaved_changes_thread.start()
+
+    @classmethod
+    def check_unsaved(cls):
+        # ToDo: Better solution
+        while cls._run_save_thread:
+            sleep(1)
+
+            if cls._changed_properties:
+                for p in cls._changed_properties.copy():  # type: Property
+                    if p._changetime is None or time() >= p._changetime + Property._changed_properties_save_timeout:
+                        p.save_setting(p._value, p._datatype, ensure_path_absolute=False)
+                        p._changetime = None
+                        Property._changed_properties.discard(p)
 
     @classmethod
     def get_by_id(cls, pr_id: int) -> Optional["Property"]:
@@ -442,6 +468,10 @@ class Property:  # QObject
             self._is_persistent = False  # Force
             self._datatype = DataType.PROPERTYDICT  # Force
             self._native_datatype = None
+
+            if initial_value is None:
+                initial_value = PropertyDict()
+
             self._value = initial_value  # Collect PropertyDict
             self._default_value = None
 
@@ -459,7 +489,7 @@ class Property:  # QObject
             self._native_datatype = DataType.to_basic_type(datatype)
             self._default_value = initial_value
             self._is_persistent = persistent
-            self._value = NotLoaded if persistent else initial_value
+            self._value: Any = NotLoaded if persistent else initial_value
 
             if self._datatype is DataType.ENUM:
                 if not isinstance(type(initial_value), EnumMeta):
@@ -518,7 +548,7 @@ class Property:  # QObject
 
         self._loaded = True
 
-    def load_value(self, ensure_path_absolute=True):
+    def load_value(self, ensure_path_absolute=True, setvalue=True):
         if ensure_path_absolute:
             self.ensure_path_absolute()
 
@@ -535,10 +565,14 @@ class Property:  # QObject
                 try:
                     self.value = enum[value_str]
                 except KeyError:
-                    logger.warning('Found unknown enum member in settings. Reverting to default for %r.', (self,))
+                    logger.warning('Found unknown enum member in settings. Reverting to default for %r.', self)
                     self.value_to_default()
             else:
-                self.value = settings.get(self.path, self._default_value, self._datatype)
+                res = settings.get(self.path, self._default_value, self._datatype)
+                # logger.warning("assigning %s, %s, %s, %s", self.path, self._default_value, self._datatype, res)
+                if setvalue:
+                    self.value = res
+                return res
 
     def save_setting(self, value, datatype: DataType, namespace: str = None, ensure_path_absolute=True):
         # Default implementation for loading values.
@@ -600,7 +634,7 @@ class Property:  # QObject
 
             if self._is_persistent:
                 if not self.path_is_absolute:
-                    logger.error(f"Could not save new value of Property because path is not yet defined: {self!r}")
+                    logger.error('Could not save new value of Property because path is not yet defined: %r', self)
                     return
 
                 # Mark as unsaved
@@ -652,10 +686,10 @@ class Property:  # QObject
     def unload(self):
         if self._event_manager:
             self._event_manager.unload()
-        self._event_manager = None
+            del self._event_manager
 
         if isinstance(self._value, PropertyDict):
-            logcall(self._value.unload, errmsg="Exception during unloading nested PropertyDict: %s")
+            logcall(self._value.unload, errmsg="Exception during unloading nested PropertyDict: %s", stack_trace=True)
 
         del self._value
         del self.parentdict
@@ -689,6 +723,9 @@ class Property:  # QObject
 
     def __delitem__(self, key: str):
         del self.value[key]
+
+    def __setitem__(self, key, value):
+        self.value[key] = value
 
     def __bool__(self):
         return bool(self.value)
@@ -752,7 +789,7 @@ class SelectProperty(Property):
     def selected_path(self, newpath: Optional[str]):
         self.selected_property = PropertyDict.root().get(newpath) if newpath else None
         if newpath and self._selected_property is None:
-            logger.warning('Path for selection does not exist (anymore): "%s". Selection has been removed.', (newpath,))
+            logger.warning('Path for selection does not exist (anymore): "%s". Selection has been removed.', newpath)
 
     @property
     def selected_property(self) -> Optional[Property]:
@@ -784,9 +821,8 @@ class SelectProperty(Property):
         if changed:
             self.events.emit(self.SELECTED)
 
-    def load(self):
-        super().load()
-        self.selected_path = self._value
+    def load_value(self, ensure_path_absolute=True, setvalue=True):
+        self.selected_path = super().load_value(ensure_path_absolute, setvalue=False)
 
     @property
     def value(self):
@@ -858,7 +894,6 @@ class ROProperty(Property):
 
     @property
     def value(self):
-        # Getter
         if not self._locked:
             raise ValueError(f"Read only value has not been set yet: {self!r}")
 
@@ -991,22 +1026,12 @@ class FunctionProperty(Property):
 
 class IntervalProperty(Property):
     _event_table = EventTable()
+    _event_table.event_loop_start()
 
     @classmethod
-    def run_event_loop(cls):
-        for e in cls._event_table:
-            e.activate()
-
-        # Start the blocking loop.
-        cls._event_table.event_loop_start()
-
-        # Loop finished. Cleanup.
-        for e in cls._event_table:
-            e.deactivate()
-
-    @classmethod
-    def stop_event_loop(cls):
-        cls._event_table.event_loop_stop()
+    def quit(cls):
+        cls._event_table.unload()
+        del cls._event_table
 
     def __init__(
             self,
@@ -1067,7 +1092,7 @@ class IntervalProperty(Property):
 
 
 class TimeoutProperty(IntervalProperty):
-    _event_table = EventTable()
+    # No own event_table? _event_table = EventTable()
 
     def __init__(
             self,
@@ -1116,13 +1141,184 @@ class TimeoutProperty(IntervalProperty):
         return self._event.on_time is not None
 
 
+class StringListProperty(Property):
+    ADDED = object()
+    REMOVED = object()
+    _eventids = Property._eventids | {ADDED, REMOVED}
+
+    def __init__(
+            self,
+            initial_value: List[str] = None,
+            unique=False,
+            desc: str = None,
+            persistent=True,
+    ):
+        if initial_value is None:
+            initial_value = []
+
+        self.unique = unique
+
+        if unique:
+            initial_value = list(set(initial_value))
+
+        Property.__init__(self, datatype=DataType.LIST_OF_STRINGS, initial_value=initial_value, desc=desc, persistent=persistent)
+
+    def pop(self, index=-1, emit_update=True) -> str:
+        item = self._value.pop(index)  # or IndexError
+
+        if self._event_manager:
+            self._event_manager.emit(self.REMOVED, item)
+            if emit_update:
+                self._event_manager.emit(self.UPDATED)
+                self._event_manager.emit(self.UPDATED_AND_CHANGED)
+
+        return item
+
+    def remove(self, item: str, emit_update=True):
+        self._value.remove(item)  # or ValueError
+
+        if self._event_manager:
+            self._event_manager.emit(self.REMOVED, item)
+            if emit_update:
+                self._event_manager.emit(self.UPDATED)
+                self._event_manager.emit(self.UPDATED_AND_CHANGED)
+
+    def extend(self, new_items: Iterable[str]):
+        if self.unique:
+            # Discard duplicates
+            new_items = set(new_items) - set(self._value)
+
+        for new_item in new_items:
+            self.append(new_item, emit_update=False)
+
+        if new_items and self._event_manager:
+            self._event_manager.emit(self.UPDATED)
+            self._event_manager.emit(self.UPDATED_AND_CHANGED)
+
+    def insert(self, pos: int, new_str: str, emit_update=True):
+        if self.unique and new_str in self._value:
+            return
+
+        self._value.insert(pos, new_str)
+
+        if self._event_manager:
+            self._event_manager.emit(self.ADDED, new_str)
+
+            if emit_update:
+                self._event_manager.emit(self.UPDATED)
+                self._event_manager.emit(self.UPDATED_AND_CHANGED)
+
+    def append(self, new_str: str, emit_update=True):
+        self.insert(len(self._value), new_str, emit_update)
+
+    def clear(self):
+        self.value = []
+
+    @property
+    def value(self) -> Any:
+        return tuple(self._value)
+
+    @value.setter
+    def value(self, newvalue: Any):
+        if not isinstance(newvalue, Iterable):
+            raise ValueError('StringListProperty\'s value must be iterable of strings')
+
+        with self._lock:
+            old = self._value
+            if not isinstance(old, list):
+                old = ()
+
+            Property.value.fset(self, newvalue)
+
+            # ToDo: merge changes
+            if self._event_manager:
+                for olds in old:
+                    self._event_manager.emit(self.REMOVED, olds)
+
+                for news in newvalue:
+                    self._event_manager.emit(self.ADDED, news)
+
+                self._event_manager.emit(self.UPDATED)
+                self._event_manager.emit(self.UPDATED_AND_CHANGED)
+
+
+class ModuleInstancePropertyDict(PropertyDict):
+    static_categories = "Home", "All"
+
+    active_categories: List[Tuple[str, List[str]]] = [(cat, []) for cat in static_categories]
+    catlist_by_cat: Dict[str, List[str]] = {cat: [] for cat in static_categories}  # to find the list in active_categories
+
+    changed_callback = None
+    # ToDo: Category order
+
+    def __init__(self, **kwargs):
+        PropertyDict.__init__(self, **kwargs)
+        self._load_module = self['__load'] = Property(DataType.BOOLEAN, True, desc="Load/enable this module instance")
+        self._in_categories = self['__in_categories'] = \
+            StringListProperty(unique=True, initial_value=['All'], desc='List of assigned categories')
+
+        self._in_categories.events.subscribe(self._added, StringListProperty.ADDED)
+        self._in_categories.events.subscribe(self._removed, StringListProperty.REMOVED)
+        self._in_categories.events.subscribe(self._qt_emit, Property.UPDATED_AND_CHANGED)
+
+    def _qt_emit(self):
+        if not self.changed_callback:
+            return
+        self.changed_callback()
+
+    def _added(self, prop, cat: str):
+        if cat in self.catlist_by_cat:
+            catlist = self.catlist_by_cat[cat]
+        else:
+            # New category
+            catlist = self.catlist_by_cat[cat] = []
+            self.active_categories.append((cat, catlist))
+
+        # Add our instance path to the specific category
+        catlist.append(self.path)
+
+    def _removed(self, prop, cat: str):
+        if cat not in self.catlist_by_cat:
+            logger.warning('Removed from a non existing category: %s', cat)
+            return
+
+        catlist = self.catlist_by_cat[cat]
+        if self.path not in catlist:
+            logger.warning('Has already been removed from existing category before: %s', cat)
+            return
+
+        catlist.remove(self.path)
+
+        if not catlist and cat not in self.static_categories:
+            # Remove empty category which are not static
+            del self.catlist_by_cat[cat]
+            delindex = None
+            for category_index, category in enumerate(self.active_categories):
+                if category[0] == cat:
+                    delindex = category_index
+                    break
+
+            if delindex is None:
+                logger.warning('Could not find and delete category from list: %s', cat)
+                return
+
+            self.active_categories.pop(delindex)
+
+    def load(self):
+        super().load()
+        # Save the value to settings to ensure this PropertyDict is in settings too for future loadings.
+        self._load_module.save_setting(self._load_module.value, DataType.BOOLEAN, ensure_path_absolute=False)
+
+
 class QtPropLink(QtProperty):
+    """
+    Mapping for class level Qt-Properties to instance-properties
+    """
     def __init__(self, datatype, path: str, notify: Signal = None):
         """
-        datatype: Datatype in Qt format
-        path: Path to linked Property relative to Module class
-            "instancename/propertykey" or for main instance: "propertykey"
-        notify: Signal to notify or None for constant properties
+        :param datatype: Datatype in Qt format
+        :param path: Path to linked Property relative to Module instance's properties
+        :param notify: Signal to notify or None for constant properties
         """
         QtProperty.__init__(
             self,
@@ -1132,7 +1328,8 @@ class QtPropLink(QtProperty):
             notify=notify,
             constant=notify is None
         )
-        self._notify = str(notify)[:-2]  # Remember name of signal only
+        # self._notify = str(notify)[:-2]  # Remember name of signal only
+        self._notify = notify
         self._path = path
 
         # ToDo: Property-Changes -> Qt-Notify
@@ -1149,11 +1346,16 @@ class QtPropLink(QtProperty):
         prop.value = newvalue
 
         # Notify change
-        notify = getattr(modinst, self._notify)
+        notify = getattr(modinst, str(self._notify)[:-2])
         notify.emit()
 
 
 class QtPropLinkEnum(QtPropLink):
+    """
+    Mapping for class level Qt-Properties to instance-properties
+    Ability to handle Enums by strings
+    """
+
     def f_get(self, modinst):
         prop: Property = modinst.properties[self._path]
         # Convert Enum to str for Qml
@@ -1163,6 +1365,10 @@ class QtPropLinkEnum(QtPropLink):
 
 
 class QtPropLinkSelect(QtPropLink):
+    """
+    Mapping for class level Qt-Properties to instance-properties
+    Ability to get or set the path of an SelectProperty
+    """
     def f_get(self, modinst):
         prop: SelectProperty = modinst.properties[self._path]
 
@@ -1177,5 +1383,19 @@ class QtPropLinkSelect(QtPropLink):
         prop.selected_path = newvalue
 
         # Notify change
-        notify = getattr(modinst, self._notify)
+        notify = getattr(modinst, str(self._notify)[:-2])
         notify.emit()
+
+
+def properties_start():
+    logcall(Property.init_class)
+
+
+def properties_stop():
+    print("Stopping properties")
+    logcall(IntervalProperty.quit)
+    logcall(Property.quit)
+
+    root = PropertyDict.root()
+    if root is not None:
+        logcall(root.unload)

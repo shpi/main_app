@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import logging
+from logging import getLogger
 import inspect
 from typing import NoReturn, Callable, Any, Dict, Iterable, Union
 from threading import Event, Lock
+from functools import partial
+
+
+logger = getLogger(__name__)
 
 callback_function = Union[Callable[[Any], NoReturn], Callable[[], NoReturn]]
-function = Callable[[Any], NoReturn]
+function = Union[Callable[[Any], NoReturn], Callable[[Any, Any], NoReturn]]
 
 
 class EventManager:
@@ -35,13 +39,14 @@ class EventManager:
         sig = inspect.signature(fnc)
         argcount = len(sig.parameters)
 
-        if argcount == 1:
+        if argcount in {1, 2}:
             # arg1 of fnc receives the source object
+            # arg2 of fnc received data
             event_dict[fnc] = fnc
 
         elif argcount == 0:  # Function has no arguments and does not care about source object
             # Wrap function
-            event_dict[fnc] = lambda x: fnc()
+            event_dict[fnc] = lambda x: partial(fnc)
 
         else:
             raise ValueError("Function in fnc must provide either one or none arguments.")
@@ -57,7 +62,7 @@ class EventManager:
 
         del event_dict[fnc]
 
-    def emit(self, eventid):
+    def emit(self, eventid, value=None):
         if self._is_emitting[eventid]:
             # Because may be called multiple times.
             return
@@ -65,12 +70,15 @@ class EventManager:
         event_dict = self._emit_fncs[eventid]
         try:
             self._is_emitting[eventid] = True
-            for fnc in list(event_dict.values()):  # Original Dict may get changed during calling events
+            for fnc in tuple(event_dict.values()):  # Original Dict may get changed during calling events
                 try:
-                    fnc(self._source)
+                    if value is None:
+                        fnc(self._source)
+                    else:
+                        fnc(self._source, value)
                 except Exception as e:
-                    logging.error(f"Exception while calling event {eventid!s} during calling function {fnc!r} which"
-                                  f" has subscribed for {self._source!r}: {e}")
+                    logger.error('Exception while calling event %s during calling function %r which'
+                                 ' has subscribed for %r: %s', eventid, fnc, self._source, e)
         finally:
             self._is_emitting[eventid] = False
 

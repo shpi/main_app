@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import logging
+from logging import getLogger
 from datetime import datetime, timedelta
 from typing import List, Optional, Callable, Any, Union, Iterator
-from threading import Event as _Event
+from threading import Event as _Event, Thread
 
 from core.Logger import LogCall
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 logcall = LogCall(logger)
 
 
@@ -46,8 +46,9 @@ class Event:
         else:
             args = (self._on_time, self._event_data)
 
-        logcall(
-            self._event_func,
+        print(self._event_func)
+        logcall.testxxxx(
+            func=self._event_func,
             errmsg=f"Exception occured during calling event's function '{self._event_func!r}': %s",
             stack_trace=True,
             *args,
@@ -87,11 +88,14 @@ def _get_time(e: Event) -> datetime:
 
 
 class EventTable:
+    __slots__ = "_active_events", "_all_events", "_event_loop_running", "_t_event", "_event_thread"
+
     def __init__(self):
         self._active_events: List[Event] = []
         self._all_events: List[Event] = []
         self._event_loop_running = False
         self._t_event = _Event()
+        self._event_thread: Optional[Thread] = None
 
     def __iter__(self) -> Iterator[Event]:
         return iter(self._all_events)
@@ -178,12 +182,21 @@ class EventTable:
     def event_loop_stop(self):
         self._event_loop_running = False
         self._t_event.set()  # Trigger eventloop wait to restart.
+        if self._event_thread:
+            self._event_thread.join(5)
+            self._event_thread = None
 
     def event_loop_start(self):
         """
-        Should be called in own thread.
+        Starts a new thread
         """
+        if self._event_loop_running:
+            raise RecursionError("event_loop already running.")
 
+        self._event_thread = Thread(target=self.event_loop, name=f"EventTable_eventloop_{id(self)}")
+        self._event_thread.start()
+
+    def event_loop(self):
         if self._event_loop_running:
             raise RecursionError("event_loop already running.")
 
@@ -194,7 +207,7 @@ class EventTable:
                 e = self.get_next_event()
                 if e is None:
                     # No events. Sleep a little bit or wakeup on event changes
-                    if self._t_event.wait(10.):
+                    if self._t_event.wait(2.):
                         # wait was interrupted. Events changed.
                         self._t_event.clear()
                     continue
@@ -224,6 +237,11 @@ class EventTable:
             e.deactivate()
 
     def unload(self):
-        self._event_loop_running = False
+        print("eventtable unload")
+        self.event_loop_stop()
+
         for e in self._all_events:
             e.unload()
+
+        self._all_events.clear()
+        self._active_events.clear()

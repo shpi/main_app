@@ -3,7 +3,7 @@ from PySide2.QtCore import QObject
 from PySide2.QtQml import QQmlApplicationEngine
 from PySide2.QtCore import Signal, Property as QtProperty
 
-from interfaces.PropertySystem import PropertyDict, Property, QtPropLink
+from interfaces.PropertySystem import PropertyDict, Property, QtPropLink, properties_stop, properties_start
 from interfaces.DataTypes import DataType
 
 # from PySide2.QtQml import QQmlDebuggingEnabler
@@ -11,6 +11,8 @@ from interfaces.DataTypes import DataType
 
 # pyside2-rcc main_qmltest.qrc -o qmltestres.py --compress 9 --threshold 9
 import qmltestres
+
+properties_start()
 
 pd = PropertyDict.root(allowcreate=True)
 
@@ -20,15 +22,15 @@ class Appearance(QObject):
     maxChanged = Signal()
     nightChanged = Signal()
 
-    minbacklight = QtPropLink(datatype=DataType.INTEGER, path="min", notify=minChanged)
-    maxbacklight = QtPropLink(datatype=DataType.INTEGER, path="max", notify=maxChanged)
+    minbacklight = QtPropLink(int, path="min", notify=minChanged)
+    maxbacklight = QtPropLink(int, path="max", notify=maxChanged)
 
     def __init__(self):
         QObject.__init__(self)
         self._night = 0
         self.properties = PropertyDict(
-            min=Property(DataType.INTEGER, 40, persistent=True),
-            max=Property(DataType.INTEGER, 60, persistent=True)
+            min=Property(DataType.INTEGER, 40),
+            max=Property(DataType.INTEGER, 60)
         )
         self.instancename = None
 
@@ -57,3 +59,5 @@ engine.load("main_qmltest.qml")
 
 app.exec_()
 del engine
+
+properties_stop()

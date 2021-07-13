@@ -4,12 +4,10 @@ import QtQuick.Controls 2.15
 import "qrc:/fonts"
 
 Item {
-
-    property string category
+    //property string category
     property string classname
 
     StackView.onActivated: {
-
         instantview.model = modules.instances(category, classname)
         instantview.forceLayout()
     }
@@ -68,13 +66,11 @@ Item {
     }
 
     ListView {
+        id: instantview
         anchors.fill: parent
         anchors.horizontalCenter: parent.horizontalCenter
 
-        id: instantview
-
         header: Rectangle {
-
             width: parent.width
             height: 50
             color: "transparent"
@@ -96,7 +92,6 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
 
             TextField {
-
                 id: instancename
                 font.pixelSize: 32
                 height: 50
@@ -114,7 +109,7 @@ Item {
                 font.pixelSize: 32
 
                 onClicked: {
-                    modules.add_instance(category, classname, instancename.text)
+                    modules.add_instance(classname, instancename.text)
                     instantview.model = modules.instances(category, classname)
                     instantview.forceLayout()
 

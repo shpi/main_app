@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
 
 # Import standard module classes here to get compiled in by nuitka
-from core.MLX90615 import MLX90615
-from core.Wifi import Wifi
-from hardware.Alsa import AlsaMixer
-from hardware.Backlight import Backlight
-from hardware.CPU import CPU
-from hardware.Disk import DiskStats
-from hardware.HWMon import HWMon
-from hardware.IIO import IIO
-from hardware.InputDevs import InputDevs
-from hardware.Leds import Led
-from hardware.System import SystemInfo
-from core.Appearance import Appearance
-from core.Git import Git
-from core.HTTPServer import HTTPServer
+from modules.Appearance import Appearance
+from modules.InputDevs import InputDevs
+from modules.MLX90615 import MLX90615
+# from core.Wifi import Wifi
+# from hardware.Alsa import AlsaMixer
+# from hardware.Backlight import Backlight
+from modules.CPU import CPU
+# from hardware.Disk import DiskStats
+# from hardware.HWMon import HWMon
+# from hardware.IIO import IIO
+# from hardware.Leds import Led
+# from hardware.System import SystemInfo
+# from core.Git import Git
+# from modules.HTTPServer import HTTPServer
 # from interfaces.DemoModules import DemoThreadModule, EndlessThreadModule
 
 # Other imports
 import inspect
-from typing import Set, Type
+from typing import Set, Type, Tuple
 
 from interfaces.Module import ModuleBase
 
@@ -35,6 +35,10 @@ def internal_modules() -> Set[Type[ModuleBase]]:
 
 def external_modules() -> Set[Type[ModuleBase]]:
     return set()
+
+
+def always_preload_modules() -> Tuple[Type[ModuleBase]]:
+    return Appearance,
 
 
 GIT_CLONE_PATH = 'https://github.com/shpi/main_app'

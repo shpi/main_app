@@ -4,7 +4,6 @@ import QtQuick.Controls 2.15
 import "qrc:/fonts"
 
 Item {
-
     property string category
 
     Component {

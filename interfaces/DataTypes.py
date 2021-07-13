@@ -25,15 +25,16 @@ class DataType(Enum):
     INTEGER = 2  # any undefined int
     BOOLEAN = 3  # bool (off/on)
     STRING = 4  # string representation of a state
+    LIST_OF_STRINGS = 5  # List of strings
 
     # Correct interpretation of datetime objects
-    DATE = 5  # date object (without time)
-    TIME = 6  # time object (without date)
-    TIME_STR = 7  # time as string "14:00"
-    DATETIME = 8  # datetime object
-    TIMERANGE = 9  # Range between two times (seconds, float)
-    TIMERANGE_INT = 10  # Range between two times (seconds, int)
-    TIMESTAMP = 11  # Seconds since unix epoch (float)
+    DATE = 7  # date object (without time)
+    TIME = 8  # time object (without date)
+    TIME_STR = 9  # time as string "14:00"
+    DATETIME = 10  # datetime object
+    TIMERANGE = 11  # Range between two times (seconds, float)
+    TIMERANGE_INT = 12  # Range between two times (seconds, int)
+    TIMESTAMP = 13  # Seconds since unix epoch (float)
 
     # Fix range types
     PERCENT_FLOAT = 15  # float, 0.-100.
@@ -119,6 +120,8 @@ class DataType(Enum):
 
         BYTES: int,
         ENUM: str,
+
+        LIST_OF_STRINGS: list,
     }
 
     _mapping_iio_shpi = {
@@ -151,6 +154,7 @@ class DataType(Enum):
     }
 
     _valid_check = {
+        # ToDo
         TIME_STR: _re_time_str.fullmatch,
         PERCENT_FLOAT: lambda x: 0. <= x <= 100.,
         PERCENT_INT: lambda x: x in range(101),
@@ -165,7 +169,7 @@ class DataType(Enum):
         return cls._mapping_iio_shpi.value.get(iio.value, DataType.UNDEFINED)
 
     @classmethod
-    def to_basic_type(cls, type_: "DataType") -> Type[Union[int, str, bool, float, date, time, datetime]]:
+    def to_basic_type(cls, type_: "DataType") -> Type[Union[int, str, bool, float, date, time, datetime, list]]:
         return cls._to_basic_type.value.get(type_.value, float)
 
     @staticmethod

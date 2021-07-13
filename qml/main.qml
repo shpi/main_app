@@ -18,8 +18,7 @@ ApplicationWindow {
         keyboardLoader.item.textfield = object
         if (object.activeFocus === true) {
             keyboardPopup.open()
-        } 
-
+        }
     }
 
     function getIndex(path, mmodel) {
@@ -40,33 +39,32 @@ ApplicationWindow {
     property int i: 0
 
     FolderListModel {
+        id: folderModel
         // Component.onCompleted: console.error(applicationDirPath)
 
         caseSensitive: false
-        id: folderModel
         folder: "file://" + applicationDirPath + "/backgrounds/"
         nameFilters: ["*.png", "*.jpg"]
         onCountChanged: {
             if (folderModel.count > 0)
                 bg.source = folderModel.get(i, "fileURL")
-                // console.error(bg.source)
         }
     }
 
     Image {
-        anchors.fill: parent
         id: bg
+        anchors.fill: parent
         source: ""
         fillMode: Image.Stretch
         visible: appearance.night_active === false || appearance.background_night
 
         RadialGradient {
+            id: mask
             angle: 30
             horizontalOffset: 0
             verticalOffset: 0
             horizontalRadius: parent.height
             verticalRadius: parent.height
-            id: mask
             anchors.fill: parent
 
             Behavior on angle {
@@ -114,6 +112,7 @@ ApplicationWindow {
         edge: Qt.TopEdge
         visible: true
         interactive: settingsstackView.depth > 0 ? false : true
+
         Behavior on position {
             PropertyAnimation {}
         }
@@ -133,9 +132,9 @@ ApplicationWindow {
             anchors.topMargin: 5
 
             ListView {
+                id: mainsettingsView
                 spacing: 10
                 height: settingsstackView.depth > 0 ? 85 : 130
-                id: mainsettingsView
                 orientation: ListView.Horizontal
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width - 15
@@ -182,7 +181,7 @@ ApplicationWindow {
                 ListElement {
                     title: "\uE00C" // Icons.sun
                     size: 50
-                    page: "core/AppearanceSettings.qml"
+                    page: "/modules/Appearance.qml"
                 }
                 ListElement {
                     title: "\uE016" // Icons.wifi
@@ -250,27 +249,26 @@ ApplicationWindow {
 
     SwipeView {
         id: view
-
         currentIndex: 1
         anchors.fill: parent
 
         //anchors.bottom: inputPanel.top
         Loader {
+            id: categories
             asynchronous: true
-            id: rooms
             property bool _isCurrentItem: SwipeView.isCurrentItem
-            source: "Rooms.qml"
+            source: "CategoriesListView.qml"
         }
 
         Loader {
+            id: mainscreen
             asynchronous: true
-            id: screensaver
             property bool _isCurrentItem: SwipeView.isCurrentItem
-            source: "screensaver/Screensaver.qml"
+            source: "MainScreen.qml"
         }
 
+        /* todo
         Repeater {
-
             id: thermostatrepeater
             model: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
             visible: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
@@ -285,7 +283,6 @@ ApplicationWindow {
         }
 
         Repeater {
-
             id: weatherrepeater
             model: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
             visible: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
@@ -298,6 +295,7 @@ ApplicationWindow {
                 active: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
             }
         }
+        */
     }
 
     PageIndicator {
@@ -327,9 +325,9 @@ ApplicationWindow {
         repeat: true
         running: (view.currentIndex === 1
                   && appearance.backlightlevel > 0)  // to make ui more fluent
+
         onTriggered: {
             mask.angle = Math.random() * 180
-
             mask.verticalOffset = -mask.height / 4 + (Math.random(
                                                           ) * mask.height) / 2
             mask.horizontalOffset = -mask.width / 4 + (Math.random(
@@ -338,8 +336,7 @@ ApplicationWindow {
             if (!appearance.night_active || appearance.background_night) {
                 // Set random background
                 if (Math.random() > 0.7)
-                    bg.source = folderModel.get(Math.random() * Math.floor(
-                                                    folderModel.count),
+                    bg.source = folderModel.get(Math.random() * Math.floor(folderModel.count),
                                                 "fileURL")
             }
         }
@@ -397,7 +394,6 @@ ApplicationWindow {
     }
 
     Popup {
-
         id: keyboardPopup
         width: parent.width
         height: parent.height
@@ -420,7 +416,4 @@ ApplicationWindow {
             source: "keyboard/Keyboard.qml"
         }
     }
-
-
-
 }

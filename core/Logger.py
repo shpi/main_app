@@ -2,7 +2,7 @@
 
 import logging
 from os import environ
-from typing import Optional, Any, Union
+from typing import Any, Union
 
 from PySide2 import QtCore
 from PySide2.QtCore import Qt, QModelIndex, QAbstractListModel, Slot
@@ -13,10 +13,7 @@ class LogModel(QAbstractListModel):
         # QAbstractListModel.__init__(self)
         super().__init__()
 
-        if items is None:
-            self._items = []
-        else:
-            self._items = items
+        self._items = items or []
 
         self.roles = {
             # 257: b"threadName",
@@ -59,7 +56,7 @@ class LogModel(QAbstractListModel):
     @Slot(int)
     def removeRows(self, row, parent=None):
         self.beginRemoveRows(parent, row, row)
-        self._items.remove(self._items[row])
+        del self._items[row]
         self.endRemoveRows()
 
     def data(self, index, role=Qt.DisplayRole):
@@ -92,8 +89,8 @@ qt_warning_handler = QtWarningHandler(log_model)
 
 logging.basicConfig(
     level=logging.DEBUG if environ.get("DEBUG") not in (None, "0") else logging.WARNING,
-    format='%(asctime)s.%(msecs)03d %(module)s - %(funcName)s: %(message)s',
-    datefmt='%m-%d %H:%M:%S',
+    format='%(asctime)s.%(msecs)03d %(module)s - [%(threadName)s] %(funcName)s: %(message)s',
+    datefmt='%d.%m. %H:%M:%S',
     handlers=[
         logging.StreamHandler(),
         # logging.FileHandler("debug.log"),
@@ -101,18 +98,17 @@ logging.basicConfig(
     ]
 )
 
+qml_logger = logging.getLogger("QML")
+_message_mapping = {
+    QtCore.QtInfoMsg: qml_logger.info,
+    QtCore.QtWarningMsg: qml_logger.warning,
+    QtCore.QtCriticalMsg: qml_logger.critical,
+    QtCore.QtFatalMsg: qml_logger.error,
+}
+
 
 def qt_message_handler(mode, context, message):
-    if mode == QtCore.QtInfoMsg:
-        logging.info("%s (%d, %s)" % (message, context.line, context.file))
-    elif mode == QtCore.QtWarningMsg:
-        logging.warning("%s (%d, %s)" % (message, context.line, context.file))
-    elif mode == QtCore.QtCriticalMsg:
-        logging.critical("%s (%d, %s)" % (message, context.line, context.file))
-    elif mode == QtCore.QtFatalMsg:
-        logging.error("%s (%d, %s)" % (message, context.line, context.file))
-    else:
-        logging.debug("%s (%d, %s)" % (message, context.line, context.file))
+    _message_mapping.get(mode, qml_logger.debug)("%s (%d, %s)", message, context.line, context.file)
 
 
 class LogCall:
@@ -131,15 +127,24 @@ class LogCall:
     def __init__(self, logger: logging.Logger):
         self._logger = logger
 
+    def testxxxx(self,
+                 func,
+                 errmsg="Exception during calling function: %s",
+                 stack_trace=False,
+                 catch_exceptions=(Exception,),
+                 *args,
+                 **kwargs) -> Union[Any, BaseException]:
+        pass
+
     def __call__(self,
                  func,
                  errmsg="Exception during calling function: %s",
-                 *args,
-                 catch_exceptions=(Exception,),
                  stack_trace=False,
+                 catch_exceptions=(Exception,),
+                 *args,
                  **kwargs) -> Union[Any, BaseException]:
         try:
             return func(*args, **kwargs)
         except catch_exceptions as e:
-            self._logger.error(errmsg, (repr(e), ), exc_info=stack_trace)
+            self._logger.error(errmsg, e, exc_info=stack_trace)
             return e

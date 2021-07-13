@@ -16,6 +16,7 @@ class Settings(QSettings):
             str: self.str,
             bool: self.bool,
             float: self.float,
+            list: self.list,
         }
 
         self._write_funcs = {
@@ -23,6 +24,7 @@ class Settings(QSettings):
             str: self.setstr,
             bool: self.setbool,
             float: self.setfloat,
+            list: self.setlist,
         }
 
     # ---- get functions
@@ -65,9 +67,9 @@ class Settings(QSettings):
         v = self.value(key, default)
         if v is None:
             return None
-        return v in {True, "true", 1, "1"} or default
+        return v not in {False, "false", 0, "0"}
 
-    def list(self, key: str, default: list = None, none_to_empty_list=True) -> List[str]:
+    def list(self, key: str, default: list = None, none_to_empty_list=True) -> Optional[List[str]]:
         # get list of strings
         data = self.value(key, default)
 
@@ -107,6 +109,10 @@ class Settings(QSettings):
     def setbool(self, key: str, value: Optional[bool]):
         # simple set value as bool
         self.setValue(key, None if value is None else bool(value))  # will be string
+
+    def setlist(self, key: str, value: Optional[list]):
+        # simple set list or None
+        self.setValue(key, None if value is None else list(value))
 
 
 def new_settings_instance(section: str = None) -> Settings:
