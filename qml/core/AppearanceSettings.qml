@@ -110,21 +110,30 @@ Item {
 
             SpinBox {
                 value: appearance.dim_timer
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.right: parent.right
+                anchors.rightMargin: 5
+                font.pixelSize:32
                 stepSize: 1
                 onValueChanged: appearance.dim_timer = this.value
                 from: 0
-                to: 1000
-                Label {
-                    anchors.left: parent.right
-                    anchors.leftMargin: 10
-                    text: "s inactivity."
-                    color: Colors.black
+
+                textFromValue: function (value, locale) {
+                    return Number(value) + "s"
                 }
+
+                valueFromText: function (text, locale) {
+                    return Number.fromLocaleString(locale, text)
+                }
+
+
+
+                to: 1000
+
 
                 Label {
                     anchors.right: parent.left
                     anchors.rightMargin: 10
+                    font.pixelSize: 25
                     text: "Dim Backlight after"
                     color: Colors.black
                 }
@@ -132,21 +141,27 @@ Item {
 
             SpinBox {
                 value: appearance.off_timer
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.right: parent.right
+                anchors.rightMargin: 5
+                font.pixelSize:32
                 stepSize: 1
+
+                textFromValue: function (value, locale) {
+                    return Number(value) + "s"
+                }
+
+                valueFromText: function (text, locale) {
+                    return Number.fromLocaleString(locale, text)
+                }
                 onValueChanged: appearance.off_timer = this.value
                 from: 0
                 to: 1000
-                Label {
-                    anchors.left: parent.right
-                    anchors.leftMargin: 10
-                    text: "s inactivity."
-                    color: Colors.black
-                }
+
 
                 Label {
                     anchors.right: parent.left
                     anchors.rightMargin: 10
+                    font.pixelSize: 25
                     text: "Turn display off after"
                     color: Colors.black
                 }
@@ -154,22 +169,35 @@ Item {
 
             SpinBox {
                 value: appearance.jump_timer
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.right: parent.right
+                anchors.rightMargin: 5
+                font.pixelSize:32
                 stepSize: 1
                 onValueChanged: appearance.jump_timer = this.value
+
+                textFromValue: function (value, locale) {
+                    return Number(value) + "s"
+                }
+
+                valueFromText: function (text, locale) {
+                    return Number.fromLocaleString(locale, text)
+                }
+
+
                 from: 0
                 to: 1000
-                Label {
+                /*Label {
                     anchors.left: parent.right
                     anchors.leftMargin: 10
                     text: "s inactivity."
                     color: Colors.black
                 }
-
+*/
                 Label {
                     anchors.right: parent.left
                     anchors.rightMargin: 10
                     text: "Jump to home after"
+                    font.pixelSize: 25
                     color: Colors.black
                 }
             }
@@ -196,8 +224,8 @@ Item {
                 id: nightGroup
             }
 
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
+            Flow {
+                width: parent.width
                 RadioButton {
                     checked: appearance.night_mode === 0
                     onReleased: {
@@ -244,7 +272,7 @@ Item {
                                     ) + ':' + minutesTumbler2.currentIndex.toString()
                     }
 
-                    text: qsTr("during timerange")
+                    text: qsTr("timerange")
                     ButtonGroup.group: nightGroup
                     contentItem: Text {
                         text: parent.text
@@ -261,7 +289,7 @@ Item {
                             appearance.night_mode = 3
                     }
 
-                    text: qsTr("dynamic timerange")
+                    text: qsTr("dynamic")
                     contentItem: Text {
                         text: parent.text
                         color: Colors.black
@@ -474,10 +502,18 @@ Item {
     }*/
             CheckBox {
                 Text {
+
+
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    wrapMode: Text.WordWrap
+                    width: parent.parent.width - 40
+
                     anchors.left: parent.right
                     anchors.leftMargin: 10
                     color: Colors.black
-                    text: 'Show Background Pictures in Nightmode'
+                    text: 'Background Pictures in Nightmode'
+
                 }
                 Component.onCompleted: this.checked = appearance.background_night
 
@@ -487,22 +523,30 @@ Item {
             }
 
             Text {
-                text: "Tracked Input Devices for activity"
+
+                text: "\nTracked Input Devices"
                 color: Colors.black
                 font.bold: true
-                anchors.topMargin: 20
+                anchors.topMargin: 30
             }
 
             Repeater {
-
+                width: parent.width
                 model: appearance.devices
                 CheckBox {
+
                     checked: appearance.selected_device(modelData)
+                    height: subtext.height + 10
+
                     Text {
-                        anchors.left: parent.right
-                        anchors.leftMargin: 10
+                        id: subtext
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.left: parent.left
+                        anchors.leftMargin: 40
                         color: Colors.black
                         text: appearance.device_description(modelData)
+                        wrapMode: Text.WordWrap
+                        width: parent.parent.width - 45
                     }
                     onCheckStateChanged: {
                         appearance.setDeviceTrack(modelData, this.checked)

@@ -37,7 +37,8 @@ Rectangle {
             Text {
                 visible: git.updates_remote > 0
                 anchors.verticalCenter: parent.verticalCenter
-                text: 'version:'
+                text: 'Version:'
+                font.bold: true
                 font.family: localFont.name
                 font.pixelSize: 24
                 color: Colors.black
@@ -61,13 +62,15 @@ Rectangle {
                 visible: git.updates_remote > 0
                 anchors.verticalCenter: parent.verticalCenter
                 text: 'Description:'
+                font.bold: true
                 font.family: localFont.name
                 font.pixelSize: 24
                 color: Colors.black
             }
             Text {
                 visible: git.updates_remote > 0
-
+                wrapMode: Text.WordWrap
+                width: parent.width / 2
                 text: git.update_description
                 font.pixelSize: 20
                 color: Colors.black
@@ -81,16 +84,18 @@ Rectangle {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: 'installed version:'
+                text: 'Installed version:'
                 font.family: localFont.name
                 font.pixelSize: 24
+                font.bold: true
                 color: Colors.black
             }
             Text {
 
                 text: git.current_version_hex + ', '
                       + new Date(git.current_version_date * 1000).toLocaleDateString()
-
+                wrapMode: Text.WordWrap
+                width: parent.width / 2
                 font.pixelSize: 20
                 color: Colors.black
                 anchors.verticalCenter: parent.verticalCenter

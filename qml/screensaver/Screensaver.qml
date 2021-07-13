@@ -8,6 +8,10 @@ Item {
 
         color: "transparent"
         anchors.fill: parent
+        anchors.leftMargin: 5
+        anchors.rightMargin: 5
+        anchors.topMargin: 5
+        anchors.bottomMargin: 5
 
         Text {
             id: moving_text
@@ -28,25 +32,27 @@ Item {
             }
         }
 
-        Rectangle {
 
-            width: parent.width
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 20
-            height: 130
-            color: "transparent"
 
-            Row {
+            Flow {
 
-                height: parent.height
-                spacing: 30
-                anchors.horizontalCenter: parent.horizontalCenter
+                id: screensaverflow
+                spacing: 20
+                anchors.bottom: parent.bottom
 
+                property int rowCount: window.width / (150 + spacing)
+                property int rowWidth: rowCount * 150 + (rowCount - 1) * spacing
+                property int mar: (window.width - rowWidth) / 2
+
+                anchors.right: parent.right
+                width: parent.width - mar
+
+
+                Component.onCompleted: console.error(mar)
 
                 Repeater {
                     id: screensaverRow
                     model: modules.rooms['Screensaver']
-                    height: parent.height
 
 
                     Rectangle {
@@ -56,8 +62,8 @@ Item {
                         border.width: 1
                         border.color: Colors.white
                         color: "transparent"
-                        height: parent.height
-                        width: 100
+                        width: 150
+                        height: 160
                         radius: 10
 
                         Loader {
@@ -72,7 +78,7 @@ Item {
                 }
             }
         }
-    }
+
 
     Timer {
         property bool direction: true

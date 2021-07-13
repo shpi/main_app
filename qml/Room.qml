@@ -15,9 +15,9 @@ Item {
 
         height: parent.height
 
-        width: cellWidth * 3
+        width: parent.width
 
-        anchors.horizontalCenter: parent.horizontalCenter
+
 
         cellWidth: 260; cellHeight: 170
 

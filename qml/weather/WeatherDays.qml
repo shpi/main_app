@@ -71,15 +71,36 @@ Item {
         visible: false
     }
 
-    Grid {
 
-        columns: 4
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 10
+    Rectangle {
+
+    Flow {
 
         spacing: 10
         id: precast
+
+
+        property int rowCount: parent.width / (160 + spacing)
+                property int rowWidth: rowCount * 160 + (rowCount - 1) * spacing
+                property int mar: (parent.width - rowWidth) / 2
+
+                anchors {
+                    fill: parent
+                    leftMargin: mar
+                    rightMargin: mar
+                }
+
+    }
+
+    width: parent.width
+    color: "transparent"
+
+    height: parent.height - weatherselect.height - 5
+    //columns: 4
+    anchors.horizontalCenter:  parent.horizontalCenter
+    anchors.verticalCenter:  parent.verticalCenter
+    anchors.verticalCenterOffset: weatherselect.height + 5
+
     }
 
     Connections {

@@ -1,6 +1,5 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.VirtualKeyboard 2.1
 import Qt.labs.folderlistmodel 2.12
 import QtGraphicalEffects 1.12
 
@@ -9,10 +8,12 @@ import "qrc:/fonts"
 ApplicationWindow {
     id: window
     title: "SHPI"
-    width: 800
-    height: 480
+    width: 480
+    height: 800
     visible: true
     font.family: localFont.name
+
+    property int minsize: width < height ? width: height
 
     function keyboard(object) {
         keyboardLoader.item.textfield = object
@@ -129,28 +130,49 @@ ApplicationWindow {
             color: appearance.night ? "#222222" : Colors.white
             opacity: 0.9
             anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width - 20
-            height: mainsettingsView.height
+            width: parent.width - 10
+            //height: mainsettingsView.height
+            height: subrct.height + 10
             anchors.top: parent.top
             radius: 20
             anchors.topMargin: 5
 
-            ListView {
-                spacing: 10
-                height: settingsstackView.depth > 0 ? 85 : 130
+            Rectangle {
+                id: subrct
+                height: mainsettingsView.height
+                anchors.top: parent.top
+                anchors.topMargin: 5
+                width: parent.width - 10
+                anchors.left: parent.left
+                anchors.rightMargin: 5
+                anchors.leftMargin: 5
+                color: "transparent"
+
+
+            Flow {
+
+                //height: settingsstackView.depth > 0 ? 85 : 130
                 id: mainsettingsView
-                orientation: ListView.Horizontal
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: parent.width - 15
-                model: mainsettingsModel
-                delegate: mainsettingsDelegate
-                layoutDirection: ListView.RightToLeft
+                //orientation: ListView.Horizontal
+                //anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width - closebutton.width - 5
+                anchors.right: parent.right
+
+                spacing: 10
+
+                layoutDirection: Qt.RightToLeft
+
+                Repeater {
+                    model: mainsettingsModel
+                    delegate: mainsettingsDelegate
+                }
+
             }
 
             RoundButton {
-                anchors.left: parent.left
-                anchors.leftMargin: 5
-                anchors.verticalCenter: parent.verticalCenter
+                id: closebutton
+                //anchors.left: parent.left
+                //anchors.top: parent.top
                 font.family: localFont.name
                 //settingsstackView.depth > 0 ? true : false
                 text: settingsstackView.depth > 1 ? Icons.arrow : settingsstackView.depth
@@ -214,7 +236,8 @@ ApplicationWindow {
             Component {
                 id: mainsettingsDelegate
                 RoundButton {
-                    anchors.verticalCenter: parent.verticalCenter
+                    //anchors.verticalCenter: parent.verticalCenter
+
                     font.family: localFont.name
                     height: settingsstackView.depth > 0 ? 80 : 100
                     font.pixelSize: settingsstackView.depth > 0 ? size : size * 1.5
@@ -229,6 +252,8 @@ ApplicationWindow {
                     width: height
                 }
             }
+        }
+
         }
 
         Rectangle {

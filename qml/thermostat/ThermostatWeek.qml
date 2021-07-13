@@ -94,7 +94,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: exitbutton.right
             anchors.leftMargin: 10
-            text: 'Thermostat Schedule'
+            text: 'Schedule'
             color: Colors.black
             font.bold: true
             font.pixelSize:40
@@ -134,7 +134,7 @@ Rectangle {
         id: scheduleFlick
         width: parent.width
         contentHeight: dayrepeater.count * 100 + 200
-        height: 380
+        height: parent.height - header.height
         anchors.top: header.bottom
         clip: true
 
@@ -186,7 +186,7 @@ Rectangle {
 
     Row {
         anchors.top: header.bottom
-        height: 380
+        height: parent.height - header.height
         width: parent.width - 80 //weekknob width
         spacing: ((parent.width) / 14) + 1
         anchors.horizontalCenter: parent.horizontalCenter

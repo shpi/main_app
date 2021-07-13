@@ -173,8 +173,8 @@ engine.rootContext().setContextProperty("modules", modules)
 setup_interrupt_handling()
 
 # filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "qml/main.qml")
-
 engine.load("qrc:/qml/main.qml")
+#engine.load("qml/main.qml")
 
 if not engine.rootObjects():
     sys.exit(-1)

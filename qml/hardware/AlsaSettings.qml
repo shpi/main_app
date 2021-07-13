@@ -38,21 +38,25 @@ Item {
                     property int sensorvalue: value
 
                     id: wrapper
-                    height: 70
+                    height:      110
 
                     width: inputsview.width
                     color: index % 2 === 0 ? Colors.white : "transparent"
                     Row {
                         spacing: 10
+                        width: parent.width
                         height: parent.height
-                        anchors.right: parent.right
-                        anchors.rightMargin: 10
+
 
                         Text {
+                            horizontalAlignment: Text.AlignHCenter
                             anchors.verticalCenter: parent.verticalCenter
                             text: description + ' '
                             font.pixelSize: 24
                             color: Colors.black
+                            wrapMode: Text.WordWrap
+                            width: parent.width - 220
+
                         }
 
                         //(output === '1' ? '' : value)
@@ -75,6 +79,7 @@ Item {
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: sensorvalue
+                                    width: 200
                                     font.pixelSize: 24
                                     color: Colors.black
                                 }
@@ -84,7 +89,7 @@ Item {
                                 id: gaugebar
                                 Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
-                                    width: 300
+                                    width: 200
                                     height: 30
                                     color: "darkgrey"
                                     border.color: Colors.black
@@ -136,7 +141,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     //visible: output == '1' ? 1 : 0
                                     font.pixelSize: 24
-                                    width: 300
+                                    width: 200
                                     color: Colors.black
                                     placeholderText: (output == '1' ? value.toString(
                                                                           ) : '')
@@ -180,7 +185,7 @@ Item {
                                     checked: sensorvalue === 1 ? true : false
                                     anchors.verticalCenter: parent.verticalCenter
                                     //visible: output == '1' ? 1 : 0
-                                    width: 300
+                                    width: 200
                                     onToggled: inputs.set(
                                                    path,
                                                    this.checked === true ? 1 : 0)
@@ -192,7 +197,7 @@ Item {
                                 ComboBox {
                                     currentIndex: parseInt(sensorvalue)
                                     //visible: output == '1' ? 1 : 0
-                                    width: 300
+                                    width: 200
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     model: available
                                     onActivated: inputs.set(path,
@@ -206,7 +211,7 @@ Item {
                                 Slider {
                                     from: min
                                     value: sensorvalue
-                                    width: 300
+                                    width: 200
                                     to: max
                                     stepSize: step === 0 ? 1 : step
                                     //onMoved: inputs.set(path, this.value)

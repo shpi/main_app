@@ -21,7 +21,7 @@ Rectangle {
                                                ((max_temp - min_temp) / 240) -480) ) )
 
 
-        temptext.text = modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp.toFixed(1)  + '°C'
+        temptext.text = modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp.toFixed(1)
         }
         if (modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode === 0)
          temptext.text = 'OFF'
@@ -63,14 +63,15 @@ Rectangle {
     }
 
     Slider {
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: 150
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 10
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.horizontalCenterOffset: -100
+
         id: control
         property real radius: 25
         from: 0 // 0 off, 1 away, 2 eco , 3 normal, 4 party
         to: 4
+
         stepSize: 1
         value: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode
         snapMode: Slider.SnapAlways
@@ -78,7 +79,7 @@ Rectangle {
         onMoved: { modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode = value
                    setRotation() }
 
-        width: 500
+        width: window.minsize
         height: radius * 2
         background: Rectangle {
 
@@ -226,11 +227,23 @@ Rectangle {
 
     Text {
         id: temptext
-        text: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode > 0 ? modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp.toFixed(1)  + '°C' : 'OFF'
+        text: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode > 0 ? modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp.toFixed(1)  : 'OFF'
         color: Colors.black
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter
-        font.pixelSize: tickswindow.width * 0.10
+        font.pixelSize: tickswindow.width * 0.17
+         anchors.horizontalCenterOffset: -wheel.width / 2
+
+
+         Text {
+
+             visible: modules.loaded_instances['Logic']['Thermostat'][instancename].offset == 0
+             text:  '°C'
+             anchors.left: parent.right
+             anchors.bottom: parent.bottom
+             font.pixelSize: 25
+             color: Colors.black
+         }
 
         onTextChanged: {
                          animation.stop()
@@ -245,23 +258,26 @@ Rectangle {
 
     Text {
         id: actualtemp
-        text: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].actual_temp.toFixed(1)  + '°C'
+        text: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].actual_temp.toFixed(1)
         color: Colors.black
         anchors.verticalCenter: parent.verticalCenter
+        anchors.horizontalCenterOffset: -wheel.width / 2
         anchors.horizontalCenter: parent.horizontalCenter
-        font.pixelSize: tickswindow.width * 0.10
-
+        font.pixelSize: window.minsize * 0.17
         opacity: temptext.opacity == 0 ? 1 : 0
 
+
         Text {
-            id: offsetTemperature
-            visible: modules.loaded_instances['Logic']['Thermostat'][instancename].offset !== 0
-            text: modules.loaded_instances['Logic']['Thermostat'][instancename].offset > 0 ? '+' + modules.loaded_instances['Logic']['Thermostat'][instancename].offset : modules.loaded_instances['Logic']['Thermostat'][instancename].offset
-            anchors.top: parent.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
+
+            visible: modules.loaded_instances['Logic']['Thermostat'][instancename].offset === 0
+            text:  '°C'
+            anchors.left: parent.right
+            anchors.bottom: parent.bottom
             font.pixelSize: 25
             color: Colors.black
         }
+
+
 
     }
 
@@ -269,7 +285,6 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
         anchors.leftMargin: 30
-
         font.pixelSize: 120
         font.family: localFont.name
         text: Icons.fire
@@ -280,38 +295,49 @@ Rectangle {
 
     RoundButton
     {
+        property string offset: modules.loaded_instances['Logic']['Thermostat'][instancename].offset > 0 ?
+                                    ' ' + modules.loaded_instances['Logic']['Thermostat'][instancename].offset :
+                                    modules.loaded_instances['Logic']['Thermostat'][instancename].offset
+
 
         visible: (modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode == 2 ||
                  modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode == 3) &&
                  modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].schedule_mode > 0
                  ? true : false
 
-        anchors.right: temptext.left
-        anchors.rightMargin: 30
-        anchors.verticalCenter: temptext.verticalCenter
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.horizontalCenterOffset: -wheel.width / 2
+        anchors.top:actualtemp.bottom
+        anchors.topMargin: 40
         width: height
         font.family: localFont.name
-        text: Icons.schedule
+
+
+        text: modules.loaded_instances['Logic']['Thermostat'][instancename].offset === 0 ? Icons.schedule :
+                                     offset
+
+
+
         palette.button: Colors.grey
         palette.buttonText: Colors.black
-        font.pixelSize: 90
+        font.pixelSize: 80
         onClicked: thermostatPopup.open()
     }
 
     Rectangle {
+        id: wheel
         anchors.top: tickswindow.top
-        height: tickswindow.height
         width: tickswindow.width / 4
         anchors.right: tickswindow.right
-        //border.width: 1
-        //border.color: "white"
+        height: parent.height
         //opacity: 0.5
         color: "transparent"
 
         MouseArea {
 
             property int velocity;
-            anchors.fill: parent
+            width: parent.width
+            height: parent.height - 100
             preventStealing: true
             //property int velocity: 0.0
             property int calcrotation: rotator.rotation //needed because animation
@@ -342,7 +368,7 @@ Rectangle {
                 rotator.rotation = Math.abs(settemp / step - 480)
 
                 modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp = settemp
-                temptext.text = modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp.toFixed(1)  + '°C'
+                temptext.text = modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].set_temp.toFixed(1)
 
                 }
 
@@ -362,11 +388,11 @@ Rectangle {
         visible: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode > 0
 
         id: rotator
-        height: tickswindow.height * 1.5
+        height: window.minsize * 2
         width: height
         anchors.verticalCenter: tickswindow.verticalCenter
         anchors.horizontalCenter: tickswindow.right
-        anchors.horizontalCenterOffset: rotator.width * 0.22
+        anchors.horizontalCenterOffset: rotator.width * 0.35
         color: "transparent"
         border.width: 1
         border.color: Colors.black

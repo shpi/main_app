@@ -145,7 +145,7 @@ class Weather(QObject):
                                                  value=settings.value('weather/' + self.name + "/lon", ""))
 
         self._has_error = False
-        self._api_key = settings.value('weather/' + self.name + "/api_key", "20f7aab0a600927a8486b220200ee694")
+        self._api_key = settings.value('weather/' + self.name + "/api_key", "e4854133715fcbdd00c39baa1705a936")
         self._current_date = ""
 
     def get_inputs(self) -> list:

@@ -28,7 +28,7 @@ Rectangle {
     property real snow
     property real uvi
     width: 160
-    height: 200
+    height: 165
     radius: 10
     border.width: 2
     border.color: Colors.white
@@ -45,6 +45,7 @@ Rectangle {
     Text {
         text: average_temp + "°C"
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: 10
         font.pixelSize: 32
         color: Colors.black
     }

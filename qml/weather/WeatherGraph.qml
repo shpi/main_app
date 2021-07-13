@@ -142,6 +142,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: -parent.height / 18
         anchors.horizontalCenter: parent.horizontalCenter
+        anchors.horizontalCenterOffset: 20
         asynchronous: true
 
         ShapePath {

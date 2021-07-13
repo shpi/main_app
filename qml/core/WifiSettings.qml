@@ -6,8 +6,7 @@ import "qrc:/fonts"
 Item {
 
     Column {
-        padding: 5
-        spacing: 20
+        spacing: 13
         anchors.fill: parent
 
         Text {
@@ -18,6 +17,7 @@ Item {
             font.pixelSize: 32
             color: Colors.black
         }
+
 
         Row {
             spacing: 20
@@ -40,8 +40,13 @@ Item {
 
                 onPressedChanged: wifi.wpa_status(actualDevice.currentText)
 
-            }
+            }}
 
+
+        Row {
+
+            spacing: 20
+            anchors.horizontalCenter: parent.horizontalCenter
 
 
             Text {
@@ -94,7 +99,7 @@ Item {
 
 
 
-        Row {
+ /*       Row {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 20
 
@@ -112,7 +117,10 @@ Item {
                 color: Colors.black
                 anchors.verticalCenter: parent.verticalCenter
             }
-
+} */
+        Row {
+            spacing: 20
+            anchors.horizontalCenter: parent.horizontalCenter
 
 
             Text {
@@ -150,6 +158,10 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
             }
 
+}
+        Row {
+            spacing: 20
+            anchors.horizontalCenter: parent.horizontalCenter
 
             Text {
 
