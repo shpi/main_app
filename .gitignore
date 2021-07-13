@@ -1,13 +1,27 @@
-*.log
-*.user
-*.build
-*.so
+# Python stuff
 __pycache__/
 *.py[cod]
-
-venv/
 *.egg-info/
+
+# Virtual environments
+venv/
+
+# PyCharm
+.idea/
+
+# Qt Creator
+*.pyproject
+
+# Compiled output
+*.build
+main.bin
+
+# Application specific
 settings.ini
 keymap/keymap
 keymap/keymap.o
-.idea/*
+
+# Other
+*.log
+*.user
+*.so
