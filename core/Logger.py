@@ -127,24 +127,17 @@ class LogCall:
     def __init__(self, logger: logging.Logger):
         self._logger = logger
 
-    def testxxxx(self,
-                 func,
-                 errmsg="Exception during calling function: %s",
-                 stack_trace=False,
-                 catch_exceptions=(Exception,),
-                 *args,
-                 **kwargs) -> Union[Any, BaseException]:
-        pass
-
     def __call__(self,
                  func,
+                 *args,
                  errmsg="Exception during calling function: %s",
                  stack_trace=False,
                  catch_exceptions=(Exception,),
-                 *args,
                  **kwargs) -> Union[Any, BaseException]:
+
         try:
-            return func(*args, **kwargs)
+            ret = func(*args, **kwargs)
+            return ret
         except catch_exceptions as e:
             self._logger.error(errmsg, e, exc_info=stack_trace)
             return e

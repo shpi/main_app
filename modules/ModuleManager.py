@@ -9,7 +9,7 @@ from PySide2.QtQml import QQmlApplicationEngine
 from core.Settings import settings, new_settings_instance
 from core.Constants import internal_modules, external_modules, always_preload_modules
 from interfaces.Module import ModuleBase, ThreadModuleBase
-from interfaces.PropertySystem import Property, PropertyDict, IntervalProperty, ModuleInstancePropertyDict, \
+from interfaces.PropertySystem import Property, PropertyDict, PropertyAccess, ModuleInstancePropertyDict, \
     properties_start, properties_stop
 from interfaces.DataTypes import DataType
 from core.Module import Module, ThreadModule
@@ -80,6 +80,7 @@ class Modules(ModuleBase):
         self.mainapp = parent
 
         self.qmlengine: QQmlApplicationEngine = parent.engine
+        self.property_access = PropertyAccess(parent, self._root_properties)
 
         # Add contextproperties from mainapp
         self.add_module_contextproperties(parent)
@@ -88,7 +89,10 @@ class Modules(ModuleBase):
         ModuleInstancePropertyDict.changed_callback = lambda: self.categories_changed.emit()
 
     def qml_context_properties(self) -> Optional[Dict[str, Any]]:
-        return {'modules': self}
+        return {
+            'modules': self,
+            'properties': self.property_access,
+        }
 
     def load(self):
         logcall(properties_start)
@@ -236,14 +240,16 @@ class Modules(ModuleBase):
     def shutdown(cls):
         print("shutdown")
         logcall(Module.unload_modules)
+
         logcall(properties_stop)
+
+        del cls._root_properties
+        del cls.all_modules_classes
+        del cls.all_modules_classes_by_str
 
     def unload(self):
         del self.mainapp
         del self.qmlengine
-        del self._root_properties
-        del self.all_modules_classes
-        del self.all_modules_classes_by_str
 
     @QtProperty('QVariantMap', notify=categories_changed)
     def categories_dict(self) -> Dict[str, List[str]]:

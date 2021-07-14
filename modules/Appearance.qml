@@ -33,8 +33,8 @@ Item {
     }
 
     function getTimeStr(htumbler, mtumbler) {
-        h = htumbler.currentIndex.toString()
-        m = mtumbler.currentIndex.toString()
+        var h = htumbler.currentIndex.toString()
+        var m = mtumbler.currentIndex.toString()
 
         return ('00' + h).substr(-2) + ':' + ('00' + m).substr(-2)
     }
@@ -123,17 +123,20 @@ Item {
                 onValueChanged: appearance.dim_timer = this.value
                 from: 0
                 to: 1000
+
                 Label {
-                    anchors.left: parent.right
-                    anchors.leftMargin: 10
-                    text: "s inactivity."
+                    anchors.right: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.rightMargin: 10
+                    text: "Dim backlight after"
                     color: Colors.black
                 }
 
                 Label {
-                    anchors.right: parent.left
-                    anchors.rightMargin: 10
-                    text: "Dim Backlight after"
+                    anchors.left: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.leftMargin: 10
+                    text: "seconds of inactivity."
                     color: Colors.black
                 }
             }
@@ -146,16 +149,18 @@ Item {
                 from: 0
                 to: 1000
                 Label {
-                    anchors.left: parent.right
-                    anchors.leftMargin: 10
-                    text: "s inactivity."
+                    anchors.right: parent.left
+                    anchors.rightMargin: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "Turn display off after"
                     color: Colors.black
                 }
 
                 Label {
-                    anchors.right: parent.left
-                    anchors.rightMargin: 10
-                    text: "Turn display off after"
+                    anchors.left: parent.right
+                    anchors.leftMargin: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "seconds of inactivity."
                     color: Colors.black
                 }
             }
@@ -164,20 +169,23 @@ Item {
                 value: appearance.jump_home_timer
                 anchors.horizontalCenter: parent.horizontalCenter
                 stepSize: 1
-                // onValueChanged: appearance.jump_home_timer = this.value
+                onValueChanged: appearance.jump_home_timer = this.value
                 from: 0
                 to: 1000
+
                 Label {
-                    anchors.left: parent.right
-                    anchors.leftMargin: 10
-                    text: "s inactivity."
+                    anchors.right: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.rightMargin: 10
+                    text: "Jump to home after"
                     color: Colors.black
                 }
 
                 Label {
-                    anchors.right: parent.left
-                    anchors.rightMargin: 10
-                    text: "Jump to home after"
+                    anchors.left: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.leftMargin: 10
+                    text: "seconds of inactivity."
                     color: Colors.black
                 }
             }
@@ -475,10 +483,13 @@ Item {
                 Text {
                     anchors.left: parent.right
                     anchors.leftMargin: 10
+                    anchors.verticalCenter: parent.verticalCenter
                     color: Colors.black
                     text: 'Show Background Pictures in Nightmode'
                 }
-                Component.onCompleted: this.checked = appearance.background_night
+
+                //Component.onCompleted: this.checked = appearance.background_night
+                checked: appearance.background_night
 
                 onCheckStateChanged: {
                     appearance.background_night = this.checked
@@ -486,7 +497,7 @@ Item {
             }
 
             Text {
-                text: "Tracked Input Devices for activity"
+                text: "Tracked input devices for activity"
                 color: Colors.black
                 font.bold: true
                 anchors.topMargin: 20

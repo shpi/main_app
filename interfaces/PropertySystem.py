@@ -49,7 +49,7 @@ from re import compile
 from contextlib import suppress
 from enum import EnumMeta
 
-from PySide2.QtCore import Property as QtProperty, Signal
+from PySide2.QtCore import Property as QtProperty, Signal, QObject
 
 from interfaces.DataTypes import DataType
 from core.Events import EventManager
@@ -398,15 +398,26 @@ class Property:  # QObject
     _eventids = {UPDATED, UPDATED_AND_CHANGED, PropertyDict.CHANGED}
 
     _run_save_thread = False
-    _check_unsaved_changes_thread = None
+    _check_unsaved_changes_thread: Optional[Thread] = None
 
     @classmethod
     def quit(cls):
+        if cls._check_unsaved_changes_thread is None:
+            return
+
         for p in cls._changed_properties:
             # Schedule immediate save
             p._changetime = None
+
         cls._run_save_thread = False
-        cls._check_unsaved_changes_thread.join(2)
+
+        if cls._check_unsaved_changes_thread.is_alive():
+            try:
+                cls._check_unsaved_changes_thread.join(2)
+            except Exception as e:
+                logger.error("Error in Property.quit: %s", e)
+
+        cls._check_unsaved_changes_thread = None
 
     @classmethod
     def init_class(cls):
@@ -425,9 +436,10 @@ class Property:  # QObject
             if cls._changed_properties:
                 for p in cls._changed_properties.copy():  # type: Property
                     if p._changetime is None or time() >= p._changetime + Property._changed_properties_save_timeout:
+                        print("Saving property", p.path, p._value)
                         p.save_setting(p._value, p._datatype, ensure_path_absolute=False)
                         p._changetime = None
-                        Property._changed_properties.discard(p)
+                        cls._changed_properties.discard(p)
 
     @classmethod
     def get_by_id(cls, pr_id: int) -> Optional["Property"]:
@@ -1343,11 +1355,14 @@ class QtPropLink(QtProperty):
     def f_set(self, modinst, newvalue):
         # Get signal from parent which has the emit function.
         prop: Property = modinst.properties[self._path]
+
+        changed = prop.value != newvalue
         prop.value = newvalue
 
         # Notify change
-        notify = getattr(modinst, str(self._notify)[:-2])
-        notify.emit()
+        if changed:
+            notify = getattr(modinst, str(self._notify)[:-2])
+            notify.emit()
 
 
 class QtPropLinkEnum(QtPropLink):
@@ -1380,11 +1395,22 @@ class QtPropLinkSelect(QtPropLink):
         prop: SelectProperty = modinst.properties[self._path]
 
         # Set new path
+        changed = prop.selected_path != newvalue
         prop.selected_path = newvalue
 
         # Notify change
-        notify = getattr(modinst, str(self._notify)[:-2])
-        notify.emit()
+        if changed:
+            notify = getattr(modinst, str(self._notify)[:-2])
+            notify.emit()
+
+
+class PropertyAccess(QObject):
+    def __init__(self, parent, propertydict: PropertyDict):
+        QObject.__init__(self, parent)
+        self._pd = propertydict
+
+    def getDataTypeModel(self):
+        pass
 
 
 def properties_start():
@@ -1392,7 +1418,6 @@ def properties_start():
 
 
 def properties_stop():
-    print("Stopping properties")
     logcall(IntervalProperty.quit)
     logcall(Property.quit)
 

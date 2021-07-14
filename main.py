@@ -40,16 +40,15 @@ class MainApp(MainAppBase):
         MainAppBase.__init__(self, sys.argv)
 
         signal.signal(signal.SIGINT, self._interrupt_handler)
-        self.aboutToQuit.connect(MainApp.unload)
+        # self.aboutToQuit.connect(MainApp.unload)
 
         self.setApplicationName("Main")
         self.setOrganizationName("SHPI GmbH")
         self.setOrganizationDomain("shpi.de")
         self.setFont(QFont('Dejavu', 11))
 
-        # Load "everything"
-
         self.engine = QQmlApplicationEngine()
+        # Load "everything"
         Modules.selfload(self)
         self.engine.load("qrc:/qml/main.qml")
 
@@ -64,20 +63,14 @@ class MainApp(MainAppBase):
 
     @classmethod
     def unload(cls):
-        print("unload")
         if cls._main_instance is None:
             return
 
         mapp = cls._main_instance
-        print("deleteing engine")
         del mapp.engine
-        print("deleteted engine")
 
-        print("modules.shutdown()")
-        mapp.modules.shutdown()
+        Modules.shutdown()
 
-        print("del modules")
-        del mapp.modules
         cls._main_instance = None
 
     def _interrupt_handler(self, signum, frame):  # signum, frame
@@ -95,7 +88,6 @@ if __name__ == '__main__':
     qInstallMessageHandler(qt_message_handler)
 
     # Run event loop
-    print("Starting mainloop")
     exec_returncode = app.exec_()
     print("mainloop exited")
     # main app exited.

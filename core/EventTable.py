@@ -46,13 +46,15 @@ class Event:
         else:
             args = (self._on_time, self._event_data)
 
-        print(self._event_func)
-        logcall.testxxxx(
-            func=self._event_func,
-            errmsg=f"Exception occured during calling event's function '{self._event_func!r}': %s",
-            stack_trace=True,
-            *args,
-        )
+        try:
+            logcall(
+                self._event_func,
+                *args,
+                errmsg=f"Exception occured during calling event's function '{self._event_func!r}': %s",
+                stack_trace=True,
+            )
+        except Exception as e:
+            logger.error("Critical error. logcall failed: %s", e, exc_info=True)
 
     def reschedule(self, new_time: datetime, additional_seconds: float = None):
         if additional_seconds is None:
@@ -71,13 +73,11 @@ class Event:
 
     def unload(self):
         if self._table:
-            self._table.remove_event(self, full=True)
-            del self._table
-        del self._event_func
-        del self._event_data
-
-    def __del__(self):
-        self.unload()
+            t = self._table
+            self._table = None
+            t.remove_event(self, full=True)
+            del self._event_func
+            del self._event_data
 
     def __repr__(self):
         return f"<Event[@{self._on_time}: {self._event_func}(data={self._event_data})]>"
@@ -127,6 +127,7 @@ class EventTable:
                 self._all_events.remove(event)
 
             # Full kill or just a one time event
+            # Try unload if remove_event wasn't called by event.unload()
             event.unload()
 
     def schedule_event(self, event: Event):
@@ -182,9 +183,10 @@ class EventTable:
     def event_loop_stop(self):
         self._event_loop_running = False
         self._t_event.set()  # Trigger eventloop wait to restart.
-        if self._event_thread:
+        if self._event_thread and self._event_thread.is_alive():
             self._event_thread.join(5)
-            self._event_thread = None
+
+        self._event_thread = None
 
     def event_loop_start(self):
         """
@@ -237,10 +239,9 @@ class EventTable:
             e.deactivate()
 
     def unload(self):
-        print("eventtable unload")
         self.event_loop_stop()
 
-        for e in self._all_events:
+        for e in self._all_events.copy():
             e.unload()
 
         self._all_events.clear()
