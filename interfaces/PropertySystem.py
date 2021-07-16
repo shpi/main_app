@@ -48,6 +48,8 @@ from threading import Lock, RLock, Thread
 from re import compile
 from contextlib import suppress
 from enum import EnumMeta
+from pathlib import Path
+from html import escape
 
 from PySide2.QtCore import Property as QtProperty, Signal, QObject
 
@@ -63,6 +65,16 @@ logcall = LogCall(logger)
 
 NotLoaded = object()
 _valid_key = compile(r"[a-zA-Z0-9_]+")
+
+
+class PropertyEvent:
+    __slots__ = '_name',
+
+    def __init__(self, name_for_repr: str):
+        self._name = name_for_repr
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__} {self._name}>'
 
 
 class PropertyException(Exception):
@@ -83,12 +95,12 @@ class PropertyDict:
     PropertyDicts bound in other PropertyDicts get their path fetched from containing Property.path.
     """
 
-    __slots__ = "parentproperty", "_loaded", "_data"
+    __slots__ = 'parentproperty', '_loaded', '_data'
     _root_instance: Optional["PropertyDict"] = None
 
     path_sep = '/'
 
-    CHANGED = object()
+    CHANGED = PropertyEvent('CHANGED')
 
     @classmethod
     def root(cls, allowcreate=False) -> Optional["PropertyDict"]:
@@ -202,7 +214,7 @@ class PropertyDict:
             raise TypeError("Key must be a string.")
 
         if not _valid_key.fullmatch(key):
-            raise TypeError("Invalid chars in key. Allowed characters for keys: A-Z, a-z, 0-9, '_'")
+            raise TypeError("Invalid chars in key. Allowed characters for keys: A-Z, a-z, 0-9, '_': '" + key + '"')
 
         if key in self._data:
             raise TypeError("Key already present in PropertyDict.")
@@ -393,8 +405,8 @@ class Property:  # QObject
     # For storing meta information beyond the persistent value of the property.
     namespace_sep = ':'
 
-    UPDATED = object()
-    UPDATED_AND_CHANGED = object()
+    UPDATED = PropertyEvent('UPDATED')
+    UPDATED_AND_CHANGED = PropertyEvent('UPDATED_AND_CHANGED')
     _eventids = {UPDATED, UPDATED_AND_CHANGED, PropertyDict.CHANGED}
 
     _run_save_thread = False
@@ -436,7 +448,7 @@ class Property:  # QObject
             if cls._changed_properties:
                 for p in cls._changed_properties.copy():  # type: Property
                     if p._changetime is None or time() >= p._changetime + Property._changed_properties_save_timeout:
-                        print("Saving property", p.path, p._value)
+                        logger.debug("Saving property %s=%s", str(p.path), str(p._value))
                         p.save_setting(p._value, p._datatype, ensure_path_absolute=False)
                         p._changetime = None
                         cls._changed_properties.discard(p)
@@ -472,6 +484,7 @@ class Property:  # QObject
         self.desc: Optional[str] = desc
         self.parentdict: Optional[PropertyDict] = None  # ToDo: Use QObject.parent only?
         self._valuepool = valuepool
+        # print("evid:", self.__class__, self._eventids)
         self._event_manager: Optional[EventManager] = EventManager(self, self._eventids) if self._eventids else None
         self._changetime: Optional[float] = None
 
@@ -641,6 +654,7 @@ class Property:  # QObject
 
             if self._event_manager:
                 self._event_manager.emit(self.UPDATED)
+
                 if changed:
                     self._event_manager.emit(self.UPDATED_AND_CHANGED)
 
@@ -758,17 +772,20 @@ class SelectProperty(Property):
     """
     __slots__ = "_selected_property", "_expected_datatype",
 
-    SELECTED = object()
+    SELECTED = PropertyEvent('SELECTED')
     _eventids = Property._eventids | {SELECTED}
 
     def __init__(
             self,
-            expected_datatype: DataType,
+            expected_datatype: Optional[DataType],
             default_path: str = None,
             valuepool: Union[Iterable, Dict[Any, str]] = None,
             desc: str = None,
             persistent=True
     ):
+        if not isinstance(expected_datatype, (DataType, type(None))):
+            raise TypeError('expected_datatype must be member of DataType enum or None, not:' + repr(expected_datatype))
+
         # This property practically contains the path to another Property
         super().__init__(datatype=DataType.STRING, initial_value=default_path, valuepool=valuepool, desc=desc,
                          persistent=persistent)
@@ -804,6 +821,11 @@ class SelectProperty(Property):
             logger.warning('Path for selection does not exist (anymore): "%s". Selection has been removed.', newpath)
 
     @property
+    def expected_datatype(self) -> Optional[DataType]:
+        """Returns the DataType which is used to find suitable Properties."""
+        return self._expected_datatype
+
+    @property
     def selected_property(self) -> Optional[Property]:
         """Returns the selected Property if set or None."""
         return self._selected_property
@@ -819,7 +841,7 @@ class SelectProperty(Property):
             if isinstance(new_property, Property):
                 # Subscribe to events from new property
                 for eventid, func in self._event_mapping.items():
-                    self._selected_property.events.subscribe(func, eventid)
+                    new_property.events.subscribe(func, eventid)
 
         changed = self.events and self._selected_property is not new_property
 
@@ -869,7 +891,7 @@ class ROProperty(Property):
     """
     __slots__ = "_locked",
 
-    DEFINED = object()
+    DEFINED = PropertyEvent('DEFINED')
     _eventids = {DEFINED}
 
     def __init__(
@@ -940,9 +962,9 @@ class FunctionProperty(Property):
     This type of Property will call a function when it's value is requested.
     Has caching capabilities.
     """
-    __slots__ = "_func", "_maxage", "_time", "args", "kwargs"
+    __slots__ = "func", "maxage", "_time", "args", "kwargs"
 
-    BEFORE_FUNC_CALL = object()
+    BEFORE_FUNC_CALL = PropertyEvent('BEFORE_FUNC_CALL')
     _eventids = Property._eventids | {BEFORE_FUNC_CALL}
 
     def __init__(
@@ -967,8 +989,8 @@ class FunctionProperty(Property):
             raise TypeError("getterfunc must provide a callable object.")
 
         Property.__init__(self, datatype=datatype, desc=desc, persistent=False)
-        self._func = getterfunc
-        self._maxage = maxage
+        self.func = getterfunc
+        self.maxage = maxage
         self._time = 0.
 
         self.args = list(args) if args else []
@@ -977,7 +999,7 @@ class FunctionProperty(Property):
     @property
     def cachevalid(self) -> bool:
         """Is the cached value valid?"""
-        return self.age < self._maxage
+        return self.age < self.maxage
 
     @property
     def age(self) -> float:
@@ -1001,10 +1023,10 @@ class FunctionProperty(Property):
 
             # Call the function
             newvalue = logcall(
-                self._func,
+                self.func,
+                *self.args,
                 errmsg="Exception caught during getting value of FunctionProperty: %s",
                 stack_trace=True,
-                *self.args,
                 **self.kwargs
             )
 
@@ -1026,11 +1048,11 @@ class FunctionProperty(Property):
 
     def __repr__(self):
         ret = super().__repr__()[:-1]
-        ret += f", func={self._func!r}, maxage={self._maxage}"
+        ret += f", func={self.func!r}, maxage={self.maxage}"
         return ret + ">"
 
     def unload(self):
-        del self._func
+        del self.func
         del self.kwargs
         del self.args
         super().unload()
@@ -1038,7 +1060,10 @@ class FunctionProperty(Property):
 
 class IntervalProperty(Property):
     _event_table = EventTable()
-    _event_table.event_loop_start()
+
+    @classmethod
+    def init_class(cls):
+        cls._event_table.event_loop_start()
 
     @classmethod
     def quit(cls):
@@ -1154,8 +1179,8 @@ class TimeoutProperty(IntervalProperty):
 
 
 class StringListProperty(Property):
-    ADDED = object()
-    REMOVED = object()
+    ADDED = PropertyEvent('ADDED')
+    REMOVED = PropertyEvent('REMOVED')
     _eventids = Property._eventids | {ADDED, REMOVED}
 
     def __init__(
@@ -1415,6 +1440,7 @@ class PropertyAccess(QObject):
 
 def properties_start():
     logcall(Property.init_class)
+    logcall(IntervalProperty.init_class)
 
 
 def properties_stop():
@@ -1424,3 +1450,87 @@ def properties_stop():
     root = PropertyDict.root()
     if root is not None:
         logcall(root.unload)
+
+
+class KwReplace:
+    def __init__(self, template: str):
+        self.template = template
+
+    def format(self, **kwargs) -> str:
+        out = self.template
+        for key, value in kwargs.items():
+            out = out.replace('{' + key + '}', value)
+
+        return out
+
+
+_html_template_file = Path('properties_export.template.html')
+_html_export_file = Path('properties_export.html')
+
+if _html_template_file.is_file():
+    _html_template = KwReplace(_html_template_file.read_text())
+else:
+    _html_template = KwReplace('{nested}')
+
+_html_property = '{level}<li id="{id}" class="property"><p class="property">{nested}</p></li>'
+
+
+def _export_prop(prop: Property, level=0):
+    try:
+        value = escape(str(prop.value))
+    except Exception as e:
+        value = '<span class="error">[' + escape(str(e)) + ']</span>'
+
+    value2 = ''
+
+    if isinstance(prop, SelectProperty):
+        value2 = '<br>\n' + ('  ' * level) + 'Allowed DataType: ' + ("All" if prop.expected_datatype is None else '<span class="datatype">' + escape(prop.expected_datatype.name) + '</span>')
+
+        if prop.is_selected:
+            value2 = '<br>\n' + _html_propertydict.format(level='  ' * (level+1), id='', name='Selected Property', nested=_export_prop(prop.selected_property, level=level+1))
+
+    if isinstance(prop, FunctionProperty):
+        value2 = '<br>\n' + ('  ' * level) + '<span class="function">' + escape(str(prop.func)) + '</span>, maxage=' + escape(str(prop.maxage))
+
+    additional = '<br>\n' + ('  ' * level) + (' <span class="persistent">persistent</span>, ' if prop.is_persistent else '') + \
+                 'default: <span class="value defaultvalue">' + \
+                 escape(str(prop.default_value)) + '</span>' + value2 + '<br>\n' + ('  ' * level) + '<span class="datatype">' + escape(prop.datatype.name) + '</span> <span class="value">' + value + '</span>'
+
+    nested = '<span class="propertyname">' + escape(str(prop.key)) + '</span> ' \
+             '<span class="classname">[' + escape(prop.__class__.__name__) + ']</span> ' \
+             '<span class="path">\'' + escape(str(prop.path)) + '\'</span> ' \
+             '<span class="desc">' + escape(str(prop.desc)) + '</span>' + additional
+
+    return _html_property.format(id='property_' + str(prop.id), nested=nested, level='  ' * level)
+
+
+_html_propertydict = '{level}<li id="{id}"><span class="caret">{name}</span><ul class="nested">\n' \
+                     '{nested}</ul>\n' \
+                     '{level}</li>'
+
+
+def _export_pd(pd: PropertyDict, level=0) -> str:
+    if pd.is_root:
+        pd_id = 'root'
+        name = '<span class="propertydict root">ROOT</span>'
+    else:
+        pd_id = 'property_' + str(pd.parentproperty.id)
+        name = '<span class="propertydict">' + escape(pd.parentproperty.key) + '</span>'
+
+    name += ' <span class="classname">[' + escape(pd.__class__.__name__) + ']</span> <span class="path">' + escape(str(pd.path)) + '</span>'
+
+    if not pd.is_root:
+        name += ' <span class="desc">' + escape(str(pd.parentproperty.desc)) + '</span>'
+
+    pds = (prop.value for prop in pd.values() if prop.datatype is DataType.PROPERTYDICT)
+    props = (prop for prop in pd.values() if prop.datatype is not DataType.PROPERTYDICT)
+
+    nested = '\n'.join((_export_pd(pd_sub, level+1) for pd_sub in pds)) + \
+             '\n'.join((_export_prop(prop, level+1) for prop in props))
+
+    return _html_propertydict.format(id=pd_id, name=name, nested=nested, level='  ' * level)
+
+
+def propertydict_to_html(pd: PropertyDict):
+    data = _html_template.format(nested=_export_pd(pd))
+    _html_export_file.write_text(data)

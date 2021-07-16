@@ -182,9 +182,14 @@ class Appearance(ModuleBase):
         # Available devices access
         alldevs = self.properties.root().get('InputDevs/available_devices')
         if alldevs:
-            self._epd_all_devices = alldevs.value
+            self._epd_all_devices: PropertyDict = alldevs.value
             # Tell qml about available inputdev changes
-            self._epd_all_devices.events.subscribe(self.available_input_devices_changed.emit, PropertyDict.CHANGED)
+            try:
+                alldevs.events.subscribe(lambda: self.available_input_devices_changed.emit(), PropertyDict.CHANGED)
+            except Exception as e:
+                ev = self.available_input_devices_changed.emit
+                logger.error('Could not subscribe available_input_devices_changed: %s', str(e), exc_info=True)
+                print("ev:", ev, type(ev))
 
             # Trigger reload
             self.available_input_devices_changed.emit()

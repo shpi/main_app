@@ -2,7 +2,7 @@
 
 from logging import getLogger
 import inspect
-from typing import NoReturn, Callable, Any, Dict, Iterable, Union
+from typing import NoReturn, Callable, Any, Dict, Iterable, Union, Tuple
 from threading import Event, Lock
 from functools import partial
 
@@ -22,6 +22,10 @@ class EventManager:
         self._is_emitting: Dict[Any, bool] = {evid: False for evid in eventids}
         self._waitable_events: Dict[Any, Event] = {}
         self._lock = Lock()
+
+    @property
+    def event_ids(self) -> Tuple[Any]:
+        return tuple(self._waitable_events.keys())
 
     def subscribe(self, fnc: callback_function, eventid):
         if eventid not in self._emit_fncs:

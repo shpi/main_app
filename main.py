@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+import logging
+import os
 import signal
 import sys
-from os import environ
 from pathlib import Path
 from logging import getLogger
 from typing import Dict, Optional, Any
@@ -13,21 +13,24 @@ from PySide2.QtGui import QFont, QFontDatabase
 from PySide2.QtQml import QQmlApplicationEngine
 
 from interfaces.MainApp import MainAppBase
-from core.Logger import qt_message_handler, log_model
+from core.Logger import qt_message_handler, log_model, get_logging_level
 from modules.ModuleManager import Modules
+
 
 # Qt resources
 import qtres
 
 logger = getLogger(__name__)
 
-if environ.get("QMLDEBUG") not in (None, "0"):
+if get_logging_level() <= logging.DEBUG:
     from PySide2.QtQml import QQmlDebuggingEnabler
     debug = QQmlDebuggingEnabler()
 
+SCRIPT_PATH = Path(sys.argv[0]).parent.resolve()
+
 
 class MainApp(MainAppBase):
-    applicationDirPath = Path(sys.argv[0]).parent.resolve()
+    applicationDirPath = SCRIPT_PATH
 
     _main_instance: Optional["MainApp"] = None
 
@@ -81,6 +84,9 @@ class MainApp(MainAppBase):
 
 
 if __name__ == '__main__':
+    # Change working directory to location of main.py or executable
+    os.chdir(SCRIPT_PATH)
+
     # Create main app
     app = MainApp()
 
@@ -89,8 +95,8 @@ if __name__ == '__main__':
 
     # Run event loop
     exec_returncode = app.exec_()
-    print("mainloop exited")
     # main app exited.
+    print("mainloop exited")
 
     app.unload()
     del app

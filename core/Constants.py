@@ -15,11 +15,11 @@ from modules.CPU import CPU
 # from hardware.System import SystemInfo
 # from core.Git import Git
 # from modules.HTTPServer import HTTPServer
-# from interfaces.DemoModules import DemoThreadModule, EndlessThreadModule
+from interfaces.DemoModules import DemoThreadModule, EndlessThreadModule, DemoModule
 
 # Other imports
 import inspect
-from typing import Set, Type, Tuple
+from typing import Set, Type
 
 from interfaces.Module import ModuleBase
 
@@ -37,8 +37,7 @@ def external_modules() -> Set[Type[ModuleBase]]:
     return set()
 
 
-def always_preload_modules() -> Tuple[Type[ModuleBase]]:
-    return Appearance,
+always_instantiate_modules = Appearance, CPU, DemoModule,
 
 
 GIT_CLONE_PATH = 'https://github.com/shpi/main_app'

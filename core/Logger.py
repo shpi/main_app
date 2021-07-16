@@ -1,11 +1,31 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from os import environ
+import sys
 from typing import Any, Union
 
 from PySide2 import QtCore
 from PySide2.QtCore import Qt, QModelIndex, QAbstractListModel, Slot
+
+
+def get_logging_level() -> int:
+    if "DEBUG" in sys.argv:
+        return logging.DEBUG
+
+    if "INFO" in sys.argv:
+        return logging.INFO
+
+    if "WARNING" in sys.argv:
+        return logging.WARNING
+
+    if "ERROR" in sys.argv:
+        return logging.INFO
+
+    if "CRITICAL" in sys.argv:
+        return logging.CRITICAL
+
+    # Default
+    return logging.WARNING
 
 
 class LogModel(QAbstractListModel):
@@ -73,7 +93,7 @@ class QtWarningHandler(logging.Handler):
     def __init__(self, model, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.model = model
-        self.setLevel(logging.WARNING)
+        self.setLevel(get_logging_level())
 
     def emit(self, record):
         self.format(record)
@@ -88,8 +108,8 @@ qt_warning_handler = QtWarningHandler(log_model)
 
 
 logging.basicConfig(
-    level=logging.DEBUG if environ.get("DEBUG") not in (None, "0") else logging.WARNING,
-    format='%(asctime)s.%(msecs)03d %(module)s - [%(threadName)s] %(funcName)s: %(message)s',
+    level=get_logging_level(),
+    format='%(asctime)s.%(msecs)03d %(levelname)s @%(threadName)s [%(module)s:%(funcName)s()]: %(message)s',
     datefmt='%d.%m. %H:%M:%S',
     handlers=[
         logging.StreamHandler(),

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Property Export</title>
+<meta charset="utf-8">
+<style>
+/* Remove default bullets */
+ul, #myUL {list-style-type: none; }
+
+/* Remove margins and padding from the parent ul */
+#myUL {margin: 0; padding: 0; }
+
+/* Style the caret/arrow */
+.caret {
+  cursor: pointer;
+  -webkit-user-select: none; /* Safari 3.1+ */
+  -moz-user-select: none; /* Firefox 2+ */
+  -ms-user-select: none; /* IE 10+ */
+  user-select: none; /* Prevent text selection */
+}
+
+/* Create the caret/arrow with a unicode, and style it */
+.caret::before {
+  content: "\25B6";
+  color: black;
+  display: inline-block;
+  margin-right: 6px;
+  margin-top: 10px;
+}
+
+/* Rotate the caret/arrow icon when clicked on (using JavaScript) */
+.caret-down::before {
+  -ms-transform: rotate(90deg); /* IE 9 */
+  -webkit-transform: rotate(90deg); /* Safari */'
+  transform: rotate(90deg);
+}
+
+/* Hide the nested list */
+.nested {display: none; }
+
+/* Show the nested list when the user clicks on the caret/arrow (with JavaScript) */
+.active {display: block; }
+
+/* Text styles */
+span {font-size: medium}
+.classname {color: darkgreen; font-family: monospace; }
+.path {color: mediumblue; font-family: monospace; }
+.propertydict { color: darkslategray; }
+.root {font-weight: bold; }
+.desc {color: gray; font-size: smaller; }
+
+li.property {
+  margin-bottom: 16px;
+}
+
+p.property::before {
+  content: "\27A5";
+  font-size: larger;
+}
+
+.propertyname {
+  color: darkviolet;
+  background: lightgray;
+  font-size: larger;
+  font-family: monospace;
+}
+
+/*.persistent {color: gray; font-size: medium;} */
+.datatype {color: gray; font-size: medium; }
+
+.value {
+  color: black;
+  background: lightgrey;
+  font-size: large;
+  font-weight: bold;
+  font-family: monospace;
+  margin-left: 6px;
+}
+
+.defaultvalue {
+  color: gray;
+  font-size: medium;
+}
+
+.function {
+  color: darkslategray;
+  background: lightgray;
+  font-weight: bold;
+  font-family: monospace;
+}
+
+.error {
+  color: brown;
+  background: #fbb;
+}
+
+</style>
+</head>
+
+<body>
+<h2>Properties</h2>
+<ul id="myUL">
+  {nested}
+</ul>
+<script>
+var toggler = document.getElementsByClassName("caret");
+var i;
+
+for (i = 0; i < toggler.length; i++) {
+  toggler[i].addEventListener("click", function() {
+    this.parentElement.querySelector(".nested").classList.toggle("active");
+    this.classList.toggle("caret-down");
+  });
+}
+</script>
+</body>
+</html>

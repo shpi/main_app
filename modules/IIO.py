@@ -6,7 +6,7 @@ from functools import partial
 from pathlib import Path
 from typing import Generator
 
-import hardware.iio as iio
+import core.iio as iio
 from interfaces.DataTypes import DataType
 from interfaces.Module import ModuleBase
 from interfaces.PropertySystem import ModuleInstancePropertyDict, FunctionProperty
@@ -17,7 +17,7 @@ class IIO(ModuleBase):
 
     allow_maininstance = True
     allow_instances = False
-    description = 'CPU info'
+    description = 'IIO access'
     categories = 'Sensors', 'Temperature', 'Hardware'
 
     _iio_devices_path = Path('/sys/bus/iio/devices')

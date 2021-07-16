@@ -14,7 +14,7 @@ from time import time
 
 from interfaces.DataTypes import DataType
 from interfaces.Module import ModuleBase, IgnoreModuleException
-from interfaces.PropertySystem import Property, PropertyDict, ModuleInstancePropertyDict
+from interfaces.PropertySystem import Property, PropertyDict, ModuleInstancePropertyDict, ROProperty
 from core.Toolbox import thread_kill, Pipe
 
 logger = getLogger(__name__)
@@ -43,14 +43,14 @@ class EvTypes(Enum):
 
 
 def id_from_id_match(m: Match) -> str:
-    return ''.join(m.group(x) for x in range(4))
+    return ''.join(m.groups())
 
 
 class KeyProperty(Property):
     KEY_DOWN = object()
     KEY_UP = object()
 
-    _eventids = {KEY_DOWN, KEY_UP}
+    _eventids = {KEY_DOWN, KEY_UP, Property.UPDATED, Property.UPDATED_AND_CHANGED}
 
     UNPRESSED = 0
     PRESSED = 1
@@ -97,13 +97,20 @@ class InputDeviceProperty(Property):
     _systembits = calcsize('P') * 8  # 16 byte for 32bit,  24 for 64bit
 
     def __init__(self, desc: str, ev_int: int, handler: str, keymap: str):
+        if ev_int is None:
+            ev_int = 0
+        self._ev: Set[EvTypes] = {ev for ev in EvTypes if ev_int & (2 ** ev.value)}
+        self._devpath = Path(f'/dev/input/{handler}')
+        self._thread: Optional[Thread] = None
+        self._stoppipe: Optional[Pipe] = None
+        self._is_mouse = bool({EvTypes.EV_ABS, EvTypes.EV_REL}.intersection(self._ev))
+
         self._pr_use = Property(DataType.BOOLEAN, True, desc='Use this input device')
         self._pr_keymap = InputDeviceKeymapProperty(keymap)
-        self._pd_keymap: PropertyDict = self._value
 
-        self._pr_last_key = Property(DataType.STRING, desc='Key of last input', persistent=False)
-        self._pr_last_input = Property(DataType.TIMESTAMP, desc='Timestamp of last keypress', persistent=False)
-        self._pr_last_touch = Property(DataType.TIMESTAMP, desc='Timestamp of last touch', persistent=False)
+        self._pr_last_key = Property(DataType.STRING, desc='Key of last input', )  # persistent=False)
+        self._pr_last_input = Property(DataType.TIMESTAMP, desc='Timestamp of last keypress', )  # persistent=False)
+        self._pr_last_touch = Property(DataType.TIMESTAMP, desc='Timestamp of last touch', )  # persistent=False)
 
         pd = PropertyDict(
             use_device=self._pr_use,
@@ -111,6 +118,9 @@ class InputDeviceProperty(Property):
             last_key=self._pr_last_key,
             last_input=self._pr_last_input,
             last_touch=self._pr_last_touch,
+            dev_path=ROProperty(DataType.STRING, str(self._devpath)),
+            is_mouse=ROProperty(DataType.BOOLEAN, self._is_mouse),
+            EV=ROProperty(DataType.LIST_OF_STRINGS, [ev.name for ev in self._ev]),
         )
 
         Property.__init__(
@@ -120,16 +130,8 @@ class InputDeviceProperty(Property):
             desc=desc
         )
 
-        self._ev = {ev for ev in EvTypes if ev_int & (2 ** ev.value)}
-        self._devpath = Path(f'/dev/input/{handler}')
-        self._thread: Optional[Thread] = None
-        self._stoppipe: Optional[Pipe] = None
-        self._is_mouse = bool({EvTypes.EV_ABS, EvTypes.EV_REL}.intersection(self._ev))
-
     def load(self):
         self._pr_use.events.subscribe(self._use_changed, Property.UPDATED)
-        # self._pr_last_input.events.subscribe(self._last_input_changed, Property.UPDATED_AND_CHANGED)
-        # self._pr_last_touch.events.subscribe(self._last_touch_changed, Property.UPDATED_AND_CHANGED)
         super().load()
 
     def unload(self):
@@ -138,7 +140,6 @@ class InputDeviceProperty(Property):
 
         del self._pr_use
         del self._pr_keymap
-        del self._pd_keymap
         del self._pr_last_key
         del self._pr_last_input
         del self._pr_last_touch
@@ -148,11 +149,11 @@ class InputDeviceProperty(Property):
     def _use_changed(self, prop):
         newstate = self._pr_use.value
 
-        if (prop is not None and newstate) == (self._thread and self._thread.is_alive()) or False:
+        if (prop is not None and newstate) == ((self._thread and self._thread.is_alive()) or False):
             # State satisfied.
             return
 
-        if newstate:
+        if newstate and prop is not None:
             # New pipe
             self._stoppipe = Pipe()
             # New thread
@@ -160,12 +161,14 @@ class InputDeviceProperty(Property):
             # Run
             self._thread.start()
         else:
-            self._stoppipe.write(b'X')
-            self._thread.join(1.)
-            if self._thread.is_alive():
-                # Graceful exit did not work.
-                if not thread_kill(self._thread, 5):  # Fallback and timeout
-                    logger.error('Could not kill thread of: %r', self)
+            if self._stoppipe:
+                self._stoppipe.write(b'X')
+            if self._thread and self._thread.is_alive():
+                self._thread.join(1.)
+                if self._thread.is_alive():
+                    # Graceful exit did not work.
+                    if not thread_kill(self._thread, 5):  # Fallback and timeout
+                        logger.error('Could not kill thread of: %r', self)
 
     @property
     def use_device(self) -> bool:
@@ -177,11 +180,11 @@ class InputDeviceProperty(Property):
 
     def devloop(self):
         try:
-            logger.debug('Starting devloop on %s', self._devpath)
+            logger.info('Starting devloop on %s', str(self._devpath))
             self._devloop()
-            logger.debug('Stopped devloop on %s', self._devpath)
+            logger.info('Stopped devloop on %s', str(self._devpath))
         except Exception as e:
-            logger.error('Exception occured during devloop of device %s: %s', self._devpath, e)
+            logger.error('Exception occured during devloop of device %s: %s', self._devpath, e, exc_info=True)
 
     def _devloop(self):
         read_size = 16 if self._systembits == 32 else 24
@@ -191,7 +194,7 @@ class InputDeviceProperty(Property):
         pr_last_touch = self._pr_last_touch
         pr_last_input = self._pr_last_input
         pr_last_key = self._pr_last_key
-        pd_keymap = self._pd_keymap
+        pd_keymap = self._pr_keymap.value
 
         logger.debug(f'start reading: %s', self._devpath)
         with self._devpath.open('rb') as fd:
@@ -219,15 +222,16 @@ class InputDeviceProperty(Property):
 
                 # Unpack struct
                 timestamp, _id, evtype, keycode, value = unpack('llHHI', event)
-
-                if evtype != 1:
-                    # type 1 = key, we watch only keys!
-                    continue
+                # print(keycode, value, evtype)
 
                 if ismouse:
                     pr_last_touch.value = time()
                 else:
                     pr_last_input.value = time()
+
+                if evtype != 1:
+                    # type 1 = key, we watch only keys!
+                    continue
 
                 keycode = str(keycode)
                 pr_last_key.value = keycode
@@ -245,7 +249,7 @@ class InputDevs(ModuleBase):
     description = "Manages input devices"
     allow_maininstance = True
     allow_instances = False
-    categories = ()
+    categories = 'Hardware', 'Input'
 
     _INFOFILE = Path('/proc/bus/input/devices')
 
@@ -255,8 +259,8 @@ class InputDevs(ModuleBase):
 
         ModuleBase.__init__(self, parent=parent, instancename=instancename)
 
-        self._pr_last_input = Property(DataType.TIMESTAMP, desc='Timestamp of last keypress', persistent=False)
-        self._pr_last_touch = Property(DataType.TIMESTAMP, desc='Timestamp of last touch', persistent=False)
+        self._pr_last_input = Property(DataType.TIMESTAMP, desc='Timestamp of last keypress', )  # persistent=False)
+        self._pr_last_touch = Property(DataType.TIMESTAMP, desc='Timestamp of last touch', )  # persistent=False)
 
         self._pd_available_devices = PropertyDict()
 
@@ -274,15 +278,18 @@ class InputDevs(ModuleBase):
         self._check_inputdev_file()
 
     def unload(self):
+        self.properties.unload()  # todo: persistent: save_now
+
         del self._pr_last_input
         del self._pr_last_touch
         del self._pd_available_devices
+        # ToDo: vor unload_modules alle subscriptions leeren?
 
     def _last_input_changed(self, prop):
-        pass
+        self._pr_last_input.value = time()
 
     def _last_touch_changed(self, prop):
-        pass
+        self._pr_last_touch.value = time()
 
     def _check_inputdev_file(self):
         found: Set[str] = set()
@@ -295,6 +302,7 @@ class InputDevs(ModuleBase):
             keymap = None
 
             for line in file:
+                line = line.strip()
                 match_idline = _re_id.fullmatch(line)
                 # Next device?
                 if match_idline:

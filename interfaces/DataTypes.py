@@ -5,7 +5,7 @@ from enum import Enum
 from datetime import datetime, date, time
 from re import compile
 
-from hardware.iio import ChannelType
+from core.iio import ChannelType
 
 _re_time_str = compile(r'(2[0-3]|[01]?[0-9]):([0-5]?[0-9])')
 

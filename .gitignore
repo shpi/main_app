@@ -20,6 +20,7 @@ main.bin
 settings.ini
 keymap/keymap
 keymap/keymap.o
+properties_export.html
 
 # Other
 *.log

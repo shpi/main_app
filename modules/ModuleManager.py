@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 
 from logging import getLogger
-from typing import Optional, Dict, Any, Union, Type, Iterable, List
+from typing import Optional, Dict, Any, Union, Type, Iterable, List, Set
 
 from PySide2.QtCore import Property as QtProperty, Signal, Slot
 from PySide2.QtQml import QQmlApplicationEngine
 
 from core.Settings import settings, new_settings_instance
-from core.Constants import internal_modules, external_modules, always_preload_modules
+from core.Constants import internal_modules, external_modules, always_instantiate_modules
+
 from interfaces.Module import ModuleBase, ThreadModuleBase
 from interfaces.PropertySystem import Property, PropertyDict, PropertyAccess, ModuleInstancePropertyDict, \
-    properties_start, properties_stop
+    properties_start, properties_stop, propertydict_to_html
 from interfaces.DataTypes import DataType
 from core.Module import Module, ThreadModule
 from core.Logger import LogCall
@@ -38,6 +39,69 @@ def map_class_categories(classes: Iterable[Type[ModuleBase]]) -> Dict[str, List[
     return out
 
 
+def trace_module_dependencies(module: Type[ModuleBase], all_available_modules: Set[Type[ModuleBase]], _level=0) -> Optional[Set[Type[ModuleBase]]]:
+    if _level > 10:
+        logger.error('Too many recursive dependency checks for Module %s', str(module))
+        return None
+
+    result: Set[Type[ModuleBase]] = set()
+
+    for dep in module.depends_on:
+        if dep not in all_available_modules:
+            logger.error('Unknown dependency %s for Module %s', str(dep), str(module))
+            return None
+
+        # This dependency is well known. Check its dependencies
+        deplist = trace_module_dependencies(dep, all_available_modules, _level+1)
+        if deplist is None:
+            # At least one dependency failed. Break recursion.
+            return None
+
+        # Add this modules dependency and their dependencies.
+        result.update(set(module.depends_on))
+        result.update(deplist)
+
+    # Finished and success
+    return result
+
+
+def extend_dependencies(minimal_modules_set: Set[Type[ModuleBase]], all_available_modules: Set[Type[ModuleBase]]):
+    for dep_module in minimal_modules_set.copy():
+        extra_deps = trace_module_dependencies(dep_module, all_available_modules)
+        if extra_deps is None:
+            # Fail
+            logger.error('This Module has missing dependencies and will be skipped: %s', str(dep_module))
+            minimal_modules_set.remove(dep_module)
+        else:
+            # Success. Add extra dependencies if they are detected and not yet in to-load list.
+            minimal_modules_set.update(extra_deps)
+
+
+def get_loadorder(to_load: Set[Type[ModuleBase]]) -> List[Type[ModuleBase]]:
+    remaining = to_load.copy()
+    ordered: List[Type[ModuleBase]] = []
+
+    while remaining:  # At least one element to process
+        # Fetch satisfied module classes based on current load order state which are ready to load
+        next_candidates = set(remainder for remainder in remaining if set(remainder.depends_on).issubset(ordered))
+
+        if not next_candidates:
+            # No more modules to process
+            break
+
+        # Append next_candidated to load order
+        ordered.extend(next_candidates)
+
+        # Remove processed modules from queue
+        remaining -= next_candidates
+
+    if remaining:
+        # At least one module cannot be loaded because of missing, conflicting or circular dependencies.
+        logger.error('These Moduls can\'t be loaded because of missing, conflicting or circular dependencies: %s', str(remaining))
+
+    return ordered
+
+
 class Modules(ModuleBase):
     """
     "Modules" module which interfaces with Module class for qml
@@ -52,10 +116,6 @@ class Modules(ModuleBase):
 
     modules_changed = Signal()
     categories_changed = Signal()
-
-    all_modules_classes = internal_modules() | external_modules()
-    all_modules_classes_by_str = map_classes(all_modules_classes)
-    module_categories = map_class_categories(all_modules_classes)
 
     _root_properties = PropertyDict.root(allowcreate=True)
 
@@ -76,6 +136,11 @@ class Modules(ModuleBase):
             raise ValueError('"Modules" module has already been instantiated.')
 
         ModuleBase.__init__(self, parent=parent, instancename=instancename)
+
+        self.all_modules_classes = internal_modules() | external_modules()
+        self.all_modules_classes.add(self.__class__)  # Append us lately to avoid circular imports
+        self.all_modules_classes_by_str = map_classes(self.all_modules_classes)
+        self.module_categories = map_class_categories(self.all_modules_classes)
 
         self.mainapp = parent
 
@@ -107,35 +172,59 @@ class Modules(ModuleBase):
         self.add_module_properties(self)
         self.add_module_contextproperties(self)
 
-        # Load other modules which are always loaded or are saved in settings
+        # Find modules to be loaded.
 
-        to_load = set(settings.childGroups()) | set(m.__name__ for m in always_preload_modules())
-        logger.info("Adding modules now: %s", str(to_load))
+        # Modules referenced in settings
+        config_modules_set: Set[Type[ModuleBase]] = set()
+        for config_module_str in settings.childGroups():  # type: str
+            mcls = self.all_modules_classes_by_str.get(config_module_str)
+            if mcls is None:
+                logger.warning('Unknown Module class referenced in settings: "%s". Skipping.', config_module_str)
+            else:
+                config_modules_set.add(mcls)
 
-        for classname in to_load:
-            # Iterate over top level settings which contain the settings for modules and their instances
-            cls = self.all_modules_classes_by_str.get(classname)
-            if cls is None:
-                # Unknown class or not available anymore.
+        # Combine referenced and static modules
+        to_load: Set[Type[ModuleBase]] = config_modules_set | set(always_instantiate_modules)
+
+        logger.info("Modules to load: %s", str(to_load))
+
+        # Add dependencies recursively which are not in the to_load set yet.
+        extend_dependencies(to_load, self.all_modules_classes)
+
+        logger.info("Modules to load with dependencies: %s", str(to_load))
+
+        # Oder Module classes by their dependencies.
+        to_load_ordered = get_loadorder(to_load)
+        logger.info("Modules to load, ordered: %s", str(to_load_ordered))
+
+        # Instantiate all Modules in correct order
+        for mcls in to_load_ordered:
+            if mcls is self.__class__:
+                # We're already instantiated.
                 continue
 
-            if cls.allow_maininstance and not cls.allow_instances:
-                # Only a main instance expected
-                if settings.value(f'{classname}/__load', True):
-                    self.add_module_instance(cls)
+            classname = mcls.__name__
 
-            elif cls.allow_instances() and not cls.allow_maininstance():
+            if mcls.allow_maininstance and not mcls.allow_instances:
+                # Only a main instance expected
+                if settings.bool(f'{classname}/__load', True):
+                    self.add_module_instance(mcls)
+
+            elif mcls.allow_instances and not mcls.allow_maininstance:
                 # Iterate over instances
                 instance_settings = new_settings_instance(classname)
                 for instancename in instance_settings.childGroups():
-                    if instance_settings.value(f'{instancename}/__load', True):
-                        self.add_module_instance(cls, instancename)
+                    if instance_settings.bool(f'{instancename}/__load', True):
+                        self.add_module_instance(mcls, instancename)
             else:
                 # ToDo
                 pass
 
-        # Call load() in correct ordner on still unloaded modules
+        # Call load() in correct order on still unloaded modules
         Module.load_modules()
+
+        logger.debug('Done loading modules. Writing properties_export.html.')
+        propertydict_to_html(self._root_properties)
 
     def add_module_instance(self, class_or_class_str: Union[Type[ModuleBase], str], instancename: str = None):
         if type(class_or_class_str) is str:
@@ -244,12 +333,13 @@ class Modules(ModuleBase):
         logcall(properties_stop)
 
         del cls._root_properties
-        del cls.all_modules_classes
-        del cls.all_modules_classes_by_str
 
     def unload(self):
         del self.mainapp
         del self.qmlengine
+        del self.all_modules_classes
+        del self.all_modules_classes_by_str
+        del self.module_categories
 
     @QtProperty('QVariantMap', notify=categories_changed)
     def categories_dict(self) -> Dict[str, List[str]]:

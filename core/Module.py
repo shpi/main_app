@@ -64,10 +64,15 @@ class Module:
         if not issubclass(module_class, ModuleBase):
             raise TypeError('Given module_class is not a subclass of ModuleBase:' + str(module_class))
 
-        logger.info('Creating Module instance %s of %s', instancename, module_class.__name__)
+        logger.info('Creating Module instance %s', module_class.__name__ + ('.' + instancename if instancename else ''))
         self.module_class = module_class
 
         # Check instancing policy with instancename
+
+        if module_class.allow_maininstance == module_class.allow_instances:
+            logger.error('For now, exactly one attribute must be set to True: allow_maininstance OR allow_instances. '
+                         'Module: %s', str(module_class))
+
         if instancename is None:
             if not module_class.allow_maininstance:
                 raise NotImplementedError(
@@ -168,7 +173,7 @@ class Module:
         # Remove instance
         self.module_instance = None
 
-        logger.info('Destroyed module instance %s of %s', self.module_instancename, clsstr)
+        logger.info('Destroyed module instance %s ', clsstr + ('.' + self.module_instancename if self.module_instancename else ''))
 
     def __repr__(self):
         return f'<Module {self.module_class.__name__}[{self.module_instancename}]>'
