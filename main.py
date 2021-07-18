@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import faulthandler
 import logging
 import os
 import signal
 import sys
+import threading
 from pathlib import Path
 from logging import getLogger
 from typing import Dict, Optional, Any
@@ -16,6 +18,7 @@ from interfaces.MainApp import MainAppBase
 from core.Logger import qt_message_handler, log_model, get_logging_level
 from modules.ModuleManager import Modules
 
+faulthandler.enable()
 
 # Qt resources
 import qtres
@@ -103,5 +106,9 @@ if __name__ == '__main__':
 
     if exec_returncode:
         logger.warning('Exiting mainapp with code: %s', exec_returncode)
+
+    for t in tuple(threading.enumerate()):
+        if t is not threading.current_thread():
+            logger.warning("Remaining Thread: %s", t.name)
 
     sys.exit(exec_returncode)

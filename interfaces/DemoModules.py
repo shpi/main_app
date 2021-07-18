@@ -6,9 +6,9 @@ from interfaces.PropertySystem import Property, ModuleInstancePropertyDict
 
 
 class DemoModule(ModuleBase):
-    allow_maininstance = True
-    allow_instances = False
-    description = "Demo thread module"
+    allow_maininstance = False
+    allow_instances = True
+    description = "Demo thread module (multi instances)"
     categories = "Demo",
 
     def __init__(self, parent, instancename: str = None):
@@ -19,7 +19,7 @@ class DemoModule(ModuleBase):
         )
 
     def load(self):
-        print("Loading...")
+        print("Loading another instance...")
 
     def unload(self):
         print("Unload called")
@@ -35,10 +35,10 @@ class DemoThreadModule(ThreadModuleBase):
         ThreadModuleBase.__init__(self, parent=parent, instancename=instancename)
 
     def load(self):
-        print("Loading...")
+        print("Loading module", self.modulename(), self.instancename())
 
     def unload(self):
-        print("Unload called")
+        pass
 
     def run(self):
         print("Start thread")

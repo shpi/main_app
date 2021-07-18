@@ -44,14 +44,14 @@ from logging import getLogger
 from typing import Optional, Union, Any, Callable, Iterable, Dict, ValuesView, ItemsView, KeysView, Generator, Set, \
     Type, List, Tuple
 from time import time, sleep
-from threading import Lock, RLock, Thread
+from threading import RLock, Thread
 from re import compile
 from contextlib import suppress
 from enum import EnumMeta
 from pathlib import Path
 from html import escape
 
-from PySide2.QtCore import Property as QtProperty, Signal, QObject
+from PySide2.QtCore import Property as QtProperty, Signal, QObject, Slot, QAbstractListModel, Qt, QModelIndex
 
 from interfaces.DataTypes import DataType
 from core.Events import EventManager
@@ -68,6 +68,10 @@ _valid_key = compile(r"[a-zA-Z0-9_]+")
 
 
 class PropertyEvent:
+    """
+    Dummy class which just provides a verbose repr value.
+    Instances are singleton tokens and are checked by identity directly.
+    """
     __slots__ = '_name',
 
     def __init__(self, name_for_repr: str):
@@ -287,7 +291,7 @@ class PropertyDict:
         if isinstance(self.parentproperty, Property):
             return f"<{self.__class__.__name__} key='{self.parentproperty.key}' ({len(self._data)} elements)>"
 
-        return f"{self.__class__.__name__} ORPHAN ({len(self._data)} elements)"
+        return f"<{self.__class__.__name__} ORPHAN ({len(self._data)} elements)>"
 
     def load(self):
         if self._loaded:
@@ -383,6 +387,86 @@ class PersistentPropertyDict(PropertyDict):
         # load() should have set a value which also should be saved now.
 
 
+class PropertiesByDataTypeModel(QAbstractListModel):
+    PathRole = Qt.UserRole + 1000
+    IDRole = Qt.UserRole + 1001
+    ValueRole = Qt.UserRole + 1002
+    DefaultValueRole = Qt.UserRole + 1003
+    DescriptionRole = Qt.UserRole + 1004
+    TypeRole = Qt.UserRole + 1005
+    PersistentRole = Qt.UserRole + 1006
+
+    _rolenames = {
+        PathRole: b"path",
+        IDRole: b"id",
+        ValueRole: b"value",
+        DefaultValueRole: b"default",
+        DescriptionRole: b"description",
+        TypeRole: b"datatype",
+        PersistentRole: b"persistent",
+    }
+
+    def __init__(self, for_datatype: DataType, parent: QObject = None):
+        QAbstractListModel.__init__(self, parent=parent)
+        self._datatype = for_datatype
+        self._matching_properties: List[Property] = []
+
+    def index_valid(self, index: QModelIndex) -> bool:
+        return 0 <= index.row() < self.rowCount() and index.isValid()
+
+    def data(self, index: QModelIndex, role: int = Qt.DisplayRole):
+        if not self.index_valid(index):
+            return None
+
+        row = index.row()
+        prop = self._matching_properties[row]
+
+        try:
+            if role == self.PathRole:
+                return prop.path
+            elif role == self.ValueRole:
+                return prop.value
+            elif role == self.DefaultValueRole:
+                return prop.default_value
+            elif role == self.DescriptionRole:
+                return prop.desc
+            elif role == self.TypeRole:
+                if prop.datatype is None:
+                    return None
+                return prop.datatype.name
+            elif role == self.PersistentRole:
+                return prop.is_persistent
+
+        except Exception as e:
+            logger.error('Exception on fetching data in SelectPropertyByDataTypeModel: %s', repr(e))
+
+    def add(self, prop: "Property"):
+        self._matching_properties.append(prop)
+        index = self.index(len(self._matching_properties)-1)
+        self.dataChanged.emit(index, index, [])
+
+    def remove(self, prop: "Property"):
+        pos = self._matching_properties.index(prop)
+        try:
+            index_start = self.index(pos)
+        except RuntimeError:
+            # App shutdown
+            return
+
+        index_stop = self.index(len(self._matching_properties)-1)
+
+        self._matching_properties.remove(prop)
+        self.dataChanged.emit(index_start, index_stop, [])
+
+    def rowCount(self, parent=QModelIndex()):
+        if parent.isValid():
+            return 0
+        return len(self._matching_properties)
+
+    def roleNames(self):
+        return self._rolenames
+
+
 class Property:  # QObject
     """
     Defines a simple property with an initial value of any type.
@@ -393,14 +477,16 @@ class Property:  # QObject
     Properties may contain another sub PropertyDicts.
     """
 
-    __slots__ = "_value", "parentdict", "_path", "_id", "desc", "_lock", "_valuepool", "_event_manager", \
-                "_datatype", "_is_persistent", "_default_value", "_loaded", "_key", "_native_datatype", "_changetime"
+    __slots__ = '_value', 'parentdict', '_path', '_id', 'desc', '_lock', '_valuepool', '_event_manager', \
+                '_datatype', '_is_persistent', '_default_value', '_loaded', '_key', '_native_datatype', '_savetime'
 
-    _classlock = Lock()  # For incrementing instance counters
+    _classlock = RLock()  # For incrementing instance counters
     _last_id = 0
     _instances_by_id: Dict[int, "Property"] = {}
     _changed_properties: Set["Property"] = set()
     _changed_properties_save_timeout = 5.
+
+    _models: Dict[str, QAbstractListModel] = {}
 
     # For storing meta information beyond the persistent value of the property.
     namespace_sep = ':'
@@ -413,25 +499,6 @@ class Property:  # QObject
     _check_unsaved_changes_thread: Optional[Thread] = None
 
     @classmethod
-    def quit(cls):
-        if cls._check_unsaved_changes_thread is None:
-            return
-
-        for p in cls._changed_properties:
-            # Schedule immediate save
-            p._changetime = None
-
-        cls._run_save_thread = False
-
-        if cls._check_unsaved_changes_thread.is_alive():
-            try:
-                cls._check_unsaved_changes_thread.join(2)
-            except Exception as e:
-                logger.error("Error in Property.quit: %s", e)
-
-        cls._check_unsaved_changes_thread = None
-
-    @classmethod
     def init_class(cls):
         if cls._run_save_thread:
             raise RuntimeError('Save thread already running.')
@@ -440,23 +507,61 @@ class Property:  # QObject
         cls._check_unsaved_changes_thread.start()
 
     @classmethod
+    def quit(cls):
+        for p in cls._changed_properties.copy():
+            # immediate save
+            cls._save_now(p)
+
+        cls._run_save_thread = False
+
+        if cls._check_unsaved_changes_thread is None:
+            return
+
+        if cls._check_unsaved_changes_thread.is_alive():
+            try:
+                cls._check_unsaved_changes_thread.join(2)
+            except Exception as e:
+                logger.error('Error in Property.quit: %s', e)
+
+        cls._check_unsaved_changes_thread = None
+
+    @classmethod
     def check_unsaved(cls):
         # ToDo: Better solution
         while cls._run_save_thread:
             sleep(1)
-
             if cls._changed_properties:
-                for p in cls._changed_properties.copy():  # type: Property
-                    if p._changetime is None or time() >= p._changetime + Property._changed_properties_save_timeout:
-                        logger.debug("Saving property %s=%s", str(p.path), str(p._value))
-                        p.save_setting(p._value, p._datatype, ensure_path_absolute=False)
-                        p._changetime = None
-                        cls._changed_properties.discard(p)
+                now = time()
+                with cls._classlock:
+                    for p in tuple(cls._changed_properties):
+                        if p._savetime is None or now >= p._savetime:
+                            cls._save_now(p)
+
+    @classmethod
+    def _save_now(cls, prop: "Property"):
+        with cls._classlock:
+            if prop in cls._changed_properties:
+                logger.info('Saving property %s=%s', str(prop.path), str(prop._value))
+                prop.save_setting(prop._value, prop._datatype, ensure_path_absolute=False)
+                prop._savetime = None
+                cls._changed_properties.discard(prop)
 
     @classmethod
     def get_by_id(cls, pr_id: int) -> Optional["Property"]:
         # Speedup accessing by id instead of paths. Usecase in http, mqtt etc.
         return cls._instances_by_id.get(pr_id)
+
+    @classmethod
+    def get_datatype_model(cls, for_datatype: DataType, create=True, exception=True) \
+            -> Optional[PropertiesByDataTypeModel]:
+        key = 'datatype:' + for_datatype.name
+        model = cls._models.get(key)
+        if model is None:
+            if create:
+                model = cls._models[key] = PropertiesByDataTypeModel(for_datatype)
+            elif exception:
+                raise KeyError('No model found for datatype: ' + str(for_datatype))
+        return model
 
     def __init__(
             self,
@@ -482,11 +587,11 @@ class Property:  # QObject
         self._key: Optional[str] = None  # Cache attribute
         self._path: Optional[str] = None  # Cache attribute
         self.desc: Optional[str] = desc
-        self.parentdict: Optional[PropertyDict] = None  # ToDo: Use QObject.parent only?
+        self.parentdict: Optional[PropertyDict] = None
         self._valuepool = valuepool
         # print("evid:", self.__class__, self._eventids)
         self._event_manager: Optional[EventManager] = EventManager(self, self._eventids) if self._eventids else None
-        self._changetime: Optional[float] = None
+        self._savetime: Optional[float] = None
 
         if datatype is DataType.PROPERTYDICT or isinstance(initial_value, PropertyDict):
             # This Property contains a subordinal PropertyDict.
@@ -532,6 +637,11 @@ class Property:  # QObject
             # Collect all instances
             Property._instances_by_id[self._id] = self
 
+            # Create/update model
+            if self._datatype not in {DataType.UNDEFINED, DataType.PROPERTYDICT, DataType.ENUM}:
+                model = self.get_datatype_model(self._datatype)
+                model.add(self)
+
     @property
     def id(self) -> int:
         """Temporary numeric id of property. May change on next program run. Do not hard rely on that."""
@@ -567,11 +677,11 @@ class Property:  # QObject
         if self._loaded:
             return
         self.ensure_path_absolute()  # Should be now!
+
+        self._loaded = True
         self.load_value(ensure_path_absolute=False)  # For persistent values or sub property dicts
 
         # Load other attributes: logging, exposed...
-
-        self._loaded = True
 
     def load_value(self, ensure_path_absolute=True, setvalue=True):
         if ensure_path_absolute:
@@ -633,6 +743,10 @@ class Property:  # QObject
 
     @value.setter
     def value(self, newvalue: Any):
+        if not self._loaded:
+            # May be called by a different thread a little bit later after unload() has been called.
+            return
+
         if self._datatype is DataType.PROPERTYDICT:
             raise ValueError('Setting a new value on a Property containing a PropertyDict is not allowed.')
 
@@ -663,9 +777,9 @@ class Property:  # QObject
                     logger.error('Could not save new value of Property because path is not yet defined: %r', self)
                     return
 
-                # Mark as unsaved
-                self._changetime = time()
-                Property._changed_properties.add(self)
+                # Schedule save
+                self._changed_properties.add(self)
+                self._savetime = time() + self._changed_properties_save_timeout
 
     @property
     def key(self) -> Optional[str]:
@@ -710,12 +824,23 @@ class Property:  # QObject
         return newpath
 
     def unload(self):
+        logcall(self._save_now, self)  # If in unsaved list
+
         if self._event_manager:
             self._event_manager.unload()
-            del self._event_manager
+            self._event_manager = None
 
         if isinstance(self._value, PropertyDict):
             logcall(self._value.unload, errmsg="Exception during unloading nested PropertyDict: %s", stack_trace=True)
+
+        if not self._loaded:
+            return
+
+        if self._datatype not in {DataType.UNDEFINED, DataType.PROPERTYDICT, DataType.ENUM}:
+            # Remove from model
+            model = self.get_datatype_model(self._datatype, create=False, exception=False)
+            if model:
+                model.remove(self)
 
         del self._value
         del self.parentdict
@@ -728,18 +853,23 @@ class Property:  # QObject
         if self._id in self._instances_by_id:
             self._instances_by_id.pop(self._id)
         else:
-            logger.warning("My id was not found in _instances_by_id for removal.")
+            logger.warning('My id was not found in _instances_by_id for removal.')
+
+        self._loaded = False
 
     def __repr__(self):
+        if not self._loaded:
+            return f'<{self.__class__.__name__} (not loaded)>'
+
         ret = f"<{self.__class__.__name__} key='{self.key}', type={self._datatype}, default={self._default_value}, desc='{self.desc}'"
 
         if self.parentdict is not None:
-            ret += f", bound to {self.parentdict!r}"
+            ret += f', bound to {self.parentdict!r}'
 
         if self._is_persistent:
-            ret += ", persistent"
+            ret += ', persistent'
 
-        return ret + ">"
+        return ret + '>'
 
     def __contains__(self, key: str):
         return key in self.value
@@ -1112,6 +1242,16 @@ class IntervalProperty(Property):
 
             self._event.reschedule(next_event)
 
+    def load(self):
+        super().load()
+
+        if not self._is_persistent:
+            # Need a manual reschedule because non persistent properties don't trigger the setter.
+            v = self.value
+            if v:
+                now = datetime.datetime.now()
+                self._event.reschedule(now, float(v))
+
     @property
     def value(self) -> Any:
         return self._value
@@ -1171,6 +1311,7 @@ class TimeoutProperty(IntervalProperty):
         newvalue = None if newvalue is None else float(newvalue)
         Property.value.__set__(self, newvalue)
         if self._event.on_time:
+            # Is running
             self.restart()
 
     @property
@@ -1185,18 +1326,20 @@ class StringListProperty(Property):
 
     def __init__(
             self,
-            initial_value: List[str] = None,
+            initial_value: Iterable[str] = None,
             unique=False,
             desc: str = None,
             persistent=True,
     ):
+        self.unique = unique
+
         if initial_value is None:
             initial_value = []
 
-        self.unique = unique
-
         if unique:
             initial_value = list(set(initial_value))
+        else:
+            initial_value = list(initial_value)
 
         Property.__init__(self, datatype=DataType.LIST_OF_STRINGS, initial_value=initial_value, desc=desc, persistent=persistent)
 
@@ -1253,6 +1396,9 @@ class StringListProperty(Property):
 
     @property
     def value(self) -> Any:
+        """
+        A tuple is returned because the internal list should not be modified by a direct list access.
+        """
         return tuple(self._value)
 
     @value.setter
@@ -1265,21 +1411,26 @@ class StringListProperty(Property):
             if not isinstance(old, list):
                 old = ()
 
-            Property.value.fset(self, newvalue)
+            Property.value.fset(self, list(newvalue))
 
             # ToDo: merge changes
             if self._event_manager:
-                for olds in old:
-                    self._event_manager.emit(self.REMOVED, olds)
+                for old_item in old:
+                    self._event_manager.emit(self.REMOVED, old_item)
 
-                for news in newvalue:
-                    self._event_manager.emit(self.ADDED, news)
+                for new_item in newvalue:
+                    self._event_manager.emit(self.ADDED, new_item)
 
                 self._event_manager.emit(self.UPDATED)
                 self._event_manager.emit(self.UPDATED_AND_CHANGED)
 
 
 class ModuleInstancePropertyDict(PropertyDict):
+    """
+    This subclass of PropertyDict adds some standard properties which are used to store meta settings for a module.
+    """
+
+    # These categories always exists even if not module instance is part of it.
     static_categories = "Home", "All"
 
     active_categories: List[Tuple[str, List[str]]] = [(cat, []) for cat in static_categories]
@@ -1349,7 +1500,10 @@ class ModuleInstancePropertyDict(PropertyDict):
 
 class QtPropLink(QtProperty):
     """
-    Mapping for class level Qt-Properties to instance-properties
+    Mapping for class level Qt-Properties to instance level properties.
+    Result is a Property (QtCore.Property) which can access a Property (interfaces.PropertySystem.Property).
+    When choosing and calling QtPropLink (or subclasses) from Qt/qml, the referenced Properties must exist.
+    Module instances may have different Properties.
     """
     def __init__(self, datatype, path: str, notify: Signal = None):
         """
@@ -1434,8 +1588,12 @@ class PropertyAccess(QObject):
         QObject.__init__(self, parent)
         self._pd = propertydict
 
-    def getDataTypeModel(self):
-        pass
+    @Slot(str, result=QObject)
+    def get_properties_by_datatype_model(self, datatype: str):
+        dt = DataType.str_to_type(datatype)
+        if dt is DataType.UNDEFINED:
+            raise ValueError('DataType unknown: ' + repr(datatype))
+        return Property.get_datatype_model(dt)
 
 
 def properties_start():
@@ -1472,14 +1630,14 @@ if _html_template_file.is_file():
 else:
     _html_template = KwReplace('{nested}')
 
-_html_property = '{level}<li id="{id}" class="property"><p class="property">{nested}</p></li>'
+_html_property = '\n{level}<li id="{id}" class="property"><p class="property">{nested}</p></li>'
 
 
 def _export_prop(prop: Property, level=0):
     try:
         value = escape(str(prop.value))
     except Exception as e:
-        value = '<span class="error">[' + escape(str(e)) + ']</span>'
+        value = '<span class="error">[' + escape(repr(e)) + ']</span>'
 
     value2 = ''
 
@@ -1492,7 +1650,7 @@ def _export_prop(prop: Property, level=0):
     if isinstance(prop, FunctionProperty):
         value2 = '<br>\n' + ('  ' * level) + '<span class="function">' + escape(str(prop.func)) + '</span>, maxage=' + escape(str(prop.maxage))
 
-    additional = '<br>\n' + ('  ' * level) + (' <span class="persistent">persistent</span>, ' if prop.is_persistent else '') + \
+    additional = '<br>\n' + ('  ' * level) + ('<span class="persistent">persistent</span>, ' if prop.is_persistent else '') + \
                  'default: <span class="value defaultvalue">' + \
                  escape(str(prop.default_value)) + '</span>' + value2 + '<br>\n' + ('  ' * level) + '<span class="datatype">' + escape(prop.datatype.name) + '</span> <span class="value">' + value + '</span>'
 
@@ -1504,8 +1662,10 @@ def _export_prop(prop: Property, level=0):
     return _html_property.format(id='property_' + str(prop.id), nested=nested, level='  ' * level)
 
 
-_html_propertydict = '{level}<li id="{id}"><span class="caret">{name}</span><ul class="nested">\n' \
-                     '{nested}</ul>\n' \
+_html_propertydict = '{level}<li id="{id}"><span class="caret">{name}</span>\n' \
+                     '{level}<ul class="nested">\n' \
+                     '{nested}' \
+                     '{level}</ul>\n' \
                      '{level}</li>'
 
 

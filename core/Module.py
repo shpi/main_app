@@ -18,9 +18,9 @@ logcall = LogCall(logger)
 
 
 class ModuleInstancesViewer(ModuleInstancesView):
-    def __init__(self, module_class: Type[ModuleBase], content_dict: dict):
+    def __init__(self, module_class: Type[ModuleBase], content_dict: Dict[Optional[str], ModuleBase]):
         self._class = module_class
-        self._instances: Dict[Optional[str], ModuleBase] = content_dict
+        self._instances = content_dict
 
     def __getitem__(self, instancename: Optional[str]) -> ModuleBase:
         return self._instances[instancename]
@@ -31,6 +31,12 @@ class ModuleInstancesViewer(ModuleInstancesView):
     def __iter__(self) -> Iterator[Optional[str]]:
         return iter(self._instances)
 
+    def values(self) -> Iterator[ModuleBase]:
+        return iter(self._instances.values())
+
+    def keys(self) -> Iterator[Optional[str]]:
+        return iter(self._instances)
+
 
 class Module:
     """
@@ -38,7 +44,7 @@ class Module:
     """
     modules_classes: Dict[str, Type[ModuleBase]] = {}
     instancesviewer_by_cls: Dict[str, ModuleInstancesViewer] = {}
-    instancesdict_by_cls: Dict[str, Dict[Optional[str], "Module"]] = {}
+    instancesdict_by_cls: Dict[str, Dict[Optional[str], ModuleBase]] = {}
     instances_in_loadorder: List["Module"] = []
 
     __slots__ = 'module_class', 'running', 'module_instancename', 'module_instance', 'loaded'
@@ -55,7 +61,7 @@ class Module:
         """
         Call load() in correct order on unloaded modules.
         """
-        # ToDo: Loadorder etc.
+
         for m in cls.instances_in_loadorder:
             if not m.loaded and m.module_instance is not None:
                 m.load()
@@ -114,25 +120,29 @@ class Module:
             logger.error('Module instance of %s denies instantiation: %s', clsstr, e)
             return
 
-        # Link functions and accessors to the module instance
-        self.module_instance.instancename = lambda: self.module_instancename
-        self.module_instance.modulename = lambda: clsstr  # ToDo: test
+        except Exception as e:
+            logger.error('Exception during init of %s with instancename %s: %s', clsstr, str(instancename), repr(e), exc_info=True)
+            return
 
         # Lookup instance dict for specific subclass type
-        viewer = Module.instancesviewer_by_cls.get(clsstr)
         instances = Module.instancesdict_by_cls.get(clsstr)
+        viewer = Module.instancesviewer_by_cls.get(clsstr)
 
         if viewer is None:
             # It's the first instance of that module subclass.
             instances = Module.instancesdict_by_cls[clsstr] = {}
             viewer = Module.instancesviewer_by_cls[clsstr] = ModuleInstancesViewer(module_class, instances)
-            module_class.instances = viewer
+            module_class.instances = lambda cls: viewer
 
-        if instancename in viewer:
+        elif instancename in viewer:
             raise ValueError(f"There is already an instancename of {instancename!s} for class {clsstr}")
 
+        # Link functions and accessors to the module instance
+        self.module_instance.instancename = lambda: self.module_instancename
+        self.module_instance.modulename = lambda: clsstr
+
         # Store new instance by instancename
-        instances[instancename] = self
+        instances[instancename] = self.module_instance
 
         Module.instances_in_loadorder.append(self)
 
@@ -168,7 +178,7 @@ class Module:
         clsstr = self.module_class.__name__
 
         instances = Module.instancesdict_by_cls[clsstr]
-        instances.pop(self.module_instancename)
+        del instances[self.module_instancename]
 
         # Remove instance
         self.module_instance = None

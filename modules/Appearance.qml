@@ -378,9 +378,12 @@ Item {
 
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: 600
-                model: inputs.typeList
+                model: properties.get_properties_by_datatype_model('TIME_STR')
                 textRole: 'path'
-                onActivated: appearance.night_mode_start_select = this.currentText
+                valueRole: 'path'
+                onActivated: appearance.night_mode_start_select = this.currentValue
+                Component.onCompleted: this.currentIndex = indexOfValue(appearance.night_mode_start_select)
+                // currentIndex: appearance.night_mode === "DynamicTimeRange" ? indexOfValue(appearance.night_mode_start_select) : -1
             }
 
             ComboBox {
@@ -394,9 +397,12 @@ Item {
                 }
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: 600
-                model: inputs.typeList
+                model: properties.get_properties_by_datatype_model('TIME_STR')
                 textRole: 'path'
-                onActivated: appearance.night_mode_end_select = this.currentText
+                valueRole: 'path'
+                onActivated: appearance.night_mode_end_select = this.currentValue
+                // currentIndex: appearance.night_mode === "DynamicTimeRange" ? indexOfValue(appearance.night_mode_end_select) : -1
+                Component.onCompleted: this.currentIndex = indexOfValue(appearance.night_mode_end_select)
             }
 
             Text {
@@ -521,8 +527,8 @@ Item {
         }
     }
 
-    Component.onCompleted: {
-        inputs.set_typeList('time')
+    /* Component.onCompleted: {
+        // inputs.set_typeList('time')
 
         if (appearance.night_mode === "DynamicTimeRange") {
             combo_night_mode_end.currentIndex = getIndex(
@@ -530,5 +536,5 @@ Item {
             combo_night_mode_start.currentIndex = getIndex(
                         appearance.night_mode_start_select, inputs.typeList)
         }
-    }
+    } */
 }

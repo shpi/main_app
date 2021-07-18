@@ -170,7 +170,7 @@ class MLX90615(ThreadModuleBase):  # Non Thread?
                 file.write_text('1')
 
         except Exception as e:
-            logging.error('Cannot activate IIO scan channels for MLX' + str(e), exc_info=True)
+            logging.error('Cannot activate IIO scan channels for MLX: %s', repr(e), exc_info=True)
 
     def single_shot(self, channel='in_temp_object_raw') -> int:
         channel_file = self.ospath / channel
@@ -219,4 +219,4 @@ class MLX90615(ThreadModuleBase):  # Non Thread?
 
                     self.buffer_enable(True)
                 except Exception as e:
-                    logging.error(str(e), exc_info=True)
+                    logging.error(repr(e), exc_info=True)

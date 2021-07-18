@@ -151,7 +151,10 @@ class Modules(ModuleBase):
         self.add_module_contextproperties(parent)
 
         # self.properties = ModuleInstancePropertyDict()
-        ModuleInstancePropertyDict.changed_callback = lambda: self.categories_changed.emit()
+        ModuleInstancePropertyDict.changed_callback = self.categories_changed_emit
+
+    def categories_changed_emit(self):
+        self.categories_changed.emit()
 
     def qml_context_properties(self) -> Optional[Dict[str, Any]]:
         return {
@@ -186,16 +189,16 @@ class Modules(ModuleBase):
         # Combine referenced and static modules
         to_load: Set[Type[ModuleBase]] = config_modules_set | set(always_instantiate_modules)
 
-        logger.info("Modules to load: %s", str(to_load))
+        logger.info("Modules to load: %s", str([m.__name__ for m in to_load]))
 
         # Add dependencies recursively which are not in the to_load set yet.
         extend_dependencies(to_load, self.all_modules_classes)
 
-        logger.info("Modules to load with dependencies: %s", str(to_load))
+        logger.info("Modules to load with dependencies: %s", str([m.__name__ for m in to_load]))
 
         # Oder Module classes by their dependencies.
         to_load_ordered = get_loadorder(to_load)
-        logger.info("Modules to load, ordered: %s", str(to_load_ordered))
+        logger.info("Modules to load, ordered: %s", str([m.__name__ for m in to_load_ordered]))
 
         # Instantiate all Modules in correct order
         for mcls in to_load_ordered:
@@ -217,13 +220,14 @@ class Modules(ModuleBase):
                     if instance_settings.bool(f'{instancename}/__load', True):
                         self.add_module_instance(mcls, instancename)
             else:
-                # ToDo
+                logger.error('For now, only one attribute (allow_maininstance or allow_instances)'
+                             ' may set to True: %s', str(mcls))
                 pass
 
         # Call load() in correct order on still unloaded modules
         Module.load_modules()
 
-        logger.debug('Done loading modules. Writing properties_export.html.')
+        logger.info('Done loading modules. Writing properties_export.html.')
         propertydict_to_html(self._root_properties)
 
     def add_module_instance(self, class_or_class_str: Union[Type[ModuleBase], str], instancename: str = None):
@@ -327,7 +331,6 @@ class Modules(ModuleBase):
 
     @classmethod
     def shutdown(cls):
-        print("shutdown")
         logcall(Module.unload_modules)
 
         logcall(properties_stop)

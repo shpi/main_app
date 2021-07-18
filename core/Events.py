@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from logging import getLogger
+import sys
 import inspect
+from logging import getLogger
 from typing import NoReturn, Callable, Any, Dict, Iterable, Union, Tuple
 from threading import Event, Lock
-from functools import partial
-
 
 logger = getLogger(__name__)
 
@@ -50,8 +49,7 @@ class EventManager:
 
         elif argcount == 0:  # Function has no arguments and does not care about source object
             # Wrap function
-            event_dict[fnc] = lambda x: partial(fnc)
-
+            event_dict[fnc] = lambda x: fnc()
         else:
             raise ValueError("Function in fnc must provide either one or none arguments.")
 
@@ -72,19 +70,22 @@ class EventManager:
             return
 
         event_dict = self._emit_fncs[eventid]
-        try:
-            self._is_emitting[eventid] = True
-            for fnc in tuple(event_dict.values()):  # Original Dict may get changed during calling events
-                try:
-                    if value is None:
-                        fnc(self._source)
-                    else:
-                        fnc(self._source, value)
-                except Exception as e:
-                    logger.error('Exception while calling event %s during calling function %r which'
-                                 ' has subscribed for %r: %s', eventid, fnc, self._source, e)
-        finally:
-            self._is_emitting[eventid] = False
+
+        with self._lock:
+            try:
+                self._is_emitting[eventid] = True
+                for origfnc, fnc in event_dict.items():  # Original Dict may get changed during calling events
+                    try:
+                        if value is None:
+                            fnc(self._source)  # here
+                        else:
+                            fnc(self._source, value)
+                    except Exception as e:
+                        logger.error('Exception while calling event %s during calling function %r which'
+                                     ' has subscribed for %r: %s',
+                                     eventid, fnc, self._source, e, exc_info='STACKTRACE' in sys.argv)
+            finally:
+                self._is_emitting[eventid] = False
 
         e = self._waitable_events.get(eventid)
         if e:
@@ -111,6 +112,9 @@ class EventManager:
                 event = self._waitable_events[eventid] = Event()
 
         return event.wait(timeout)
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__} of {self._source!r}: {self._emit_fncs}>'
 
     def unload(self):
         del self._source

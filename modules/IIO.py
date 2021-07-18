@@ -198,8 +198,7 @@ class IIO(ModuleBase):
                                 IIO.write_iio, dev.id, path)
 
                         except Exception as e:
-                            logging.error('error iio: ' + str(e))
-                            pass
+                            logging.error('error iio: %s', repr(e))
 
                 if raw is not None:
                     self.properties[f'{dev.name}/{channel.id}'].value = (float(raw) + float(offset)) * float(scale)

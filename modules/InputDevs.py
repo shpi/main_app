@@ -108,9 +108,9 @@ class InputDeviceProperty(Property):
         self._pr_use = Property(DataType.BOOLEAN, True, desc='Use this input device')
         self._pr_keymap = InputDeviceKeymapProperty(keymap)
 
-        self._pr_last_key = Property(DataType.STRING, desc='Key of last input', )  # persistent=False)
-        self._pr_last_input = Property(DataType.TIMESTAMP, desc='Timestamp of last keypress', )  # persistent=False)
-        self._pr_last_touch = Property(DataType.TIMESTAMP, desc='Timestamp of last touch', )  # persistent=False)
+        self._pr_last_key = Property(DataType.STRING, desc='Key of last input', persistent=False)
+        self._pr_last_input = Property(DataType.TIMESTAMP, desc='Timestamp of last keypress', persistent=False)
+        self._pr_last_touch = Property(DataType.TIMESTAMP, desc='Timestamp of last touch', persistent=False)
 
         pd = PropertyDict(
             use_device=self._pr_use,
@@ -136,7 +136,7 @@ class InputDeviceProperty(Property):
 
     def unload(self):
         # Stop thread if running
-        self._use_changed(None)
+        self._use_changed(None)  # Stop the thread
 
         del self._pr_use
         del self._pr_keymap
@@ -204,6 +204,10 @@ class InputDeviceProperty(Property):
                 r, _, _ = select.select(read_fds, (), ())
 
                 if stop_fd in r:
+                    self._stoppipe.read(8)  # To read and clear the buffer
+
+                    if input_fd in r:
+                        fd.read(2048)  # To read and clear the buffer
                     break
 
                 if input_fd not in r:
@@ -259,8 +263,8 @@ class InputDevs(ModuleBase):
 
         ModuleBase.__init__(self, parent=parent, instancename=instancename)
 
-        self._pr_last_input = Property(DataType.TIMESTAMP, desc='Timestamp of last keypress', )  # persistent=False)
-        self._pr_last_touch = Property(DataType.TIMESTAMP, desc='Timestamp of last touch', )  # persistent=False)
+        self._pr_last_input = Property(DataType.TIMESTAMP, desc='Timestamp of last keypress', persistent=False)
+        self._pr_last_touch = Property(DataType.TIMESTAMP, desc='Timestamp of last touch', persistent=False)
 
         self._pd_available_devices = PropertyDict()
 
@@ -278,12 +282,12 @@ class InputDevs(ModuleBase):
         self._check_inputdev_file()
 
     def unload(self):
-        self.properties.unload()  # todo: persistent: save_now
+        # Early unload of properties to clear subscriptions.
+        self.properties.unload()
 
         del self._pr_last_input
         del self._pr_last_touch
         del self._pd_available_devices
-        # ToDo: vor unload_modules alle subscriptions leeren?
 
     def _last_input_changed(self, prop):
         self._pr_last_input.value = time()

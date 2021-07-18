@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import sys
 from typing import List, Optional
 from datetime import datetime, date, time
 
@@ -26,6 +27,9 @@ class Settings(QSettings):
             float: self.setfloat,
             list: self.setlist,
         }
+
+        if 'NOSAVE' in sys.argv:
+            self.setValue = lambda x, y: None
 
     # ---- get functions
 

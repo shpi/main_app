@@ -159,5 +159,5 @@ class LogCall:
             ret = func(*args, **kwargs)
             return ret
         except catch_exceptions as e:
-            self._logger.error(errmsg, e, exc_info=stack_trace)
+            self._logger.error(errmsg, repr(e), exc_info=stack_trace or 'STACKTRACE' in sys.argv)
             return e

@@ -13,11 +13,8 @@ WorkingDirectory=/home/pi/qmlui
 StandardOutput=inherit
 StandardError=inherit
 Restart=always
-User=root
+User=pi
+SupplementaryGroups=input
 
 [Install]
 WantedBy=multi-user.target
-
-
-
-

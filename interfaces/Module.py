@@ -15,19 +15,11 @@ class IgnoreModuleException(BaseException):
     """
 
 
-# class ModuleCategories(Enum):
-#    _INTERNAL = auto()  # Hide this module in module manager
-#    _AUTOLOAD = auto()  # Automatically loads this internal module
-#    LOGIC = auto()
-#    HARDWARE = auto()
-#    INFO = auto()
-#    UI = auto()
-#    USER_MODULE = auto()
-
-
 class ModuleBase(QObject, FakeABC):
     """
     Minimal base class for each Module that can be used in the main app.
+
+    Choose a unique and descriptive class name for your modules.
     """
 
     # Optionally provide a sequence of depending ModuleBase classes.
@@ -45,22 +37,21 @@ class ModuleBase(QObject, FakeABC):
 
         The instancename must not be saved and may be aqcuired by calling self.instancename() later.
 
-        Each module instance should create a new ModuleInstancePropertyDict containing its Properties.
-        Do not read or write from Properties during __init__ because it's path and dependencies are not ready.
+        Each module instance should add its properties into self.properties, which is an pre instantiated
+         ModulePropertyDict. You may also overwrite self.properties with your own PropertyDict based instance.
 
-        Save the populated ModuleInstancePropertyDict instance into self.properties.
-        You may access properties by self.properties["propname"] later or additionally save specific properties into
+        Do not read or write from any properties during __init__ because it's path and dependencies are not ready.
+
+        You may access properties by self.properties['propname'] later or additionally save specific properties into
         'self' directly for speedups.
         """
 
         FakeABC.__init__(self)  # Manual check for matching all abstract base classes.
         QObject.__init__(self, parent)
 
-        # Create at least an empty one.
-        # Modify this attribute in __init__: Extend it or replace it with a prefilled one.
+        # Pre create an empty ModuleInstancePropertyDict.
+        # Handle this attribute in your __init__(): Extend it or replace it with a prefilled one.
         self.properties = ModuleInstancePropertyDict()
-
-        # TODO: app reference?
 
     @classmethod
     def available(cls) -> bool:
@@ -77,21 +68,21 @@ class ModuleBase(QObject, FakeABC):
         This function is only available after completing __init__.
         During __init__, use given argument "instancename".
         """
-        raise NotImplementedError("Function called too early. Don't use it in __init__.")
+        raise NotImplementedError('Function called too early. Don\'t use it in __init__.')
 
     def modulename(self) -> str:
         """
         modulename refers to class name of module.
         This function is only available after completing __init__.
         """
-        raise NotImplementedError("Function called too early. Don't use it in __init__.")
+        raise NotImplementedError('Function called too early. Don\'t use it in __init__.')
 
     @classmethod
     def instances(cls) -> "ModuleInstancesView":
         """
         Module class's instance view which contains all loaded instances of the specific class.
         """
-        raise NotImplementedError("Function called too early. Don't use it in __init__.")
+        raise NotImplementedError('Function called too early. Don\'t use it in __init__.')
 
     @abstractmethod  # Means REQUIRED. A module must specify this attribute as a function.
     def load(self):
@@ -154,6 +145,17 @@ class ModuleBase(QObject, FakeABC):
 
     def qml_context_properties(self) -> Optional[Dict[str, Any]]:
         return None
+
+    def __repr__(self):
+        try:
+            instancename = self.instancename()
+        except NotImplementedError:
+            instancename = "not set"
+
+        if instancename:
+            return f'<{self.__class__.__name__}[{instancename}]>'
+        else:
+            return f'<{self.__class__.__name__}>'
 
 
 class ModuleInstancesView(Mapping):

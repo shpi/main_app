@@ -44,3 +44,9 @@ Then add the user to that group (and relogin): `sudo usermod -aG input pi`
 
 ### Wifi
 TODO
+
+
+## ToDos
+- segfault analysis (qt problem)
+- Property models for use in qml
+- mqtt

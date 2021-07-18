@@ -34,10 +34,11 @@ def internal_modules() -> Set[Type[ModuleBase]]:
 
 
 def external_modules() -> Set[Type[ModuleBase]]:
+    # ToDo find external classes and check duplicated names
     return set()
 
 
-always_instantiate_modules = Appearance, CPU, DemoModule,
+always_instantiate_modules = Appearance, CPU
 
 
 GIT_CLONE_PATH = 'https://github.com/shpi/main_app'

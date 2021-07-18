@@ -154,7 +154,7 @@ class DataType(Enum):
     }
 
     _valid_check = {
-        # ToDo
+        # ToDo: use validity checks
         TIME_STR: _re_time_str.fullmatch,
         PERCENT_FLOAT: lambda x: 0. <= x <= 100.,
         PERCENT_INT: lambda x: x in range(101),

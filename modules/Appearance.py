@@ -12,7 +12,7 @@ from interfaces.DataTypes import DataType
 from interfaces.PropertySystem import PropertyDict, QtPropLink, Property, IntervalProperty, TimeoutProperty, \
     SelectProperty, QtPropLinkEnum, QtPropLinkSelect, ModuleInstancePropertyDict
 from interfaces.Module import ModuleBase
-from modules.InputDevs import InputDeviceProperty, InputDevs  # ToDo: central import
+from modules.InputDevs import InputDeviceProperty, InputDevs
 
 
 logger = getLogger(__name__)
@@ -185,11 +185,12 @@ class Appearance(ModuleBase):
             self._epd_all_devices: PropertyDict = alldevs.value
             # Tell qml about available inputdev changes
             try:
-                alldevs.events.subscribe(lambda: self.available_input_devices_changed.emit(), PropertyDict.CHANGED)
+                pass
+                # todo: alldevs.events.subscribe(lambda: self.available_input_devices_changed.emit(), PropertyDict.CHANGED)
             except Exception as e:
                 ev = self.available_input_devices_changed.emit
-                logger.error('Could not subscribe available_input_devices_changed: %s', str(e), exc_info=True)
-                print("ev:", ev, type(ev))
+                logger.error('Could not subscribe available_input_devices_changed: %s', repr(e), exc_info=True)
+                print("ev:", ev, type(ev))  # todo: remove
 
             # Trigger reload
             self.available_input_devices_changed.emit()
@@ -257,6 +258,7 @@ class Appearance(ModuleBase):
 
     def _check_night_active(self):
         # Called by: night_mode_changed, start/end ranges, update()
+
         night_mode = self._pr_night_mode.value
 
         if night_mode in (NightModes.Off, NightModes.On):

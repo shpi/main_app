@@ -144,6 +144,9 @@ class Pipe:
     def write(self, data: bytes):
         os.write(self.write_fd, data)
 
+    def read(self, size=0):
+        os.read(self.read_fd, size)
+
     def __del__(self):
         os.close(self.read_fd)
         os.close(self.write_fd)
