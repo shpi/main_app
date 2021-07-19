@@ -185,7 +185,6 @@ class PropertyDict:
         :param key: Simple key string "myproperty" or a path "sublist.myproperty" relative to this instance.
         :return: Found Property or KeyError
         """
-
         if type(key) is int:
             key = str(key)
 
@@ -285,13 +284,15 @@ class PropertyDict:
             yield f'{path}{self.path_sep}{key}'
 
     def __repr__(self):
+        loaded_status = '' if self._loaded else ' not loaded'
+
         if self.is_root:
-            return f"<{self.__class__.__name__} ROOT ({len(self._data)} elements)>"
+            return f"<{self.__class__.__name__} ROOT ({len(self._data)} elements{loaded_status})>"
 
         if isinstance(self.parentproperty, Property):
-            return f"<{self.__class__.__name__} key='{self.parentproperty.key}' ({len(self._data)} elements)>"
+            return f"<{self.__class__.__name__} key='{self.parentproperty.key}' ({len(self._data)} elements{loaded_status})>"
 
-        return f"<{self.__class__.__name__} ORPHAN ({len(self._data)} elements)>"
+        return f"<{self.__class__.__name__} ORPHAN ({len(self._data)} elements{loaded_status})>"
 
     def load(self):
         if self._loaded:
@@ -303,16 +304,18 @@ class PropertyDict:
         self._loaded = True
 
     def unload(self):
-        for prop in self._data.values():
-            if isinstance(prop, Property):
-                logcall(prop.unload, errmsg="Exception on unloading Property: %s")
+        if self._data:
+            for prop in self._data.values():
+                if isinstance(prop, Property):
+                    logcall(prop.unload, errmsg="Exception on unloading Property: %s")
 
-        self._data.clear()
-        del self._data
+            self._data.clear()
+        self._data = None
 
         if isinstance(self.parentproperty, Property):
             self.parentproperty._value = None  # remove me there
         self.parentproperty = None
+        self._loaded = False
 
 
 class PersistentPropertyDict(PropertyDict):
@@ -593,6 +596,13 @@ class Property:  # QObject
         self._event_manager: Optional[EventManager] = EventManager(self, self._eventids) if self._eventids else None
         self._savetime: Optional[float] = None
 
+        with Property._classlock:
+            # Unique numeric ID for fast access and easier identification
+            self._id = Property._last_id = Property._last_id + 1
+
+            # Collect all instances
+            Property._instances_by_id[self._id] = self
+
         if datatype is DataType.PROPERTYDICT or isinstance(initial_value, PropertyDict):
             # This Property contains a subordinal PropertyDict.
             self._is_persistent = False  # Force
@@ -630,17 +640,10 @@ class Property:  # QObject
                     enum = type(initial_value)
                     self._valuepool = {e: e.value for e in enum}
 
-        with Property._classlock:
-            # Unique numeric ID for fast access and easier identification
-            self._id = Property._last_id = Property._last_id + 1
-
-            # Collect all instances
-            Property._instances_by_id[self._id] = self
-
-            # Create/update model
-            if self._datatype not in {DataType.UNDEFINED, DataType.PROPERTYDICT, DataType.ENUM}:
-                model = self.get_datatype_model(self._datatype)
-                model.add(self)
+        # Create/update model
+        if self._datatype not in {DataType.UNDEFINED, DataType.PROPERTYDICT, DataType.ENUM}:
+            model = self.get_datatype_model(self._datatype)
+            model.add(self)
 
     @property
     def id(self) -> int:
@@ -842,7 +845,7 @@ class Property:  # QObject
             if model:
                 model.remove(self)
 
-        del self._value
+        self._value = None
         del self.parentdict
         del self._path
         del self._valuepool
@@ -858,8 +861,7 @@ class Property:  # QObject
         self._loaded = False
 
     def __repr__(self):
-        if not self._loaded:
-            return f'<{self.__class__.__name__} (not loaded)>'
+        loaded_status = '' if self._loaded else ' not loaded'
 
         ret = f"<{self.__class__.__name__} key='{self.key}', type={self._datatype}, default={self._default_value}, desc='{self.desc}'"
 
@@ -869,7 +871,7 @@ class Property:  # QObject
         if self._is_persistent:
             ret += ', persistent'
 
-        return ret + '>'
+        return ret + f'{loaded_status}>'
 
     def __contains__(self, key: str):
         return key in self.value
@@ -884,7 +886,9 @@ class Property:  # QObject
         self.value[key] = value
 
     def __bool__(self):
-        return bool(self.value)
+        # Always true. Not relevant to value for safety.
+        # Allows: "if self._pr_myproperty:" shortcut.
+        return True
 
     def __len__(self):
         return len(self.value)
@@ -892,8 +896,8 @@ class Property:  # QObject
     def __iter__(self):
         return iter(self.value)
 
-    def __str__(self):
-        return str(self.value)
+    # def __str__(self):
+    #    return str(self.value)
 
 
 class SelectProperty(Property):
@@ -1202,7 +1206,7 @@ class IntervalProperty(Property):
 
     def __init__(
             self,
-            callback_func,
+            callback_func: Callable[[], None],
             default_interval=1.,
             desc: str = None,
             persistent_interval=True,
@@ -1273,7 +1277,7 @@ class TimeoutProperty(IntervalProperty):
 
     def __init__(
             self,
-            timeout_func,
+            timeout_func: Callable[[], None],
             default_timeout=1.,
             desc: str = None,
             persistent_timeout=True,
@@ -1505,6 +1509,8 @@ class QtPropLink(QtProperty):
     When choosing and calling QtPropLink (or subclasses) from Qt/qml, the referenced Properties must exist.
     Module instances may have different Properties.
     """
+    connect = True
+
     def __init__(self, datatype, path: str, notify: Signal = None):
         """
         :param datatype: Datatype in Qt format
@@ -1526,15 +1532,21 @@ class QtPropLink(QtProperty):
         # ToDo: Property-Changes -> Qt-Notify
 
     def f_get(self, modinst):
+        if not self.connect:
+            return
+
         prop: Property = modinst.properties[self._path]
 
         # Return bare value
         return prop.value
 
     def f_set(self, modinst, newvalue):
+        if not self.connect:
+            return
+
         # Get signal from parent which has the emit function.
         prop: Property = modinst.properties[self._path]
-
+        # ToDo: enum no change emit (enum vs. str)
         changed = prop.value != newvalue
         prop.value = newvalue
 
@@ -1551,6 +1563,9 @@ class QtPropLinkEnum(QtPropLink):
     """
 
     def f_get(self, modinst):
+        if not self.connect:
+            return
+
         prop: Property = modinst.properties[self._path]
         # Convert Enum to str for Qml
         return prop.value.name
@@ -1564,12 +1579,18 @@ class QtPropLinkSelect(QtPropLink):
     Ability to get or set the path of an SelectProperty
     """
     def f_get(self, modinst):
+        if not self.connect:
+            return
+
         prop: SelectProperty = modinst.properties[self._path]
 
         # Qml uses path only
         return prop.selected_path
 
     def f_set(self, modinst, newvalue):
+        if not self.connect:
+            return
+
         # Get signal from parent which has the emit function.
         prop: SelectProperty = modinst.properties[self._path]
 
@@ -1584,6 +1605,8 @@ class QtPropLinkSelect(QtPropLink):
 
 
 class PropertyAccess(QObject):
+    data_changed = Signal()
+
     def __init__(self, parent, propertydict: PropertyDict):
         QObject.__init__(self, parent)
         self._pd = propertydict
@@ -1595,10 +1618,20 @@ class PropertyAccess(QObject):
             raise ValueError('DataType unknown: ' + repr(datatype))
         return Property.get_datatype_model(dt)
 
+    @QtProperty(QObject, notify=data_changed)
+    def get_sortfilter_model(self):
+        self.completelist.filter = None
+        return self.completelist
+
 
 def properties_start():
     logcall(Property.init_class)
     logcall(IntervalProperty.init_class)
+
+
+def properties_early_stop():
+    ModuleInstancePropertyDict.changed_callback = None
+    QtPropLink.connect = False
 
 
 def properties_stop():
@@ -1607,7 +1640,7 @@ def properties_stop():
 
     root = PropertyDict.root()
     if root is not None:
-        logcall(root.unload)
+        logcall(root.unload, errmsg='Error during unloading all properties: %s')
 
 
 class KwReplace:
@@ -1640,6 +1673,7 @@ def _export_prop(prop: Property, level=0):
         value = '<span class="error">[' + escape(repr(e)) + ']</span>'
 
     value2 = ''
+    loaded_status = '' if prop._loaded else ' <span class="error">NOT LOADED!</span>'
 
     if isinstance(prop, SelectProperty):
         value2 = '<br>\n' + ('  ' * level) + 'Allowed DataType: ' + ("All" if prop.expected_datatype is None else '<span class="datatype">' + escape(prop.expected_datatype.name) + '</span>')
@@ -1654,7 +1688,7 @@ def _export_prop(prop: Property, level=0):
                  'default: <span class="value defaultvalue">' + \
                  escape(str(prop.default_value)) + '</span>' + value2 + '<br>\n' + ('  ' * level) + '<span class="datatype">' + escape(prop.datatype.name) + '</span> <span class="value">' + value + '</span>'
 
-    nested = '<span class="propertyname">' + escape(str(prop.key)) + '</span> ' \
+    nested = '<span class="propertyname">' + escape(str(prop.key)) + f'{loaded_status}</span> ' \
              '<span class="classname">[' + escape(prop.__class__.__name__) + ']</span> ' \
              '<span class="path">\'' + escape(str(prop.path)) + '\'</span> ' \
              '<span class="desc">' + escape(str(prop.desc)) + '</span>' + additional
@@ -1670,12 +1704,14 @@ _html_propertydict = '{level}<li id="{id}"><span class="caret">{name}</span>\n' 
 
 
 def _export_pd(pd: PropertyDict, level=0) -> str:
+    loaded_status = '' if pd._loaded else ' <span class="error">NOT LOADED!</span>'
+
     if pd.is_root:
         pd_id = 'root'
-        name = '<span class="propertydict root">ROOT</span>'
+        name = f'<span class="propertydict root">ROOT{loaded_status}</span>'
     else:
         pd_id = 'property_' + str(pd.parentproperty.id)
-        name = '<span class="propertydict">' + escape(pd.parentproperty.key) + '</span>'
+        name = '<span class="propertydict">' + escape(pd.parentproperty.key) + f'{loaded_status}</span>'
 
     name += ' <span class="classname">[' + escape(pd.__class__.__name__) + ']</span> <span class="path">' + escape(str(pd.path)) + '</span>'
 
@@ -1691,6 +1727,10 @@ def _export_pd(pd: PropertyDict, level=0) -> str:
     return _html_propertydict.format(id=pd_id, name=name, nested=nested, level='  ' * level)
 
 
-def propertydict_to_html(pd: PropertyDict):
+def propertydict_to_html(pd: PropertyDict, dest: Path = None):
     data = _html_template.format(nested=_export_pd(pd))
-    _html_export_file.write_text(data)
+
+    if dest is None:
+        dest = _html_export_file
+
+    dest.write_text(data)

@@ -60,7 +60,6 @@ class Appearance(ModuleBase):
     night_mode_end_changed = Signal()
     night_mode_start_select_changed = Signal()
     night_mode_end_select_changed = Signal()
-    # input_activity_changed = Signal()
     display_state_changed = Signal()
     available_input_devices_changed = Signal()
 
@@ -71,7 +70,7 @@ class Appearance(ModuleBase):
     night_mode = QtPropLinkEnum(str, path='night_mode', notify=night_mode_changed)
     night_active = QtPropLink(bool, path='night_active', notify=night_changed)
     backlightlevel = QtPropLink(int, path='brightness_out', notify=backlight_changed)
-    blackfilter = QtPropLink(int, path='blackfilter', notify=backlight_changed)
+    blackfilter = QtPropLink(float, path='blackfilter', notify=backlight_changed)
     background_night = QtPropLink(bool, path='background_night', notify=background_night_changed)
     dim_timer = QtPropLink(int, path='dim_timer', notify=dim_timer_changed)
     off_timer = QtPropLink(int, path='off_timer', notify=off_timer_changed)
@@ -80,8 +79,7 @@ class Appearance(ModuleBase):
     night_mode_start_select = QtPropLinkSelect(str, path='night_mode_start_select', notify=night_mode_start_select_changed)
     night_mode_end_select = QtPropLinkSelect(str, path='night_mode_end_select', notify=night_mode_end_select_changed)
     jump_home_timer = QtPropLink(int, path='jump_home_timer', notify=jump_home_timer_changed)
-    # input_activity = QtPropLink(bool, path='input_activity', notify=input_activity_changed)
-    display_state = QtPropLink(int, path='display_state', notify=display_state_changed)
+    display_state = QtPropLinkEnum(str, path='display_state', notify=display_state_changed)
 
     def _devices(self) -> List[str]:
         return list(self._epd_all_devices.paths()) if self._epd_all_devices else []
@@ -93,11 +91,11 @@ class Appearance(ModuleBase):
         self._pr_max = Property(DataType.PERCENT_INT, 100, desc='Backlight max')
         self._pr_min_night = Property(DataType.PERCENT_INT, 30, desc='Backlight min during nightmode')
         self._pr_max_night = Property(DataType.PERCENT_INT, 100, desc='Backlight max during nightmode')
-        self._pr_blackfilter = Property(DataType.INTEGER, 50., desc='Blackfilter', persistent=False)
+        self._pr_blackfilter = Property(DataType.FLOAT, 0.5, desc='Blackfilter', persistent=False)
         self._pr_brightness_out = Property(DataType.PERCENT_INT, 50, desc='Brightness control from Appearance', persistent=False)
         self._pr_dim_timer = TimeoutProperty(self._dim_timeout, 100., desc='Display dim timeout')
         self._pr_off_timer = TimeoutProperty(self._off_timeout, 300., desc='Display off timeout')
-        self._pr_jump_home_timer = TimeoutProperty(self._jump_home, 20., desc='Inactivity time to jump into home screen')
+        self._pr_jump_home_timer = TimeoutProperty(self._jump_home, 10., desc='Inactivity time to jump into home screen')
         self._pr_display_state = Property(DataType.ENUM, DisplayStates.On, desc='Current state of display', persistent=False)
         self._pr_night_active = Property(DataType.BOOLEAN, False, desc='Nightmode is active', persistent=False)
         self._pr_night_mode = Property(DataType.ENUM, NightModes.FixTimeRange, desc='Night mode')
@@ -113,7 +111,7 @@ class Appearance(ModuleBase):
             max_night=self._pr_max_night,
             night_mode=self._pr_night_mode,
             night_active=self._pr_night_active,
-            interval=IntervalProperty(self.update, default_interval=5., desc='Check interval for Appearance', persistent_interval=False),
+            interval=IntervalProperty(self.update, default_interval=5., desc='Check interval for Appearance'),
             brightness_out=self._pr_brightness_out,
             blackfilter=self._pr_blackfilter,
             background_night=Property(DataType.BOOLEAN, True, desc='Background night'),
@@ -128,10 +126,14 @@ class Appearance(ModuleBase):
         )
 
         self._epr_lasttouch: Optional[Property] = None
+        self._epr_lastinput: Optional[Property] = None
         self._epd_all_devices: Optional[PropertyDict] = None
 
     def qml_context_properties(self) -> Optional[Dict[str, Any]]:
         return {'appearance': self}
+
+    def update(self):
+        self._check_night_active()
 
     def _dim_timeout(self):
         if self._pr_display_state.value == DisplayStates.On:
@@ -146,10 +148,10 @@ class Appearance(ModuleBase):
         brightness = pr_brightness.value
 
         if 0 < brightness < 30:
-            self._pr_blackfilter.value = ((100 - (brightness * 3.3)) / 100)
+            self._pr_blackfilter.value = (100 - (brightness * 3.3)) / 100
 
         elif brightness <= 100:
-            self._pr_blackfilter.value = 0
+            self._pr_blackfilter.value = 0.
 
     def load(self):
         # Couple brightness to blackfilter
@@ -172,16 +174,16 @@ class Appearance(ModuleBase):
 
         # Track touches for sleep/off mode
         self._epr_lasttouch = self.properties.root().get('InputDevs/last_touch')
-        if self._epr_lasttouch:
+        if self._epr_lasttouch is not None:
             self._epr_lasttouch.events.subscribe(self._touched, Property.UPDATED_AND_CHANGED)
 
-        # self._epr_lastinput = self.properties.root().get('InputDevs/last_input')
-        # if self._epr_lastinput:
-        #    self._epr_lastinput.events.subscribe(self._touched, Property.UPDATED_AND_CHANGED)
+        self._epr_lastinput = self.properties.root().get('InputDevs/last_input')
+        if self._epr_lastinput:
+            self._epr_lastinput.events.subscribe(self._touched, Property.UPDATED_AND_CHANGED)
 
         # Available devices access
         alldevs = self.properties.root().get('InputDevs/available_devices')
-        if alldevs:
+        if alldevs is not None:
             self._epd_all_devices: PropertyDict = alldevs.value
             # Tell qml about available inputdev changes
             try:
@@ -196,7 +198,7 @@ class Appearance(ModuleBase):
             self.available_input_devices_changed.emit()
 
         # night cycle changes
-        self._pr_night_active.events.subscribe(self._night_changed, Property.UPDATED_AND_CHANGED)
+        self._pr_night_active.events.subscribe(self._night_changed, Property.UPDATED)  # _AND_CHANGED
 
         # Start timers
         self._pr_dim_timer.restart()
@@ -208,10 +210,11 @@ class Appearance(ModuleBase):
         self._check_backlight()
 
     def _jump_home(self):
-        pass
+        print("jump home now!")
+        self.jump_home.emit()
 
     def _touched(self):
-        self._pr_display_state = DisplayStates.On
+        self._pr_display_state.value = DisplayStates.On
         # Restart timers
         self._pr_dim_timer.restart()
         self._pr_off_timer.restart()
@@ -261,7 +264,7 @@ class Appearance(ModuleBase):
 
         night_mode = self._pr_night_mode.value
 
-        if night_mode in (NightModes.Off, NightModes.On):
+        if night_mode in {NightModes.Off, NightModes.On}:
             # Easy job
             self._pr_night_active.value = night_mode is NightModes.On
             return
@@ -330,9 +333,6 @@ class Appearance(ModuleBase):
 
         else:
             logger.warning('Unknown displaystate: %s', displaystate)
-
-    def update(self):
-        self._check_night_active()
 
 
 def _test_timerange():

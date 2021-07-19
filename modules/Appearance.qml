@@ -383,7 +383,6 @@ Item {
                 valueRole: 'path'
                 onActivated: appearance.night_mode_start_select = this.currentValue
                 Component.onCompleted: this.currentIndex = indexOfValue(appearance.night_mode_start_select)
-                // currentIndex: appearance.night_mode === "DynamicTimeRange" ? indexOfValue(appearance.night_mode_start_select) : -1
             }
 
             ComboBox {
@@ -401,7 +400,6 @@ Item {
                 textRole: 'path'
                 valueRole: 'path'
                 onActivated: appearance.night_mode_end_select = this.currentValue
-                // currentIndex: appearance.night_mode === "DynamicTimeRange" ? indexOfValue(appearance.night_mode_end_select) : -1
                 Component.onCompleted: this.currentIndex = indexOfValue(appearance.night_mode_end_select)
             }
 
@@ -516,6 +514,7 @@ Item {
                     Text {
                         anchors.left: parent.right
                         anchors.leftMargin: 10
+                        anchors.verticalCenter: parent.verticalCenter
                         color: Colors.black
                         text: appearance.device_description(modelData)
                     }
@@ -526,15 +525,4 @@ Item {
             }
         }
     }
-
-    /* Component.onCompleted: {
-        // inputs.set_typeList('time')
-
-        if (appearance.night_mode === "DynamicTimeRange") {
-            combo_night_mode_end.currentIndex = getIndex(
-                        appearance.night_mode_end_select, inputs.typeList)
-            combo_night_mode_start.currentIndex = getIndex(
-                        appearance.night_mode_start_select, inputs.typeList)
-        }
-    } */
 }

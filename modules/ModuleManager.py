@@ -4,14 +4,13 @@ from logging import getLogger
 from typing import Optional, Dict, Any, Union, Type, Iterable, List, Set
 
 from PySide2.QtCore import Property as QtProperty, Signal, Slot
-from PySide2.QtQml import QQmlApplicationEngine
 
 from core.Settings import settings, new_settings_instance
 from core.Constants import internal_modules, external_modules, always_instantiate_modules
 
 from interfaces.Module import ModuleBase, ThreadModuleBase
 from interfaces.PropertySystem import Property, PropertyDict, PropertyAccess, ModuleInstancePropertyDict, \
-    properties_start, properties_stop, propertydict_to_html
+    properties_start, properties_stop, propertydict_to_html, IntervalProperty
 from interfaces.DataTypes import DataType
 from core.Module import Module, ThreadModule
 from core.Logger import LogCall
@@ -144,14 +143,22 @@ class Modules(ModuleBase):
 
         self.mainapp = parent
 
-        self.qmlengine: QQmlApplicationEngine = parent.engine
+        # self.properties['debug_timer'] = IntervalProperty(self.debug, 5., desc='Just a debug trigger', persistent_interval=False)
+
         self.property_access = PropertyAccess(parent, self._root_properties)
 
         # Add contextproperties from mainapp
         self.add_module_contextproperties(parent)
 
-        # self.properties = ModuleInstancePropertyDict()
         ModuleInstancePropertyDict.changed_callback = self.categories_changed_emit
+
+    def debug(self):
+        print("debug function")
+        liste = self.categories_list
+        print("categories_list:", liste)
+
+        cat_all = self.categories_dict["All"]
+        print('categories_dict["All"]:', cat_all)
 
     def categories_changed_emit(self):
         self.categories_changed.emit()
@@ -269,11 +276,15 @@ class Modules(ModuleBase):
         self.remove_module_properties(inst)
 
     def add_module_contextproperties(self, obj):
+        engine = self.mainapp and self.mainapp.engine or False
+        if not engine:
+            return
+
         cprops = obj.qml_context_properties()
         if not cprops:
             return
 
-        root_context = self.qmlengine.rootContext()
+        root_context = engine.rootContext()
 
         for key, obj in cprops.items():  # type: str, Any
             root_context.setContextProperty(key, obj)
@@ -331,15 +342,12 @@ class Modules(ModuleBase):
 
     @classmethod
     def shutdown(cls):
-        logcall(Module.unload_modules)
-
         logcall(properties_stop)
-
+        logcall(Module.unload_modules)
         del cls._root_properties
 
     def unload(self):
         del self.mainapp
-        del self.qmlengine
         del self.all_modules_classes
         del self.all_modules_classes_by_str
         del self.module_categories
@@ -351,30 +359,30 @@ class Modules(ModuleBase):
         """
         return ModuleInstancePropertyDict.catlist_by_cat
 
-    @QtProperty('QVariantMap', notify=categories_changed)
+    @QtProperty('QVariantList', notify=categories_changed)
     def categories_list(self) -> List[str]:
         """
         Plain list of all active categories
         """
         return [cat[0] for cat in ModuleInstancePropertyDict.active_categories]
 
-    @QtProperty('QVariantMap', notify=modules_changed)
-    def loaded_instances(self) -> dict:
-        """
-        modules.loaded_instances['Info']['Weather'][swipeView.instancename]
-        reference to "inputdict"
+    # @QtProperty('QVariantMap', notify=modules_changed)
+    # def loaded_instances(self) -> dict:
+    #    """
+    #    modules.loaded_instances['Info']['Weather'][swipeView.instancename]
+    #    reference to "inputdict"
 
-        self._instances[category][classname][instancename] = tempclass(instancename, self.inputs, self.settings)
-        """
-        return self._instances
+    #    self._instances[category][classname][instancename] = tempclass(instancename, self.inputs, self.settings)
+    #    """
+    #    return self._instances
 
-    @QtProperty('QVariantMap', notify=modules_changed)
-    def modules(self):
-        """
-        modules.modules['Logic']['Thermostat'][0]
-        dict[category]/dict[classname]/list[instancenames]
-        """
-        return self._modules
+    # @QtProperty('QVariantMap', notify=modules_changed)
+    # def modules(self):
+    #    """
+    #    modules.modules['Logic']['Thermostat'][0]
+    #    dict[category]/dict[classname]/list[instancenames]
+    #    """
+    #    return self._modules
 
     @Slot(str, str, str)
     def add_instance(self, classname, instancename):
@@ -393,13 +401,13 @@ class Modules(ModuleBase):
         instancesdict = Module.instancesdict_by_cls[classname]
         return [instancename or '' for instancename in instancesdict]
 
-    @Slot(result='QVariantList')
-    def all_instances(self) -> list:
-        listed = list()
+    # @Slot(result='QVariantList')
+    # def all_instances(self) -> list:
+    #    listed = list()#
 
-        for category in self._instances:
-            for classname in self._instances[category]:
-                for instance in self._instances[category][classname]:
-                    listed.append(f'{category}/{classname}/{instance}')
+    #    for category in self._instances:
+    #        for classname in self._instances[category]:
+    #            for instance in self._instances[category][classname]:
+    #                listed.append(f'{category}/{classname}/{instance}')
+    #    return listed
 
-        return listed

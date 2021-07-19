@@ -1,6 +1,6 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import QtQuick.VirtualKeyboard 2.1
+// import QtQuick.VirtualKeyboard 2.1
 import Qt.labs.folderlistmodel 2.12
 import QtGraphicalEffects 1.12
 
@@ -21,7 +21,7 @@ ApplicationWindow {
         }
     }
 
-    function getIndex(path, mmodel) {
+    /* function getIndex(path, mmodel) {
         for (var i = 0; i < mmodel.rowCount(); i++) {
             var idx = mmodel.index(i, 0)
             var value = mmodel.data(idx, Qt.UserRole + 1000)
@@ -30,13 +30,13 @@ ApplicationWindow {
             }
         }
         return 0
-    }
+    } */
 
     background: Rectangle {
         color: Colors.white
     }
 
-    property int i: 0
+    // property int i: 0
 
     FolderListModel {
         id: folderModel
@@ -47,7 +47,7 @@ ApplicationWindow {
         nameFilters: ["*.png", "*.jpg"]
         onCountChanged: {
             if (folderModel.count > 0)
-                bg.source = folderModel.get(i, "fileURL")
+                bg.source = folderModel.get(0, "fileURL") // i
         }
     }
 
@@ -97,7 +97,6 @@ ApplicationWindow {
             }
         }
     }
-
     FontLoader {
         id: localFont
         source: "/fonts/dejavu-custom.ttf"
@@ -257,14 +256,14 @@ ApplicationWindow {
             id: categories
             asynchronous: true
             property bool _isCurrentItem: SwipeView.isCurrentItem
-            source: "CategoriesListView.qml"
+            source: "/qml/CategoriesListView.qml"
         }
 
         Loader {
             id: mainscreen
             asynchronous: true
             property bool _isCurrentItem: SwipeView.isCurrentItem
-            source: "MainScreen.qml"
+            source: "/qml/MainScreen.qml"
         }
 
         /* todo
@@ -297,7 +296,6 @@ ApplicationWindow {
         }
         */
     }
-
     PageIndicator {
         id: indicator
         count: view.count
@@ -316,6 +314,7 @@ ApplicationWindow {
     Connections {
         target: appearance
         function onjump_home() {
+            console.log('jumping home!')
             view.currentIndex = 1
         }
     }
@@ -340,10 +339,6 @@ ApplicationWindow {
                                                 "fileURL")
             }
         }
-    }
-
-    Component.onCompleted: {
-        Colors.night = appearance.night_active
     }
 
     Popup {
@@ -413,7 +408,7 @@ ApplicationWindow {
         Loader {
             id: keyboardLoader
             anchors.fill: parent
-            source: "keyboard/Keyboard.qml"
+            source: "/qml/keyboard/Keyboard.qml"
         }
     }
 }

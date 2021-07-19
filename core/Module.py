@@ -4,6 +4,7 @@ from logging import getLogger
 from typing import Optional, Dict, Type, List, Iterator
 from threading import Thread, enumerate
 from time import sleep
+from re import compile
 
 from PySide2.QtCore import QObject
 
@@ -15,6 +16,7 @@ from core.Logger import LogCall
 
 logger = getLogger(__name__)
 logcall = LogCall(logger)
+_re_property_attribute = compile(r'_(pr|epr|pd|epd)_.*')
 
 
 class ModuleInstancesViewer(ModuleInstancesView):
@@ -36,6 +38,27 @@ class ModuleInstancesViewer(ModuleInstancesView):
 
     def keys(self) -> Iterator[Optional[str]]:
         return iter(self._instances)
+
+
+def _release_properties(instance: ModuleBase):
+    if hasattr(instance, "__dict__"):
+        # Attribute are in __dict__
+        attrnames = tuple(instance.__dict__.keys())
+
+    elif hasattr(instance, "__slots__"):
+        # Attribute names are defined in __slots__
+        attrnames = tuple(instance.__slots__)
+
+    else:
+        return
+
+    for attrname in attrnames:
+        if _re_property_attribute.fullmatch(attrname):
+            delattr(instance, attrname)
+
+    if hasattr(instance, "properties"):
+        logcall(instance.properties.unload)
+        del instance.properties
 
 
 class Module:
@@ -173,6 +196,8 @@ class Module:
         self.loaded = False
 
         logcall(self.module_instance.unload, errmsg='Error during unload() of module: %s', stack_trace=True)
+
+        logcall(_release_properties, self.module_instance, errmsg='Error on releasing properties: %s')
 
         # Remove from dicts
         clsstr = self.module_class.__name__

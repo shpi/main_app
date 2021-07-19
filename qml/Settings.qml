@@ -4,30 +4,28 @@ import QtQuick.Controls 2.15
 import "qrc:/fonts"
 
 Item {
-
     ListModel {
         id: pageModel
+
         ListElement {
-            title: "System Variables"
-            page: "core/InputsSettings.qml"
+            title: "Properties (Variables)"
+            page: "core/Properties.qml"
         }
+
         ListElement {
             title: "Modules"
             page: "Modules.qml"
         }
 
         ListElement {
-            title: "Rooms / Categories"
-            page: "RoomManager.qml"
+            title: "Categories"
+            page: "CategorySettings.qml"
         }
-
 
         ListElement {
-            title: "Screensaver Pictures"
+            title: "Background Pictures"
             page: "Pictures.qml"
         }
-
-
     }
 
     Component {
@@ -79,9 +77,7 @@ Item {
     }
 
     ListView {
-
         header: Rectangle {
-
             width: parent.width
             height: 50
             color: "transparent"

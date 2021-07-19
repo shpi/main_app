@@ -20,7 +20,6 @@ from core.Toolbox import thread_kill, Pipe
 logger = getLogger(__name__)
 
 
-# TODO: EV mitnehmen in die id
 _re_id = compile(r'I: Bus=([0-9a-f]{4}) Vendor=([0-9a-f]{4}) Product=([0-9a-f]{4}) Version=([0-9a-f]{4})')
 _re_name = compile(r'N: Name="(.*)"')
 _re_ev = compile(r'B: EV=(.*)')
@@ -42,6 +41,7 @@ class EvTypes(Enum):
     EV_FF_STATUS = 0x17
 
 
+# ToDo: add name and ev! Duplicates!
 def id_from_id_match(m: Match) -> str:
     return ''.join(m.groups())
 
@@ -61,7 +61,7 @@ class KeyProperty(Property):
 
     def load(self):
         # TODO: Load key assignments and scripts
-        pass
+        super().load()
 
     def key_down(self):
         self.events.emit(self.KEY_DOWN)
@@ -289,10 +289,10 @@ class InputDevs(ModuleBase):
         del self._pr_last_touch
         del self._pd_available_devices
 
-    def _last_input_changed(self, prop):
+    def _last_input_changed(self):
         self._pr_last_input.value = time()
 
-    def _last_touch_changed(self, prop):
+    def _last_touch_changed(self):
         self._pr_last_touch.value = time()
 
     def _check_inputdev_file(self):

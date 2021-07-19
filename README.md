@@ -48,5 +48,6 @@ TODO
 
 ## ToDos
 - segfault analysis (qt problem)
-- Property models for use in qml
+- adapt qml
 - mqtt
+- NOABC

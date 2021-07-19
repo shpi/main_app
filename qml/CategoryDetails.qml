@@ -11,7 +11,7 @@ Item {
 
     GridView {
         id: categoriesview
-        model: modules.categories_dict[root.categoryname]
+        model: modules.categories_dict[categoryname]
 
         height: parent.height
         width: cellWidth * 3
@@ -59,7 +59,7 @@ Item {
             id: listDelegate
 
             Rectangle {
-                property var model: modelData.split('/')  // classname + optional instancename
+                property var class_instancename: modelData.split('/')  // classname + optional instancename
 
                 border.width:  1
                 border.color: Colors.white
@@ -67,25 +67,25 @@ Item {
                 width: categoriesview.cellWidth - 5
                 height: categoriesview.cellHeight - 5
                 radius: 10
-
+                /*
                 Loader {
                     id: componentLoader
-                    source: "modules/" + model[0] + ".qml"
+                    source: "modules/" + class_instancename[0] + ".qml"
                     anchors.fill: parent
                     asynchronous: true
-                    property var instancename: model.length === 2 ? model[1] : ""
+                    property var instancename: class_instancename.length === 2 ? class_instancename[1] : ""
                     property var iconview: true
                 }
-
-                /*  Text {
+                */
+                Text {
                     id: textitem
                     color: Colors.black
                     font.pixelSize: 24
-                    text: model[0]
+                    text: modelData //class_instancename[0]
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
-                */
+
 
                 /* layer.enabled: true
                             layer.effect: DropShadow {

@@ -61,9 +61,7 @@ Item {
                             id: mouse
                             anchors.fill: parent
                             onClicked: categoriesstackView.push(
-                                Qt.resolvedUrl('qml/CategoryDetails.qml'), {
-                                    "categoryname": modelData
-                                }
+                                Qt.resolvedUrl('/qml/CategoryDetails.qml'), {"categoryname": modelData}
                             )
                         }
                     }

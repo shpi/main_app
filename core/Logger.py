@@ -25,7 +25,7 @@ def get_logging_level() -> int:
         return logging.CRITICAL
 
     # Default
-    return logging.WARNING
+    return logging.INFO
 
 
 class LogModel(QAbstractListModel):
@@ -89,22 +89,29 @@ class LogModel(QAbstractListModel):
         return self.roles
 
 
-class QtWarningHandler(logging.Handler):
+class QtLoggingHandler(logging.Handler):
     def __init__(self, model, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.model = model
         self.setLevel(get_logging_level())
 
+        self._msg_formatter = logging.Formatter(fmt='%(message)s')
+        self.setFormatter(self._msg_formatter)
+
     def emit(self, record):
-        self.format(record)
-        self.model.appendRow({b'levelno': record.levelno,
-                              b'msg': f'{record.module} - {record.funcName}: {record.msg}',
-                              b'levelname': record.levelname,
-                              b'asctime': record.asctime})
+        formatted_msg = self.format(record)
+
+        self.model.appendRow(
+            {
+                b'levelno': record.levelno,
+                b'msg': f'{record.module} - {record.funcName}: {formatted_msg}',
+                b'levelname': record.levelname,
+                b'asctime': record.asctime
+            }
+        )
 
 
 log_model = LogModel()
-qt_warning_handler = QtWarningHandler(log_model)
 
 
 logging.basicConfig(
@@ -113,8 +120,8 @@ logging.basicConfig(
     datefmt='%d.%m. %H:%M:%S',
     handlers=[
         logging.StreamHandler(),
+        QtLoggingHandler(log_model),
         # logging.FileHandler("debug.log"),
-        qt_warning_handler
     ]
 )
 

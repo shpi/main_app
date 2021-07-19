@@ -15,7 +15,8 @@ from PySide2.QtGui import QFont, QFontDatabase
 from PySide2.QtQml import QQmlApplicationEngine
 
 from interfaces.MainApp import MainAppBase
-from core.Logger import qt_message_handler, log_model, get_logging_level
+from core.Logger import qt_message_handler, log_model, get_logging_level, LogCall
+from interfaces.PropertySystem import properties_early_stop
 from modules.ModuleManager import Modules
 
 faulthandler.enable()
@@ -24,12 +25,16 @@ faulthandler.enable()
 import qtres
 
 logger = getLogger(__name__)
+logcall = LogCall(logger)
+
 
 if get_logging_level() <= logging.DEBUG:
     from PySide2.QtQml import QQmlDebuggingEnabler
     debug = QQmlDebuggingEnabler()
 
 SCRIPT_PATH = Path(sys.argv[0]).parent.resolve()
+
+in_event_loop = None
 
 
 class MainApp(MainAppBase):
@@ -56,10 +61,12 @@ class MainApp(MainAppBase):
         self.engine = QQmlApplicationEngine()
         # Load "everything"
         Modules.selfload(self)
+
         self.engine.load("qrc:/qml/main.qml")
 
         if not self.engine.rootObjects():
-            sys.exit(-1)
+            self.unload()
+            raise RuntimeError("QML failed")
 
     def qml_context_properties(self) -> Dict[str, Any]:
         return {
@@ -72,8 +79,13 @@ class MainApp(MainAppBase):
         if cls._main_instance is None:
             return
 
+        logcall(properties_early_stop)
+
         mapp = cls._main_instance
-        del mapp.engine
+        if hasattr(mapp, 'engine'):
+            del mapp.engine
+        else:
+            logger.warning('Did not find the qml engine instance in MainApp.')
 
         Modules.shutdown()
 
@@ -82,30 +94,42 @@ class MainApp(MainAppBase):
     def _interrupt_handler(self, signum, frame):  # signum, frame
         """Handle KeyboardInterrupt: quit application."""
         print("interrupt_handler called")
-        self.quit()  # trigger quit slot
-        self.exit()  # exit eventloop (app.exec)
+        if in_event_loop:
+            self.quit()  # trigger quit slot
+            self.exit()  # exit eventloop (app.exec)
+        else:
+            sys.exit(1)
 
 
 if __name__ == '__main__':
     # Change working directory to location of main.py or executable
     os.chdir(SCRIPT_PATH)
 
+    exec_returncode = 0
+
     # Create main app
-    app = MainApp()
+    try:
+        app = MainApp()
 
-    QFontDatabase.addApplicationFont("fonts/dejavu-custom.ttf")
-    qInstallMessageHandler(qt_message_handler)
+        QFontDatabase.addApplicationFont("fonts/dejavu-custom.ttf")
+        qInstallMessageHandler(qt_message_handler)
 
-    # Run event loop
-    exec_returncode = app.exec_()
-    # main app exited.
-    print("mainloop exited")
+        # Run event loop
+        in_event_loop = True
+        exec_returncode = app.exec_()
+        in_event_loop = False
 
-    app.unload()
-    del app
+        # main app exited.
+        logger.info("mainloop exited")
 
-    if exec_returncode:
-        logger.warning('Exiting mainapp with code: %s', exec_returncode)
+        app.unload()
+        del app
+
+        if exec_returncode:
+            logger.warning('Exiting mainapp with code: %s', exec_returncode)
+
+    except Exception as e:
+        logger.critical('Could not load MainApp: %s', repr(e))
 
     for t in tuple(threading.enumerate()):
         if t is not threading.current_thread():
