@@ -40,20 +40,22 @@ Properties considered as Module "outputs"
 """
 
 import datetime
+import weakref
 from logging import getLogger
 from typing import Optional, Union, Any, Callable, Iterable, Dict, ValuesView, ItemsView, KeysView, Generator, Set, \
-    Type, List, Tuple
+    Type, List, Tuple, Iterator
 from time import time, sleep
 from threading import RLock, Thread
 from re import compile
 from contextlib import suppress
 from enum import EnumMeta
-from pathlib import Path
-from html import escape
+from weakref import WeakValueDictionary
 
-from PySide2.QtCore import Property as QtProperty, Signal, QObject, Slot, QAbstractListModel, Qt, QModelIndex
+from PySide2.QtCore import Property as QtProperty, Signal, QObject, Slot, QAbstractListModel, Qt, QModelIndex, \
+    QSortFilterProxyModel
 
 from interfaces.DataTypes import DataType
+from interfaces.Module import ModuleBase
 from core.Events import EventManager
 from core.EventTable import EventTable
 from core.Settings import settings, new_settings_instance, Settings
@@ -64,8 +66,8 @@ logger = getLogger(__name__)
 logcall = LogCall(logger)
 
 NotLoaded = object()
-_valid_key = compile(r"[a-zA-Z0-9_]+")
-
+_valid_key = compile(r'[a-zA-Z0-9_]+')
+_invalid_chars = compile(r'[^a-zA-Z_]')
 
 class PropertyEvent:
     """
@@ -99,7 +101,7 @@ class PropertyDict:
     PropertyDicts bound in other PropertyDicts get their path fetched from containing Property.path.
     """
 
-    __slots__ = 'parentproperty', '_loaded', '_data'
+    __slots__ = '_parentproperty_ref', '_loaded', '_data', '__weakref__'
     _root_instance: Optional["PropertyDict"] = None
 
     path_sep = '/'
@@ -116,6 +118,10 @@ class PropertyDict:
         # Get root instance
         return cls._root_instance
 
+    @classmethod
+    def create_keyname(cls, source: str, valid_replacement='') -> str:
+        return _invalid_chars.sub(valid_replacement, source)
+
     def __init__(self, **kwargs):
         """
         Initializes a new PropertyDict object.
@@ -124,24 +130,33 @@ class PropertyDict:
         :param kwargs: Initial properties.
         """
         # QObject.__init__(self, parent)
-        self._data = {}
+        self._data: Dict[str, Property] = {}
         self._loaded = False
 
-        self.parentproperty: Optional["Property"] = None  # Parent property if set
+        self._parentproperty_ref: Optional[Any] = None  # Parent property weakref if set
 
         for key, prop in kwargs.items():
             if not _valid_key.fullmatch(key):
                 raise ValueError("Key must only consist out of chars: a-z, A-Z, 0-9, '_'.")
             self[key] = prop
 
+    def __del__(self):
+        if self.parentproperty is None:
+            # PropertyDict is just not referenced anymore.
+            self.unload()
+
     def __len__(self):
         return len(self._data)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self._data)
 
     def __contains__(self, key: str):
         return key in self._data
+
+    @property
+    def parentproperty(self) -> Optional["Property"]:
+        return self._parentproperty_ref and self._parentproperty_ref()
 
     @property
     def is_root(self) -> bool:
@@ -183,6 +198,7 @@ class PropertyDict:
         Paths may be provided as key. Property will be acquired recursively.
 
         :param key: Simple key string "myproperty" or a path "sublist.myproperty" relative to this instance.
+                    Also allows leading "path_sep" to address the root propertydict: '/InputDev/0000...'
         :return: Found Property or KeyError
         """
         if type(key) is int:
@@ -224,8 +240,8 @@ class PropertyDict:
 
         if isinstance(item, PropertyDict):
             # Wrap PropertyDict in Property
-            item.parentproperty = item = Property(datatype=DataType.PROPERTYDICT, initial_value=item,
-                                                  desc="Nested PropertyDict (automatically wrapped)")
+            item = Property(datatype=DataType.PROPERTYDICT, initial_value=item,
+                            desc="Nested PropertyDict (automatically wrapped)")
 
         if not isinstance(item, Property):
             # Not allowed. Wrap object in new simple Property
@@ -234,10 +250,18 @@ class PropertyDict:
         if item.parentdict is not None:
             raise TypeError("Property already assigned to another PropertyDict")
 
-        # Link parent
-        item.parentdict = self
+        # Link me as parent
+        item._parentdict_ref = weakref.ref(self)
+
+        # Inherit owner from my parentproperty
+        owner = self.parentproperty and self.parentproperty.owner
+        if owner is not None:
+            item.set_owner(owner)
 
         # Collect new Property
+        if key in self._data:
+            logger.warning('Replacing existing Property with another. Key=%s, new Property: %s', key, repr(item))
+
         self._data[key] = item
         item._key = key
 
@@ -245,8 +269,9 @@ class PropertyDict:
             # Late load instantly
             logcall(item.load, errmsg="Exception on calling Property.load(): %s")
 
-        if self.parentproperty:
-            self.parentproperty.events.emit(self.CHANGED)  # ToDo: context manager for event emit
+        pp = self.parentproperty
+        if pp and pp.events:
+            pp.events.emit(self.CHANGED)  # ToDo: context manager for event emit
 
     def __delitem__(self, key: str):
         # Deep deletes allowed (key = relative path)
@@ -265,8 +290,9 @@ class PropertyDict:
         logcall(delitem.unload, errmsg="Exception on unloading Property: %s")
         self._data.pop(key)
 
-        if self.parentproperty and self.parentproperty.events:
-            self.parentproperty.events.emit(self.CHANGED)  # ToDo: context manager for event emit
+        pp = self.parentproperty
+        if pp and pp.events:
+            pp.events.emit(self.CHANGED)  # ToDo: context manager for event emit
 
     def items(self) -> ItemsView[str, "Property"]:
         return self._data.items()
@@ -312,9 +338,10 @@ class PropertyDict:
             self._data.clear()
         self._data = None
 
-        if isinstance(self.parentproperty, Property):
-            self.parentproperty._value = None  # remove me there
-        self.parentproperty = None
+        pp = self.parentproperty
+        if isinstance(pp, Property):
+            pp._value = None  # remove me there
+        self._parentproperty_ref = None
         self._loaded = False
 
 
@@ -330,7 +357,8 @@ class PersistentPropertyDict(PropertyDict):
         if self._loaded:
             return
 
-        if not (self.parentproperty and self.parentproperty.path_is_absolute):
+        pp = self.parentproperty
+        if not (pp and pp.path_is_absolute):
             raise PropertyException('Called load() too early on: {pd!r}'.format(pd=self))
 
         self._loaded = True
@@ -390,14 +418,16 @@ class PersistentPropertyDict(PropertyDict):
         # load() should have set a value which also should be saved now.
 
 
-class PropertiesByDataTypeModel(QAbstractListModel):
+class PropertiesListModel(QAbstractListModel):
     PathRole = Qt.UserRole + 1000
     IDRole = Qt.UserRole + 1001
     ValueRole = Qt.UserRole + 1002
     DefaultValueRole = Qt.UserRole + 1003
     DescriptionRole = Qt.UserRole + 1004
-    TypeRole = Qt.UserRole + 1005
+    DataTypeRole = Qt.UserRole + 1005
     PersistentRole = Qt.UserRole + 1006
+    ModuleName = Qt.UserRole + 1007
+    ModulePath = Qt.UserRole + 1008
 
     _rolenames = {
         PathRole: b"path",
@@ -405,24 +435,50 @@ class PropertiesByDataTypeModel(QAbstractListModel):
         ValueRole: b"value",
         DefaultValueRole: b"default",
         DescriptionRole: b"description",
-        TypeRole: b"datatype",
+        DataTypeRole: b"datatype",
         PersistentRole: b"persistent",
+        ModuleName: b"modulename",
+        ModulePath: b"modulepath",
     }
 
-    def __init__(self, for_datatype: DataType, parent: QObject = None):
+    _invalid_index = QModelIndex()
+
+    def __init__(self, parent: QObject):
         QAbstractListModel.__init__(self, parent=parent)
-        self._datatype = for_datatype
-        self._matching_properties: List[Property] = []
+        self._property_reflist = []
+
+    def unload(self):
+        self.beginResetModel()
+        self._property_reflist.clear()
+        self.endResetModel()
 
     def index_valid(self, index: QModelIndex) -> bool:
         return 0 <= index.row() < self.rowCount() and index.isValid()
+
+    def check_properties_gone(self):
+        """Remove disappeared properties"""
+        valids = tuple(propref for propref in self._property_reflist if propref() is not None)
+        if len(valids) == len(self._property_reflist):
+            # Nothing has changed
+            return
+
+        # Replace items
+        self.beginResetModel()
+        self._property_reflist[:] = valids
+        self.endResetModel()
+
+    reload = check_properties_gone
 
     def data(self, index: QModelIndex, role: int = Qt.DisplayRole):
         if not self.index_valid(index):
             return None
 
         row = index.row()
-        prop = self._matching_properties[row]
+        wref = self._property_reflist[row]
+        prop = wref()
+
+        if prop is None:
+            return None
 
         try:
             if role == self.PathRole:
@@ -433,44 +489,96 @@ class PropertiesByDataTypeModel(QAbstractListModel):
                 return prop.default_value
             elif role == self.DescriptionRole:
                 return prop.desc
-            elif role == self.TypeRole:
-                if prop.datatype is None:
-                    return None
-                return prop.datatype.name
+            elif role == self.DataTypeRole:
+                return prop.datatype and prop.datatype.name
             elif role == self.PersistentRole:
                 return prop.is_persistent
-
+            elif role == self.ModuleClass:
+                if not prop.owner:
+                    return None
+                return prop.owner.modulename()
+            elif role == self.ModulePath:
+                if not prop.owner:
+                    return None
+                instancename = prop.owner.instancename()
+                return prop.owner.modulename() + ('/' + instancename if instancename else '')
+            else:
+                return None
         except Exception as e:
             logger.error('Exception on fetching data in SelectPropertyByDataTypeModel: %s', repr(e))
 
-    def add(self, prop: "Property"):
-        self._matching_properties.append(prop)
-        index = self.index(len(self._matching_properties)-1)
+    def data_changed(self, prop: "Property"):
+        wref = weakref.ref(prop)
+
+        if wref not in self._property_reflist:
+            logger.warning('Property is not in this model. Cannot update: %s', repr(prop))
+            return
+
+        changed_pos = self._property_reflist.index(wref)
+        index = self.index(changed_pos)
         self.dataChanged.emit(index, index, [])
 
+    def add(self, prop: "Property"):
+        if prop is None:
+            logger.warning('Tried to add None instad of Property to this model.')
+            return
+
+        wref = weakref.ref(prop)
+
+        if wref in self._property_reflist:
+            logger.warning('Property is already in this model: %s', repr(prop))
+            return
+
+        new_pos = len(self._property_reflist)
+        self.beginInsertRows(self._invalid_index, new_pos, new_pos)
+        self._property_reflist.append(wref)
+        # index = self.index(len(self._property_reflist)-1)
+        # self.dataChanged.emit(index, index, [])
+        self.endInsertRows()
+
     def remove(self, prop: "Property"):
-        pos = self._matching_properties.index(prop)
+        if prop is None:
+            logger.warning('Tried to remove None instad of Property from this model.')
+            return
+
+        wref = weakref.ref(prop)
+
+        if wref not in self._property_reflist:
+            logger.warning('Property is not in this model. Cannot remove: %s', repr(prop))
+            return
+
+        remove_pos = self._property_reflist.index(wref)
         try:
-            index_start = self.index(pos)
+            index_start = self.index(remove_pos)
         except RuntimeError:
             # App shutdown
             return
 
-        index_stop = self.index(len(self._matching_properties)-1)
+        index_stop = self.index(len(self._property_reflist)-1)
 
-        self._matching_properties.remove(prop)
+        self._property_reflist.remove(wref)
         self.dataChanged.emit(index_start, index_stop, [])
 
     def rowCount(self, parent=QModelIndex()):
         if parent.isValid():
             return 0
-        return len(self._matching_properties)
+        self.check_properties_gone()
+        return len(self._property_reflist)
 
     def roleNames(self):
         return self._rolenames
 
 
-class Property:  # QObject
+class PropertiesByDataTypeModel(QSortFilterProxyModel):
+    def __init__(self, for_datatype: DataType, sourcemodel: PropertiesListModel):
+        self._datatype = for_datatype
+        QSortFilterProxyModel.__init__(self, sourcemodel)
+        self.setSourceModel(sourcemodel)
+        self.setFilterRole(PropertiesListModel.DataTypeRole)
+        self.setFilterFixedString(for_datatype.name)
+
+
+class Property:
     """
     Defines a simple property with an initial value of any type.
     Provides a value-property for read and write access.
@@ -480,16 +588,19 @@ class Property:  # QObject
     Properties may contain another sub PropertyDicts.
     """
 
-    __slots__ = '_value', 'parentdict', '_path', '_id', 'desc', '_lock', '_valuepool', '_event_manager', \
-                '_datatype', '_is_persistent', '_default_value', '_loaded', '_key', '_native_datatype', '_savetime'
+    __slots__ = '_value', '_parentdict_ref', '_path', '_id', 'desc', '_lock', '_valuepool', '_event_manager', \
+                '_loaded', '_datatype', '_is_persistent', '_default_value',  '_key', '_native_datatype', '_savetime', \
+                '_owner', '__weakref__',
 
+    _exclude_from_model = frozenset((DataType.UNDEFINED, DataType.PROPERTYDICT, DataType.ENUM))
     _classlock = RLock()  # For incrementing instance counters
     _last_id = 0
-    _instances_by_id: Dict[int, "Property"] = {}
+    _instances_by_id: Dict[int, "Property"] = WeakValueDictionary()
     _changed_properties: Set["Property"] = set()
     _changed_properties_save_timeout = 5.
 
-    _models: Dict[str, QAbstractListModel] = {}
+    listmodel: Optional[PropertiesListModel] = None  # Raw model which contains all relevant properties
+    _models: Dict[str, QSortFilterProxyModel] = {}  # Filter models defined by string key like "datatype:TIME_STR"
 
     # For storing meta information beyond the persistent value of the property.
     namespace_sep = ':'
@@ -502,15 +613,25 @@ class Property:  # QObject
     _check_unsaved_changes_thread: Optional[Thread] = None
 
     @classmethod
-    def init_class(cls):
+    def init_class(cls, parent: QObject):
+        print("init class called")
         if cls._run_save_thread:
             raise RuntimeError('Save thread already running.')
+
+        cls.listmodel = PropertiesListModel(parent)
+
         cls._run_save_thread = True
         cls._check_unsaved_changes_thread = Thread(target=cls.check_unsaved, name='Property_thread', daemon=True)
         cls._check_unsaved_changes_thread.start()
 
     @classmethod
     def quit(cls):
+        if cls.listmodel:
+            cls.listmodel.unload()
+            cls.listmodel = None
+
+        cls._models.clear()
+
         for p in cls._changed_properties.copy():
             # immediate save
             cls._save_now(p)
@@ -544,7 +665,7 @@ class Property:  # QObject
     def _save_now(cls, prop: "Property"):
         with cls._classlock:
             if prop in cls._changed_properties:
-                logger.info('Saving property %s=%s', str(prop.path), str(prop._value))
+                logger.debug('Saving property %s=%s', str(prop.path), str(prop._value))
                 prop.save_setting(prop._value, prop._datatype, ensure_path_absolute=False)
                 prop._savetime = None
                 cls._changed_properties.discard(prop)
@@ -555,13 +676,20 @@ class Property:  # QObject
         return cls._instances_by_id.get(pr_id)
 
     @classmethod
+    def get_model(cls, key: str, exception=True) -> Optional[QAbstractListModel]:
+        model = cls._models.get(key)
+        if model is None and exception:
+            raise KeyError('No model found: ' + key)
+        return model
+
+    @classmethod
     def get_datatype_model(cls, for_datatype: DataType, create=True, exception=True) \
             -> Optional[PropertiesByDataTypeModel]:
         key = 'datatype:' + for_datatype.name
-        model = cls._models.get(key)
+        model = cls.get_model(key, exception=False)
         if model is None:
             if create:
-                model = cls._models[key] = PropertiesByDataTypeModel(for_datatype)
+                model = cls._models[key] = PropertiesByDataTypeModel(for_datatype, sourcemodel=cls.listmodel)
             elif exception:
                 raise KeyError('No model found for datatype: ' + str(for_datatype))
         return model
@@ -584,23 +712,22 @@ class Property:  # QObject
                 the visible text for the value.
         :param desc: Description of Property
         """
-
         self._lock = RLock()
         self._loaded = False
         self._key: Optional[str] = None  # Cache attribute
         self._path: Optional[str] = None  # Cache attribute
         self.desc: Optional[str] = desc
-        self.parentdict: Optional[PropertyDict] = None
+        self._parentdict_ref: Optional[Any] = None
         self._valuepool = valuepool
-        # print("evid:", self.__class__, self._eventids)
-        self._event_manager: Optional[EventManager] = EventManager(self, self._eventids) if self._eventids else None
         self._savetime: Optional[float] = None
+        self._owner: Optional[ModuleBase] = None
+        self._event_manager: Optional[EventManager] = EventManager(self, self._eventids) if self._eventids else None
 
         with Property._classlock:
             # Unique numeric ID for fast access and easier identification
             self._id = Property._last_id = Property._last_id + 1
 
-            # Collect all instances
+            # weakref collect all instances
             Property._instances_by_id[self._id] = self
 
         if datatype is DataType.PROPERTYDICT or isinstance(initial_value, PropertyDict):
@@ -621,7 +748,7 @@ class Property:  # QObject
 
             if initial_value.parentproperty is not None:
                 raise ValueError("PropertyDict already contained by other Property.")
-            initial_value.parentproperty = self
+            initial_value._parentproperty_ref = weakref.ref(self)
 
         else:
             # Any other value
@@ -640,10 +767,27 @@ class Property:  # QObject
                     enum = type(initial_value)
                     self._valuepool = {e: e.value for e in enum}
 
-        # Create/update model
-        if self._datatype not in {DataType.UNDEFINED, DataType.PROPERTYDICT, DataType.ENUM}:
-            model = self.get_datatype_model(self._datatype)
-            model.add(self)
+    def __del__(self):
+        if self._loaded:
+            self.unload()
+
+    def set_owner(self, new_owner: ModuleBase):
+        if self._owner is not None:
+            raise RuntimeError('Owner has already been set before and is not changeable.')
+
+        self._owner = new_owner
+        if self._datatype is DataType.PROPERTYDICT and isinstance(self._value, PropertyDict):
+            # Set recursively
+            for subprop in self._value.values():  # type: Property
+                subprop.set_owner(new_owner)
+
+    @property
+    def parentdict(self) -> Optional["PropertyDict"]:
+        return self._parentdict_ref and self._parentdict_ref()
+
+    @property
+    def owner(self) -> Optional[ModuleBase]:
+        return self._owner
 
     @property
     def id(self) -> int:
@@ -682,6 +826,11 @@ class Property:  # QObject
         self.ensure_path_absolute()  # Should be now!
 
         self._loaded = True
+
+        # Create/update model
+        if self._datatype not in self._exclude_from_model:
+            self.listmodel.add(self)
+
         self.load_value(ensure_path_absolute=False)  # For persistent values or sub property dicts
 
         # Load other attributes: logging, exposed...
@@ -774,6 +923,8 @@ class Property:  # QObject
 
                 if changed:
                     self._event_manager.emit(self.UPDATED_AND_CHANGED)
+                    if self._datatype not in self._exclude_from_model:
+                        self.listmodel.data_changed(self)
 
             if self._is_persistent:
                 if not self.path_is_absolute:
@@ -833,20 +984,17 @@ class Property:  # QObject
             self._event_manager.unload()
             self._event_manager = None
 
-        if isinstance(self._value, PropertyDict):
-            logcall(self._value.unload, errmsg="Exception during unloading nested PropertyDict: %s", stack_trace=True)
-
         if not self._loaded:
             return
 
-        if self._datatype not in {DataType.UNDEFINED, DataType.PROPERTYDICT, DataType.ENUM}:
+        if isinstance(self._value, PropertyDict):
+            logcall(self._value.unload, errmsg="Exception during unloading nested PropertyDict: %s", stack_trace=True)
+
+        if self._datatype not in self._exclude_from_model:
             # Remove from model
-            model = self.get_datatype_model(self._datatype, create=False, exception=False)
-            if model:
-                model.remove(self)
+            self.listmodel.remove(self)
 
         self._value = None
-        del self.parentdict
         del self._path
         del self._valuepool
 
@@ -863,7 +1011,7 @@ class Property:  # QObject
     def __repr__(self):
         loaded_status = '' if self._loaded else ' not loaded'
 
-        ret = f"<{self.__class__.__name__} key='{self.key}', type={self._datatype}, default={self._default_value}, desc='{self.desc}'"
+        ret = f"<{self.__class__.__name__} key='{self.key}', id={self._id}, type={self._datatype}, default={self._default_value}, desc='{self.desc}'"
 
         if self.parentdict is not None:
             ret += f', bound to {self.parentdict!r}'
@@ -896,15 +1044,41 @@ class Property:  # QObject
     def __iter__(self):
         return iter(self.value)
 
-    # def __str__(self):
-    #    return str(self.value)
+
+class ModuleMainProperty(Property):
+    """
+    This specialized Property hold the PropertyDict of a module instance.
+    """
+    def __init__(
+            self,
+            module_instance: ModuleBase
+    ):
+        pd = module_instance.properties
+
+        if not isinstance(pd, PropertyDict):
+            raise TypeError('ModuleBase.properties instance mustat least be of type PropertyDict.')
+
+        if not isinstance(pd, ModuleInstancePropertyDict):
+            logger.warning('ModuleBase.properties instance should at least be of type ModuleInstancePropertyDict.')
+
+        Property.__init__(self,
+                          datatype=DataType.PROPERTYDICT,
+                          initial_value=pd,
+                          desc=str(module_instance.description),
+                          persistent=False
+                          )
+
+        # classname = module_instance.modulename()
+        # instancename = module_instance.instancename()
+        # self._owner = classname + ('/' + instancename if instancename else '')
+        self.set_owner(module_instance)
 
 
 class SelectProperty(Property):
     """
     Binds to a specific Property which is interchangeable.
     """
-    __slots__ = "_selected_property", "_expected_datatype",
+    __slots__ = "_selected_property_ref", "_expected_datatype",
 
     SELECTED = PropertyEvent('SELECTED')
     _eventids = Property._eventids | {SELECTED}
@@ -924,12 +1098,8 @@ class SelectProperty(Property):
         super().__init__(datatype=DataType.STRING, initial_value=default_path, valuepool=valuepool, desc=desc,
                          persistent=persistent)
 
-        self._selected_property: Optional[Property] = None
+        self._selected_property_ref: Optional[Any] = None
         self._expected_datatype = expected_datatype
-
-    @property
-    def is_selected(self) -> bool:
-        return isinstance(self._selected_property, Property)
 
     def _updated_and_changed(self, prop):
         # Gets called from selected property
@@ -945,14 +1115,21 @@ class SelectProperty(Property):
     }
 
     @property
+    def is_selected(self) -> bool:
+        return isinstance(self.selected_property, Property)
+
+    @property
     def selected_path(self) -> Optional[str]:
         return super().value
 
     @selected_path.setter
     def selected_path(self, newpath: Optional[str]):
-        self.selected_property = PropertyDict.root().get(newpath) if newpath else None
-        if newpath and self._selected_property is None:
+        selected_prop = PropertyDict.root().get(newpath)
+
+        if newpath and selected_prop is None:
             logger.warning('Path for selection does not exist (anymore): "%s". Selection has been removed.', newpath)
+
+        self.selected_property = selected_prop
 
     @property
     def expected_datatype(self) -> Optional[DataType]:
@@ -962,31 +1139,32 @@ class SelectProperty(Property):
     @property
     def selected_property(self) -> Optional[Property]:
         """Returns the selected Property if set or None."""
-        return self._selected_property
+        return self._selected_property_ref and self._selected_property_ref()
 
     @selected_property.setter
     def selected_property(self, new_property: Optional[Property]):
-        if self.events:
-            if isinstance(self._selected_property, Property):
-                # Unsubscribe from previously selected property
-                for eventid, func in self._event_mapping.items():
-                    self._selected_property.events.unsubscribe(func, eventid)
+        current_property = self.selected_property
+        if current_property is new_property:
+            return
 
-            if isinstance(new_property, Property):
-                # Subscribe to events from new property
-                for eventid, func in self._event_mapping.items():
-                    new_property.events.subscribe(func, eventid)
+        if isinstance(current_property, Property) and current_property.events:
+            # Unsubscribe from previously selected property
+            for eventid, func in self._event_mapping.items():
+                current_property.events.unsubscribe(func, eventid)
 
-        changed = self.events and self._selected_property is not new_property
+        if isinstance(new_property, Property) and new_property.events:
+            # Subscribe to events of new property
+            for eventid, func in self._event_mapping.items():
+                new_property.events.subscribe(func, eventid)
 
         # Remember new property
-        self._selected_property = new_property
+        self._selected_property_ref = weakref.ref(new_property) if new_property else None
 
         # Set path also
         # Call base classes' setter of value.
         Property.value.__set__(self, new_property.path if new_property else None)
 
-        if changed:
+        if self.events:
             self.events.emit(self.SELECTED)
 
     def load_value(self, ensure_path_absolute=True, setvalue=True):
@@ -997,10 +1175,12 @@ class SelectProperty(Property):
         # "value" always refers to the selected property's value. Not to self.value which contains the path.
 
         # Property must be set here
-        if self._selected_property is None:
+        selected_property = self.selected_property
+
+        if selected_property is None:
             raise ValueError("A Property has not been selected yet. No value available.")
 
-        return self._selected_property.value
+        return selected_property.value
 
     @value.setter
     def value(self, newvalue):
@@ -1010,11 +1190,11 @@ class SelectProperty(Property):
 
     def __repr__(self):
         ret = super().__repr__()[:-1]
-        ret += f", selected property='{self._selected_property!r}'"
+        ret += f", selected property='{self.selected_property!r}'"
         return ret + ">"
 
     def unload(self):
-        self._selected_property = None
+        self._selected_property_ref = None
         super().unload()
 
 
@@ -1046,6 +1226,7 @@ class ROProperty(Property):
 
         :param desc: Description of Property
         """
+        self._locked = False
         Property.__init__(
             self,
             datatype=datatype,
@@ -1510,6 +1691,14 @@ class QtPropLink(QtProperty):
     Module instances may have different Properties.
     """
     connect = True
+    _instances: List["QtPropLink"] = []
+
+    @classmethod
+    def quit(cls):
+        # Stop accessing our properties immediately
+        cls.connect = False
+        for inst in cls._instances:
+            inst.unload()
 
     def __init__(self, datatype, path: str, notify: Signal = None):
         """
@@ -1528,6 +1717,9 @@ class QtPropLink(QtProperty):
         # self._notify = str(notify)[:-2]  # Remember name of signal only
         self._notify = notify
         self._path = path
+
+        # Collect instances used in classes for proper unload
+        self._instances.append(self)
 
         # ToDo: Property-Changes -> Qt-Notify
 
@@ -1554,6 +1746,9 @@ class QtPropLink(QtProperty):
         if changed:
             notify = getattr(modinst, str(self._notify)[:-2])
             notify.emit()
+
+    def unload(self):
+        self._notify = None
 
 
 class QtPropLinkEnum(QtPropLink):
@@ -1624,113 +1819,23 @@ class PropertyAccess(QObject):
         return self.completelist
 
 
-def properties_start():
-    logcall(Property.init_class)
+def properties_start(parent: QObject):
+    print("### properties_start")
+    logcall(Property.init_class, parent)
     logcall(IntervalProperty.init_class)
 
 
 def properties_early_stop():
+    print("### properties_early_stop")
+    logcall(IntervalProperty.quit)
     ModuleInstancePropertyDict.changed_callback = None
-    QtPropLink.connect = False
+    QtPropLink.quit()
 
 
 def properties_stop():
-    logcall(IntervalProperty.quit)
+    print("### properties_stop")
     logcall(Property.quit)
 
     root = PropertyDict.root()
     if root is not None:
         logcall(root.unload, errmsg='Error during unloading all properties: %s')
-
-
-class KwReplace:
-    def __init__(self, template: str):
-        self.template = template
-
-    def format(self, **kwargs) -> str:
-        out = self.template
-        for key, value in kwargs.items():
-            out = out.replace('{' + key + '}', value)
-
-        return out
-
-
-_html_template_file = Path('properties_export.template.html')
-_html_export_file = Path('properties_export.html')
-
-if _html_template_file.is_file():
-    _html_template = KwReplace(_html_template_file.read_text())
-else:
-    _html_template = KwReplace('{nested}')
-
-_html_property = '\n{level}<li id="{id}" class="property"><p class="property">{nested}</p></li>'
-
-
-def _export_prop(prop: Property, level=0):
-    try:
-        value = escape(str(prop.value))
-    except Exception as e:
-        value = '<span class="error">[' + escape(repr(e)) + ']</span>'
-
-    value2 = ''
-    loaded_status = '' if prop._loaded else ' <span class="error">NOT LOADED!</span>'
-
-    if isinstance(prop, SelectProperty):
-        value2 = '<br>\n' + ('  ' * level) + 'Allowed DataType: ' + ("All" if prop.expected_datatype is None else '<span class="datatype">' + escape(prop.expected_datatype.name) + '</span>')
-
-        if prop.is_selected:
-            value2 = '<br>\n' + _html_propertydict.format(level='  ' * (level+1), id='', name='Selected Property', nested=_export_prop(prop.selected_property, level=level+1))
-
-    if isinstance(prop, FunctionProperty):
-        value2 = '<br>\n' + ('  ' * level) + '<span class="function">' + escape(str(prop.func)) + '</span>, maxage=' + escape(str(prop.maxage))
-
-    additional = '<br>\n' + ('  ' * level) + ('<span class="persistent">persistent</span>, ' if prop.is_persistent else '') + \
-                 'default: <span class="value defaultvalue">' + \
-                 escape(str(prop.default_value)) + '</span>' + value2 + '<br>\n' + ('  ' * level) + '<span class="datatype">' + escape(prop.datatype.name) + '</span> <span class="value">' + value + '</span>'
-
-    nested = '<span class="propertyname">' + escape(str(prop.key)) + f'{loaded_status}</span> ' \
-             '<span class="classname">[' + escape(prop.__class__.__name__) + ']</span> ' \
-             '<span class="path">\'' + escape(str(prop.path)) + '\'</span> ' \
-             '<span class="desc">' + escape(str(prop.desc)) + '</span>' + additional
-
-    return _html_property.format(id='property_' + str(prop.id), nested=nested, level='  ' * level)
-
-
-_html_propertydict = '{level}<li id="{id}"><span class="caret">{name}</span>\n' \
-                     '{level}<ul class="nested">\n' \
-                     '{nested}' \
-                     '{level}</ul>\n' \
-                     '{level}</li>'
-
-
-def _export_pd(pd: PropertyDict, level=0) -> str:
-    loaded_status = '' if pd._loaded else ' <span class="error">NOT LOADED!</span>'
-
-    if pd.is_root:
-        pd_id = 'root'
-        name = f'<span class="propertydict root">ROOT{loaded_status}</span>'
-    else:
-        pd_id = 'property_' + str(pd.parentproperty.id)
-        name = '<span class="propertydict">' + escape(pd.parentproperty.key) + f'{loaded_status}</span>'
-
-    name += ' <span class="classname">[' + escape(pd.__class__.__name__) + ']</span> <span class="path">' + escape(str(pd.path)) + '</span>'
-
-    if not pd.is_root:
-        name += ' <span class="desc">' + escape(str(pd.parentproperty.desc)) + '</span>'
-
-    pds = (prop.value for prop in pd.values() if prop.datatype is DataType.PROPERTYDICT)
-    props = (prop for prop in pd.values() if prop.datatype is not DataType.PROPERTYDICT)
-
-    nested = '\n'.join((_export_pd(pd_sub, level+1) for pd_sub in pds)) + \
-             '\n'.join((_export_prop(prop, level+1) for prop in props))
-
-    return _html_propertydict.format(id=pd_id, name=name, nested=nested, level='  ' * level)
-
-
-def propertydict_to_html(pd: PropertyDict, dest: Path = None):
-    data = _html_template.format(nested=_export_pd(pd))
-
-    if dest is None:
-        dest = _html_export_file
-
-    dest.write_text(data)

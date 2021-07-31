@@ -10,10 +10,11 @@ from core.Constants import internal_modules, external_modules, always_instantiat
 
 from interfaces.Module import ModuleBase, ThreadModuleBase
 from interfaces.PropertySystem import Property, PropertyDict, PropertyAccess, ModuleInstancePropertyDict, \
-    properties_start, properties_stop, propertydict_to_html, IntervalProperty
+    ModuleMainProperty, properties_start, properties_stop, IntervalProperty
 from interfaces.DataTypes import DataType
 from core.Module import Module, ThreadModule
 from core.Logger import LogCall
+from helper.PropertyExport import propertydict_to_html
 
 
 logger = getLogger(__name__)
@@ -115,6 +116,7 @@ class Modules(ModuleBase):
 
     modules_changed = Signal()
     categories_changed = Signal()
+    slides_changed = Signal()
 
     _root_properties = PropertyDict.root(allowcreate=True)
 
@@ -122,6 +124,14 @@ class Modules(ModuleBase):
     def selfload(cls, mainapp):
         if cls._main_instance is not None:
             raise ValueError('"Modules" module is already selfloaded.')
+
+        if cls._root_properties is not PropertyDict.root():
+            raise RuntimeError('Root property has already been created before.')
+
+        logcall(properties_start, parent=mainapp)
+
+        # Initialize root propertydict
+        cls._root_properties.load()
 
         # Instantiate my main instance
         m = cls._main_instance = Module(cls, parent=mainapp)
@@ -153,12 +163,7 @@ class Modules(ModuleBase):
         ModuleInstancePropertyDict.changed_callback = self.categories_changed_emit
 
     def debug(self):
-        print("debug function")
-        liste = self.categories_list
-        print("categories_list:", liste)
-
-        cat_all = self.categories_dict["All"]
-        print('categories_dict["All"]:', cat_all)
+        pass
 
     def categories_changed_emit(self):
         self.categories_changed.emit()
@@ -170,14 +175,6 @@ class Modules(ModuleBase):
         }
 
     def load(self):
-        logcall(properties_start)
-
-        if self._root_properties is not PropertyDict.root():
-            raise ReferenceError('Root property has already been created before.')
-
-        # Initialize root propertydict
-        self._root_properties.load()
-
         # Add this instance manually
         self.add_module_properties(self)
         self.add_module_contextproperties(self)
@@ -231,7 +228,7 @@ class Modules(ModuleBase):
                              ' may set to True: %s', str(mcls))
                 pass
 
-        # Call load() in correct order on still unloaded modules
+        Property.listmodel.reload()
         Module.load_modules()
 
         logger.info('Done loading modules. Writing properties_export.html.')
@@ -247,17 +244,18 @@ class Modules(ModuleBase):
             return
 
         try:
+            m = None
             if issubclass(mcls, ThreadModuleBase):
-                m = ThreadModule(mcls, instancename)  # ToDo: Parenting
+                m = ThreadModule(mcls, instancename=instancename, parent=self.mainapp)
             elif issubclass(mcls, ModuleBase):
-                m = Module(mcls, instancename)
+                m = Module(mcls, instancename=instancename, parent=self.mainapp)
             else:
-                return
+                logger.error('Unsupported class to be used as Module: %s', repr(mcls))
         except Exception as e:
             logger.error('Initialization of Module %s failed: %s', mcls, e)
             return
 
-        if m.module_instance is None:
+        if not m or m.module_instance is None:
             # Module did not want to be loaded or threw an exception.
             # Module instance will remain without a bound ModuleBase instance.
             return
@@ -299,7 +297,7 @@ class Modules(ModuleBase):
 
         if m.allow_maininstance and not m.allow_instances:
             # Only maininstance expected
-            rp[classname] = Property(DataType.PROPERTYDICT, initial_value=m.properties, desc=str(m.description))
+            rp[classname] = ModuleMainProperty(m)
 
         elif m.allow_instances and not m.allow_maininstance:
             # Only instances expected
@@ -309,8 +307,7 @@ class Modules(ModuleBase):
                 # Prepare new PropertyDict for first instance
                 instances_property = rp[classname] = Property(DataType.PROPERTYDICT, desc='Instances of ' + classname)
 
-            instances_property[instancename] = Property(DataType.PROPERTYDICT,
-                                                        initial_value=m.properties, desc=str(m.description))
+            instances_property[instancename] = ModuleMainProperty(m)
 
         else:
             # maininstance and instances expected. Conflicting. ToDo.
@@ -342,8 +339,9 @@ class Modules(ModuleBase):
 
     @classmethod
     def shutdown(cls):
-        logcall(properties_stop)
+        print("### Modules.shutdown")
         logcall(Module.unload_modules)
+        logcall(properties_stop)
         del cls._root_properties
 
     def unload(self):
@@ -365,6 +363,13 @@ class Modules(ModuleBase):
         Plain list of all active categories
         """
         return [cat[0] for cat in ModuleInstancePropertyDict.active_categories]
+
+    @QtProperty('QVariantList', notify=slides_changed)
+    def slides(self) -> List[str]:
+        """
+        Modules that are registered as own slides
+        """
+        return ['Module 1', 'Module 2']  # todo: slides
 
     # @QtProperty('QVariantMap', notify=modules_changed)
     # def loaded_instances(self) -> dict:

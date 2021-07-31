@@ -74,6 +74,7 @@ class Module:
 
     @classmethod
     def unload_modules(cls):
+        print("### Module.unload_modules")
         # Unload in reverse order
         for minst in reversed(Module.instances_in_loadorder):
             logcall(minst.unload)

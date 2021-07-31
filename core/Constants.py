@@ -10,7 +10,7 @@ from modules.MLX90615 import MLX90615
 from modules.CPU import CPU
 # from hardware.Disk import DiskStats
 # from hardware.HWMon import HWMon
-# from hardware.IIO import IIO
+from modules.IIO import IIO
 # from hardware.Leds import Led
 # from hardware.System import SystemInfo
 # from core.Git import Git
@@ -38,7 +38,7 @@ def external_modules() -> Set[Type[ModuleBase]]:
     return set()
 
 
-always_instantiate_modules = Appearance, CPU
+always_instantiate_modules = Appearance, CPU, IIO
 
 
 GIT_CLONE_PATH = 'https://github.com/shpi/main_app'

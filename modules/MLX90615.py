@@ -35,7 +35,7 @@ class MLX90615(ThreadModuleBase):  # Non Thread?
     def __init__(self, parent, instancename: str = None):
         ThreadModuleBase.__init__(self, parent=parent, instancename=instancename)
 
-        devices = list(IIO.iio_find_device_paths(name_match='mlx90615'))
+        devices = list(IIO.iio_find_device_paths(name_match='mlx90615'))  # ToDo: Use new iio properties
         if not devices:
             raise IgnoreModuleException("Hardware not found.")
 

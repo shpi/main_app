@@ -27,7 +27,7 @@
 <file>modules/Appearance.qml</file>
 <file>qml/CategoriesListView.qml</file>
 <file>qml/CategoryDetails.qml</file>
-<file>qml/CategoryManager.qml</file>
+<file>qml/CategorySettings.qml</file>
 <file>qml/Clock.qml</file>
 <file>qml/fingerpaint.qml</file>
 <file>qml/FpsItem.qml</file>
@@ -40,8 +40,8 @@
 <file>qml/Pictures.qml</file>
 <file>qml/Settings.qml</file>
 <file>qml/core/GitSettings.qml</file>
-<file>qml/core/InputsSettings.qml</file>
 <file>qml/core/LoggingSettings.qml</file>
+<file>qml/core/Properties.qml</file>
 <file>qml/core/WifiSettings.qml</file>
 <file>qml/core/WifiSettingsList.qml</file>
 <file>qml/weather/WeatherDay.qml</file>

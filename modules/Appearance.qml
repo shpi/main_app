@@ -21,7 +21,7 @@ Item {
         return parseInt(hours)
     }
 
-    function getIndex(path, mmodel) {
+    /* function getIndex(path, mmodel) {
         for (var i = 0; i < mmodel.rowCount(); i++) {
             var idx = mmodel.index(i, 0)
             var value = mmodel.data(idx, Qt.UserRole + 1000)
@@ -30,7 +30,7 @@ Item {
             }
         }
         return 0
-    }
+    } */
 
     function getTimeStr(htumbler, mtumbler) {
         var h = htumbler.currentIndex.toString()

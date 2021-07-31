@@ -144,7 +144,6 @@ class Appearance(ModuleBase):
             self._pr_display_state.value = DisplayStates.Sleep
 
     def _update_blackfilter(self, pr_brightness: Property):
-        # ToDo: Move into qml?
         brightness = pr_brightness.value
 
         if 0 < brightness < 30:
@@ -152,6 +151,8 @@ class Appearance(ModuleBase):
 
         elif brightness <= 100:
             self._pr_blackfilter.value = 0.
+
+        self.backlight_changed.emit()
 
     def load(self):
         # Couple brightness to blackfilter
@@ -210,7 +211,6 @@ class Appearance(ModuleBase):
         self._check_backlight()
 
     def _jump_home(self):
-        print("jump home now!")
         self.jump_home.emit()
 
     def _touched(self):

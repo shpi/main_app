@@ -224,7 +224,8 @@ class EventTable:
                         continue
                     # else: We waited the exact time to emit the event.
 
-                self._handle_event(e)
+                if self._event_loop_running:
+                    self._handle_event(e)
 
         finally:
             self._event_loop_running = False

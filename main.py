@@ -15,7 +15,8 @@ from PySide2.QtGui import QFont, QFontDatabase
 from PySide2.QtQml import QQmlApplicationEngine
 
 from interfaces.MainApp import MainAppBase
-from core.Logger import qt_message_handler, log_model, get_logging_level, LogCall
+# from core.Logger import qt_message_handler, log_model, get_logging_level, LogCall
+import core.Logger
 from interfaces.PropertySystem import properties_early_stop
 from modules.ModuleManager import Modules
 
@@ -25,10 +26,10 @@ faulthandler.enable()
 import qtres
 
 logger = getLogger(__name__)
-logcall = LogCall(logger)
+logcall = core.Logger.LogCall(logger)
 
 
-if get_logging_level() <= logging.DEBUG:
+if core.Logger.get_logging_level() <= logging.DEBUG:
     from PySide2.QtQml import QQmlDebuggingEnabler
     debug = QQmlDebuggingEnabler()
 
@@ -50,8 +51,11 @@ class MainApp(MainAppBase):
 
         MainAppBase.__init__(self, sys.argv)
 
-        signal.signal(signal.SIGINT, self._interrupt_handler)
         # self.aboutToQuit.connect(MainApp.unload)
+        self.engine: Optional[QQmlApplicationEngine] = None
+
+    def load(self):
+        signal.signal(signal.SIGINT, self._interrupt_handler)
 
         self.setApplicationName("Main")
         self.setOrganizationName("SHPI GmbH")
@@ -71,7 +75,7 @@ class MainApp(MainAppBase):
     def qml_context_properties(self) -> Dict[str, Any]:
         return {
             'applicationDirPath': str(self.applicationDirPath),
-            'logs': log_model,
+            'logs': core.Logger.log_model,
         }
 
     @classmethod
@@ -110,9 +114,10 @@ if __name__ == '__main__':
     # Create main app
     try:
         app = MainApp()
+        app.load()
 
         QFontDatabase.addApplicationFont("fonts/dejavu-custom.ttf")
-        qInstallMessageHandler(qt_message_handler)
+        qInstallMessageHandler(core.Logger.qt_message_handler)
 
         # Run event loop
         in_event_loop = True
@@ -135,4 +140,12 @@ if __name__ == '__main__':
         if t is not threading.current_thread():
             logger.warning("Remaining Thread: %s", t.name)
 
+    # logging.root.removeHandler(core.Logger.qtlogginghandler)
+    # core.Logger.qtlogginghandler.unload()
+    core.Logger.log_model.unload()
+    logging.shutdown()
+    # del core.Logger.qtlogginghandler
+    del core.Logger.log_model
+
+    print("### Interpreter exit")
     sys.exit(exec_returncode)

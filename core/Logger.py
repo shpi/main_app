@@ -2,6 +2,7 @@
 
 import logging
 import sys
+import traceback
 from typing import Any, Union
 
 from PySide2 import QtCore
@@ -29,34 +30,32 @@ def get_logging_level() -> int:
 
 
 class LogModel(QAbstractListModel):
-    def __init__(self, items=None):
-        # QAbstractListModel.__init__(self)
+    roles = {
+        # 257: b"threadName",
+        # 258: b"name",
+        # 259: b"thread",
+        # 260: b"created",
+        # 261: b"process",
+        # 262: b"processName",
+        # 263: b"args",
+        # 264: b"module",
+        # 265: b"filename",
+        Qt.UserRole + 266: b"levelno",
+        # 267: b"exc_text",
+        # 268: b"pathname",
+        # 269: b"lineno",
+        Qt.UserRole + 270: b"msg",
+        # 271: b"exc_info",
+        # 272: b"funcName",
+        # 273: b"relativeCreated",
+        Qt.UserRole + 274: b"levelname",
+        # 275: b"msecs",
+        Qt.UserRole + 276: b"asctime"
+    }
+
+    def __init__(self):
         super().__init__()
-
-        self._items = items or []
-
-        self.roles = {
-            # 257: b"threadName",
-            # 258: b"name",
-            # 259: b"thread",
-            # 260: b"created",
-            # 261: b"process",
-            # 262: b"processName",
-            # 263: b"args",
-            # 264: b"module",
-            # 265: b"filename",
-            Qt.UserRole + 266: b"levelno",
-            # 267: b"exc_text",
-            # 268: b"pathname",
-            # 269: b"lineno",
-            Qt.UserRole + 270: b"msg",
-            # 271: b"exc_info",
-            # 272: b"funcName",
-            # 273: b"relativeCreated",
-            Qt.UserRole + 274: b"levelname",
-            # 275: b"msecs",
-            Qt.UserRole + 276: b"asctime"
-        }
+        self._items = []
 
     def rowCount(self, parent=None) -> int:
         # if parent.isValid():
@@ -88,11 +87,18 @@ class LogModel(QAbstractListModel):
     def roleNames(self):
         return self.roles
 
+    def unload(self):
+        self._items.clear()
+        self.deleteLater()
+
+    def __del__(self):
+        print("deleted LogModel")
+
 
 class QtLoggingHandler(logging.Handler):
     def __init__(self, model, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.model = model
+        self.model = model  # qtinstance
         self.setLevel(get_logging_level())
 
         self._msg_formatter = logging.Formatter(fmt='%(message)s')
@@ -110,9 +116,22 @@ class QtLoggingHandler(logging.Handler):
             }
         )
 
+    def unload(self):
+        print("Unloading QtLoggingHandler")
+        self.emit = lambda x: None
+        self.model = None
+
+    def close(self):
+        print("closing handler")
+        super().close()
+        self.unload()
+
+    def __del__(self):
+        print("deleted QtLoggingHandler")
+
 
 log_model = LogModel()
-
+qtlogginghandler = QtLoggingHandler(log_model)
 
 logging.basicConfig(
     level=get_logging_level(),
@@ -120,7 +139,7 @@ logging.basicConfig(
     datefmt='%d.%m. %H:%M:%S',
     handlers=[
         logging.StreamHandler(),
-        QtLoggingHandler(log_model),
+        qtlogginghandler,
         # logging.FileHandler("debug.log"),
     ]
 )
@@ -136,6 +155,9 @@ _message_mapping = {
 
 def qt_message_handler(mode, context, message):
     _message_mapping.get(mode, qml_logger.debug)("%s (%d, %s)", message, context.line, context.file)
+
+
+force_stacktrace = 'STACKTRACE' in sys.argv
 
 
 class LogCall:
@@ -166,5 +188,7 @@ class LogCall:
             ret = func(*args, **kwargs)
             return ret
         except catch_exceptions as e:
-            self._logger.error(errmsg, repr(e), exc_info=stack_trace or 'STACKTRACE' in sys.argv)
+            msg = ('\n'.join(line.strip() for line in traceback.format_stack()[:-1])) + '\n' + \
+                  'While calling: %s'
+            self._logger.error(msg + '\n' + errmsg, repr(func), repr(e), exc_info=True)
             return e

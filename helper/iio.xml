@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE context [<!ELEMENT context (device | context-attribute)*><!ELEMENT context-attribute EMPTY><!ELEMENT device (channel | attribute | debug-attribute | buffer-attribute)*><!ELEMENT channel (scan-element?, attribute*)><!ELEMENT attribute EMPTY><!ELEMENT scan-element EMPTY><!ELEMENT debug-attribute EMPTY><!ELEMENT buffer-attribute EMPTY><!ATTLIST context name CDATA #REQUIRED description CDATA #IMPLIED><!ATTLIST context-attribute name CDATA #REQUIRED value CDATA #REQUIRED><!ATTLIST device id CDATA #REQUIRED name CDATA #IMPLIED><!ATTLIST channel id CDATA #REQUIRED type (input|output) #REQUIRED name CDATA #IMPLIED><!ATTLIST scan-element index CDATA #REQUIRED format CDATA #REQUIRED scale CDATA #IMPLIED><!ATTLIST attribute name CDATA #REQUIRED filename CDATA #IMPLIED><!ATTLIST debug-attribute name CDATA #REQUIRED><!ATTLIST buffer-attribute name CDATA #REQUIRED>]>
+<context name="local" description="Linux SHPI 5.10.23+ #4 Wed Mar 17 14:52:35 CET 2021 armv6l" >
+    <context-attribute name="local,kernel" value="5.10.23+" />
+    <context-attribute name="uri" value="local:" />
+    <device id="iio:device0" name="mlx90615" >
+        <channel id="temp_ambient" type="input" >
+            <scan-element index="0" format="le:U16/16&gt;&gt;0" scale="20.000000" />
+            <attribute name="offset" filename="in_temp_offset" />
+            <attribute name="raw" filename="in_temp_ambient_raw" />
+            <attribute name="scale" filename="in_temp_scale" />
+        </channel>
+        <channel id="temp_object" type="input" >
+            <scan-element index="1" format="le:U16/16&gt;&gt;0" scale="20.000000" />
+            <attribute name="calibemissivity" filename="in_temp_object_calibemissivity" />
+            <attribute name="filter_low_pass_3db_frequency" filename="in_temp_object_filter_low_pass_3db_frequency" />
+            <attribute name="filter_low_pass_3db_frequency_available" filename="in_temp_object_filter_low_pass_3db_frequency_available" />
+            <attribute name="offset" filename="in_temp_offset" />
+            <attribute name="raw" filename="in_temp_object_raw" />
+            <attribute name="scale" filename="in_temp_scale" />
+        </channel>
+        <channel id="timestamp" type="input" >
+            <scan-element index="2" format="le:S64/64&gt;&gt;0" />
+        </channel>
+        <attribute name="current_timestamp_clock" />
+        <buffer-attribute name="data_available" />
+        <buffer-attribute name="watermark" />
+    </device>
+    <device id="iio:device1" name="bh1750" >
+        <channel id="illuminance" type="input" >
+            <attribute name="integration_time" filename="in_illuminance_integration_time" />
+            <attribute name="raw" filename="in_illuminance_raw" />
+            <attribute name="scale" filename="in_illuminance_scale" />
+        </channel>
+        <attribute name="integration_time_available" />
+    </device>
+    <device id="iio:device2" name="bmp280" >
+        <channel id="temp" type="input" >
+            <attribute name="input" filename="in_temp_input" />
+            <attribute name="oversampling_ratio" filename="in_temp_oversampling_ratio" />
+        </channel>
+        <channel id="pressure" type="input" >
+            <attribute name="input" filename="in_pressure_input" />
+            <attribute name="oversampling_ratio" filename="in_pressure_oversampling_ratio" />
+        </channel>
+    </device>
+</context>

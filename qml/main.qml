@@ -21,22 +21,9 @@ ApplicationWindow {
         }
     }
 
-    /* function getIndex(path, mmodel) {
-        for (var i = 0; i < mmodel.rowCount(); i++) {
-            var idx = mmodel.index(i, 0)
-            var value = mmodel.data(idx, Qt.UserRole + 1000)
-            if (path === value) {
-                return i
-            }
-        }
-        return 0
-    } */
-
     background: Rectangle {
         color: Colors.white
     }
-
-    // property int i: 0
 
     FolderListModel {
         id: folderModel
@@ -251,7 +238,6 @@ ApplicationWindow {
         currentIndex: 1
         anchors.fill: parent
 
-        //anchors.bottom: inputPanel.top
         Loader {
             id: categories
             asynchronous: true
@@ -266,36 +252,28 @@ ApplicationWindow {
             source: "/qml/MainScreen.qml"
         }
 
-        /* todo
         Repeater {
-            id: thermostatrepeater
-            model: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
-            visible: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
+            id: slidesrepeater
+            model: modules.slides
+            // visible: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
 
-            delegate: Loader {
+            Text {
+                // anchors.fill: parent
+                text: modelData
+                color: Colors.black
+                font.bold: true
+                font.pixelSize: 40
+            }
+
+            /* Loader {
                 asynchronous: true
-                id: thermostatslide
+                id: slide
                 source: "thermostat/Thermostat.qml"
-                visible: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
-                active: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
-            }
+                // visible: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
+                // active: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
+            } */
         }
 
-        Repeater {
-            id: weatherrepeater
-            model: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
-            visible: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
-
-            delegate: Loader {
-                asynchronous: true
-                id: weatherslide
-                source: "weather/WeatherFull.qml"
-                visible: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
-                active: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
-            }
-        }
-        */
-    }
     PageIndicator {
         id: indicator
         count: view.count
@@ -313,8 +291,7 @@ ApplicationWindow {
 
     Connections {
         target: appearance
-        function onjump_home() {
-            console.log('jumping home!')
+        function onJump_home() {
             view.currentIndex = 1
         }
     }

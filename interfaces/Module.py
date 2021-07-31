@@ -6,7 +6,7 @@ from typing import Optional, Iterable, Type, Iterator, Mapping, Union, Dict, Any
 from PySide2.QtCore import QObject
 
 from core.FakeABC import FakeABC
-from interfaces.PropertySystem import ModuleInstancePropertyDict
+# from interfaces.PropertySystem import ModuleInstancePropertyDict
 
 
 class IgnoreModuleException(BaseException):
@@ -49,6 +49,7 @@ class ModuleBase(QObject, FakeABC):
         FakeABC.__init__(self)  # Manual check for matching all abstract base classes.
         QObject.__init__(self, parent)
 
+        from interfaces.PropertySystem import ModuleInstancePropertyDict  # late import here to break circular imports.
         # Pre create an empty ModuleInstancePropertyDict.
         # Handle this attribute in your __init__(): Extend it or replace it with a prefilled one.
         self.properties = ModuleInstancePropertyDict()

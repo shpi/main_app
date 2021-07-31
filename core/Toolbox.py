@@ -153,3 +153,15 @@ class Pipe:
 
     def __repr__(self):
         return f"<{self.__class__.__name__} read={self.read_fd} write={self.write_fd}>"
+
+
+class KwReplace:
+    def __init__(self, template: str):
+        self.template = template
+
+    def format(self, **kwargs) -> str:
+        out = self.template
+        for key, value in kwargs.items():
+            out = out.replace('{' + key + '}', value)
+
+        return out

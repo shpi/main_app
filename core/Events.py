@@ -5,6 +5,7 @@ import inspect
 from logging import getLogger
 from typing import NoReturn, Callable, Any, Dict, Iterable, Union, Tuple
 from threading import Event, Lock
+from weakref import ref
 
 logger = getLogger(__name__)
 
@@ -13,10 +14,10 @@ function = Union[Callable[[Any], NoReturn], Callable[[Any, Any], NoReturn]]
 
 
 class EventManager:
-    __slots__ = "_source", "_emit_fncs", "_is_emitting", "_waitable_events", "_lock"
+    __slots__ = "_sourceref", "_emit_fncs", "_is_emitting", "_waitable_events", "_lock"
 
     def __init__(self, source_element: Any, eventids: Iterable):
-        self._source = source_element
+        self._sourceref = ref(source_element)
         self._emit_fncs: Dict[Any, Dict[callback_function, function]] = {evid: dict() for evid in eventids}
         self._is_emitting: Dict[Any, bool] = {evid: False for evid in eventids}
         self._waitable_events: Dict[Any, Event] = {}
@@ -77,13 +78,13 @@ class EventManager:
                 for origfnc, fnc in event_dict.items():  # Original Dict may get changed during calling events
                     try:
                         if value is None:
-                            fnc(self._source)  # here
+                            fnc(self._sourceref())  # here
                         else:
-                            fnc(self._source, value)
+                            fnc(self._sourceref(), value)
                     except Exception as e:
                         logger.error('Exception while calling event %s during calling function %r which'
                                      ' has subscribed for %r: %s',
-                                     eventid, fnc, self._source, e, exc_info='STACKTRACE' in sys.argv)
+                                     eventid, fnc, self._sourceref(), e, exc_info='STACKTRACE' in sys.argv)
             finally:
                 self._is_emitting[eventid] = False
 
@@ -114,10 +115,10 @@ class EventManager:
         return event.wait(timeout)
 
     def __repr__(self):
-        return f'<{self.__class__.__name__} of {self._source!r}: {self._emit_fncs}>'
+        return f'<{self.__class__.__name__} of {self._sourceref()!r}: {self._emit_fncs}>'
 
     def unload(self):
-        del self._source
+        del self._sourceref
         self._emit_fncs.clear()
         del self._emit_fncs
         self._waitable_events.clear()

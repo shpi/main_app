@@ -88,9 +88,15 @@ class Settings(QSettings):
 
     # ---- set functions
 
-    def set(self, key: str, value, datatype: DataType):
+    def set(self, key: str, value, datatype: DataType, compare_stored=True):
         # Get value and convert.
         basic_type = DataType.to_basic_type(datatype)
+
+        if compare_stored:  # Because writes to ini file are slow and inefficient
+            stored = self._read_funcs.get(basic_type, self.get_raw)(key, None)
+            if stored == value:
+                return
+
         self._write_funcs.get(basic_type, self.set_raw)(key, value)
         # or KeyError("<type>")
 

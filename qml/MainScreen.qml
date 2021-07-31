@@ -39,6 +39,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 Repeater {
+                    // todo: Widgets
                     id: screensaverRow
                     model: modules.categories_dict['Home']
                     height: parent.height
