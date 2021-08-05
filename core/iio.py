@@ -16,6 +16,8 @@ Lesser General Public License for more details.
 
 import abc
 import weakref
+import logging
+import sys
 # Imports from package ctypes are not grouped
 # pylint: disable=ungrouped-imports
 #

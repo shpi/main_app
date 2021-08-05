@@ -4,6 +4,7 @@
 from modules.Appearance import Appearance
 from modules.InputDevs import InputDevs
 from modules.MLX90615 import MLX90615
+from modules.Presence import Presence
 # from core.Wifi import Wifi
 # from hardware.Alsa import AlsaMixer
 # from hardware.Backlight import Backlight

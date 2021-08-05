@@ -32,8 +32,8 @@ class DataType(Enum):
     TIME = 8  # time object (without date)
     TIME_STR = 9  # time as string "14:00"
     DATETIME = 10  # datetime object
-    TIMERANGE = 11  # Range between two times (seconds, float)
-    TIMERANGE_INT = 12  # Range between two times (seconds, int)
+    TIMEDELTA = 11  # Range between two times (seconds, float)
+    TIMEDELTA_INT = 12  # Range between two times (seconds, int)
     TIMESTAMP = 13  # Seconds since unix epoch (float)
 
     # Fix range types
@@ -97,81 +97,6 @@ class DataType(Enum):
         except TypeError:
             return cls.UNDEFINED
 
-    _to_basic_type = {
-        # default: float
-        INTEGER: int,
-        BOOLEAN: bool,
-        STRING: str,
-
-        DATE: date,
-        TIME: time,
-        TIME_STR: str,
-        DATETIME: datetime,
-
-        TIMERANGE_INT: int,
-
-        PERCENT_INT: int,
-        BYTE: int,
-        WORD: int,
-
-        PRESENCE: bool,
-        ONOFF: bool,
-        COUNT: int,
-
-        BYTES: int,
-        ENUM: str,
-
-        LIST_OF_STRINGS: list,
-    }
-
-    _mapping_iio_shpi = {
-        ChannelType.IIO_VOLTAGE: VOLTAGE,
-        ChannelType.IIO_CURRENT: CURRENT,
-        ChannelType.IIO_POWER: POWER,
-        ChannelType.IIO_ACCEL: ACCELERATION,
-        ChannelType.IIO_MAGN: MAGNETOMETER,
-        ChannelType.IIO_LIGHT: ILLUMINATION,
-        ChannelType.IIO_INTENSITY: ILLUMINATION,
-        ChannelType.IIO_PROXIMITY: PROXIMITY,
-        ChannelType.IIO_TEMP: TEMPERATURE,
-        ChannelType.IIO_ROT: ROTATION,
-        ChannelType.IIO_ANGL: ROTATION,
-        ChannelType.IIO_TIMESTAMP: TIMESTAMP,
-        ChannelType.IIO_CAPACITANCE: CAPACITANCE,
-        ChannelType.IIO_PRESSURE: PRESSURE,
-        ChannelType.IIO_HUMIDITYRELATIVE: HUMIDITY,
-        ChannelType.IIO_STEPS: INTEGER,
-        ChannelType.IIO_ENERGY: WORK,
-        ChannelType.IIO_DISTANCE: LENGTH,
-        ChannelType.IIO_VELOCITY: VELOCITY,
-        ChannelType.IIO_CONCENTRATION: CONCENTRATION,
-        ChannelType.IIO_RESISTANCE: RESISTANCE,
-        ChannelType.IIO_PH: PHINDEX,
-        ChannelType.IIO_UVINDEX: UVINDEX,
-        ChannelType.IIO_ELECTRICALCONDUCTIVITY: CONDUCTIVITY,
-        ChannelType.IIO_COUNT: INTEGER,
-        ChannelType.IIO_GRAVITY: GRAVITY
-    }
-
-    _valid_check = {
-        # ToDo: use validity checks
-        TIME_STR: _re_time_str.fullmatch,
-        PERCENT_FLOAT: lambda x: 0. <= x <= 100.,
-        PERCENT_INT: lambda x: x in range(101),
-        FRACTION: lambda x: 0. <= x <= 1.,
-        BYTE: lambda x: x in range(256),
-        WORD: lambda x: x in range(65536),
-        BYTES: lambda x: x >= 0,
-    }
-
-    @classmethod
-    def iio_to_shpi(cls, iio: ChannelType) -> "DataType":
-        return cls._mapping_iio_shpi.value.get(iio.value, DataType.UNDEFINED)
-
-    @classmethod
-    def to_basic_type(cls, type_: "DataType") -> Type[Union[int, str, bool, float, date, time, datetime, list]]:
-        return cls._to_basic_type.value.get(type_.value, float)
-
     @staticmethod
     def str_to_tight_datatype(numeric: str):
         try:
@@ -189,3 +114,81 @@ class DataType(Enum):
         # except TypeError:
         #    # No string provided?
         #    return str(numeric)
+
+
+_valid_check = {
+    # ToDo: use validity checks
+    DataType.TIME_STR: _re_time_str.fullmatch,
+    DataType.PERCENT_FLOAT: lambda x: 0. <= x <= 100.,
+    DataType.PERCENT_INT: lambda x: x in range(101),
+    DataType.FRACTION: lambda x: 0. <= x <= 1.,
+    DataType.BYTE: lambda x: x in range(256),
+    DataType.WORD: lambda x: x in range(65536),
+    DataType.BYTES: lambda x: x >= 0,
+}
+
+
+_to_basic_type = {
+    # default: float
+    DataType.INTEGER: int,
+    DataType.BOOLEAN: bool,
+    DataType.STRING: str,
+
+    DataType.DATE: date,
+    DataType.TIME: time,
+    DataType.TIME_STR: str,
+    DataType.DATETIME: datetime,
+
+    DataType.TIMEDELTA_INT: int,
+
+    DataType.PERCENT_INT: int,
+    DataType.BYTE: int,
+    DataType.WORD: int,
+
+    DataType.PRESENCE: bool,
+    DataType.ONOFF: bool,
+    DataType.COUNT: int,
+
+    DataType.BYTES: int,
+    DataType.ENUM: str,
+
+    DataType.LIST_OF_STRINGS: list,
+}
+
+
+_mapping_iio_shpi = {
+    ChannelType.IIO_VOLTAGE: DataType.VOLTAGE,
+    ChannelType.IIO_CURRENT: DataType.CURRENT,
+    ChannelType.IIO_POWER: DataType.POWER,
+    ChannelType.IIO_ACCEL: DataType.ACCELERATION,
+    ChannelType.IIO_MAGN: DataType.MAGNETOMETER,
+    ChannelType.IIO_LIGHT: DataType.ILLUMINATION,
+    ChannelType.IIO_INTENSITY: DataType.ILLUMINATION,
+    ChannelType.IIO_PROXIMITY: DataType.PROXIMITY,
+    ChannelType.IIO_TEMP: DataType.TEMPERATURE,
+    ChannelType.IIO_ROT: DataType.ROTATION,
+    ChannelType.IIO_ANGL: DataType.ROTATION,
+    ChannelType.IIO_TIMESTAMP: DataType.TIMESTAMP,
+    ChannelType.IIO_CAPACITANCE: DataType.CAPACITANCE,
+    ChannelType.IIO_PRESSURE: DataType.PRESSURE,
+    ChannelType.IIO_HUMIDITYRELATIVE: DataType.HUMIDITY,
+    ChannelType.IIO_STEPS: DataType.INTEGER,
+    ChannelType.IIO_ENERGY: DataType.WORK,
+    ChannelType.IIO_DISTANCE: DataType.LENGTH,
+    ChannelType.IIO_VELOCITY: DataType.VELOCITY,
+    ChannelType.IIO_CONCENTRATION: DataType.CONCENTRATION,
+    ChannelType.IIO_RESISTANCE: DataType.RESISTANCE,
+    ChannelType.IIO_PH: DataType.PHINDEX,
+    ChannelType.IIO_UVINDEX: DataType.UVINDEX,
+    ChannelType.IIO_ELECTRICALCONDUCTIVITY: DataType.CONDUCTIVITY,
+    ChannelType.IIO_COUNT: DataType.INTEGER,
+    ChannelType.IIO_GRAVITY: DataType.GRAVITY
+}
+
+
+def datatype_from_iio(iio: ChannelType) -> "DataType":
+    return _mapping_iio_shpi.get(iio, DataType.UNDEFINED)
+
+
+def datatype_to_basic_type(datatype: "DataType") -> Type[Union[int, str, bool, float, date, time, datetime, list]]:
+    return _to_basic_type.get(datatype, float)

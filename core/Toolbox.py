@@ -3,10 +3,12 @@
 import socket
 import logging
 import ctypes
+import os
+import numpy
+
 from re import compile
 from typing import NamedTuple, Optional, Union
 from threading import Thread
-import os
 
 from PySide2.QtCore import QTimer
 
@@ -165,3 +167,35 @@ class KwReplace:
             out = out.replace('{' + key + '}', value)
 
         return out
+
+
+class MeanWindow:
+    def __init__(self, first: float = None, window_size=10, func=None, dtype=numpy.int16):
+        self._window_size = window_size
+        self._data: Optional[numpy.ndarray] = None
+        self._dtype = dtype
+        self._circular_index = 0
+        self._func = func
+        if first is not None:
+            self.update(first)
+
+    @property
+    def mean(self) -> Optional[float]:
+        if self._data is None:
+            return None
+        return self._data.mean()
+
+    def update(self, value: float = None):
+        if value is None:
+            value = self._func()
+
+        if self._data is None:
+            # First element. Fill to force average.
+            self._data = numpy.full(self._window_size, value, dtype=self._dtype)
+            return
+
+        # Write to pointer pos
+        self._data[self._circular_index] = value
+
+        # Move pointer
+        self._circular_index = (self._circular_index + 1) % self._window_size

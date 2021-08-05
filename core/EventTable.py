@@ -65,11 +65,13 @@ class Event:
         self.activate()
 
     def activate(self):
-        self._table.schedule_event(self)
+        if self._table:
+            self._table.schedule_event(self)
 
     def deactivate(self):
         self._on_time = None
-        self._table.remove_event(self)
+        if self._table:
+            self._table.remove_event(self)
 
     def unload(self):
         if self._table:

@@ -13,8 +13,10 @@ from logging import getLogger
 from time import time
 
 from interfaces.DataTypes import DataType
-from interfaces.Module import ModuleBase, IgnoreModuleException
-from interfaces.PropertySystem import Property, PropertyDict, ModuleInstancePropertyDict, ROProperty
+from interfaces.Module import ModuleBase
+from interfaces.PropertySystem import Property, PropertyDict, ROProperty
+from modules.Presence import Presence, PresenceHandlerSlot
+
 from core.Toolbox import thread_kill, Pipe
 
 logger = getLogger(__name__)
@@ -254,21 +256,26 @@ class InputDevs(ModuleBase):
     allow_maininstance = True
     allow_instances = False
     categories = 'Hardware', 'Input'
+    depends_on = Presence,
 
     _INFOFILE = Path('/proc/bus/input/devices')
 
-    def __init__(self, parent, instancename: str = None):
-        if not self._INFOFILE.is_file():
-            raise IgnoreModuleException('File not found: %s', (self._INFOFILE,))
+    @classmethod
+    def available(cls) -> bool:
+        return cls._INFOFILE.is_file()
+        # ToDo: test open inputdev?
 
+    def __init__(self, parent, instancename: str = None):
         ModuleBase.__init__(self, parent=parent, instancename=instancename)
 
         self._pr_last_input = Property(DataType.TIMESTAMP, desc='Timestamp of last keypress', persistent=False)
         self._pr_last_touch = Property(DataType.TIMESTAMP, desc='Timestamp of last touch', persistent=False)
+        self._announce_human_handler: Optional[PresenceHandlerSlot] = None
+        self._presence_maininstance: Optional[Presence] = None
 
         self._pd_available_devices = PropertyDict()
 
-        self.properties = ModuleInstancePropertyDict(
+        self.properties.update(
             last_input=self._pr_last_input,
             last_touch=self._pr_last_touch,
             available_devices=Property(
@@ -280,9 +287,17 @@ class InputDevs(ModuleBase):
 
     def load(self):
         self._check_inputdev_file()
+        self._presence_maininstance: Presence = Presence.instances().get(None)
+        if self._presence_maininstance:
+            self._announce_human_handler \
+                = self._presence_maininstance.register_handler(self.__class__, 'touched_display', 10.)
 
     def unload(self):
         # Early unload of properties to clear subscriptions.
+        if self._presence_maininstance and self._announce_human_handler:
+            self._presence_maininstance.unregister_handler(self._announce_human_handler)
+        self._announce_human_handler = None
+
         self.properties.unload()
 
         del self._pr_last_input
@@ -294,6 +309,7 @@ class InputDevs(ModuleBase):
 
     def _last_touch_changed(self):
         self._pr_last_touch.value = time()
+        self._announce_human_handler.trigger()
 
     def _check_inputdev_file(self):
         found: Set[str] = set()

@@ -54,7 +54,7 @@ from weakref import WeakValueDictionary
 from PySide2.QtCore import Property as QtProperty, Signal, QObject, Slot, QAbstractListModel, Qt, QModelIndex, \
     QSortFilterProxyModel
 
-from interfaces.DataTypes import DataType
+from interfaces.DataTypes import DataType, datatype_to_basic_type
 from interfaces.Module import ModuleBase
 from core.Events import EventManager
 from core.EventTable import EventTable
@@ -67,7 +67,8 @@ logcall = LogCall(logger)
 
 NotLoaded = object()
 _valid_key = compile(r'[a-zA-Z0-9_]+')
-_invalid_chars = compile(r'[^a-zA-Z_]')
+_invalid_chars = compile(r'[^a-zA-Z0-9_]')
+
 
 class PropertyEvent:
     """
@@ -136,8 +137,6 @@ class PropertyDict:
         self._parentproperty_ref: Optional[Any] = None  # Parent property weakref if set
 
         for key, prop in kwargs.items():
-            if not _valid_key.fullmatch(key):
-                raise ValueError("Key must only consist out of chars: a-z, A-Z, 0-9, '_'.")
             self[key] = prop
 
     def __del__(self):
@@ -186,6 +185,17 @@ class PropertyDict:
         else:
             # Not part of an official path hierarchy.
             return self.path_sep
+
+    def update(self, new_properties: Dict[str, "Property"]):
+        existing_keys = set(self.keys())
+        new_keys = set(new_properties.keys())
+
+        conflict = new_keys & existing_keys
+        if conflict:
+            raise KeyError('Could not update() the PropertyDict. These keys do already exist: %s', ', '.join(conflict))
+
+        for key, prop in new_properties.items():
+            self[key] = prop
 
     def get(self, path: str, default: "Property" = None) -> Optional["Property"]:
         with suppress(KeyError):
@@ -753,7 +763,7 @@ class Property:
         else:
             # Any other value
             self._datatype = datatype
-            self._native_datatype = DataType.to_basic_type(datatype)
+            self._native_datatype = datatype_to_basic_type(datatype)
             self._default_value = initial_value
             self._is_persistent = persistent
             self._value: Any = NotLoaded if persistent else initial_value
@@ -768,7 +778,7 @@ class Property:
                     self._valuepool = {e: e.value for e in enum}
 
     def __del__(self):
-        if self._loaded:
+        if hasattr(self, '_loaded') and self._loaded:
             self.unload()
 
     def set_owner(self, new_owner: ModuleBase):
@@ -900,7 +910,7 @@ class Property:
             return
 
         if self._datatype is DataType.PROPERTYDICT:
-            raise ValueError('Setting a new value on a Property containing a PropertyDict is not allowed.')
+            raise ValueError('Setting a new value on a Property containing a PropertyDict not allowed: ' + repr(self))
 
         with self._lock:
             if self._native_datatype is int and type(newvalue) is float:
@@ -1036,6 +1046,7 @@ class Property:
     def __bool__(self):
         # Always true. Not relevant to value for safety.
         # Allows: "if self._pr_myproperty:" shortcut.
+        # If not defined, __len__ is being called which may fail.
         return True
 
     def __len__(self):
@@ -1362,8 +1373,12 @@ class FunctionProperty(Property):
         raise ValueError("New values for FunctionProperty cannot be assigned.")
 
     def __repr__(self):
-        ret = super().__repr__()[:-1]
-        ret += f", func={self.func!r}, maxage={self.maxage}"
+        ret = Property.__repr__(self)[:-1]
+
+        # Recursion on repr(self.func)!
+        func_repr = f'<bound method {self.func.__qualname__}>'
+
+        ret += f", func={func_repr}, maxage={self.maxage}"
         return ret + ">"
 
     def unload(self):
@@ -1395,7 +1410,7 @@ class IntervalProperty(Property):
 
         Property.__init__(
             self,
-            datatype=DataType.TIMERANGE,
+            datatype=DataType.TIMEDELTA,
             initial_value=default_interval,
             desc=desc,
             persistent=persistent_interval
@@ -1454,8 +1469,6 @@ class IntervalProperty(Property):
 
 
 class TimeoutProperty(IntervalProperty):
-    # No own event_table? _event_table = EventTable()
-
     def __init__(
             self,
             timeout_func: Callable[[], None],

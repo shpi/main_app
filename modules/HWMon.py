@@ -23,6 +23,10 @@ class HWMon(ModuleBase):
 
     _hwmon_devices_path = Path('/sys/class/hwmon')
 
+    @classmethod
+    def available(cls) -> bool:
+        return cls._hwmon_devices_path.is_dir()
+
     def __init__(self, parent, instancename: str = None):
         super().__init__(parent=parent, instancename=instancename)
 
@@ -111,16 +115,16 @@ class HWMon(ModuleBase):
         try:
             with open(f'/sys/class/hwmon/{channelid}/{channel}', 'r') as rf:
                 value = rf.read().strip()
-                # logging.debug(f' reading channel: {channel} value: {value}')
+                # logger.debug(f' reading channel: {channel} value: {value}')
                 return DataType.str_to_tight_datatype(value)
 
         except Exception as e:
             exception_type, exception_object, exception_traceback = sys.exc_info()
             line_number = exception_traceback.tb_lineno
-            logging.error(f'channel: {channel} error: {e} in line {line_number}')
+            logger.error(f'channel: {channel} error: {e} in line {line_number}')
 
     def write_hwmon(self, channelid, channel, value, retries=0):
-        logging.debug(f' writing {value} to output')
+        logger.debug(f' writing {value} to output')
         value = str(int(value))
         if not os.path.isfile(f'/sys/class/hwmon/{channelid}/{channel}'):
             return False
@@ -137,5 +141,5 @@ class HWMon(ModuleBase):
             else:
                 exception_type, exception_object, exception_traceback = sys.exc_info()
                 line_number = exception_traceback.tb_lineno
-                logging.error(f'channel: {channel} error: {e} in line {line_number}')
+                logger.error(f'channel: {channel} error: {e} in line {line_number}')
                 return False

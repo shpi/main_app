@@ -4,12 +4,12 @@
 
 from logging import getLogger
 from pathlib import Path
-from typing import Generator, Dict, Any, List, Type
+from typing import Generator, Dict, Any, List, Type, Optional
 
 import core.iio as iio
-from interfaces.DataTypes import DataType
+from interfaces.DataTypes import DataType, datatype_from_iio
 from interfaces.Module import ModuleBase
-from interfaces.PropertySystem import PropertyDict, Property, ROProperty
+from interfaces.PropertySystem import PropertyDict, Property, ROProperty, FunctionProperty
 
 
 logger = getLogger(__name__)
@@ -60,6 +60,25 @@ def _iio_dev_dump():
                 print("    attr:", attr, type(attr_obj), "=", attr_obj.value.strip(), type(attr_obj.value))
 
 
+def _datatype_from_name(name: str) -> DataType:
+    if name in {'raw', 'offset', 'scale', 'calibemissivity', 'input'}:
+        return DataType.FLOAT
+
+    if name.endswith('_frequency'):
+        return DataType.FLOAT
+
+    if name.endswith('_time'):
+        return DataType.TIMEDELTA
+
+    if name.endswith('_ratio'):
+        return DataType.FLOAT
+
+    if name.endswith('_available'):
+        return DataType.LIST_OF_STRINGS
+
+    return DataType.UNDEFINED
+
+
 class IioChannelAttribute(Property):
     __slots__ = '_attr', '_file'
 
@@ -78,7 +97,7 @@ class IioChannelAttribute(Property):
 
         output = isinstance(self, IioOutputChannelAttribute)
         Property.__init__(self,
-                          datatype=DataType.iio_to_shpi(channel.type),
+                          datatype=_datatype_from_name(attr.name),
                           desc='Output channel attribute' if output else 'Input channel attribute',
                           persistent=False)
 
@@ -135,11 +154,138 @@ class IioChannel(Property):
             attr_pd[attr_name] = chan_attr_class(channel, attr)
 
 
-class IioInputChannel(IioChannel):
+class PathProperty(Property):
+    __slots__ = '_iopath'
+
+    def __init__(self, path: Path, datatype: DataType = DataType.STRING, desc: str = None):
+        self._iopath = path
+        if not desc:
+            desc = str(path)
+        Property.__init__(self, datatype=datatype, desc=desc, persistent=False)
+
+    @property
+    def value(self):
+        return self._iopath.read_text()
+
+    @value.setter
+    def value(self, newvalue: str):
+        self._iopath.write_text(newvalue)
+
+
+class PathPropertyEnable(PathProperty):
     __slots__ = ()
 
+    def __init__(self, path: Path, desc: str):
+        PathProperty.__init__(self, path, datatype=DataType.BOOLEAN, desc=desc)
+
+    @property
+    def value(self):
+        return PathProperty.value.fget(self) != '0\n'
+
+    @value.setter
+    def value(self, newvalue: bool):
+        PathProperty.value.fset(self, '1' if newvalue else '0')
+
+    def unload(self):
+        try:
+            self.value = False
+        except Exception as e:
+            logger.error('Could not disable buffer on unload:', repr(e))
+
+        super().unload()
+
+
+class PathPropertyInteger(PathProperty):
+    __slots__ = ()
+
+    def __init__(self, path: Path, desc: str):
+        PathProperty.__init__(self, path, datatype=DataType.INTEGER, desc=desc)
+
+    @property
+    def value(self):
+        return int(PathProperty.value.fget(self))
+
+    @value.setter
+    def value(self, newvalue: int):
+        PathProperty.value.fset(self, str(newvalue))
+
+
+class PathPropertyIntegerRO(FunctionProperty):
+    __slots__ = '_iopath',
+
+    def __init__(self, path: Path, desc: str):
+        self._iopath = path
+        FunctionProperty.__init__(self, datatype=DataType.INTEGER, getterfunc=self._readfile, desc=desc)
+
+    def _readfile(self):
+        return int(self._iopath.read_text())
+
+
+class IioInputChannel(IioChannel):
+    __slots__ = '_pr_base', '_pr_offset', '_pr_scale', '_ch_datatype'
+
     def __init__(self, channel: iio.Channel):
+        self._ch_datatype = datatype_from_iio(channel.type)
+
         IioChannel.__init__(self, channel, 'Input channel', IioInputChannelAttribute)
+
+        # Append some processing properties
+        if 'raw' in self._value:
+            self._value['processed'] = FunctionProperty(datatype=self._ch_datatype,
+                                                        getterfunc=self._from_raw,
+                                                        desc='Processed value from raw')
+            self._pr_base: Property = self['raw']
+            self._pr_offset: Optional[Property] = self.value.get('offset')
+            self._pr_scale: Optional[Property] = self.value.get('scale')
+
+        elif 'input' in self._value:
+            self._pr_base: Property = self['input']
+
+            self._value['processed'] = FunctionProperty(datatype=self._ch_datatype,
+                                                        getterfunc=self._from_input,
+                                                        desc='Processed value from input')
+
+        # self._value['read'] = FunctionProperty(datatype=self._ch_datatype,
+        #                                       getterfunc=self._read,
+        #                                       desc='Direct reading of channel')
+
+        # self._value['read_raw'] = FunctionProperty(datatype=self._ch_datatype,
+        #                                           getterfunc=self._read_raw,
+        #                                           desc='Direct reading of channel')
+
+        if channel.scan_element:
+            self._value['scan_elements_enable'] = PathPropertyEnable(
+                Path('/sys/bus/iio/devices', channel.device.id, 'scan_elements', f'in_{channel.id}_en'),
+                'scan_element enable/disable'
+            )
+
+    def _scaled(self, unscaled):
+        if self._ch_datatype is DataType.TEMPERATURE:
+            return unscaled / 1000
+
+        return unscaled
+
+    def _from_input(self):
+        v = self._pr_base.value
+        return self._scaled(v)
+
+    def _from_raw(self):
+        # Scaled value = (raw + offset) * scale
+        v = self._pr_base.value
+
+        if self._pr_offset:
+            v += self._pr_offset.value
+
+        if self._pr_scale:
+            v *= self._pr_scale.value
+
+        return self._scaled(v)
+
+    def _read(self):
+        return "Not yet supported"
+
+    def _read_raw(self):
+        return "Not yet supported"
 
 
 class IioOutputChannel(IioChannel):
@@ -250,6 +396,54 @@ class IioDevChannels(Property):
                 chan_pd[channel.id] = IioInputChannel(channel)
 
 
+class IioDevBufferLength(Property):
+    __slots__ = '_enable_path', '_length_path'
+
+    _eventids = ()  # No event manager
+
+    def __init__(self, enable_path: Path, length_path: Path):
+        self._enable_path = enable_path
+        self._length_path = length_path
+
+        Property.__init__(self, DataType.INTEGER, desc='Enable buffer / buffer length. 0=Disabled', persistent=False)
+
+    @property
+    def value(self):
+        enabled = self._enable_path.read_text() != '0\n'
+        if not enabled:
+            return 0
+        return int(self._length_path.read_text())
+
+    @value.setter
+    def value(self, newvalue: int):
+        if newvalue < 1:
+            self._enable_path.write_text('0')
+            return
+
+        self._length_path.write_text(str(newvalue))
+        self._enable_path.write_text('1')
+
+
+class IioDevBuffer(Property):
+    __slots__ = '_buffer_path',
+
+    _eventids = ()  # No event manager
+
+    def __init__(self, buffer_path: Path):
+        self._buffer_path = buffer_path.resolve()
+        pd = PropertyDict()
+        Property.__init__(self, datatype=DataType.PROPERTYDICT, initial_value=pd, desc='Buffer control')
+
+        data_available_path = buffer_path / 'data_available'
+        if data_available_path.is_file():
+            pd['data_available'] = PathPropertyIntegerRO(data_available_path.resolve(), desc='Amount of data in buffer')
+
+        enable_path = self._buffer_path / 'enable'
+        length_path = self._buffer_path / 'length'
+        if enable_path.is_file() and length_path.is_file():
+            pd['length'] = IioDevBufferLength(enable_path, length_path)
+
+
 class IioDev(Property):
     __slots__ = ()
 
@@ -270,6 +464,14 @@ class IioDev(Property):
 
         if dev.channels:
             dev_pd['channels'] = IioDevChannels(dev.channels)
+
+        buffer_path = Path('/sys/bus/iio/devices', dev.id, 'buffer')
+        if buffer_path.is_dir():
+            dev_pd['buffer'] = IioDevBuffer(buffer_path)
+
+        raw_path = Path('/dev', dev.id)
+        if raw_path.exists():
+            dev_pd['rawdevice'] = ROProperty(datatype=DataType.STRING, value=str(raw_path), desc='Raw data access path')
 
 
 class IIO(ModuleBase):

@@ -22,8 +22,6 @@ class CPU(ModuleBase):
     def __init__(self, parent, instancename: str = None):
         super().__init__(parent=parent, instancename=instancename)
 
-        self.properties = ModuleInstancePropertyDict()
-
         if self.CPU_PATH.exists():
             self._freq_files: Dict[str, Path] = \
                 {file.parent.parent.name: file for file in self.CPU_PATH.glob('cpu*/cpufreq/scaling_cur_freq')}

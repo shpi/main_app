@@ -6,7 +6,7 @@ from datetime import datetime, date, time
 
 from PySide2.QtCore import QSettings, QObject
 
-from interfaces.DataTypes import DataType
+from interfaces.DataTypes import DataType, datatype_to_basic_type
 
 
 class Settings(QSettings):
@@ -35,7 +35,7 @@ class Settings(QSettings):
 
     def get(self, key: str, default, datatype: DataType):
         # Get value and convert.
-        basic_type = DataType.to_basic_type(datatype)
+        basic_type = datatype_to_basic_type(datatype)
         return self._read_funcs.get(basic_type, self.get_raw)(key, default)
         # or KeyError("<type>")
 
@@ -90,7 +90,7 @@ class Settings(QSettings):
 
     def set(self, key: str, value, datatype: DataType, compare_stored=True):
         # Get value and convert.
-        basic_type = DataType.to_basic_type(datatype)
+        basic_type = datatype_to_basic_type(datatype)
 
         if compare_stored:  # Because writes to ini file are slow and inefficient
             stored = self._read_funcs.get(basic_type, self.get_raw)(key, None)
