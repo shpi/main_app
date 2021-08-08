@@ -156,7 +156,7 @@ class Module:
             # It's the first instance of that module subclass.
             instances = Module.instancesdict_by_cls[clsstr] = {}
             viewer = Module.instancesviewer_by_cls[clsstr] = ModuleInstancesViewer(module_class, instances)
-            module_class.instances = lambda cls: viewer
+            module_class.instances = lambda: viewer
 
         elif instancename in viewer:
             raise ValueError(f"There is already an instancename of {instancename!s} for class {clsstr}")

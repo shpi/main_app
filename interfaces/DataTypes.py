@@ -51,7 +51,7 @@ class DataType(Enum):
     PRESENCE = 24  # bool
     ONOFF = 25  # bool
     COUNT = 26  # integer
-    FAN = 27  # rpm
+    RPM = 27  # rpm, int
     ACCELERATION = 28  # m seconds squared
     VELOCITY = 29  # meter per second
     MAGNETOMETER = 30  # milli gauss
@@ -148,6 +148,7 @@ _to_basic_type = {
     DataType.PRESENCE: bool,
     DataType.ONOFF: bool,
     DataType.COUNT: int,
+    DataType.RPM: int,
 
     DataType.BYTES: int,
     DataType.ENUM: str,

@@ -66,6 +66,7 @@ class Event:
 
     def activate(self):
         if self._table:
+            # print("## calling activate")
             self._table.schedule_event(self)
 
     def deactivate(self):
@@ -120,6 +121,7 @@ class EventTable:
     def remove_event(self, event: Event, full=False):
         # Prevent from emitting anyway. Remove from queue.
         if event in self._active_events:
+            # print("removing event", event)
             self._active_events.remove(event)
             self._t_event.set()  # Trigger eventloop wait to restart.
 
@@ -133,7 +135,9 @@ class EventTable:
             event.unload()
 
     def schedule_event(self, event: Event):
+        # print("## rescheduling event", event)
         if event in self._active_events:
+            # print("already scheduled", event)
             # Already scheduled and in queue
             return
 
@@ -174,10 +178,12 @@ class EventTable:
         now = e.on_time
 
         # Call event functions
+        # print("emit", e)
         e.emit()
 
         if e.on_time <= now:
             # Not rescheduled. Remove it.
+            # print("remove")
             self.remove_event(e)
         else:
             self._t_event.set()  # Trigger eventloop wait to restart.
@@ -218,6 +224,7 @@ class EventTable:
 
                 # Remaining time
                 diff = (e.on_time - datetime.now()).total_seconds()
+                # print("remaining:", diff, "on_time was:", e.on_time, e)
                 if diff > 0.:
                     # Still time to wait.
                     if self._t_event.wait(diff):

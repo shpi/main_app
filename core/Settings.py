@@ -3,10 +3,13 @@
 import sys
 from typing import List, Optional
 from datetime import datetime, date, time
+from logging import getLogger
 
 from PySide2.QtCore import QSettings, QObject
 
 from interfaces.DataTypes import DataType, datatype_to_basic_type
+
+logger = getLogger(__name__)
 
 
 class Settings(QSettings):
@@ -49,7 +52,11 @@ class Settings(QSettings):
         v = self.value(key, default)
         if v is None:
             return None
-        return int(v)
+
+        try:
+            return int(v)
+        except Exception as e:
+            logger.error('Could not convert into int: %s, key=%s (%s)', v, key, repr(e))
 
     def float(self, key: str, default=0.) -> Optional[float]:
         # get value with float conversion
@@ -57,7 +64,10 @@ class Settings(QSettings):
         v = self.value(key, default)
         if v is None:
             return None
-        return float(v)
+        try:
+            return float(v)
+        except Exception as e:
+            logger.error('Could not convert into float: %s, key=%s (%s)', v, key, repr(e))
 
     def str(self, key: str, default='') -> Optional[str]:
         # get value with str conversion

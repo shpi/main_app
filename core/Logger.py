@@ -91,8 +91,8 @@ class LogModel(QAbstractListModel):
         self._items.clear()
         self.deleteLater()
 
-    def __del__(self):
-        print("deleted LogModel")
+    # def __del__(self):
+    #    print("deleted LogModel")
 
 
 class QtLoggingHandler(logging.Handler):
@@ -117,17 +117,17 @@ class QtLoggingHandler(logging.Handler):
         )
 
     def unload(self):
-        print("Unloading QtLoggingHandler")
+        # print("Unloading QtLoggingHandler")
         self.emit = lambda x: None
         self.model = None
 
     def close(self):
-        print("closing handler")
+        # print("closing handler")
         super().close()
         self.unload()
 
-    def __del__(self):
-        print("deleted QtLoggingHandler")
+    # def __del__(self):
+    #    print("deleted QtLoggingHandler")
 
 
 log_model = LogModel()
@@ -188,7 +188,7 @@ class LogCall:
             ret = func(*args, **kwargs)
             return ret
         except catch_exceptions as e:
-            msg = ('\n'.join(line.strip() for line in traceback.format_stack()[:-1])) + '\n' + \
+            msg = ('\n'.join(line.strip() for line in traceback.format_stack()[:-1])).replace('%', '%%') + '\n' + \
                   'While calling: %s'
             self._logger.error(msg + '\n' + errmsg, repr(func), repr(e), exc_info=True)
             return e

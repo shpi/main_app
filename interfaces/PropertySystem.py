@@ -66,8 +66,8 @@ logger = getLogger(__name__)
 logcall = LogCall(logger)
 
 NotLoaded = object()
-_valid_key = compile(r'[a-zA-Z0-9_]+')
-_invalid_chars = compile(r'[^a-zA-Z0-9_]')
+_valid_key = compile(r'[a-zA-Z0-9_.]+')
+_invalid_chars = compile(r'[^a-zA-Z0-9_.]')
 
 
 class PropertyEvent:
@@ -186,7 +186,7 @@ class PropertyDict:
             # Not part of an official path hierarchy.
             return self.path_sep
 
-    def update(self, new_properties: Dict[str, "Property"]):
+    def update(self, **new_properties: "Property"):
         existing_keys = set(self.keys())
         new_keys = set(new_properties.keys())
 
@@ -624,7 +624,6 @@ class Property:
 
     @classmethod
     def init_class(cls, parent: QObject):
-        print("init class called")
         if cls._run_save_thread:
             raise RuntimeError('Save thread already running.')
 
@@ -1000,7 +999,7 @@ class Property:
         if isinstance(self._value, PropertyDict):
             logcall(self._value.unload, errmsg="Exception during unloading nested PropertyDict: %s", stack_trace=True)
 
-        if self._datatype not in self._exclude_from_model:
+        if self._datatype not in self._exclude_from_model and self.listmodel:
             # Remove from model
             self.listmodel.remove(self)
 
@@ -1444,7 +1443,6 @@ class IntervalProperty(Property):
 
     def load(self):
         super().load()
-
         if not self._is_persistent:
             # Need a manual reschedule because non persistent properties don't trigger the setter.
             v = self.value
@@ -1458,12 +1456,14 @@ class IntervalProperty(Property):
 
     @value.setter
     def value(self, newvalue: Any):
-        newvalue = 0. if newvalue is None else float(newvalue)
-        Property.value.__set__(self, newvalue)
+        newvalue = newvalue and float(newvalue) or None
+        Property.value.fset(self, newvalue)
 
-        if newvalue == 0.:
+        if newvalue is None:
+            # print("interval.value=None", self._event)
             self._event.deactivate()
         else:
+            # print("interval.value = not None:", newvalue, self._event)
             now = datetime.datetime.now()
             self._event.reschedule(now, newvalue)
 
@@ -1493,12 +1493,18 @@ class TimeoutProperty(IntervalProperty):
         self._event.deactivate()
 
     def restart(self):
+        # print("timeout.restart():", self._event)
+
         now = datetime.datetime.now()
         if self.value is None:
+            # print("... but its None")
+
             # Timeout deactivated
             return
 
+        # print("... call reschedule")
         self._event.reschedule(now, self._value)
+        # print("... rescheduled to", self._event.on_time, 'because of diff', self._value)
 
     @property
     def value(self) -> Optional[float]:
@@ -1506,10 +1512,11 @@ class TimeoutProperty(IntervalProperty):
 
     @value.setter
     def value(self, newvalue: Optional[float]):
-        newvalue = None if newvalue is None else float(newvalue)
-        Property.value.__set__(self, newvalue)
+        newvalue = newvalue and float(newvalue) or None
+        IntervalProperty.value.fset(self, newvalue)
         if self._event.on_time:
             # Is running
+            # print("++timeout call e.restart()", self._event)
             self.restart()
 
     @property

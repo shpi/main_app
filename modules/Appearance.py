@@ -10,7 +10,7 @@ from PySide2.QtCore import Signal, Slot, Property as QtProperty
 
 from interfaces.DataTypes import DataType
 from interfaces.PropertySystem import PropertyDict, QtPropLink, Property, IntervalProperty, TimeoutProperty, \
-    SelectProperty, QtPropLinkEnum, QtPropLinkSelect, ModuleInstancePropertyDict
+    SelectProperty, QtPropLinkEnum, QtPropLinkSelect
 from interfaces.Module import ModuleBase
 from modules.InputDevs import InputDeviceProperty, InputDevs
 
@@ -104,7 +104,7 @@ class Appearance(ModuleBase):
         self._pr_night_mode_start = Property(DataType.TIME_STR, '20:00', desc='Start time of night mode')
         self._pr_night_mode_end = Property(DataType.TIME_STR, '06:00', desc='End time of night mode')
 
-        self.properties = ModuleInstancePropertyDict(
+        self.properties.update(
             min=self._pr_min,
             max=self._pr_max,
             min_night=self._pr_min_night,
@@ -175,7 +175,7 @@ class Appearance(ModuleBase):
 
         # Track touches for sleep/off mode
         self._epr_lasttouch = self.properties.root().get('InputDevs/last_touch')
-        if self._epr_lasttouch is not None:
+        if self._epr_lasttouch:
             self._epr_lasttouch.events.subscribe(self._touched, Property.UPDATED_AND_CHANGED)
 
         self._epr_lastinput = self.properties.root().get('InputDevs/last_input')
@@ -211,6 +211,7 @@ class Appearance(ModuleBase):
         self._check_backlight()
 
     def _jump_home(self):
+        print("jumping home now")
         self.jump_home.emit()
 
     def _touched(self):
@@ -221,7 +222,11 @@ class Appearance(ModuleBase):
         self._pr_jump_home_timer.restart()
 
     def unload(self):
-        pass
+        if self._epr_lasttouch is not None:
+            self._epr_lasttouch.events.unsubscribe(self._touched, Property.UPDATED_AND_CHANGED)
+
+        if self._epr_lastinput is not None:
+            self._epr_lastinput.events.unsubscribe(self._touched, Property.UPDATED_AND_CHANGED)
 
     def _inputdev_prop(self, prop_or_path: Union[Property, str]) -> Optional[InputDeviceProperty]:
         # Get InputDeviceProperty from path or check given property to be an InputDeviceProperty

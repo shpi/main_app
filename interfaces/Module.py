@@ -61,6 +61,10 @@ class ModuleBase(QObject, FakeABC):
         Missing hardware etc. should return False.
         Default: True
         """
+        for dep in cls.depends_on:
+            if not dep.available():
+                return False
+
         return True
 
     def instancename(self) -> Optional[str]:
@@ -78,8 +82,8 @@ class ModuleBase(QObject, FakeABC):
         """
         raise NotImplementedError('Function called too early. Don\'t use it in __init__.')
 
-    @classmethod
-    def instances(cls) -> "ModuleInstancesView":
+    @staticmethod
+    def instances() -> "ModuleInstancesView":
         """
         Module class's instance view which contains all loaded instances of the specific class.
         """
