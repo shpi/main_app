@@ -88,13 +88,14 @@ class Module:
 
         for m in cls.instances_in_loadorder:
             if not m.loaded and m.module_instance is not None:
+                logger.debug("Loading module %s", m.module_class.__name__ + ('.' + m.module_instancename if m.module_instancename else ''))
                 m.load()
 
     def __init__(self, module_class: Type[ModuleBase], instancename: str = None, parent: QObject = None):
         if not issubclass(module_class, ModuleBase):
             raise TypeError('Given module_class is not a subclass of ModuleBase:' + str(module_class))
 
-        logger.info('Creating Module instance %s', module_class.__name__ + ('.' + instancename if instancename else ''))
+        logger.debug('Creating Module %s', module_class.__name__ + ('.' + instancename if instancename else ''))
         self.module_class = module_class
 
         # Check instancing policy with instancename
@@ -238,10 +239,10 @@ class ThreadModule(Module):
         self.module_threadname = threadname
         self.module_instance.sleep = self.sleep  # Get access to sleep function
         self.module_instance.module_is_running = lambda: self.running
-        self.thread = Thread(target=self.module_instance.run)
+        self.thread = Thread(target=self.module_instance.run, name=threadname)
 
-    def load(self):
-        Module.load(self)
+    def load(self, force_reload=False):
+        Module.load(self, force_reload)
 
         if self.module_instance is None:
             return

@@ -378,7 +378,7 @@ Item {
 
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: 600
-                model: properties.get_properties_by_datatype_model('TIME_STR')
+                model: properties.get_properties_by_datatype_model('TIME')
                 textRole: 'path'
                 valueRole: 'path'
                 onActivated: appearance.night_mode_start_select = this.currentValue
@@ -396,7 +396,7 @@ Item {
                 }
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: 600
-                model: properties.get_properties_by_datatype_model('TIME_STR')
+                model: properties.get_properties_by_datatype_model('TIME')
                 textRole: 'path'
                 valueRole: 'path'
                 onActivated: appearance.night_mode_end_select = this.currentValue

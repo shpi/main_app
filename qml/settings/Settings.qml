@@ -9,22 +9,22 @@ Item {
 
         ListElement {
             title: "Properties (Variables)"
-            page: "core/Properties.qml"
+            page: "/qml/settings/Properties.qml"
         }
 
         ListElement {
             title: "Modules"
-            page: "Modules.qml"
+            page: "/qml/settings/Modules.qml"
         }
 
         ListElement {
             title: "Categories"
-            page: "CategorySettings.qml"
+            page: "/qml/settings/CategorySettings.qml"
         }
 
         ListElement {
             title: "Background Pictures"
-            page: "Pictures.qml"
+            page: "/qml/settings/Pictures.qml"
         }
     }
 

@@ -4,11 +4,11 @@ from pathlib import Path
 from html import escape
 
 from core.Toolbox import KwReplace
-from interfaces.PropertySystem import Property, SelectProperty, FunctionProperty, PropertyDict
+from interfaces.PropertySystem import Property, PropertyDict, Input, Function
 from interfaces.DataTypes import DataType
 
 
-_html_template_file = Path('properties_export.template.html')
+_html_template_file = Path('helper/properties_export.template.html')
 _html_export_file = Path('properties_export.html')
 
 if _html_template_file.is_file():
@@ -28,20 +28,21 @@ def _export_prop(prop: Property, level=0):
     value2 = ''
     loaded_status = '' if prop._loaded else ' <span class="error">NOT LOADED!</span>'
 
-    if isinstance(prop, SelectProperty):
-        value2 = '<br>\n' + ('  ' * level) + 'Allowed DataType: ' + ("All" if prop.expected_datatype is None else '<span class="datatype">' + escape(prop.expected_datatype.name) + '</span>')
+    if prop.ptype is Input and prop.is_linked:
+        value2 = '<br>\n' + _html_propertydict.format(level='  ' * (level+1), id='', name='Linked Property', nested=_export_prop(prop._link.source, level=level+1))
 
-        if prop.is_selected:
-            value2 = '<br>\n' + _html_propertydict.format(level='  ' * (level+1), id='', name='Selected Property', nested=_export_prop(prop.selected_property, level=level+1))
-
-    if isinstance(prop, FunctionProperty):
-        value2 = '<br>\n' + ('  ' * level) + '<span class="function">' + escape(str(prop.func)) + '</span>, maxage=' + escape(str(prop.maxage))
+    if prop.ptype is Function:
+        value2 = '<br>\n' + ('  ' * level) + '<span class="function">' + escape(str(prop._getfunc.args[0])) + \
+                 '</span>, min_interval=' + escape(str(prop._poll_interval_min_default[0])) + \
+                 ', def_interval=' + escape(str(prop._poll_interval_min_default[1])) + \
+                 ', interval=' + escape(str(prop.poll_interval))
 
     additional = '<br>\n' + ('  ' * level) + ('<span class="persistent">persistent</span>, ' if prop.is_persistent else '') + \
                  'default: <span class="value defaultvalue">' + \
                  escape(str(prop.default_value)) + '</span>' + value2 + '<br>\n' + ('  ' * level) + '<span class="datatype">' + escape(prop.datatype.name) + '</span> <span class="value">' + value + '</span>'
 
-    nested = '<span class="propertyname">' + escape(str(prop.key)) + f'{loaded_status}</span> <span class="propid">id={prop.id}</span> ' \
+    nested = '<span class="ptype">' + escape(prop.ptype.name) + '</span> ' \
+             '<span class="propertyname">' + escape(str(prop.key)) + f'{loaded_status}</span> <span class="propid">id={prop.id}</span> ' \
              '<span class="classname">[' + escape(prop.__class__.__name__) + ']</span> ' \
              '<span class="path">\'' + escape(str(prop.path)) + '\'</span> ' \
              '<span class="desc">' + escape(str(prop.desc)) + '</span> ' + additional

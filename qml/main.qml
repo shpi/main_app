@@ -84,6 +84,7 @@ ApplicationWindow {
             }
         }
     }
+
     FontLoader {
         id: localFont
         source: "/fonts/dejavu-custom.ttf"
@@ -189,7 +190,7 @@ ApplicationWindow {
                 ListElement {
                     title: "\uE010" // Icons.settings
                     size: 50
-                    page: "Settings.qml"
+                    page: "/qml/settings/Settings.qml"
                 }
             }
 
@@ -273,6 +274,7 @@ ApplicationWindow {
                 // active: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
             } */
         }
+    }
 
     PageIndicator {
         id: indicator

@@ -91,9 +91,10 @@ def _get_time(e: Event) -> datetime:
 
 
 class EventTable:
-    __slots__ = "_active_events", "_all_events", "_event_loop_running", "_t_event", "_event_thread"
+    __slots__ = "_active_events", "_all_events", "_event_loop_running", "_t_event", "_event_thread", "_name"
 
-    def __init__(self):
+    def __init__(self, name: str):
+        self._name = name
         self._active_events: List[Event] = []
         self._all_events: List[Event] = []
         self._event_loop_running = False
@@ -203,7 +204,11 @@ class EventTable:
         if self._event_loop_running:
             raise RecursionError("event_loop already running.")
 
-        self._event_thread = Thread(target=self.event_loop, name=f"EventTable_eventloop_{id(self)}")
+        name = "EventTable_eventloop"
+        if self._name:
+            name += "_" + self._name
+
+        self._event_thread = Thread(target=self.event_loop, name=name)
         self._event_thread.start()
 
     def event_loop(self):

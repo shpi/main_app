@@ -5,17 +5,18 @@ from modules.Appearance import Appearance
 from modules.InputDevs import InputDevs
 from modules.MLX90615 import MLX90615
 from modules.Presence import Presence
+from modules.MainApp import MainApp_Info
 # from core.Wifi import Wifi
 # from hardware.Alsa import AlsaMixer
 # from hardware.Backlight import Backlight
 from modules.CPU import CPU
 # from hardware.Disk import DiskStats
-# from hardware.HWMon import HWMon
+from modules.HWMon import HWMon
 from modules.IIO import IIO
 # from hardware.Leds import Led
 # from hardware.System import SystemInfo
 # from core.Git import Git
-# from modules.HTTPServer import HTTPServer
+from modules.HTTPServer import HTTPServer
 from interfaces.DemoModules import DemoThreadModule, EndlessThreadModule, DemoModule
 
 # Other imports
@@ -39,7 +40,7 @@ def external_modules() -> Set[Type[ModuleBase]]:
     return set()
 
 
-always_instantiate_modules = Appearance, CPU, IIO
+always_instantiate_modules = Appearance, CPU, MainApp_Info  # ToDo: Modules by model-detection
 
 
 GIT_CLONE_PATH = 'https://github.com/shpi/main_app'

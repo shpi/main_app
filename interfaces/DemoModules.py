@@ -1,8 +1,9 @@
 from time import sleep
+from datetime import time
 
 from interfaces.DataTypes import DataType
 from interfaces.Module import ThreadModuleBase, ModuleBase
-from interfaces.PropertySystem import Property, ModuleInstancePropertyDict
+from interfaces.PropertySystem import Property, ModuleInstancePropertyDict, Input
 
 
 class DemoModule(ModuleBase):
@@ -15,7 +16,7 @@ class DemoModule(ModuleBase):
         ModuleBase.__init__(self, parent=parent, instancename=instancename)
 
         self.properties = ModuleInstancePropertyDict(
-            a_time_str=Property(DataType.TIME_STR, '10:00', desc='Static TIME_STR property demo')
+            a_time_str=Property(Input, DataType.TIME, time(20, 0), desc='Static TIME property demo')
         )
 
     def load(self):

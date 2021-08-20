@@ -10,8 +10,7 @@ from logging import getLogger
 # from core.CircularBuffer import CircularBuffer
 from interfaces.DataTypes import DataType
 from interfaces.Module import ThreadModuleBase
-from interfaces.PropertySystem import FunctionProperty, IntervalProperty, Property
-from core.Settings import settings
+from interfaces.PropertySystem import IntervalProperty, Property, Function, Input, Output
 from core.Toolbox import MeanWindow
 from modules.CPU import CPU
 from modules.IIO import IIO
@@ -47,7 +46,7 @@ class MLX90615(ThreadModuleBase):  # Non Thread?
         ThreadModuleBase.__init__(self, parent=parent, instancename=instancename)
 
         self.mean_backlight_level = MeanWindow(window_size=self.MEAN_COUNT)
-        self.mean_cpu_temp = MeanWindow(window_size=self.MEAN_COUNT, func=CPU.get_cpu_temp)
+        self.mean_cpu_temp = MeanWindow(window_size=self.MEAN_COUNT)
         self.mean_fan_speed = MeanWindow(1900., window_size=self.MEAN_COUNT)
 
         # Updated often in run(), used in calc_compensated_temp()
@@ -64,42 +63,36 @@ class MLX90615(ThreadModuleBase):  # Non Thread?
 
         self._pr_interval = IntervalProperty(self.update_means, 10., desc='Interval of calculating mean values')
 
-        self._pr_temp_room = FunctionProperty(
-            datatype=DataType.TEMPERATURE,
-            getterfunc=self._get_room_temp,
-            maxage=1.,
-            desc='Room temperature (stabilized)'
+        pr_temp_room = Property(Output, DataType.TEMPERATURE, 0.,
+                                desc='Room temperature (stabilized)', persistent=False)
+        self._set_roomtemp = pr_temp_room.get_setvalue_func()
+
+        pr_temp = Property(
+            Output, DataType.TEMPERATURE, 0., desc='Temperature of room or object'
         )
+        self._set_temp = pr_temp.get_setvalue_func()
 
-        self._pr_temp = FunctionProperty(
-            datatype=DataType.TEMPERATURE,
-            getterfunc=self.calc_compensated_temp,
-            maxage=1.,
-            desc='Temperature of room or object'
-        )
+        pr_last_movement = Property(Output, DataType.TIMESTAMP, 0.,
+                                    desc='Last movement detection by fast temperature change',
+                                    persistent=False)
+        self._set_last_movement = pr_last_movement.get_setvalue_func()
 
-        self._pr_last_movement = Property(datatype=DataType.TIMESTAMP,
-                                          initial_value=0.,
-                                          desc='Last movement detection by fast temperature change',
-                                          persistent=False)
-
-        self._pr_delta = Property(datatype=DataType.TEMPERATURE,
-                                  initial_value=3.,
+        self._pr_delta = Property(Input, DataType.TEMPERATURE, 1.5,
                                   desc='Temp difference to interrupt calculation of room temp (human detected)')
         self._delta_raw = 0.
 
-        self._pr_human_detect = Property(datatype=DataType.PRESENCE,
-                                         initial_value=False,
-                                         desc='Detecting a human by significant temperature increase',
-                                         persistent=False)
+        pr_human_detect = Property(Output, DataType.PRESENCE, False,
+                                   desc='Detecting a human by significant temperature increase',
+                                   persistent=False)
+        self._set_human_detect = pr_human_detect.get_setvalue_func()
 
         self.properties.update(
-            room_temperature=self._pr_temp_room,
-            temperature=self._pr_temp,
+            room_temperature=pr_temp_room,
+            temperature=pr_temp,
             interval=self._pr_interval,
-            last_movement=self._pr_last_movement,
+            last_movement=pr_last_movement,
             human_detect_delta=self._pr_delta,
-            human_detected=self._pr_human_detect,
+            human_detected=pr_human_detect,
         )
 
         self._epr_fan_rpm: Optional[Property] = None
@@ -108,6 +101,7 @@ class MLX90615(ThreadModuleBase):  # Non Thread?
         self._epr_mlx_bufferlength: Optional[Property] = None
         self._epr_mlx_temp_object_scan_elements_enable: Optional[Property] = None
         self._epr_mlx_timestamp_scan_elements_enable: Optional[Property] = None
+        self._epr_cputemp: Optional[Property] = None
 
         self._epr_human_detect: Optional[Property] = None
         self._announce_human_handler: Optional[PresenceHandlerSlot] = None
@@ -121,13 +115,14 @@ class MLX90615(ThreadModuleBase):  # Non Thread?
         self._devfile: Optional[Path] = None
 
     def _new_delta(self):
-        self._delta_raw = self._pr_delta.value / self._object_temp_scale
+        # object_temp = (self.mean_object_temp_raw.mean + self._object_temp_offset) * self._object_temp_scale
+        self._delta_raw = (self._pr_delta.value * 1000 / self._object_temp_scale)
 
     def load(self):
-        self._epr_fan_rpm = self.properties.get('/HWMon/shpi/pwm1')
-        self._epr_backlight_brightness = self.properties.get('/Appearance/brightness_out')
+        self._epr_fan_rpm = self.properties.get('/HWMon/shpi/fan1_input')
+        self._epr_backlight_brightness = self.properties.get('/Appearance/brightness')
         self._epr_mlx_bufferlength = self.properties.get('/IIO/mlx90615/buffer/length')
-
+        self._epr_cputemp = self.properties.get('/CPU/cpu_temp')
         self._epr_mlx_temp_object_scan_elements_enable = self.properties.get('/IIO/mlx90615/channels/temp_object/scan_elements_enable')
         self._epr_mlx_timestamp_scan_elements_enable = self.properties.get('/IIO/mlx90615/channels/timestamp/scan_elements_enable')
 
@@ -156,7 +151,7 @@ class MLX90615(ThreadModuleBase):  # Non Thread?
     def stop(self):
         pass
 
-    def calc_compensated_temp(self) -> float:
+    def calc_compensated_live_temp(self) -> float:
         object_temp = (self.mean_object_temp_raw.mean + self._object_temp_offset) * self._object_temp_scale
         sensor_temp = (self.mean_sensor_temp_raw.mean + self._sensor_temp_offset) * self._sensor_temp_scale
 
@@ -169,29 +164,39 @@ class MLX90615(ThreadModuleBase):  # Non Thread?
         else:
             temp = object_temp
 
-        if self.mean_cpu_temp.mean > sensor_temp:
+        if self.mean_cpu_temp.mean and self.mean_cpu_temp.mean > sensor_temp:
             temp -= (self.mean_cpu_temp.mean - sensor_temp) / 60
             logger.debug('sensor cpu correction: %s', temp)
 
-        if self.mean_fan_speed.mean < 1790:
+        if self.mean_fan_speed.mean and self.mean_fan_speed.mean < 1790:
             # temp -= 1000  todo: fan speed correction
             logger.debug('sensor fan correction: %s', temp)
 
-        if self.mean_backlight_level.mean > 0:
+        if self.mean_backlight_level.mean and self.mean_backlight_level.mean > 0:
             temp -= self.mean_backlight_level.mean * 3
             logger.debug('sensor backlight correction: %s', temp)
 
         return temp / 1000
 
     def update_means(self):
-        self.mean_cpu_temp.update()
-        self.mean_fan_speed.update(self._epr_fan_rpm.value)
-        self.mean_backlight_level.update(self._epr_backlight_brightness.value)
-        if not self._epr_human_detect.value:
-            self.mean_compensated_room_temp.update(self.calc_compensated_temp())
+        if self._epr_cputemp:
+            self.mean_cpu_temp.update(self._epr_cputemp.value)
 
-        # If room temp changes rapidly without human interference update mean into current object temp
-        self.mean_room_temp_raw.update(self.mean_object_temp_raw.mean)
+        if self._epr_fan_rpm:
+            self.mean_fan_speed.update(self._epr_fan_rpm.value)
+
+        if self._epr_backlight_brightness:
+            self.mean_backlight_level.update(self._epr_backlight_brightness.value)
+
+        if self._epr_human_detect.value or self.mean_room_temp_raw.mean is None:
+            # Human. Ignore live temp.
+            # But if room temp changes rapidly without human interference update room mean raw into current object temp
+            self.mean_room_temp_raw.update(self.mean_object_temp_raw.mean)
+        else:
+            # No human. Add live temp to room temp mean.
+            self.mean_compensated_room_temp.update(self.calc_compensated_live_temp())
+
+        self._set_roomtemp(self.mean_compensated_room_temp.mean or 0.)
 
     def buffer_enable(self, value: bool):
         try:
@@ -205,9 +210,6 @@ class MLX90615(ThreadModuleBase):  # Non Thread?
                 channel.value = True
             except Exception as e:
                 logger.error('Could not activate channel %s: %s' + repr(channel), repr(e))
-
-    def _get_room_temp(self) -> float:
-        return self.mean_compensated_room_temp.mean or 0.
 
     def run(self):
         self.buffer_enable(False)
@@ -227,21 +229,26 @@ class MLX90615(ThreadModuleBase):  # Non Thread?
                 line = devfile.read(16)
                 (tempobj, tempamb, _, timestamp) = struct.unpack('<HHiq', line)
 
-                if tempobj > self.mean_room_temp_raw.mean + self._delta_raw:
+                room_mean = self.mean_room_temp_raw.mean
+                # print("mlx", tempobj, room_mean, self._delta_raw)
+                if abs(tempobj - room_mean) > self._delta_raw:
+                    # Fast temp change
                     # Human in front of sensor
-                    self._pr_last_movement.value = time.time()
-                    self._pr_human_detect.value = True
+                    self._set_last_movement(time.time())
+                    self._set_human_detect(True)
                     self._announce_human_handler.trigger()
                 else:
                     # No human
-                    self.mean_room_temp_raw.update(tempobj)
 
                     if self._announce_human_handler.is_triggered:
                         # Release trigger
-                        self._pr_human_detect.value = False
+                        self._set_human_detect(False)
                         self._announce_human_handler.untrigger()
 
                 self.mean_object_temp_raw.update(tempobj)
                 self.mean_sensor_temp_raw.update(tempamb)
+
+                # Fast temperature
+                self._set_temp(self.calc_compensated_live_temp())
 
         self.buffer_enable(False)

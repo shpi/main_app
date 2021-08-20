@@ -4,12 +4,12 @@
 
 from logging import getLogger
 from pathlib import Path
-from typing import Generator, Dict, Any, List, Type, Optional
+from typing import Generator, Dict, Any, List, Optional
 
 import core.iio as iio
-from interfaces.DataTypes import DataType, datatype_from_iio
+from interfaces.DataTypes import DataType, datatype_from_iio, datatype_to_basic_type
 from interfaces.Module import ModuleBase
-from interfaces.PropertySystem import PropertyDict, Property, ROProperty, FunctionProperty
+from interfaces.PropertySystem import PropertyDict, Property, ROProperty, Input, Function, PropertyDictProperty
 
 
 logger = getLogger(__name__)
@@ -61,17 +61,20 @@ def _iio_dev_dump():
 
 
 def _datatype_from_name(name: str) -> DataType:
-    if name in {'raw', 'offset', 'scale', 'calibemissivity', 'input'}:
+    if name in {'raw'}:
+        return DataType.INTEGER
+
+    if name in {'offset', 'scale', 'calibemissivity', 'input'}:
         return DataType.FLOAT
 
     if name.endswith('_frequency'):
-        return DataType.FLOAT
+        return DataType.FREQUENCY
 
     if name.endswith('_time'):
         return DataType.TIMEDELTA
 
     if name.endswith('_ratio'):
-        return DataType.FLOAT
+        return DataType.INTEGER
 
     if name.endswith('_available'):
         return DataType.LIST_OF_STRINGS
@@ -79,15 +82,32 @@ def _datatype_from_name(name: str) -> DataType:
     return DataType.UNDEFINED
 
 
+def _floatprec_from_name(name: str) -> Optional[int]:
+    if name in {'calibemissivity', 'input'}:
+        return 9
+
+    if name in {'offset', 'scale'} or name.endswith('_time') or name.endswith('_frequency'):
+        return 6
+
+    return None
+
+
+def _poll_interval_from_name(name: str):
+    if name.endswith('offset'):
+        return None
+    if name.endswith('scale'):
+        return None
+    if name.endswith('_available'):
+        return None
+    return 10
+
+
 class IioChannelAttribute(Property):
     __slots__ = '_attr', '_file'
 
     _eventids = ()  # No event manager
 
-    def __init__(self, channel: iio.Channel, attr: iio.ChannelAttr):
-        if type(self) is IioChannelAttribute:
-            raise TypeError('Cant instantiate IioChannelAttribute directly.')
-
+    def __init__(self, channel: iio.Channel, attr: iio.ChannelAttr, iio_output: bool):
         self._attr = attr
 
         file = Path('/sys/bus/iio/devices', channel.device.id, attr.filename)
@@ -95,15 +115,42 @@ class IioChannelAttribute(Property):
         if not self._file.exists():
             raise FileNotFoundError('File does not exists: "{}" (resolved from "{}")'.format(self._file, file))
 
-        output = isinstance(self, IioOutputChannelAttribute)
-        Property.__init__(self,
-                          datatype=_datatype_from_name(attr.name),
-                          desc='Output channel attribute' if output else 'Input channel attribute',
-                          persistent=False)
+        datatype = _datatype_from_name(attr.name)
 
-    def _get_value(self, attempt=1) -> Any:
+        if iio_output:
+            Property.__init__(self, Input, datatype, desc='Output channel attribute', persistent=False)
+            # Standard: self._getfunc = self._from_cache
+            self._getfunc = self._read_sync_cache
+
+        else:
+            def_time = _poll_interval_from_name(attr.name)
+            # print(attr.name, def_time)
+            Property.__init__(self, Function, datatype, self._read_channel,
+                              desc='Input channel attribute', function_poll_min_def=(1, def_time))
+
+        if datatype_to_basic_type(datatype) is float:
+            prec = _floatprec_from_name(attr.name)
+            if prec is not None:
+                self._floatprec_default = prec
+
+    def _read_sync_cache(self):
+        res = self._read_channel()
+
+        if res != self._from_cache():
+            # Sync cache
+            Property._set_value(self, res)
+
+        return res
+
+    def _set_value(self, newvalue):
+        with self._lock:
+            self._write_channel(newvalue)
+            Property._set_value(self, newvalue)
+
+    def _read_channel(self, attempt=1) -> Any:
         try:
             v = self._file.read_text().strip()
+            # print("_read_channel", self._file, v)
             return DataType.str_to_tight_datatype(v)
         except Exception as e:
             logger.error('Failed to read from iio channel %s: %s', repr(self), repr(e))
@@ -111,86 +158,97 @@ class IioChannelAttribute(Property):
         if attempt > 5:
             raise IOError('Reading from iio channel failed 5 times: ' + repr(self))
         # Retry
-        return self._get_value(attempt+1)
+        return self._read_channel(attempt+1)
 
-    def _get_cached_value(self) -> Any:
-        # Just return previously written (cached) value
-        return super().value
-
-    def _set_value(self, newvalue: Any, attempt=1):
+    def _write_channel(self, newvalue: Any, attempt=1):
         try:
             self._file.write_text(str(newvalue))
-            Property.value.fset(self, newvalue)
         except Exception as e:
             logger.error('Failed to write to iio channel %s: %s', repr(self), repr(e))
 
         if attempt > 5:
             raise IOError('Writing to iio channel failed 5 times: ' + repr(self))
         # Retry
-        self._set_value(newvalue, attempt+1)
+        self._write_channel(newvalue, attempt+1)
 
 
-class IioInputChannelAttribute(IioChannelAttribute):
-    value = property(fget=IioChannelAttribute._get_value)
-
-
-class IioOutputChannelAttribute(IioChannelAttribute):
-    value = property(fget=IioChannelAttribute._get_cached_value, fset=IioChannelAttribute._set_value)
-
-
-class IioChannel(Property):
+class IioChannel(PropertyDictProperty):
     __slots__ = ()
 
     _eventids = ()  # No event manager
 
-    def __init__(self, channel: iio.Channel, description: str, chan_attr_class: Type[Any]):
-        if type(self) is IioChannel:
-            raise TypeError('Cant instantiate IioChannel directly.')
-
+    def __init__(self, channel: iio.Channel, description: str, iio_output: bool):
         attr_pd = PropertyDict()
-        Property.__init__(self, datatype=DataType.PROPERTYDICT, initial_value=attr_pd, desc=description)
+        PropertyDictProperty.__init__(self, attr_pd, desc=description)
 
         for attr_name, attr in channel.attrs.items():  # type: str, iio.ChannelAttr
-            attr_pd[attr_name] = chan_attr_class(channel, attr)
+            attr_pd[attr_name] = IioChannelAttribute(channel, attr, iio_output)
 
 
 class PathProperty(Property):
-    __slots__ = '_iopath'
+    __slots__ = '_iopath',
 
-    def __init__(self, path: Path, datatype: DataType = DataType.STRING, desc: str = None):
+    def __init__(self, readonly: bool, path: Path, datatype: DataType = DataType.STRING, desc: str = None):
         self._iopath = path
         if not desc:
             desc = str(path)
-        Property.__init__(self, datatype=datatype, desc=desc, persistent=False)
 
-    @property
-    def value(self):
-        return self._iopath.read_text()
+        if readonly:
+            Property.__init__(self, Function, datatype, self._read_file, desc=desc, function_poll_min_def=(1, None))
+        else:
+            Property.__init__(self, Input, datatype, desc=desc, persistent=False)
 
-    @value.setter
-    def value(self, newvalue: str):
-        self._iopath.write_text(newvalue)
+            # Standard: self._getfunc = self._from_cache
+            self._getfunc = self._read_sync_cache
 
+    def _read_sync_cache(self):
+        res = self._read_file()
+
+        if res != self._from_cache():
+            # Sync cache
+            Property._set_value(self, res)
+
+        return res
+
+    def _set_value(self, newvalue):
+        with self._lock:
+            if self._write_file(newvalue):
+                Property._set_value(self, newvalue)
+
+    def _read_file(self) -> str:
+        try:
+            return self._iopath.read_text()
+        except Exception as e:
+            logger.error('Could not write from %s: %s', self._iopath, repr(e))
+            return '0'
+
+    def _write_file(self, newvalue: str) -> bool:
+        try:
+            self._iopath.write_text(newvalue)
+            return True
+        except Exception as e:
+            logger.error('Could not write into %s: %s', self._iopath, repr(e))
+            return False
 
 class PathPropertyEnable(PathProperty):
-    __slots__ = ()
+    __slots__ = '_value_on_unload'
 
-    def __init__(self, path: Path, desc: str):
-        PathProperty.__init__(self, path, datatype=DataType.BOOLEAN, desc=desc)
+    def __init__(self, path: Path, desc: str = None, readonly=False, value_on_unload: bool = False):
+        PathProperty.__init__(self, readonly, path, datatype=DataType.BOOLEAN, desc=desc)
+        self._value_on_unload = value_on_unload
 
-    @property
-    def value(self):
-        return PathProperty.value.fget(self) != '0\n'
+    def _read_file(self) -> bool:
+        return super()._read_file() != '0\n'
 
-    @value.setter
-    def value(self, newvalue: bool):
-        PathProperty.value.fset(self, '1' if newvalue else '0')
+    def _write_file(self, newvalue: bool):
+        super()._write_file('1' if newvalue else '0')
 
     def unload(self):
-        try:
-            self.value = False
-        except Exception as e:
-            logger.error('Could not disable buffer on unload:', repr(e))
+        if isinstance(self._value_on_unload, bool):
+            try:
+                self._write_file(self._value_on_unload)
+            except Exception as e:
+                logger.error('Could not set unload state:', repr(e))
 
         super().unload()
 
@@ -198,27 +256,14 @@ class PathPropertyEnable(PathProperty):
 class PathPropertyInteger(PathProperty):
     __slots__ = ()
 
-    def __init__(self, path: Path, desc: str):
-        PathProperty.__init__(self, path, datatype=DataType.INTEGER, desc=desc)
+    def __init__(self, path: Path, desc: str, readonly=False):
+        PathProperty.__init__(self, readonly, path, datatype=DataType.INTEGER, desc=desc)
 
-    @property
-    def value(self):
-        return int(PathProperty.value.fget(self))
+    def _read_file(self) -> int:
+        return int(super()._read_file())
 
-    @value.setter
-    def value(self, newvalue: int):
-        PathProperty.value.fset(self, str(newvalue))
-
-
-class PathPropertyIntegerRO(FunctionProperty):
-    __slots__ = '_iopath',
-
-    def __init__(self, path: Path, desc: str):
-        self._iopath = path
-        FunctionProperty.__init__(self, datatype=DataType.INTEGER, getterfunc=self._readfile, desc=desc)
-
-    def _readfile(self):
-        return int(self._iopath.read_text())
+    def _write_file(self, newvalue: int):
+        super()._write_file(str(newvalue))
 
 
 class IioInputChannel(IioChannel):
@@ -227,13 +272,12 @@ class IioInputChannel(IioChannel):
     def __init__(self, channel: iio.Channel):
         self._ch_datatype = datatype_from_iio(channel.type)
 
-        IioChannel.__init__(self, channel, 'Input channel', IioInputChannelAttribute)
+        IioChannel.__init__(self, channel, 'Input channel', iio_output=False)
 
         # Append some processing properties
         if 'raw' in self._value:
-            self._value['processed'] = FunctionProperty(datatype=self._ch_datatype,
-                                                        getterfunc=self._from_raw,
-                                                        desc='Processed value from raw')
+            self._value['processed'] = Property(Function, self._ch_datatype, self._from_raw,
+                                                desc='Processed value from raw', function_poll_min_def=(1, None))
             self._pr_base: Property = self['raw']
             self._pr_offset: Optional[Property] = self.value.get('offset')
             self._pr_scale: Optional[Property] = self.value.get('scale')
@@ -241,9 +285,8 @@ class IioInputChannel(IioChannel):
         elif 'input' in self._value:
             self._pr_base: Property = self['input']
 
-            self._value['processed'] = FunctionProperty(datatype=self._ch_datatype,
-                                                        getterfunc=self._from_input,
-                                                        desc='Processed value from input')
+            self._value['processed'] = Property(Function, self._ch_datatype, self._from_input,
+                                                desc='Processed value from input', function_poll_min_def=(1, 5))
 
         # self._value['read'] = FunctionProperty(datatype=self._ch_datatype,
         #                                       getterfunc=self._read,
@@ -292,7 +335,7 @@ class IioOutputChannel(IioChannel):
     __slots__ = ()
 
     def __init__(self, channel: iio.Channel):
-        IioChannel.__init__(self, channel, 'Output channel', IioOutputChannelAttribute)
+        IioChannel.__init__(self, channel, 'Output channel', iio_output=True)
 
 
 class IioDevAttribute(Property):
@@ -304,16 +347,34 @@ class IioDevAttribute(Property):
         self._attr = attr
 
         self._is_device_attr = is_device_attr
-        self._is_available = isinstance(attr.name, str) and attr.name.endswith('_available')
+        self._is_available = isinstance(attr.name, str) and attr.name != 'data_available' and attr.name.endswith('_available')
         if self._is_available:
-            Property.__init__(self, DataType.LIST_OF_STRINGS, None, desc=f'Available attribute "{attr.name}"',
-                              persistent=False)
+            Property.__init__(self, Function, DataType.LIST_OF_STRINGS, self._read_attr,
+                              desc=f'Available attribute "{attr.name}"', persistent=False,
+                              function_poll_min_def=(60, None))
+
         else:
-            Property.__init__(self, DataType.STRING if is_device_attr else DataType.FLOAT,
+            Property.__init__(self, Input, DataType.STRING if is_device_attr else DataType.FLOAT,
                               desc=f'Attribute "{attr.name}"', persistent=False)
 
-    @property
-    def value(self) -> Any:
+            # Standard: self._getfunc = self._from_cache
+            self._getfunc = self._read_sync_cache
+
+    def _read_sync_cache(self):
+        res = self._read_attr()
+
+        if res != self._from_cache():
+            # Sync cache
+            Property._set_value(self, res)
+
+        return res
+
+    def _set_value(self, newvalue):
+        with self._lock:
+            self._write_attr(newvalue)
+            Property._set_value(self, newvalue)
+
+    def _read_attr(self) -> Any:
         if self._is_available:
             # Expect list of strings
             return self._attr._read().strip().split()
@@ -325,8 +386,7 @@ class IioDevAttribute(Property):
         # Expect int/float -> float
         return float(self._attr._read())
 
-    @value.setter
-    def value(self, newvalue: Any):
+    def _write_attr(self, newvalue: Any):
         if self._is_available:
             raise TypeError('Cannot write to "available" attributes.')
 
@@ -354,40 +414,40 @@ class IioDevAttribute(Property):
         self._attr._write(value_str + '\n')
 
 
-class IioDevAttributes(Property):
+class IioDevAttributes(PropertyDictProperty):
     __slots__ = ()
 
     _eventids = ()  # No event manager
 
     def __init__(self, attrs: Dict[str, iio.DeviceAttr]):
         devattr_pd = PropertyDict()
-        Property.__init__(self, datatype=DataType.PROPERTYDICT, initial_value=devattr_pd, desc='IIO device attributes')
+        PropertyDictProperty.__init__(self, devattr_pd, desc='IIO device attributes')
 
         for device_attr_name, device_attr in attrs.items():
             devattr_pd[device_attr_name] = IioDevAttribute(device_attr, True)
 
 
-class IioDevBufferAttributes(Property):
+class IioDevBufferAttributes(PropertyDictProperty):
     __slots__ = ()
 
     _eventids = ()  # No event manager
 
     def __init__(self, attrs: Dict[str, iio.DeviceBufferAttr]):
         devattr_pd = PropertyDict()
-        Property.__init__(self, datatype=DataType.PROPERTYDICT, initial_value=devattr_pd, desc='IIO device buffer attributes')
+        PropertyDictProperty.__init__(self, devattr_pd, desc='IIO device buffer attributes')
 
         for device_attr_name, device_attr in attrs.items():
             devattr_pd[device_attr_name] = IioDevAttribute(device_attr, True)
 
 
-class IioDevChannels(Property):
+class IioDevChannels(PropertyDictProperty):
     __slots__ = ()
 
     _eventids = ()  # No event manager
 
     def __init__(self, channels: List[iio.Channel]):
         chan_pd = PropertyDict()
-        Property.__init__(self, datatype=DataType.PROPERTYDICT, initial_value=chan_pd, desc='IIO device channels')
+        PropertyDictProperty.__init__(self, chan_pd, desc='IIO device channels')
 
         for channel in channels:
             if channel.output:
@@ -405,26 +465,38 @@ class IioDevBufferLength(Property):
         self._enable_path = enable_path
         self._length_path = length_path
 
-        Property.__init__(self, DataType.INTEGER, desc='Enable buffer / buffer length. 0=Disabled', persistent=False)
+        Property.__init__(self, Input, DataType.INTEGER,
+                          desc='Enable buffer / buffer length. 0=Disabled', persistent=False)
 
-    @property
-    def value(self):
+        # Standard: self._getfunc = self._from_cache
+        self._getfunc = self._read_sync_cache
+
+    def _read_sync_cache(self):
         enabled = self._enable_path.read_text() != '0\n'
-        if not enabled:
-            return 0
-        return int(self._length_path.read_text())
+        if enabled:
+            res = int(self._length_path.read_text())
+        else:
+            res = 0
 
-    @value.setter
-    def value(self, newvalue: int):
-        if newvalue < 1:
-            self._enable_path.write_text('0')
-            return
+        if res != self._from_cache():
+            # Sync cache
+            Property._set_value(self, res)
 
-        self._length_path.write_text(str(newvalue))
-        self._enable_path.write_text('1')
+        return res
+
+    def _set_value(self, newvalue):
+        with self._lock:
+            Property._set_value(self, newvalue)
+
+            if newvalue < 1:
+                self._enable_path.write_text('0')
+                return
+
+            self._length_path.write_text(str(int(newvalue)))
+            self._enable_path.write_text('1')
 
 
-class IioDevBuffer(Property):
+class IioDevBuffer(PropertyDictProperty):
     __slots__ = '_buffer_path',
 
     _eventids = ()  # No event manager
@@ -432,11 +504,12 @@ class IioDevBuffer(Property):
     def __init__(self, buffer_path: Path):
         self._buffer_path = buffer_path.resolve()
         pd = PropertyDict()
-        Property.__init__(self, datatype=DataType.PROPERTYDICT, initial_value=pd, desc='Buffer control')
+        PropertyDictProperty.__init__(self, pd, desc='Buffer control')
 
         data_available_path = buffer_path / 'data_available'
         if data_available_path.is_file():
-            pd['data_available'] = PathPropertyIntegerRO(data_available_path.resolve(), desc='Amount of data in buffer')
+            pd['data_available'] = PathPropertyInteger(data_available_path.resolve(),
+                                                       desc='Amount of data in buffer', readonly=True)
 
         enable_path = self._buffer_path / 'enable'
         length_path = self._buffer_path / 'length'
@@ -444,14 +517,14 @@ class IioDevBuffer(Property):
             pd['length'] = IioDevBufferLength(enable_path, length_path)
 
 
-class IioDev(Property):
+class IioDev(PropertyDictProperty):
     __slots__ = ()
 
     _eventids = ()  # No event manager
 
     def __init__(self, dev: iio.Device):
         dev_pd = PropertyDict()
-        Property.__init__(self, DataType.PROPERTYDICT, initial_value=dev_pd, desc='Device access to ' + dev.name)
+        PropertyDictProperty.__init__(self, dev_pd, desc='Device access to ' + dev.name)
 
         dev_pd['name'] = ROProperty(DataType.STRING, dev.name.strip(), desc='Device name')
         dev_pd['id'] = ROProperty(DataType.STRING, dev.id.strip(), desc='Device id')
@@ -471,7 +544,7 @@ class IioDev(Property):
 
         raw_path = Path('/dev', dev.id)
         if raw_path.exists():
-            dev_pd['rawdevice'] = ROProperty(datatype=DataType.STRING, value=str(raw_path), desc='Raw data access path')
+            dev_pd['rawdevice'] = ROProperty(DataType.STRING, str(raw_path), desc='Raw data access path')
 
 
 class IIO(ModuleBase):

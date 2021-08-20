@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import sys
 from logging import getLogger
 from typing import Optional, Dict, Any, Union, Type, Iterable, List, Set
 
@@ -7,13 +8,15 @@ from PySide2.QtCore import Property as QtProperty, Signal, Slot
 
 from core.Settings import settings, new_settings_instance
 from core.Constants import internal_modules, external_modules, always_instantiate_modules
-
-from interfaces.Module import ModuleBase, ThreadModuleBase
-from interfaces.PropertySystem import Property, PropertyDict, PropertyAccess, ModuleInstancePropertyDict, \
-    ModuleMainProperty, properties_start, properties_stop, IntervalProperty
-from interfaces.DataTypes import DataType
 from core.Module import Module, ThreadModule
 from core.Logger import LogCall
+
+from interfaces.DataTypes import DataType
+from interfaces.Module import ModuleBase, ThreadModuleBase
+from interfaces.PropertySystem import Property, PropertyDict, PropertyAccess, ModuleInstancePropertyDict, \
+    ModuleMainProperty, properties_start, properties_stop
+
+
 from helper.PropertyExport import propertydict_to_html
 
 
@@ -153,17 +156,13 @@ class Modules(ModuleBase):
 
         self.mainapp = parent
 
-        # self.properties['debug_timer'] = IntervalProperty(self.debug, 5., desc='Just a debug trigger', persistent_interval=False)
-
         self.property_access = PropertyAccess(parent, self._root_properties)
 
         # Add contextproperties from mainapp
         self.add_module_contextproperties(parent)
 
+        # Fast and simple callback
         ModuleInstancePropertyDict.changed_callback = self.categories_changed_emit
-
-    def debug(self):
-        pass
 
     def categories_changed_emit(self):
         self.categories_changed.emit()
@@ -226,15 +225,24 @@ class Modules(ModuleBase):
             else:
                 logger.error('For now, only one attribute (allow_maininstance or allow_instances)'
                              ' may set to True: %s', str(mcls))
-                pass
+
+        # Properties should be all created now
 
         Property.listmodel.reload()
+
+        # Start modules
         Module.load_modules()
 
-        logger.info('Done loading modules. Writing properties_export.html.')
-        propertydict_to_html(self._root_properties)
+        Property.create_links()
+
+        Property.start_worker()
+
+        if 'PROP_EXPORT' in sys.argv:
+            logger.info('Done loading modules. Writing properties_export.html once.')
+            propertydict_to_html(self._root_properties)
 
     def add_module_instance(self, class_or_class_str: Union[Type[ModuleBase], str], instancename: str = None):
+        logger.debug('Adding module instance %s:%s', class_or_class_str, instancename)
         if type(class_or_class_str) is str:
             mcls = self.all_modules_classes_by_str.get(class_or_class_str)
         elif issubclass(class_or_class_str, ModuleBase):
@@ -371,24 +379,6 @@ class Modules(ModuleBase):
         """
         return ['Module 1', 'Module 2']  # todo: slides
 
-    # @QtProperty('QVariantMap', notify=modules_changed)
-    # def loaded_instances(self) -> dict:
-    #    """
-    #    modules.loaded_instances['Info']['Weather'][swipeView.instancename]
-    #    reference to "inputdict"
-
-    #    self._instances[category][classname][instancename] = tempclass(instancename, self.inputs, self.settings)
-    #    """
-    #    return self._instances
-
-    # @QtProperty('QVariantMap', notify=modules_changed)
-    # def modules(self):
-    #    """
-    #    modules.modules['Logic']['Thermostat'][0]
-    #    dict[category]/dict[classname]/list[instancenames]
-    #    """
-    #    return self._modules
-
     @Slot(str, str, str)
     def add_instance(self, classname, instancename):
         self.add_module_instance(classname, instancename or None)
@@ -405,14 +395,3 @@ class Modules(ModuleBase):
     def instances(self, classname) -> List[str]:
         instancesdict = Module.instancesdict_by_cls[classname]
         return [instancename or '' for instancename in instancesdict]
-
-    # @Slot(result='QVariantList')
-    # def all_instances(self) -> list:
-    #    listed = list()#
-
-    #    for category in self._instances:
-    #        for classname in self._instances[category]:
-    #            for instance in self._instances[category][classname]:
-    #                listed.append(f'{category}/{classname}/{instance}')
-    #    return listed
-

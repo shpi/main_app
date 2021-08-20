@@ -8,4 +8,6 @@ rsync -rpt -v --delete-after \
     --exclude="/keymap/keymap" \
     --exclude="/keymap/keymap.o" \
     --exclude="/qml/" \
+    --exclude="/settings.ini" \
+    --exclude="/properties_export.html" \
     ./ pi@SHPI:/home/pi/main_app_dev/

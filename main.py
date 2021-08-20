@@ -1,5 +1,29 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
+"""
+Command line arguments:
+
+DEBUG | INFO | WARNING | ERROR | CRITICAL
+    Set log level for stdout
+
+STACKTRACE
+    Enable full stacktrace on each logcall()
+
+NOSAVE
+    Disable setValue calls in settings.py
+
+PROP_EXPORT
+    Write properties_export.html once after modules have been loaded.
+
+    PDPROPS
+        Don't exclude Properties with DataType.PROPERTYDICT in dump.
+
+THREAD_STATS
+    Dump threads info to stdout on each call of /MainApp_Info/threads_interval
+
+"""
+
 import faulthandler
 import logging
 import os

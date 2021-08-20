@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from typing import List, Optional
+from typing import List, Optional, Union
 from datetime import datetime, date, time
 from logging import getLogger
 
@@ -21,6 +21,9 @@ class Settings(QSettings):
             bool: self.bool,
             float: self.float,
             list: self.list,
+            datetime: self.datetime,
+            date: self.date,
+            time: self.time,
         }
 
         self._write_funcs = {
@@ -29,6 +32,9 @@ class Settings(QSettings):
             bool: self.setbool,
             float: self.setfloat,
             list: self.setlist,
+            datetime: self.settime,
+            date: self.settime,
+            time: self.settime,
         }
 
         if 'NOSAVE' in sys.argv:
@@ -83,6 +89,24 @@ class Settings(QSettings):
             return None
         return v not in {False, "false", 0, "0"}
 
+    def datetime(self, key: str, default: datetime):
+        v = self.value(key, None)
+        if v is None:
+            return default
+        return datetime.fromisoformat(v)
+
+    def date(self, key: str, default: date):
+        v = self.value(key, None)
+        if v is None:
+            return default
+        return date.fromisoformat(v)
+
+    def time(self, key: str, default: date):
+        v = self.value(key, None)
+        if v is None:
+            return default
+        return time.fromisoformat(v)
+
     def list(self, key: str, default: list = None, none_to_empty_list=True) -> Optional[List[str]]:
         # get list of strings
         data = self.value(key, default)
@@ -129,6 +153,9 @@ class Settings(QSettings):
     def setbool(self, key: str, value: Optional[bool]):
         # simple set value as bool
         self.setValue(key, None if value is None else bool(value))  # will be string
+
+    def settime(self, key: str, timeobj: Union[None, datetime, date, time]):
+        self.setValue(key, None if timeobj is None else timeobj.isoformat())  # will be string
 
     def setlist(self, key: str, value: Optional[list]):
         # simple set list or None

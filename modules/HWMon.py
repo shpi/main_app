@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
+
 from logging import getLogger
 from pathlib import Path
-from typing import Any
 
 from interfaces.DataTypes import DataType
 from interfaces.Module import ModuleBase
-from interfaces.PropertySystem import PropertyDict, Property
+from interfaces.PropertySystem import PropertyDict, Property, PType, Input, Function
 
 
 logger = getLogger(__name__)
@@ -41,14 +42,14 @@ def _to_byte(source: int) -> str:
     return str(source)
 
 
-def _no_write(source: Any):
+def _no_write(_):
     logger.error('Cannot write to this HWMon channel')
 
 
 class HWMonChannel(Property):
     __slots__ = '_channel_path', '_channel_name', '_channel_type', '_from_str_func', '_to_str_func'
 
-    def __init__(self, channel_path: Path, channel_type: str):
+    def __init__(self, channel_path: Path, channel_type: str, ptype: PType):
         self._channel_path = channel_path.resolve()
         self._channel_name = self._channel_path.name
 
@@ -92,7 +93,7 @@ class HWMonChannel(Property):
 
         else:
             self._from_str_func = str
-            self._from_str_func = _no_write
+            self._to_str_func = _no_write
             channel_type = DataType.UNDEFINED
 
         # Find description
@@ -107,7 +108,10 @@ class HWMonChannel(Property):
             if labelfile.is_file():
                 desc = labelfile.read_text().strip()
 
-        Property.__init__(self, datatype=channel_type, desc=desc, persistent=False)
+        Property.__init__(self, ptype, channel_type,
+                          self._read if ptype is Function else self._read(),
+                          desc=desc, persistent=False,
+                          function_poll_min_def=(5, 10) if ptype is Function else None)
 
     def _read(self):
         try:
@@ -115,10 +119,7 @@ class HWMonChannel(Property):
 
         except Exception as e:
             logger.error('Failed to read from HWMon channel %s: %s', self._channel_path, repr(e))
-
-    def _cached_value(self) -> Any:
-        # Just return previously written (cached) value
-        return super().value
+            return None
 
     def _write(self, value, attempt=1):
         try:
@@ -136,11 +137,20 @@ class HWMonChannel(Property):
 
 
 class HWMonChannelInput(HWMonChannel):
-    value = property(fget=HWMonChannel._read)
+    # This Property is of type Function!
+    def __init__(self, channel_path: Path, channel_type: str):
+        HWMonChannel.__init__(self, channel_path, channel_type, Function)  # HWMon "input" is output of Module!
 
 
 class HWMonChannelOutput(HWMonChannel):
-    value = property(fget=HWMonChannel._read, fset=HWMonChannel._write)
+    # This Property is of type Input!
+    def __init__(self, channel_path: Path, channel_type: str):
+        HWMonChannel.__init__(self, channel_path, channel_type, Input)  # HWMon "output" is input of Module!
+
+    def _set_value(self, newvalue):
+        with self._lock:
+            Property._set_value(self, newvalue)
+            self._write(newvalue)
 
 
 class HWMonDevice(Property):
@@ -149,7 +159,7 @@ class HWMonDevice(Property):
     def __init__(self, sensor_dir: Path):
         pd = PropertyDict()
 
-        Property.__init__(self, datatype=DataType.PROPERTYDICT, initial_value=pd, desc='HWMon compatible device')
+        Property.__init__(self, PType.PropertyDict, DataType.PROPERTYDICT, pd, desc='HWMon compatible device')
 
         for channel_type in ('*_input', '*_alarm', '*_enable', 'pwm*', 'buzzer*', 'relay*'):
             for channel_file in sensor_dir.glob(channel_type):

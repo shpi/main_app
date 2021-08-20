@@ -78,13 +78,13 @@ class EventManager:
                 for origfnc, fnc in event_dict.items():  # Original Dict may get changed during calling events
                     try:
                         if value is None:
-                            fnc(self._sourceref())  # here
+                            fnc(self._sourceref())
                         else:
                             fnc(self._sourceref(), value)
                     except Exception as e:
                         logger.error('Exception while calling event %s during calling function %r which'
                                      ' has subscribed for %r: %s',
-                                     eventid, fnc, self._sourceref(), e, exc_info='STACKTRACE' in sys.argv)
+                                     eventid, fnc, self._sourceref(), repr(e), exc_info='STACKTRACE' in sys.argv)
             finally:
                 self._is_emitting[eventid] = False
 

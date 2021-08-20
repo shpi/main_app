@@ -1,0 +1,277 @@
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+
+import "qrc:/fonts"
+
+Item {
+    Rectangle {
+        id: proptitle
+        anchors.top: parent.top
+        width: parent.width
+        implicitHeight: proptitle_text.implicitHeight
+        color: "transparent"
+
+        Text {
+            id: proptitle_text
+            padding: 5
+            width: parent.width
+            text: '<b>Active Properties (Variables)</b>'
+            font.pixelSize: 16
+            color: Colors.black
+        }
+    }
+
+    ListView {
+        id: listview
+
+        model: properties.get_properties_model(true)
+        delegate: listitem_delegate
+
+        property var item_height_min: 34
+
+        anchors.top: proptitle.bottom
+        anchors.bottom: parent.bottom
+        width: parent.width
+        clip: true
+
+        orientation: Qt.Vertical
+        currentIndex: -1
+        cacheBuffer: item_height_min * 4
+
+        Component {
+            id: listitem_delegate
+
+            Rectangle {
+                property var itemModel: model // read 'model' from the delegate's context
+                id: wrapper
+                height: listview.currentIndex == index ? listview.item_height_min + expand_loader.height : listview.item_height_min
+                Behavior on height { PropertyAnimation {} }
+                width: listview.width
+                color: listview.currentIndex == index ? "lightsteelblue" : (index % 2 === 0 ? Colors.white : Colors.white2)
+
+                Item {
+                    id: title_row
+
+                    width: parent.width
+                    height: listview.item_height_min
+
+                    Text {
+                        // Property path
+                        id: line_path
+                        padding: 5
+                        text: path
+                        font.pixelSize: 20
+                        font.bold: expand_loader.active
+                        color: Colors.black
+                        anchors.left: parent.left
+                        anchors.right: expand_loader.active ? line_value.left : undefined
+                        elide: Text.ElideRight
+                    }
+
+                    Text {
+                        // Property value or iorole
+                        id: line_value
+                        horizontalAlignment: Text.AlignRight
+                        padding: 5
+                        text: expand_loader.active ? io : cache_human
+                        font.pixelSize: 20
+                        font.bold: true
+                        color: Colors.black
+                        elide: expand_loader.active ? Text.ElideNone : Text.ElideLeft
+
+                        anchors.left: expand_loader.active ? undefined : line_path.right
+                        anchors.right: parent.right
+                        width: expand_loader.active ? implicitWidth : undefined
+                    }
+                }
+
+                Loader {
+                    id: expand_loader
+
+                    anchors.top: title_row.bottom
+                    width: listview.width
+
+                    property var model: parent.itemModel // inject 'model' to the loaded item's context
+
+                    active: listview.currentIndex == index
+                    asynchronous: true
+                    visible: status == Loader.Ready
+                    sourceComponent: expanded_delegate
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {listview.currentIndex = index}
+                    enabled: listview.currentIndex != index
+                }
+            }
+        }
+
+        Component {
+            id: expanded_delegate
+
+            Column {
+                height: implicitHeight
+                width: parent.width
+
+                spacing: 2
+
+                Text {
+                    // Property value
+                    width: parent.width
+                    padding: 5
+                    text: "<b>Value:</b> " + model.cache_human
+                    font.pixelSize: 20
+                    color: Colors.black
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    // Datatype, default
+                    width: parent.width
+                    padding: 5
+                    text: "<b>Datatype:</b> " + model.datatype + (model.default === undefined ? "" : "<b>Default:</b> " + model.default)
+                    font.pixelSize: 20
+                    color: Colors.black
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    // Description
+                    width: parent.width
+                    padding: 5
+                    text: model.description
+                    font.pixelSize: 20
+                    font.italic: true
+                    color: Colors.black
+                    elide: Text.ElideRight
+                }
+
+                Row {
+                    id: interval_settings
+                    width: parent.width
+                    height: implicitHeight
+
+                    visible: model.isfunction
+
+                    Text {
+                        text: "Automatic value read interval:"
+                        color: Colors.black
+                        padding: 5
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    RadioButton {
+                        checked: model.interval === undefined
+                        text: 'Disable'
+                        anchors.verticalCenter: parent.verticalCenter
+                        onClicked: { model.interval = undefined }
+                    }
+
+                    RadioButton {
+                        checked: model.interval !== undefined
+                        text: checked ? 'Enable:' : 'Enable'
+                        anchors.verticalCenter: parent.verticalCenter
+                        onClicked: { model.interval = model.interval_min }
+                    }
+
+                    SpinBox {
+                        id: interval_spin
+                        visible: model.interval !== undefined
+                        value: model.interval ? model.interval : 0
+                        anchors.verticalCenter: parent.verticalCenter
+                        stepSize: 1
+
+                        onValueModified: { model.interval = value }
+
+                        from: model.interval_min
+                        to: 600
+                        font.pixelSize: 32
+
+                        contentItem: TextInput {
+                            z: 2
+                            text: spinbox.textFromValue(interval_spin.value, interval_spin.locale) + 's'
+                            color: "#000"
+                            selectionColor: "#000"
+                            selectedTextColor: "#ffffff"
+                            horizontalAlignment: Qt.AlignHCenter
+                            verticalAlignment: Qt.AlignVCenter
+                            readOnly: !spinbox.editable
+                            validator: spinbox.validator
+                            inputMethodHints: Qt.ImhFormattedNumbersOnly
+                        }
+                    }
+                }
+
+                CheckBox {
+                    checked: parent.parent.plogging
+                    onClicked: inputs.set_logging(parent.parent.ppath, this.checked)
+
+                    Text {
+                        text: "bla1"
+                        color: Colors.black
+                        anchors.left: parent.right
+                        anchors.leftMargin: 15
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+
+                CheckBox {
+                    checked: parent.parent.pexposed
+                    onClicked: inputs.set_exposed(parent.parent.ppath, this.checked)
+                    Text {
+                        text: "bla2"
+                        color: Colors.black
+                        anchors.left: parent.right
+                        anchors.leftMargin: 15
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+
+                CheckBox {
+                    checked: true
+                    Text {
+                        text: "bla3"
+                        color: Colors.black
+                        anchors.left: parent.right
+                        anchors.leftMargin: 15
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+
+                SpinBox {
+                    id: spinbox
+                    visible: parent.parent.pinterval > 0 ? true : false
+                    value: parent.parent.pinterval
+                    stepSize: 5
+
+                    onValueModified:  inputs.set_interval(parent.parent.ppath, value)
+                    Text {
+                        text: "Interval"
+                        color: Colors.black
+                        anchors.left: parent.right
+                        anchors.leftMargin: 15
+                    }
+
+                    from: 1
+                    to: 600
+                    font.pixelSize: 32
+
+                    contentItem: TextInput {
+                        z: 2
+                        text: spinbox.textFromValue(
+                                  spinbox.value, spinbox.locale) + 's'
+                        color: "#000"
+                        selectionColor: "#000"
+                        selectedTextColor: "#ffffff"
+                        horizontalAlignment: Qt.AlignHCenter
+                        verticalAlignment: Qt.AlignVCenter
+                        readOnly: !spinbox.editable
+                        validator: spinbox.validator
+                        inputMethodHints: Qt.ImhFormattedNumbersOnly
+                    }
+                }
+            }
+        }
+    }
+}

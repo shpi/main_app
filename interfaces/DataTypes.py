@@ -1,13 +1,40 @@
 # -*- coding: utf-8 -*-
 
+import locale
 from typing import Union, Type
-from enum import Enum
+from enum import Enum, EnumMeta
 from datetime import datetime, date, time
 from re import compile
+
 
 from core.iio import ChannelType
 
 _re_time_str = compile(r'(2[0-3]|[01]?[0-9]):([0-5]?[0-9])')
+
+
+class _Localization:
+    _bytype = {
+        datetime: 0,
+        date: 1,
+        time: 2,
+    }
+
+    def __init__(self):
+        self._fmts = [
+            locale.nl_langinfo(locale.D_T_FMT),
+            locale.nl_langinfo(locale.D_FMT),
+            locale.nl_langinfo(locale.T_FMT)
+        ]
+
+    def to_local_string(self, obj: Union[datetime, date, time]) -> str:
+        index = self._bytype.get(type(obj))
+        if index is None:
+            return 'None'
+
+        return obj.strftime(self._fmts[index])
+
+
+localization = _Localization()
 
 
 class DataType(Enum):
@@ -30,11 +57,10 @@ class DataType(Enum):
     # Correct interpretation of datetime objects
     DATE = 7  # date object (without time)
     TIME = 8  # time object (without date)
-    TIME_STR = 9  # time as string "14:00"
-    DATETIME = 10  # datetime object
+    DATETIME = 9  # datetime object
+
     TIMEDELTA = 11  # Range between two times (seconds, float)
-    TIMEDELTA_INT = 12  # Range between two times (seconds, int)
-    TIMESTAMP = 13  # Seconds since unix epoch (float)
+    TIMESTAMP = 12  # Seconds since unix epoch (utc, float)
 
     # Fix range types
     PERCENT_FLOAT = 15  # float, 0.-100.
@@ -63,6 +89,7 @@ class DataType(Enum):
     GRAVITY = 36  #
     DIRECTION = 37  # degrees 0-360°
     LENGTH = 38  # mm
+    FREQUENCY = 39  # Hz, float
 
     # Electricity (from sensors)
     CURRENT = 40  # float, Ampere
@@ -118,7 +145,6 @@ class DataType(Enum):
 
 _valid_check = {
     # ToDo: use validity checks
-    DataType.TIME_STR: _re_time_str.fullmatch,
     DataType.PERCENT_FLOAT: lambda x: 0. <= x <= 100.,
     DataType.PERCENT_INT: lambda x: x in range(101),
     DataType.FRACTION: lambda x: 0. <= x <= 1.,
@@ -136,10 +162,7 @@ _to_basic_type = {
 
     DataType.DATE: date,
     DataType.TIME: time,
-    DataType.TIME_STR: str,
     DataType.DATETIME: datetime,
-
-    DataType.TIMEDELTA_INT: int,
 
     DataType.PERCENT_INT: int,
     DataType.BYTE: int,
@@ -154,6 +177,7 @@ _to_basic_type = {
     DataType.ENUM: str,
 
     DataType.LIST_OF_STRINGS: list,
+    DataType.PROPERTYDICT: None,
 }
 
 
@@ -184,6 +208,122 @@ _mapping_iio_shpi = {
     ChannelType.IIO_ELECTRICALCONDUCTIVITY: DataType.CONDUCTIVITY,
     ChannelType.IIO_COUNT: DataType.INTEGER,
     ChannelType.IIO_GRAVITY: DataType.GRAVITY
+}
+
+
+def _celsius(value):
+    if not isinstance(value, (float, int)):
+        return str(value)
+    return str(value) + ' °C'
+
+
+def _enum(value):
+    if type(type(value)) is EnumMeta:
+        return str(value)
+    return value.name
+
+
+def _bytes(value):
+    if not isinstance(value, (float, int)):
+        return str(value)
+
+    if value < 1024:  # less than 1kB
+        return str(value)
+
+    if value < 1048576:  # less than 1MB
+        return str(round(value / 1024, 2)) + ' KiB'
+
+    if value < 1073741824:  # less than 1GB
+        return str(round(value / 1048576, 2)) + ' MiB'
+
+    if value < 1099511627776:  # less than 1TB
+        return str(round(value / 1073741824, 4)) + ' GiB'
+
+    # >= 1 TeraByte
+    return str(round(value / 1099511627776, 4)) + ' TiB'
+
+
+def _list_of_strings(value):
+    if not isinstance(value, (list, tuple, set, frozenset)):
+        return str(value)
+
+    return ', '.join(value)
+
+
+def _percent(value):
+    if not isinstance(value, (int, float)):
+        return str(value)
+
+    if type(value) is float:
+        value = round(value, 2)
+
+    return str(value) + '%'
+
+
+def _append_unit(unit: str):
+    def _append(value):
+        return str(value) + unit
+    return _append
+
+
+def _append_autobase_unit(unit: str):
+    def _append(value):
+        if value == 0:
+            return '0' + unit
+
+        neg = '-' if value < 0 else ''
+        value = abs(value)
+
+        if value > 1:
+            if value < 1000:
+                return neg + str(value) + unit
+
+            if value < 1000000:
+                return neg + str(round(value / 1000, 2)) + 'k' + unit
+
+            if value < 1000000000:
+                return neg + str(round(value / 1000000, 4)) + 'M' + unit
+
+            return neg + str(round(value / 1000000000, 6)) + 'G' + unit
+
+        else:
+            # less than 1
+            if value > 0.001:
+                return neg + str(round(value * 1000)) + 'm' + unit
+
+            if value > 0.000001:
+                return neg + str(round(value * 1000000)) + 'µ' + unit
+
+            if value > 0.000000001:
+                return neg + str(round(value * 1000000000)) + 'n' + unit
+
+            return neg + str(round(value * 1000000000000)) + 'p' + unit
+
+    return _append
+
+
+def _from_timestamp(ts: float) -> str:
+    dt = datetime.fromtimestamp(ts)
+    return localization.to_local_string(dt)
+
+
+datatype_tohuman_func = {
+    DataType.TEMPERATURE: _append_unit(' °C'),
+    DataType.RPM: _append_unit(' rpm'),
+    DataType.ENUM: _enum,
+    DataType.BYTES: _bytes,
+    DataType.LIST_OF_STRINGS: _list_of_strings,
+    DataType.PERCENT_FLOAT: _percent,
+    DataType.PERCENT_INT: _percent,
+    DataType.FREQUENCY: _append_autobase_unit('Hz'),
+    DataType.VOLTAGE: _append_autobase_unit('V'),
+    DataType.CURRENT: _append_autobase_unit('A'),
+    DataType.POWER: _append_autobase_unit('W'),
+    DataType.WORK: _append_autobase_unit('Wh'),
+    DataType.TIMESTAMP: _from_timestamp,
+    DataType.DATETIME: localization.to_local_string,
+    DataType.TIME: localization.to_local_string,
+    DataType.DATE: localization.to_local_string,
 }
 
 

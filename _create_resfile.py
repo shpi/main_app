@@ -7,7 +7,6 @@ line_template = '<file>{filename}</file>'
 
 source_defs =\
     'fonts/*',\
-    'info/citylist.csv',\
     'weathersprites/*.png',\
     'modules/*.qml',\
     'qml/*.qml',\
@@ -19,7 +18,8 @@ source_defs =\
     'qml/connections/*.qml',\
     'qml/hardware/*.qml',\
     'qml/keyboard/*.qml',\
-    'qml/thermostat/*.qml'
+    'qml/thermostat/*.qml',\
+    'qml/settings/*.qml',
 
 destfile = Path('qtres.qrc')
 

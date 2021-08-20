@@ -5,7 +5,6 @@
 <file>fonts/Icons.qml</file>
 <file>fonts/orkney-custom.ttf</file>
 <file>fonts/qmldir</file>
-<file>info/citylist.csv</file>
 <file>weathersprites/01d.png</file>
 <file>weathersprites/01n.png</file>
 <file>weathersprites/02d.png</file>
@@ -27,7 +26,6 @@
 <file>modules/Appearance.qml</file>
 <file>qml/CategoriesListView.qml</file>
 <file>qml/CategoryDetails.qml</file>
-<file>qml/CategorySettings.qml</file>
 <file>qml/Clock.qml</file>
 <file>qml/fingerpaint.qml</file>
 <file>qml/FpsItem.qml</file>
@@ -35,13 +33,9 @@
 <file>qml/Graph2.qml</file>
 <file>qml/main.qml</file>
 <file>qml/MainScreen.qml</file>
-<file>qml/Modules.qml</file>
 <file>qml/ModulesClasses.qml</file>
-<file>qml/Pictures.qml</file>
-<file>qml/Settings.qml</file>
 <file>qml/core/GitSettings.qml</file>
 <file>qml/core/LoggingSettings.qml</file>
-<file>qml/core/Properties.qml</file>
 <file>qml/core/WifiSettings.qml</file>
 <file>qml/core/WifiSettingsList.qml</file>
 <file>qml/weather/WeatherDay.qml</file>
@@ -75,5 +69,10 @@
 <file>qml/thermostat/ThermostatWeek.qml</file>
 <file>qml/thermostat/ThermostatWeekDay.qml</file>
 <file>qml/thermostat/ThermostatWeekKnob.qml</file>
+<file>qml/settings/CategorySettings.qml</file>
+<file>qml/settings/Modules.qml</file>
+<file>qml/settings/Pictures.qml</file>
+<file>qml/settings/Properties.qml</file>
+<file>qml/settings/Settings.qml</file>
 </qresource>
 </RCC>
