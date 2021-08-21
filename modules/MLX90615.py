@@ -251,4 +251,11 @@ class MLX90615(ThreadModuleBase):  # Non Thread?
                 # Fast temperature
                 self._set_temp(self.calc_compensated_live_temp())
 
+            # while (time.time() - self.inputs.entries['core/input_dev/lasttouch'].last_update) < 5:
+            #     logging.debug('halted mlx90615 thread due touch inputs')
+            #     self.buffer_enable(0)
+            #     time.sleep(6)
+            #
+            # self.buffer_enable(1)
+
         self.buffer_enable(False)

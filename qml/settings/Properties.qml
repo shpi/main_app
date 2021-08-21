@@ -59,7 +59,7 @@ Item {
                         // Property path
                         id: line_path
                         padding: 5
-                        text: path
+                        text: expand_loader.active ? path + " [" + io + "]": path
                         font.pixelSize: 20
                         font.bold: expand_loader.active
                         color: Colors.black
@@ -73,7 +73,8 @@ Item {
                         id: line_value
                         horizontalAlignment: Text.AlignRight
                         padding: 5
-                        text: expand_loader.active ? io : cache_human
+                        text: cache_human ? cache_human : "<i>None</i>"
+                        visible: !expand_loader.active
                         font.pixelSize: 20
                         font.bold: true
                         color: Colors.black
@@ -117,34 +118,23 @@ Item {
                 spacing: 2
 
                 Text {
-                    // Property value
+                    // Description, datatype
                     width: parent.width
                     padding: 5
-                    text: "<b>Value:</b> " + model.cache_human
+                    text: "<i>" + model.description + "</i> (" + model.datatype + ")"
                     font.pixelSize: 20
                     color: Colors.black
-                    elide: Text.ElideRight
+                    wrapMode: Text.Wrap
                 }
 
                 Text {
-                    // Datatype, default
+                    // Property value, default
                     width: parent.width
                     padding: 5
-                    text: "<b>Datatype:</b> " + model.datatype + (model.default === undefined ? "" : "<b>Default:</b> " + model.default)
+                    text: "Value: <b>" + model.cache_human + "</b>" + (model.default_human === undefined ? "" : " Default: <b>" + model.default_human + "</b>")
                     font.pixelSize: 20
                     color: Colors.black
-                    elide: Text.ElideRight
-                }
-
-                Text {
-                    // Description
-                    width: parent.width
-                    padding: 5
-                    text: model.description
-                    font.pixelSize: 20
-                    font.italic: true
-                    color: Colors.black
-                    elide: Text.ElideRight
+                    wrapMode: Text.Wrap
                 }
 
                 Row {
@@ -184,28 +174,28 @@ Item {
 
                         onValueModified: { model.interval = value }
 
-                        from: model.interval_min
+                        from: model.interval_min ? model.interval_min : 0
                         to: 600
                         font.pixelSize: 32
 
                         contentItem: TextInput {
                             z: 2
-                            text: spinbox.textFromValue(interval_spin.value, interval_spin.locale) + 's'
+                            text: parent.textFromValue(interval_spin.value, interval_spin.locale) + 's'
                             color: "#000"
                             selectionColor: "#000"
                             selectedTextColor: "#ffffff"
                             horizontalAlignment: Qt.AlignHCenter
                             verticalAlignment: Qt.AlignVCenter
-                            readOnly: !spinbox.editable
-                            validator: spinbox.validator
+                            readOnly: !parent.editable
+                            validator: parent.validator
                             inputMethodHints: Qt.ImhFormattedNumbersOnly
                         }
                     }
                 }
 
                 CheckBox {
-                    checked: parent.parent.plogging
-                    onClicked: inputs.set_logging(parent.parent.ppath, this.checked)
+                    checked: false
+                    //onClicked: inputs.set_logging(parent.parent.ppath, this.checked)
 
                     Text {
                         text: "bla1"
@@ -217,8 +207,8 @@ Item {
                 }
 
                 CheckBox {
-                    checked: parent.parent.pexposed
-                    onClicked: inputs.set_exposed(parent.parent.ppath, this.checked)
+                    checked: false
+                    //onClicked: inputs.set_exposed(parent.parent.ppath, this.checked)
                     Text {
                         text: "bla2"
                         color: Colors.black
@@ -236,39 +226,6 @@ Item {
                         anchors.left: parent.right
                         anchors.leftMargin: 15
                         anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-
-                SpinBox {
-                    id: spinbox
-                    visible: parent.parent.pinterval > 0 ? true : false
-                    value: parent.parent.pinterval
-                    stepSize: 5
-
-                    onValueModified:  inputs.set_interval(parent.parent.ppath, value)
-                    Text {
-                        text: "Interval"
-                        color: Colors.black
-                        anchors.left: parent.right
-                        anchors.leftMargin: 15
-                    }
-
-                    from: 1
-                    to: 600
-                    font.pixelSize: 32
-
-                    contentItem: TextInput {
-                        z: 2
-                        text: spinbox.textFromValue(
-                                  spinbox.value, spinbox.locale) + 's'
-                        color: "#000"
-                        selectionColor: "#000"
-                        selectedTextColor: "#ffffff"
-                        horizontalAlignment: Qt.AlignHCenter
-                        verticalAlignment: Qt.AlignVCenter
-                        readOnly: !spinbox.editable
-                        validator: spinbox.validator
-                        inputMethodHints: Qt.ImhFormattedNumbersOnly
                     }
                 }
             }

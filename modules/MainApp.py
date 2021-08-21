@@ -2,42 +2,40 @@
 
 """
 Old MainApp
-Thread: MainThread  runtime: 168 s  cputime: 14.81 s  fractional cputime: 8.8378 %
-Thread: Thread-4  runtime: 160 s  cputime: 0.14 s  fractional cputime: 0.0874 %
-Thread: Thread-6  runtime: 160 s  cputime: 2.16 s  fractional cputime: 1.3492 %
-Thread: Thread-7  runtime: 160 s  cputime: 3.88 s  fractional cputime: 2.4237 %
-Thread: VCHIQ completio  runtime: 159 s  cputime: 0.08 s  fractional cputime: 0.0504 %
-Thread: HDispmanx Notif  runtime: 159 s  cputime: 0.0 s  fractional cputime: 0.0 %
-Thread: HTV Notify  runtime: 159 s  cputime: 0.0 s  fractional cputime: 0.0 %
-Thread: HCEC Notify  runtime: 159 s  cputime: 0.0 s  fractional cputime: 0.0 %
-Thread: QEvdevTouchScre  runtime: 159 s  cputime: 0.12 s  fractional cputime: 0.0757 %
-Thread: QQmlThread  runtime: 158 s  cputime: 1.91 s  fractional cputime: 1.2051 %
-Thread: FileInfoThread  runtime: 155 s  cputime: 0.0 s  fractional cputime: 0.0 %
-Thread: QSGRenderThread  runtime: 155 s  cputime: 1.74 s  fractional cputime: 1.1247 %
-Thread: threadinfo_thread  runtime: 154 s  cputime: 1.48 s  fractional cputime: 0.9621 %
-Thread: 3edd8cdc14e1  runtime: 153 s  cputime: 0.0 s  fractional cputime: 0.0 %
-Thread: 19ed1dc1e1  runtime: 153 s  cputime: 4.45 s  fractional cputime: 2.9031 %
-Thread: 18ed416dc38fe16  runtime: 153 s  cputime: 0.32 s  fractional cputime: 0.2087 %
-Thread: mlx90615  runtime: 153 s  cputime: 4.12 s  fractional cputime: 2.6877 %
-
+Thread: MainThread  runtime: 718 s  cputime: 14.24 s  fractional cputime: 1.9825 %
+Thread: Thread-1  runtime: 711 s  cputime: 0.51 s  fractional cputime: 0.0717 %
+Thread: Thread-2  runtime: 711 s  cputime: 2.72 s  fractional cputime: 0.3826 %
+Thread: Thread-3  runtime: 711 s  cputime: 12.2 s  fractional cputime: 1.7162 %
+Thread: VCHIQ completio  runtime: 710 s  cputime: 0.15 s  fractional cputime: 0.0211 %
+Thread: HDispmanx Notif  runtime: 710 s  cputime: 0.0 s  fractional cputime: 0.0 %
+Thread: HTV Notify  runtime: 710 s  cputime: 0.0 s  fractional cputime: 0.0 %
+Thread: HCEC Notify  runtime: 710 s  cputime: 0.0 s  fractional cputime: 0.0 %
+Thread: QEvdevTouchScre  runtime: 710 s  cputime: 0.0 s  fractional cputime: 0.0 %
+Thread: QQmlThread  runtime: 710 s  cputime: 1.47 s  fractional cputime: 0.207 %
+Thread: check_loop  runtime: 710 s  cputime: 5.68 s  fractional cputime: 0.7999 %
+Thread: FileInfoThread  runtime: 707 s  cputime: 0.0 s  fractional cputime: 0.0 %
+Thread: QSGRenderThread  runtime: 707 s  cputime: 2.57 s  fractional cputime: 0.3635 %
+Thread: threadinfo_thread  runtime: 706 s  cputime: 7.02 s  fractional cputime: 0.9944 %
+Thread: 3edd8cdc14e1  runtime: 706 s  cputime: 0.0 s  fractional cputime: 0.0 %
+Thread: 19ed1dc1e1  runtime: 706 s  cputime: 3.81 s  fractional cputime: 0.5397 %
+Thread: 18ed416dc38fe16  runtime: 706 s  cputime: 0.0 s  fractional cputime: 0.0 %
+Thread: mlx90615  runtime: 706 s  cputime: 24.02 s  fractional cputime: 3.4028 %
 
 
 MainApp v4
-
-Thread info: MainThread 14.822910505084389
-Thread info: VCHIQ completio 0.008601728296805061
+Thread info: MainThread 5.889656234939329
+Thread info: VCHIQ completio 0.002543569176315573
 Thread info: HDispmanx Notif 0.0
 Thread info: HTV Notify 0.0
 Thread info: HCEC Notify 0.0
 Thread info: QEvdevTouchScre 0.0
-Thread info: QQmlThread 1.1268717708525717
-Thread info: EventTable_eventloop_IntervalProperty 3.716894172389195
+Thread info: QQmlThread 0.1666043866252336
+Thread info: EventTable_eventloop_IntervalProperty 3.255912460110496
 Thread info: input_event2 0.0
-Thread info: MLX90615 10.31121899020477
-Thread info: Property_worker 1.38661886574521
-Thread info: FileInfoThread 0.008933284428694059
-Thread info: QSGRenderThread 0.6612046675299257
-
+Thread info: MLX90615 8.472220956740568
+Thread info: Property_worker 1.3342336485461956
+Thread info: FileInfoThread 0.0012787894812847209
+Thread info: QSGRenderThread 0.10997982926223698
 
 """
 

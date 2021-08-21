@@ -15,6 +15,10 @@ after changing qml files, please run:
 or just use the wrapper which calls both files above:  
 `./_res.sh`
 
+## Profiling
+
+`sudo python3 -m cProfile -o profile.pstat main.py`
+
 
 ## Hint
 
@@ -44,6 +48,9 @@ Then add the user to that group (and relogin): `sudo usermod -aG input pi`
 
 ### Wifi
 TODO
+
+### iio write
+### HWMon write
 
 
 ## ToDos

@@ -57,7 +57,9 @@ def _release_properties(instance: ModuleBase):
             delattr(instance, attrname)
 
     if hasattr(instance, "properties"):
-        logcall(instance.properties.unload)
+        if isinstance(instance.properties, PropertyDict):
+            with instance.properties.transaction:
+                logcall(instance.properties.unload)
         del instance.properties
 
 
@@ -76,8 +78,9 @@ class Module:
     def unload_modules(cls):
         print("### Module.unload_modules")
         # Unload in reverse order
-        for minst in reversed(Module.instances_in_loadorder):
-            logcall(minst.unload)
+        with PropertyDict.root().transaction:
+            for minst in reversed(Module.instances_in_loadorder):
+                logcall(minst.unload)
         Module.instances_in_loadorder.clear()
 
     @classmethod

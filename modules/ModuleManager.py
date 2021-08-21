@@ -137,11 +137,13 @@ class Modules(ModuleBase):
         cls._root_properties.load()
 
         # Instantiate my main instance
-        m = cls._main_instance = Module(cls, parent=mainapp)
+        with cls._root_properties.transaction:
+            m = cls._main_instance = Module(cls, parent=mainapp)
 
         # Load this module
         m.loaded = True
-        m.load(force_reload=True)  # Module.load() is called which calls our load()
+        with cls._root_properties.transaction:
+            m.load(force_reload=True)  # Module.load() is called which calls our load()
 
     def __init__(self, parent, instancename: str = None):
         if self._main_instance is not None:
@@ -228,7 +230,7 @@ class Modules(ModuleBase):
 
         # Properties should be all created now
 
-        Property.listmodel.reload()
+        # Property.listmodel.reload()
 
         # Start modules
         Module.load_modules()
@@ -251,17 +253,18 @@ class Modules(ModuleBase):
             logger.error('Could not find module class or invalid class type: %s', class_or_class_str)
             return
 
-        try:
-            m = None
-            if issubclass(mcls, ThreadModuleBase):
-                m = ThreadModule(mcls, instancename=instancename, parent=self.mainapp)
-            elif issubclass(mcls, ModuleBase):
-                m = Module(mcls, instancename=instancename, parent=self.mainapp)
-            else:
-                logger.error('Unsupported class to be used as Module: %s', repr(mcls))
-        except Exception as e:
-            logger.error('Initialization of Module %s failed: %s', mcls, e)
-            return
+        m = None
+        with self._root_properties.transaction:
+            try:
+                if issubclass(mcls, ThreadModuleBase):
+                    m = ThreadModule(mcls, instancename=instancename, parent=self.mainapp)
+                elif issubclass(mcls, ModuleBase):
+                    m = Module(mcls, instancename=instancename, parent=self.mainapp)
+                else:
+                    logger.error('Unsupported class to be used as Module: %s', repr(mcls))
+            except Exception as e:
+                logger.error('Initialization of Module %s failed: %s', mcls, repr(e))
+                return
 
         if not m or m.module_instance is None:
             # Module did not want to be loaded or threw an exception.
@@ -281,7 +284,7 @@ class Modules(ModuleBase):
         m.unload()
         self.remove_module_properties(inst)
 
-    def add_module_contextproperties(self, obj):
+    def add_module_contextproperties(self, obj):  # ToDo: segfault reason?
         engine = self.mainapp and self.mainapp.engine or False
         if not engine:
             return
@@ -329,21 +332,22 @@ class Modules(ModuleBase):
         classname = m.modulename()
         instancename = m.instancename()
 
-        if m.allow_maininstance and not m.allow_instances:
-            # Only maininstance expected
-            del rp[classname]
-
-        elif m.allow_instances and not m.allow_maininstance:
-            # Only instances expected
-            instances_property = rp[classname]
-            del instances_property[instancename]
-            if len(instances_property) == 0:
-                # Remove root of class
+        with rp.transaction:
+            if m.allow_maininstance and not m.allow_instances:
+                # Only maininstance expected
                 del rp[classname]
 
-        else:
-            # maininstance and instances expected. Conflicting. ToDo.
-            pass
+            elif m.allow_instances and not m.allow_maininstance:
+                # Only instances expected
+                instances_property = rp[classname]
+                del instances_property[instancename]
+                if len(instances_property) == 0:
+                    # Remove root of class
+                    del rp[classname]
+
+            else:
+                # maininstance and instances expected. Conflicting. ToDo.
+                pass
 
     @classmethod
     def shutdown(cls):

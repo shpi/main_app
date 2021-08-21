@@ -59,8 +59,6 @@ if core.Logger.get_logging_level() <= logging.DEBUG:
 
 SCRIPT_PATH = Path(sys.argv[0]).parent.resolve()
 
-in_event_loop = None
-
 
 class MainApp(MainAppBase):
     applicationDirPath = SCRIPT_PATH
@@ -74,9 +72,14 @@ class MainApp(MainAppBase):
         self.__class__._main_instance = self
 
         MainAppBase.__init__(self, sys.argv)
+        self._in_mainloop = False
 
         # self.aboutToQuit.connect(MainApp.unload)
         self.engine: Optional[QQmlApplicationEngine] = None
+
+    @property
+    def in_mainloop(self) -> bool:
+        return self._in_mainloop
 
     def load(self):
         signal.signal(signal.SIGINT, self._interrupt_handler)
@@ -122,14 +125,21 @@ class MainApp(MainAppBase):
     def _interrupt_handler(self, signum, frame):  # signum, frame
         """Handle KeyboardInterrupt: quit application."""
         print("interrupt_handler called")
-        if in_event_loop:
+        if self._in_mainloop:
             self.quit()  # trigger quit slot
             self.exit()  # exit eventloop (app.exec)
         else:
             sys.exit(1)
 
+    def exec_(self) -> int:
+        self._in_mainloop = True
+        try:
+            return super().exec_()
+        finally:
+            self._in_mainloop = False
 
-if __name__ == '__main__':
+
+def main():
     # Change working directory to location of main.py or executable
     os.chdir(SCRIPT_PATH)
 
@@ -144,9 +154,7 @@ if __name__ == '__main__':
         qInstallMessageHandler(core.Logger.qt_message_handler)
 
         # Run event loop
-        in_event_loop = True
         exec_returncode = app.exec_()
-        in_event_loop = False
 
         # main app exited.
         logger.info("mainloop exited")
@@ -170,6 +178,10 @@ if __name__ == '__main__':
     logging.shutdown()
     # del core.Logger.qtlogginghandler
     del core.Logger.log_model
+    return exec_returncode
 
+
+if __name__ == '__main__':
+    status = main()
     print("### Interpreter exit")
-    sys.exit(exec_returncode)
+    sys.exit(status)

@@ -38,9 +38,9 @@ import weakref
 from functools import partial
 from logging import getLogger
 from typing import Optional, Union, Any, Callable, Iterable, Dict, ValuesView, ItemsView, KeysView, Generator, List, \
-    Tuple, Iterator
+    Tuple, Iterator, Set
 from time import time, sleep
-from threading import RLock, Thread
+from threading import RLock, Thread, Lock
 from re import compile
 from contextlib import suppress
 from enum import EnumMeta, Enum
@@ -192,6 +192,10 @@ class PropertyDict:
         for key, prop in new_properties.items():
             self[key] = prop
 
+    @property
+    def transaction(self) -> "LockReleaseTrigger":
+        return Property.listmodel.transaction
+
     def get(self, path: str, default: "Property" = None) -> Optional["Property"]:
         with suppress(KeyError):
             return self[path]
@@ -293,13 +297,10 @@ class PropertyDict:
             del self[pd_path][key]
             return
 
-        delitem: Property = self._data.get(key)
-
-        if delitem is None:
-            raise KeyError(f"Property '{key}' not found.")
+        delitem: Property = self._data[key]
 
         logcall(delitem.unload, errmsg="Exception on unloading Property: %s")
-        self._data.pop(key)
+        del self._data[key]
 
         pp = self.parentproperty
         if pp and pp.events:
@@ -389,7 +390,6 @@ def _set_floatprec(prop: "Property", newvalue: int) -> bool:
 def _set_interval(prop: "Property", newvalue: Optional[int]) -> bool:
     try:
         prop.poll_interval = newvalue
-        print("set interval to", newvalue)
         return True
     except Exception as e:
         return False
@@ -403,7 +403,38 @@ def _set_value(prop: "Property", newvalue) -> bool:
         return False
 
 
+class LockReleaseTrigger:
+    def __init__(self, callback_func: Callable[[Set[Any]], None] = None):
+        self._callback_func = callback_func
+        self._lock_cnt = 0
+        self._flags: Set[Any] = set()
+
+    def trigger_action(self, action):
+        self._flags.add(action)
+
+    @property
+    def active(self) -> bool:
+        return self._lock_cnt > 0
+
+    def __enter__(self):
+        if self._lock_cnt == 0:
+            # First locking. Reset old stuff.
+            self._flags.clear()
+        self._lock_cnt += 1
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._lock_cnt -= 1
+        if self._lock_cnt == 0 and self._callback_func:
+            self._callback_func(self._flags)
+
+    def unload(self):
+        self._callback_func = None
+        self._lock_cnt = 0
+        self._flags.clear()
+
+
 class PropertiesListModel(QAbstractListModel):
+    # Qt.Userrole: 256
     IDRole = Qt.UserRole + 1000  # Temporary numeric id for faster and easier access.
     IORole = Qt.UserRole + 1001  # Input or Output
     PathRole = Qt.UserRole + 1002
@@ -411,20 +442,21 @@ class PropertiesListModel(QAbstractListModel):
     ValueHumanRole = Qt.UserRole + 1004  # Human readable string output
     CachedRole = Qt.UserRole + 1005  # Value from cache (fast)
     CachedHumanRole = Qt.UserRole + 1006  # Human readable string output
-    DefaultValueRole = Qt.UserRole + 1007
-    DescriptionRole = Qt.UserRole + 1008
-    DataTypeRole = Qt.UserRole + 1009
-    PersistentRole = Qt.UserRole + 1010
-    ModuleName = Qt.UserRole + 1011
-    ModulePath = Qt.UserRole + 1012
-    UIRelevant = Qt.UserRole + 1013
-    IsLinked = Qt.UserRole + 1014
-    FloatPrec = Qt.UserRole + 1015
-    IsFunction = Qt.UserRole + 1016
-    Interval = Qt.UserRole + 1017
-    IntervalMin = Qt.UserRole + 1018
-    IntervalDef = Qt.UserRole + 1019
-    # LinkedProperty = Qt.UserRole + 1016
+    DefaultRole = Qt.UserRole + 1007
+    DefaultHumanRole = Qt.UserRole + 1008
+    DescriptionRole = Qt.UserRole + 1009
+    DataTypeRole = Qt.UserRole + 1010
+    PersistentRole = Qt.UserRole + 1011
+    ModuleName = Qt.UserRole + 1012
+    ModulePath = Qt.UserRole + 1013
+    UIRelevant = Qt.UserRole + 1014
+    IsLinked = Qt.UserRole + 1015
+    FloatPrec = Qt.UserRole + 1016
+    IsFunction = Qt.UserRole + 1017
+    Interval = Qt.UserRole + 1018
+    IntervalMin = Qt.UserRole + 1019
+    IntervalDef = Qt.UserRole + 1020
+    # LinkedProperty = Qt.UserRole + 1021
 
     _rolenames = {
         IDRole: b'id',
@@ -434,7 +466,8 @@ class PropertiesListModel(QAbstractListModel):
         ValueHumanRole: b'value_human',
         CachedRole: b'cache',
         CachedHumanRole: b'cache_human',
-        DefaultValueRole: b'default',
+        DefaultRole: b'default',
+        DefaultHumanRole: b'default_human',
         DescriptionRole: b'description',
         DataTypeRole: b'datatype',
         PersistentRole: b'persistent',
@@ -451,31 +484,85 @@ class PropertiesListModel(QAbstractListModel):
 
     _invalid_index = QModelIndex()
 
+    INSERT = object()
+    REMOVE = object()
+
+    # __slots__ = '_property_reflist', '_lock_counter', '_lock', '_insert_candidates', '_indices_to_remove'
+
     def __init__(self, parent: QObject):
         QAbstractListModel.__init__(self, parent=parent)
         self._property_reflist = []
+        self._lock_counter = LockReleaseTrigger(self.transaction_exit)
+        self._lock = Lock()
+        self._insert_candidates: List[Any] = []
+        self._indices_to_remove: List[int] = []
 
-    def unload(self):
-        self.beginResetModel()
-        self._property_reflist.clear()
-        self.endResetModel()
+    @property
+    def transaction(self) -> LockReleaseTrigger:
+        """
+        Supresses emits on at least one active transaction.
+        """
+        return self._lock_counter
 
     def index_valid(self, index: QModelIndex) -> bool:
-        return 0 <= index.row() < self.rowCount() and index.isValid()
+        return index.isValid() and 0 <= index.row() < len(self._property_reflist)
 
-    def check_properties_gone(self):
-        """Remove disappeared properties"""
-        valids = tuple(propref for propref in self._property_reflist if propref() is not None)
-        if len(valids) == len(self._property_reflist):
-            # Nothing has changed
-            return
+    def transaction_exit(self, operations: Set[Any]):
+        full_reload_needed = False
 
-        # Replace items
+        with self._lock:
+            if self.REMOVE in operations and self._indices_to_remove:
+                sorted_indices = sorted(self._indices_to_remove)
+                count = len(sorted_indices)
+                if sorted_indices[0] == sorted_indices[-1] + count - 1:
+                    # Linear slice remove
+                    try:
+                        self.beginRemoveRows(self._invalid_index, sorted_indices[0], sorted_indices[-1])
+                        del self._property_reflist[sorted_indices[0]:sorted_indices[-1]+1]
+                        self._indices_to_remove.clear()
+                    finally:
+                        self.endRemoveRows()
+
+                else:
+                    # Multiple delete positions not in a straight row.
+                    full_reload_needed = True
+                    for index in reversed(sorted_indices):
+                        del self._property_reflist[index]
+
+            if self.INSERT in operations and self._insert_candidates:
+                if full_reload_needed:
+                    # Just extend and trigger reload later
+                    self._property_reflist.extend(self._insert_candidates)
+                else:
+                    # Simple linear insert of multiple items
+                    current_size = len(self._property_reflist)
+                    try:
+                        self.beginInsertRows(self._invalid_index, current_size, current_size + len(self._insert_candidates) - 1)
+                        self._property_reflist.extend(self._insert_candidates)
+                    finally:
+                        self.endInsertRows()
+                self._insert_candidates.clear()
+
+            if full_reload_needed:
+                self.reload()
+
+    # def corpse_check(self):
+    #     """Remove disappeared properties"""
+    #
+    #     valids = tuple(propref for propref in self._property_reflist if propref() is not None)
+    #
+    #     if len(valids) == len(self._property_reflist):
+    #         # Nothing has changed
+    #         return
+    #
+    #     # Replace items
+    #     self.beginResetModel()
+    #     self._property_reflist[:] = valids
+    #     self.endResetModel()
+
+    def reload(self):
         self.beginResetModel()
-        self._property_reflist[:] = valids
         self.endResetModel()
-
-    reload = check_properties_gone
 
     _dataroles_read_funcs = {
         IDRole: lambda prop: prop.id,
@@ -485,7 +572,8 @@ class PropertiesListModel(QAbstractListModel):
         CachedRole: lambda prop: str(prop.cached_value),
         ValueHumanRole: lambda prop: prop.as_human(prop.value),
         CachedHumanRole: lambda prop: prop.as_human(prop.cached_value),
-        DefaultValueRole: lambda prop: prop.default_value,
+        DefaultRole: lambda prop: prop.default_value,
+        DefaultHumanRole: lambda prop: prop.as_human(prop.default_value),
         DescriptionRole: lambda prop: prop.desc,
         DataTypeRole: lambda prop: prop.datatype and prop.datatype.name,
         PersistentRole: lambda prop: prop.is_persistent,
@@ -507,12 +595,7 @@ class PropertiesListModel(QAbstractListModel):
     }
 
     def data(self, index: QModelIndex, role: int = Qt.DisplayRole):
-        if not self.index_valid(index):
-            return None
-
-        row = index.row()
-        wref = self._property_reflist[row]
-        prop = wref()
+        prop = self._prop_from_index(index)
 
         if prop is None:
             return None
@@ -524,28 +607,19 @@ class PropertiesListModel(QAbstractListModel):
         try:
             return func(prop)
         except Exception as e:
-            logger.error('Exception on fetching data in SelectPropertyByDataTypeModel: %s', repr(e))
+            logger.error('Exception on fetching data (role=%s, datatype=%s) in SelectPropertyByDataTypeModel: %s', role, (prop.datatype and prop.datatype.name), repr(e))
             return None
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlags:
-        if not self.index_valid(index):
-            return Qt.NoItemFlags
+        prop = self._prop_from_index(index)
 
-        row = index.row()
-        wref = self._property_reflist[row]
-        prop = wref()
         if prop is None:
             return Qt.NoItemFlags
 
-        return Qt.ItemIsSelectable + Qt.ItemIsEditable + Qt.ItemIsUserCheckable + Qt.ItemIsEnabled
+        return Qt.ItemIsSelectable + Qt.ItemIsEditable + Qt.ItemIsUserCheckable + Qt.ItemIsEnabled + Qt.ItemNeverHasChildren
 
     def setData(self, index: QModelIndex, value, role: int = Qt.DisplayRole) -> bool:
-        if not self.index_valid(index):
-            return False
-
-        row = index.row()
-        wref = self._property_reflist[row]
-        prop = wref()
+        prop = self._prop_from_index(index)
 
         if prop is None:
             return False
@@ -564,7 +638,24 @@ class PropertiesListModel(QAbstractListModel):
             self.dataChanged.emit(index, index, (role,))
         return res
 
+    def _prop_from_index(self, index: QModelIndex) -> Optional["Property"]:
+        if not self.index_valid(index):
+            return
+
+        row = index.row()
+        if row + 1 > len(self._property_reflist):
+            return None
+
+        wref = self._property_reflist[row]
+        prop = wref()
+        if prop is None:
+            logger.warning('Found dead weakref to property.')
+        return prop
+
     def data_changed(self, prop: "Property", roles=(ValueRole, CachedRole, ValueHumanRole, CachedHumanRole)):
+        """
+        Called from internal property operations to annouce changes to the model
+        """
         wref = weakref.ref(prop)
 
         if wref not in self._property_reflist:
@@ -572,56 +663,77 @@ class PropertiesListModel(QAbstractListModel):
             return
 
         changed_pos = self._property_reflist.index(wref)
-        index = self.index(changed_pos)
-        self.dataChanged.emit(index, index, roles)
+        changed_index = self.index(changed_pos)
+        self.dataChanged.emit(changed_index, changed_index, roles)
 
-    def add(self, prop: "Property"):
+    def add_to_model(self, prop: "Property"):
         if prop is None:
             logger.warning('Tried to add None instad of Property to this model.')
             return
 
-        wref = weakref.ref(prop)
+        with self._lock:
+            wref = weakref.ref(prop)
 
-        if wref in self._property_reflist:
-            logger.warning('Property is already in this model: %s', repr(prop))
-            return
+            if wref in self._property_reflist:
+                logger.warning('Property is already in this model: %s', repr(prop))
+                return
 
-        new_pos = len(self._property_reflist)
-        self.beginInsertRows(self._invalid_index, new_pos, new_pos)
-        self._property_reflist.append(wref)
-        self.endInsertRows()
+            if self._lock_counter.active:
+                self._lock_counter.trigger_action(self.INSERT)
+                self._insert_candidates.append(wref)
+                return
 
-    def remove(self, prop: "Property"):
+            new_pos = len(self._property_reflist)
+
+            self.beginInsertRows(self._invalid_index, new_pos, new_pos)
+            self._property_reflist.append(wref)
+            self.endInsertRows()
+
+    def remove_from_model(self, prop: "Property"):
         if prop is None:
             logger.warning('Tried to remove None instad of Property from this model.')
             return
 
-        wref = weakref.ref(prop)
+        with self._lock:
+            wref = weakref.ref(prop)
 
-        if wref not in self._property_reflist:
-            logger.warning('Property is not in this model. Cannot remove: %s', repr(prop))
-            return
+            if wref not in self._property_reflist:
+                logger.warning('Property is not in this model. Cannot remove: %s', repr(prop))
+                return
 
-        remove_pos = self._property_reflist.index(wref)
-        try:
-            index_start = self.index(remove_pos)
-        except RuntimeError:
-            # App shutdown
-            return
+            remove_pos = self._property_reflist.index(wref)
+            if self._lock_counter.active:
+                self._lock_counter.trigger_action(self.REMOVE)
+                self._indices_to_remove.append(remove_pos)
+                return
 
-        index_stop = self.index(len(self._property_reflist)-1)
+            try:
+                remove_index = self.index(remove_pos)
+            except RuntimeError:
+                # App shutdown
+                return
 
-        self._property_reflist.remove(wref)
-        self.dataChanged.emit(index_start, index_stop, [])
+            del self._property_reflist[remove_pos]
+            self.dataChanged.emit(remove_index, remove_index, [])
+
+    def hasChildren(self, parent: QModelIndex) -> bool:
+        # If valid, it's an item which does not have children
+        # If not valid, it can
+        return not parent.isValid()
 
     def rowCount(self, parent=QModelIndex()):
-        if parent.isValid():
-            return 0
-        self.check_properties_gone()
-        return len(self._property_reflist)
+        # We're checking to the root
+        rowcount = len(self._property_reflist)
+        return rowcount
 
     def roleNames(self):
         return self._rolenames
+
+    def unload(self):
+        self._lock_counter.unload()
+        self.beginResetModel()
+        self._property_reflist.clear()
+        self.endResetModel()
 
 
 class PropertiesByDataTypeModel(QSortFilterProxyModel):
@@ -851,7 +963,7 @@ class Property:
             sleep(0.1)
 
             if cls._poll_service:
-                if cls._poll_pointer > len(cls._poll_service) - 1:
+                if cls._poll_pointer + 1 > len(cls._poll_service):
                     # End of list reached
                     cls._poll_pointer = 0
 
@@ -861,7 +973,7 @@ class Property:
                         p._getfunc()
                         if p._poll_interval is None:
                             # That was a one time poll
-                            cls._poll_service.pop(cls._poll_pointer)
+                            del cls._poll_service[cls._poll_pointer]
                         else:
                             # Process next
                             cls._poll_pointer += 1
@@ -878,7 +990,7 @@ class Property:
                 if p._savetime is None or time() >= p._savetime:
                     # Save
                     cls._save_now(p)
-                    cls._changed_properties.pop(cls._save_pointer)
+                    del cls._changed_properties[cls._save_pointer]
                 else:
                     # Check next
                     cls._save_pointer += 1
@@ -1102,7 +1214,7 @@ class Property:
 
         # Create/update model
         if self._datatype not in self._exclude_from_model:
-            self.listmodel.add(self)
+            self.listmodel.add_to_model(self)
             self._in_model = True
 
     def load_value(self, ensure_path_absolute=True):
@@ -1590,7 +1702,8 @@ class Property:
 
         if self._in_model and self.listmodel:
             # Remove from model
-            self.listmodel.remove(self)
+            self.listmodel.remove_from_model(self)
+            self._in_model = False
 
         if self in self._poll_service:
             self._poll_service.remove(self)
@@ -1602,7 +1715,7 @@ class Property:
             self._lock = None
 
         if self._id in self._instances_by_id:
-            self._instances_by_id.pop(self._id)
+            del self._instances_by_id[self._id]
         else:
             logger.warning('My id was not found in _instances_by_id for removal.')
 
@@ -2045,7 +2158,7 @@ class ModuleInstancePropertyDict(PropertyDict):
                 logger.warning('Could not find and delete category from list: %s', cat)
                 return
 
-            self.active_categories.pop(delindex)
+            del self.active_categories[delindex]
 
     def load(self):
         super().load()

@@ -303,6 +303,9 @@ def _append_autobase_unit(unit: str):
 
 
 def _from_timestamp(ts: float) -> str:
+    if not isinstance(ts, (int, float)):
+        return str(ts)
+
     dt = datetime.fromtimestamp(ts)
     return localization.to_local_string(dt)
 
