@@ -3,6 +3,7 @@ import logging
 import os
 import signal
 import sys
+import threading
 import time
 
 from PySide2 import QtCore
@@ -62,10 +63,11 @@ def qml_log(mode, context, message):
         logging.debug("%s (%d, %s)" % (message, context.line, context.file))
 
 
-def setup_interrupt_handling():
+def setup_interrupt_handling(with_safe_timer=True):
     """Setup handling of KeyboardInterrupt (Ctrl-C) for PyQt."""
     signal.signal(signal.SIGINT, _interrupt_handler)
-    safe_timer(1000, check_loop)  # not below 1000, because timeschedule in input class works with integers
+    if with_safe_timer:
+        safe_timer(1000, check_loop)  # not below 1000, because timeschedule in input class works with integers
 
 
 def _interrupt_handler(signum, frame):  # signum, frame
@@ -96,14 +98,19 @@ last_update = 0  # to initialize everything
 ready = True
 
 
-def check_loop():
+def check_loop(interval: int = None):
     global last_update, ready
 
-    if ready:
-        ready = False
-        inputs.update(last_update)
-        last_update = int(time.time())
-        ready = True
+    while True:
+        if ready:
+            ready = False
+            inputs.update(last_update)
+            last_update = int(time.time())
+            ready = True
+        if interval is None:
+            return
+
+        time.sleep(interval / 1000)
 
 
 settings = QSettings('settings.ini', QSettings.IniFormat)
@@ -162,7 +169,7 @@ app.setOrganizationDomain("shpi.de")
 app.setFont(QFont('Dejavu', 11))
 
 engine = QQmlApplicationEngine()
-engine.rootContext().setContextProperty("applicationDirPath", os.path.abspath(os.path.dirname(sys.argv[0])));
+engine.rootContext().setContextProperty("applicationDirPath", os.path.abspath(os.path.dirname(sys.argv[0])))
 engine.rootContext().setContextProperty("logs", logs)
 engine.rootContext().setContextProperty("inputs", inputs)
 engine.rootContext().setContextProperty('wifi', core_modules['wifi'])
@@ -170,7 +177,13 @@ engine.rootContext().setContextProperty('git', core_modules['git'])
 engine.rootContext().setContextProperty("appearance", core_modules['appearance'])
 engine.rootContext().setContextProperty("modules", modules)
 
-setup_interrupt_handling()
+qt_check_loop = 'THREAD_STATS' not in sys.argv
+
+setup_interrupt_handling(qt_check_loop)
+if not qt_check_loop:
+    t = threading.Thread(target=check_loop, name='check_loop', args=(1000,), daemon=True)
+    t.start()
+
 
 # filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "qml/main.qml")
 engine.load("qrc:/qml/main.qml")
@@ -178,5 +191,9 @@ engine.load("qrc:/qml/main.qml")
 
 if not engine.rootObjects():
     sys.exit(-1)
+
+if 'THREAD_STATS' in sys.argv:
+    from helper.threadinfo import start_own_thread
+    t = start_own_thread(5)
 
 sys.exit(app.exec_())

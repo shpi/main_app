@@ -176,7 +176,7 @@ class ThreadProperty(ModuleThread):
         self.interval = interval
         self.function = function
 
-        ModuleThread.__init__(self, target=self.function)
+        ModuleThread.__init__(self, target=self.function, name='ThreadProperty_' + str(self.entity) + str(self.name))
         # self.thread = ModuleThread(target=self.function)
 
     @property
@@ -220,7 +220,7 @@ class ThreadProperty(ModuleThread):
 
         if self._value and not self.is_alive():
             #self.thread = ModuleThread(target=self.function)
-            ModuleThread.__init__(self, target=self.function)
+            ModuleThread.__init__(self, target=self.function, name='ThreadProperty_' + str(self.entity) + str(self.name))
             self.start()
             logging.warning('(Re)Started Thread ' + (self.entity or self.parent_module.name) + ' ' + self.name)
 
