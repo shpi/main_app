@@ -188,11 +188,14 @@ class Module:
         logcall(self.module_instance.load, errmsg='Error during load() of module: %s', stack_trace=True)
         self.loaded = True
 
-    def unload(self):
+    def unload(self) -> Optional[int]:
         self.running = False
 
-        if self in self.instances_in_loadorder:
-            self.instances_in_loadorder.remove(self)
+        try:
+            remove_pos = self.instances_in_loadorder.index(self)
+            del self.instances_in_loadorder[remove_pos]
+        except ValueError:
+            remove_pos = None
 
         if self.module_instance is None or not self.loaded:
             # Module was not loaded
@@ -214,6 +217,8 @@ class Module:
         self.module_instance = None
 
         logger.info('Destroyed module instance %s ', clsstr + ('.' + self.module_instancename if self.module_instancename else ''))
+
+        return remove_pos
 
     def __repr__(self):
         return f'<Module {self.module_class.__name__}[{self.module_instancename}]>'
@@ -256,7 +261,7 @@ class ThreadModule(Module):
         except Exception as e:
             logger.error('Error on starting thread of module: %s', e, exc_info=True)
 
-    def unload(self):
+    def unload(self) -> Optional[int]:
         # Stop a thread first
         self.running = False
 
@@ -273,7 +278,7 @@ class ThreadModule(Module):
             logger.error("Error on stopping threadmodule: %s", e, exc_info=True)
 
         # Handover to Modules unload
-        Module.unload(self)
+        return Module.unload(self)
 
     @property
     def is_alive(self) -> bool:

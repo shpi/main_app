@@ -3,7 +3,7 @@ from datetime import time
 
 from interfaces.DataTypes import DataType
 from interfaces.Module import ThreadModuleBase, ModuleBase
-from interfaces.PropertySystem import Property, ModuleInstancePropertyDict, Input
+from interfaces.PropertySystem import Property, Output
 
 
 class DemoModule(ModuleBase):
@@ -15,9 +15,8 @@ class DemoModule(ModuleBase):
     def __init__(self, parent, instancename: str = None):
         ModuleBase.__init__(self, parent=parent, instancename=instancename)
 
-        self.properties = ModuleInstancePropertyDict(
-            a_time_str=Property(Input, DataType.TIME, time(20, 0), desc='Static TIME property demo')
-        )
+        self.properties['a_time_str'] = \
+            Property(Output, DataType.TIME, time(20, 0), desc='Static TIME property demo')
 
     def load(self):
         print("Loading another instance...")

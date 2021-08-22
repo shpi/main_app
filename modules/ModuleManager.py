@@ -4,8 +4,7 @@ import sys
 from logging import getLogger
 from typing import Optional, Dict, Any, Union, Type, Iterable, List, Set
 
-from PySide2.QtCore import Property as QtProperty, Signal, Slot, QAbstractListModel, QModelIndex, Qt, \
-    QSortFilterProxyModel, QObject
+from PySide2.QtCore import Property as QtProperty, Signal, Slot, Qt, QSortFilterProxyModel, QObject
 
 from core.Settings import settings, new_settings_instance
 from core.Constants import internal_modules, external_modules, always_instantiate_modules
@@ -16,7 +15,7 @@ from core.Toolbox import AutoEnum, StandardListModel
 from interfaces.DataTypes import DataType
 from interfaces.Module import ModuleBase, ThreadModuleBase
 from interfaces.PropertySystem import Property, PropertyDict, PropertyAccess, ModuleInstancePropertyDict, \
-    ModuleMainProperty, properties_start, properties_stop
+    ModuleMainProperty, properties_start, properties_stop, PropertyDictProperty
 
 from helper.PropertyExport import propertydict_to_html
 
@@ -212,6 +211,25 @@ class LoadedModulesListModel(StandardListModel):
         """
         StandardListModel.data_changed(self, mod, roles)
 
+    def data_changed_below(self, removed_index: int):
+        """
+        Updates the model after a deletion at "removepos" and below.
+        """
+
+        start_index = self.index(removed_index)  # QModelIndex
+        end_index = self.index(len(self._data))  # QModelIndex
+
+        self.dataChanged.emit(start_index, end_index, ())
+
+# class PropertiesByDataTypeModel(QSortFilterProxyModel):
+#     def __init__(self, for_datatype: DataType, sourcemodel: PropertiesListModel):
+#         self._datatype = for_datatype
+#         QSortFilterProxyModel.__init__(self, sourcemodel)
+#         self.setSourceModel(sourcemodel)
+#         self.setFilterRole(PropertiesListModel.DataTypeRole)
+#         self.setFilterFixedString(for_datatype.name)
+#
+
 
 class Modules(ModuleBase):
     """
@@ -263,10 +281,12 @@ class Modules(ModuleBase):
         self.all_modules_classes.append(self.__class__)  # Append us lately to avoid circular imports
         self.all_modules_classes_by_str = map_classes(self.all_modules_classes)
         self.module_categories = map_class_categories(self.all_modules_classes)
-        self.mcls_model = AvailableModuleClassesListModel(parent, self.all_modules_classes)
         self.mainapp = parent
 
-        self.property_access = PropertyAccess(parent, self._root_properties)
+        # Model access
+        self._property_access = PropertyAccess(parent, self._root_properties)
+        self._mclasses_model = AvailableModuleClassesListModel(parent, self.all_modules_classes)
+        self._loaded_modules_model = LoadedModulesListModel(parent, Module.instances_in_loadorder)
 
         # Add contextproperties from mainapp
         self.add_module_contextproperties(parent)
@@ -280,7 +300,7 @@ class Modules(ModuleBase):
     def qml_context_properties(self) -> Optional[Dict[str, Any]]:
         return {
             'modules': self,
-            'properties': self.property_access,
+            'properties': self._property_access,
         }
 
     def load(self):
@@ -343,6 +363,8 @@ class Modules(ModuleBase):
         # Start modules
         Module.load_modules()
 
+        self._loaded_modules_model.reload()
+
         Property.create_links()
 
         Property.start_worker()
@@ -382,7 +404,8 @@ class Modules(ModuleBase):
         self.add_module_properties(m.module_instance)
         self.add_module_contextproperties(m.module_instance)
 
-        self.mcls_model.data_changed(mcls)
+        self._mclasses_model.data_changed(mcls)
+        self._loaded_modules_model.data_changed(m)
 
     def remove_module_instance(self, m: Module):
         # Remove Module and its settings
@@ -391,9 +414,11 @@ class Modules(ModuleBase):
             settings.remove(path)
 
         inst = m.module_instance  # keep instance over unload()
-        m.unload()
+        removedpos = m.unload()
         self.remove_module_properties(inst)
         self.mcls_model.data_changed(m.module_class)
+        if removedpos is not None:
+            self._loaded_modules_model.data_changed_below(removedpos)
 
     def add_module_contextproperties(self, obj):  # ToDo: segfault reason?
         engine = self.mainapp and self.mainapp.engine or False
@@ -427,7 +452,7 @@ class Modules(ModuleBase):
 
             if instances_property is None:
                 # Prepare new PropertyDict for first instance
-                instances_property = rp[classname] = Property(DataType.PROPERTYDICT, desc='Instances of ' + classname)
+                instances_property = rp[classname] = PropertyDictProperty(desc='Instances of ' + classname)
 
             instances_property[instancename] = ModuleMainProperty(m)
 
@@ -463,10 +488,14 @@ class Modules(ModuleBase):
     @classmethod
     def shutdown(cls):
         print("### Modules.shutdown")
-        cls._main_instance.module_instance.mcls_model.unload()
+        if cls._main_instance:
+            mminst: Modules = cls._main_instance.module_instance
+            mminst._mclasses_model.unload()
+            mminst._loaded_modules_model.unload()
         logcall(Module.unload_modules)
         logcall(properties_stop)
         del cls._root_properties
+        del cls._main_instance
 
     def unload(self):
         del self.mainapp
@@ -507,7 +536,10 @@ class Modules(ModuleBase):
         self.remove_module_instance(instance)
         self.modulesChanged.emit()
 
-    @Slot(str, result='QVariantList')
-    def instances(self, classname) -> List[str]:
-        instancesdict = Module.instancesdict_by_cls[classname]
-        return [instancename or '' for instancename in instancesdict]
+    @QtProperty('QVariant', notify=modules_changed)
+    def instances_list(self):
+        return self._loaded_modules_model
+
+    @Slot(str, result=QObject)
+    def classes_list(self, category):
+        return self._mclasses_model

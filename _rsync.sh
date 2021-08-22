@@ -1,3 +1,4 @@
+#!/bin/bash
 # recursive, permissions, times
 rsync -rpt -v --delete-after \
     --exclude="__pycache__/" \
