@@ -4,18 +4,19 @@ import sys
 from logging import getLogger
 from typing import Optional, Dict, Any, Union, Type, Iterable, List, Set
 
-from PySide2.QtCore import Property as QtProperty, Signal, Slot
+from PySide2.QtCore import Property as QtProperty, Signal, Slot, QAbstractListModel, QModelIndex, Qt, \
+    QSortFilterProxyModel, QObject
 
 from core.Settings import settings, new_settings_instance
 from core.Constants import internal_modules, external_modules, always_instantiate_modules
 from core.Module import Module, ThreadModule
 from core.Logger import LogCall
+from core.Toolbox import AutoEnum, StandardListModel
 
 from interfaces.DataTypes import DataType
 from interfaces.Module import ModuleBase, ThreadModuleBase
 from interfaces.PropertySystem import Property, PropertyDict, PropertyAccess, ModuleInstancePropertyDict, \
     ModuleMainProperty, properties_start, properties_stop
-
 
 from helper.PropertyExport import propertydict_to_html
 
@@ -42,7 +43,7 @@ def map_class_categories(classes: Iterable[Type[ModuleBase]]) -> Dict[str, List[
     return out
 
 
-def trace_module_dependencies(module: Type[ModuleBase], all_available_modules: Set[Type[ModuleBase]], _level=0) -> Optional[Set[Type[ModuleBase]]]:
+def trace_module_dependencies(module: Type[ModuleBase], all_available_modules: List[Type[ModuleBase]], _level=0) -> Optional[Set[Type[ModuleBase]]]:
     if _level > 10:
         logger.error('Too many recursive dependency checks for Module %s', str(module))
         return None
@@ -68,7 +69,7 @@ def trace_module_dependencies(module: Type[ModuleBase], all_available_modules: S
     return result
 
 
-def extend_dependencies(minimal_modules_set: Set[Type[ModuleBase]], all_available_modules: Set[Type[ModuleBase]]):
+def extend_dependencies(minimal_modules_set: Set[Type[ModuleBase]], all_available_modules: List[Type[ModuleBase]]):
     for dep_module in minimal_modules_set.copy():
         extra_deps = trace_module_dependencies(dep_module, all_available_modules)
         if extra_deps is None:
@@ -103,6 +104,113 @@ def get_loadorder(to_load: Set[Type[ModuleBase]]) -> List[Type[ModuleBase]]:
         logger.error('These Moduls can\'t be loaded because of missing, conflicting or circular dependencies: %s', str(remaining))
 
     return ordered
+
+
+class AvailableModuleClassesListModel(StandardListModel):
+    auto = AutoEnum(Qt.UserRole + 1000)
+
+    ClassNameRole = auto()
+    DescriptionRole = auto()
+    AvailableRole = auto()
+    CategoriesRole = auto()
+    AllowMainInstance = auto()
+    AllowInstances = auto()
+    IsThreadModule = auto()
+    InstancesCount = auto()
+
+    item_flags = Qt.ItemIsSelectable | Qt.ItemIsUserCheckable | Qt.ItemIsEnabled | Qt.ItemNeverHasChildren
+
+    rolenames = {
+        ClassNameRole: b'classname',
+        DescriptionRole: b'description',
+        AvailableRole: b'available',
+        CategoriesRole: b'categories',
+        AllowMainInstance: b'allow_main_instance',
+        AllowInstances: b'allow_instances',
+        IsThreadModule: b'is_threadmodule',
+        InstancesCount: b'instances_count',
+        # depends_on, instances
+    }
+
+    dataroles_read_funcs = {
+        ClassNameRole: lambda mcls: mcls.__name__,
+        DescriptionRole: lambda mcls: mcls.description,
+        AvailableRole: lambda mcls: mcls.available(),
+        CategoriesRole: lambda mcls: list(mcls.categories),
+        AllowMainInstance: lambda mcls: mcls.allow_maininstance,
+        AllowInstances: lambda mcls: mcls.allow_instances,
+        IsThreadModule: lambda mcls: isinstance(mcls, ThreadModuleBase),
+        InstancesCount: lambda mcls: len(Module.instancesdict_by_cls.get(mcls.__name__, ())),
+    }
+
+    logger = logger
+
+    def __init__(self, parent: QObject, clslist: List[Type[ModuleBase]]):
+        StandardListModel.__init__(self, parent, clslist)
+
+    def data_changed(self, mcls: Type[ModuleBase], roles=(InstancesCount,)):
+        """
+        Called from internal operations to annouce changes to the model
+        """
+        StandardListModel.data_changed(self, mcls, roles)
+
+
+def _minst_categories(m: Module):
+    if not m.module_instance:
+        return None
+
+    cat_prop = m.module_instance.properties.get('__in_categories')
+    if not cat_prop:
+        return None
+
+    return list(cat_prop.value)
+
+
+def _minst_removable(m: Module):
+    if m.module_class is Modules:
+        return False
+
+    if m.module_class in always_instantiate_modules:
+        return False
+
+    return True
+
+
+class LoadedModulesListModel(StandardListModel):
+    auto = AutoEnum(Qt.UserRole + 1000)
+
+    ClassNameRole = auto()
+    DescriptionRole = auto()
+    CategoriesRole = auto()
+    InstanceNameRole = auto()
+    RemovableRole = auto()
+
+    item_flags = Qt.ItemIsSelectable | Qt.ItemIsUserCheckable | Qt.ItemIsEnabled | Qt.ItemNeverHasChildren
+
+    rolenames = {
+        ClassNameRole: b'classname',
+        DescriptionRole: b'description',
+        CategoriesRole: b'categories',
+        InstanceNameRole: b'instancename',
+        RemovableRole: b'is_removable',
+    }
+
+    dataroles_read_funcs = {
+        ClassNameRole: lambda m: m.module_class.__name__,
+        DescriptionRole: lambda m: m.module_class.description,
+        CategoriesRole: _minst_categories,
+        InstanceNameRole: lambda m: m.module_instancename,
+        RemovableRole: _minst_removable,
+    }
+
+    def __init__(self, parent: QObject, moduleslist: List["Module"]):
+        StandardListModel.__init__(self, parent, moduleslist)
+
+    def data_changed(self, mod: Module, roles=()):
+        """
+        Called from internal operations to annouce changes to the model
+        """
+        StandardListModel.data_changed(self, mod, roles)
 
 
 class Modules(ModuleBase):
@@ -151,11 +259,11 @@ class Modules(ModuleBase):
 
         ModuleBase.__init__(self, parent=parent, instancename=instancename)
 
-        self.all_modules_classes = internal_modules() | external_modules()
-        self.all_modules_classes.add(self.__class__)  # Append us lately to avoid circular imports
+        self.all_modules_classes: List[Type[ModuleBase]] = list(internal_modules() | external_modules())
+        self.all_modules_classes.append(self.__class__)  # Append us lately to avoid circular imports
         self.all_modules_classes_by_str = map_classes(self.all_modules_classes)
         self.module_categories = map_class_categories(self.all_modules_classes)
-
+        self.mcls_model = AvailableModuleClassesListModel(parent, self.all_modules_classes)
         self.mainapp = parent
 
         self.property_access = PropertyAccess(parent, self._root_properties)
@@ -274,6 +382,8 @@ class Modules(ModuleBase):
         self.add_module_properties(m.module_instance)
         self.add_module_contextproperties(m.module_instance)
 
+        self.mcls_model.data_changed(mcls)
+
     def remove_module_instance(self, m: Module):
         # Remove Module and its settings
         if m.module_instance and m.module_instance.properties:
@@ -283,6 +393,7 @@ class Modules(ModuleBase):
         inst = m.module_instance  # keep instance over unload()
         m.unload()
         self.remove_module_properties(inst)
+        self.mcls_model.data_changed(m.module_class)
 
     def add_module_contextproperties(self, obj):  # ToDo: segfault reason?
         engine = self.mainapp and self.mainapp.engine or False
@@ -352,6 +463,7 @@ class Modules(ModuleBase):
     @classmethod
     def shutdown(cls):
         print("### Modules.shutdown")
+        cls._main_instance.module_instance.mcls_model.unload()
         logcall(Module.unload_modules)
         logcall(properties_stop)
         del cls._root_properties

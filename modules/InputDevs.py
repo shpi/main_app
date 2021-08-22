@@ -262,11 +262,33 @@ class InputDevs(ModuleBase):
     depends_on = Presence,
 
     _INFOFILE = Path('/proc/bus/input/devices')
+    _KEYMAP_EXECUTABLE = Path('keymap/keymap')
 
     @classmethod
     def available(cls) -> bool:
-        return cls._INFOFILE.is_file()
-        # ToDo: test open inputdev?
+        ok = True  # Think positive
+
+        if not cls._KEYMAP_EXECUTABLE.is_file():
+            logger.info('InputDevs: /keymap/keymap executable not found.')
+            ok = False
+
+        if not cls._INFOFILE.is_file():
+            logger.info('InputDevs: Missing input devices.')
+            ok = False
+
+        # Check having read access to input dev files
+        devlist = sorted(list(Path('/dev/input').glob("event*")))
+        first_dev = devlist and devlist[0] or None
+        if first_dev:
+            try:
+                with first_dev.open('rb'):
+                    pass
+            except PermissionError:
+                logger.info('InputDevs: No permission to open input dev files. '
+                            'Try to add the user to the "input" group or run as root.')
+                ok = False
+
+        return ok
 
     def __init__(self, parent, instancename: str = None):
         ModuleBase.__init__(self, parent=parent, instancename=instancename)

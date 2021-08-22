@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from typing import Optional
-from werkzeug.serving import make_server, BaseWSGIServer
+from typing import Optional, Any
 from logging import getLogger
 
 from interfaces.DataTypes import DataType
 from interfaces.Module import ThreadModuleBase
 from interfaces.PropertySystem import Property, Input
-from modules.HTTPServer.App import app
-import modules.HTTPServer.PropertyExplorer
 
 logger = getLogger(__name__)
 
@@ -30,12 +27,33 @@ class HTTPServer(ThreadModuleBase):
             port=self._pr_port,
         )
 
-        self._server: Optional[BaseWSGIServer] = None
+        self._server: Optional[Any] = None  # BaseWSGIServer
+
+    @classmethod
+    def available(cls) -> bool:
+        ok = True
+
+        try:
+            from werkzeug.serving import make_server, BaseWSGIServer
+        except ModuleNotFoundError:
+            logger.warning('HTTPServer: Missing package "werkzeug"')
+            ok = False
+
+        try:
+            from flask import Flask
+        except ModuleNotFoundError:
+            logger.warning('HTTPServer: Missing package "flask"')
+            ok = False
+
+        return ok
 
     def stop(self):
         self._server.shutdown()
 
     def load(self):
+        from werkzeug.serving import make_server
+        from modules.HTTPServer.App import app
+        import modules.HTTPServer.PropertyExplorer
         self._server = make_server(self._pr_bindaddr.value, self._pr_port.value, app, threaded=True, passthrough_errors=True)
         self._server.allow_reuse_address = True
 
@@ -50,6 +68,9 @@ class HTTPServer(ThreadModuleBase):
 def runtest():
     _server = None
     try:
+        from werkzeug.serving import make_server
+        from modules.HTTPServer.App import app
+        import modules.HTTPServer.PropertyExplorer
         _server = make_server('0.0.0.0', 8080, app, threaded=True, passthrough_errors=True)
         _server.allow_reuse_address = True
         _server.serve_forever()

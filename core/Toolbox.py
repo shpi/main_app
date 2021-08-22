@@ -7,10 +7,11 @@ import os
 import numpy
 
 from re import compile
-from typing import NamedTuple, Optional, Union
+from typing import NamedTuple, Optional, Union, List, Any, Callable, Set
 from threading import Thread
+from logging import Logger
 
-from PySide2.QtCore import QTimer
+from PySide2.QtCore import QTimer, QAbstractListModel, QModelIndex, Qt, QObject
 
 
 SIOCGIFNETMASK = 0x891b
@@ -199,3 +200,164 @@ class MeanWindow:
 
         # Move pointer
         self._circular_index = (self._circular_index + 1) % self._window_size
+
+
+class AutoEnum:
+    """
+    Enumerates integer values on classes.
+    class Test:
+        auto = AutoEnum(512)
+        item1 = auto()  # gets 512
+        item2 = auto()  # gets 513
+
+    """
+    def __init__(self, start=0):
+        self._next = int(start)
+
+    def __call__(self, *args, **kwargs):
+        ret = self._next
+        self._next += 1
+        return ret
+
+
+class StandardListModel(QAbstractListModel):
+    rolenames = {}
+
+    dataroles_read_funcs = {}
+    dataroles_write_funcs = {}
+
+    item_flags = Qt.ItemIsSelectable | Qt.ItemNeverHasChildren
+    logger = logging.getLogger('StandardListModel')
+
+    _invalid_index = QModelIndex()
+
+    def __init__(self, parent: QObject, data: Optional[List[Any]]):
+        QAbstractListModel.__init__(self, parent=parent)
+        if data is None:
+            self._external_data = False
+            self._data = []
+        else:
+            self._external_data = True
+            self._data = data
+
+    def index_valid(self, index: QModelIndex) -> bool:
+        return index.isValid() and 0 <= index.row() < len(self._data)
+
+    def reload(self):
+        self.beginResetModel()
+        self.endResetModel()
+
+    def _item_from_index(self, index: QModelIndex) -> Optional[Any]:
+        if not self.index_valid(index):
+            return
+
+        row = index.row()
+        if row + 1 > len(self._data):
+            return None
+
+        return self._data[row]
+
+    def data(self, index: QModelIndex, role: int = Qt.DisplayRole):
+        item = self._item_from_index(index)
+
+        if item is None:
+            return None
+
+        func = self.dataroles_read_funcs.get(role)
+        if not func:
+            return None
+
+        try:
+            return func(item)
+        except Exception as e:
+            self.logger.error('Exception on fetching data (role=%s) in %s: %s', role, type(self), repr(e))
+            return None
+
+    def flags(self, index: QModelIndex) -> Qt.ItemFlags:
+        prop = self._item_from_index(index)
+
+        if prop is None:
+            return Qt.NoItemFlags
+
+        return self.item_flags
+
+    def setData(self, index: QModelIndex, value, role: int = Qt.DisplayRole) -> bool:
+        func = self.dataroles_write_funcs.get(role)
+        if not func:
+            return False
+
+        item = self._item_from_index(index)
+        if item is None:
+            return False
+
+        try:
+            res = func(item, value)
+        except Exception as e:
+            self.logger.error('Exception on setting data in %s: %s', type(self), repr(e))
+            return False
+
+        if res:
+            self.dataChanged.emit(index, index, (role,))
+        return res
+
+    def data_changed(self, item: Any, roles=()):
+        """
+        Called from internal operations to annouce changes to the model
+        """
+        try:
+            changed_pos = self._data.index(item)
+        except ValueError:
+            self.logger.warning('Item is not in this model. Cannot update: %s', repr(item))
+            return
+
+        changed_index = self.index(changed_pos)  # QModelIndex
+        self.dataChanged.emit(changed_index, changed_index, roles)
+
+    def hasChildren(self, parent: QModelIndex) -> bool:
+        # If valid, it's an item which does not have children
+        # If not valid, it can
+        return not parent.isValid()
+
+    def rowCount(self, parent=QModelIndex()):
+        return len(self._data)
+
+    def roleNames(self):
+        return self.rolenames
+
+    def unload(self):
+        self.beginResetModel()
+        if self._external_data:
+            self._data = []  # Set to an empty list.
+        else:
+            self._data.clear()
+        self.endResetModel()
+
+
+class LockReleaseTrigger:
+    def __init__(self, callback_func: Callable[[Set[Any]], None] = None):
+        self._callback_func = callback_func
+        self._lock_cnt = 0
+        self._flags: Set[Any] = set()
+
+    def trigger_action(self, action):
+        self._flags.add(action)
+
+    @property
+    def active(self) -> bool:
+        return self._lock_cnt > 0
+
+    def __enter__(self):
+        if self._lock_cnt == 0:
+            # First locking. Reset old stuff.
+            self._flags.clear()
+        self._lock_cnt += 1
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._lock_cnt -= 1
+        if self._lock_cnt == 0 and self._callback_func:
+            self._callback_func(self._flags)
+
+    def unload(self):
+        self._callback_func = None
+        self._lock_cnt = 0
+        self._flags.clear()

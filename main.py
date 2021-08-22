@@ -23,12 +23,16 @@ THREAD_STATS
     Dump threads info to stdout on each call of /MainApp_Info/threads_interval
 
 """
+import sys
+
+from core.SHPI import check
+if not check():
+    sys.exit(1)
 
 import faulthandler
 import logging
 import os
 import signal
-import sys
 import threading
 from pathlib import Path
 from logging import getLogger
