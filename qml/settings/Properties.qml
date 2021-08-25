@@ -16,7 +16,7 @@ Item {
             padding: 5
             width: parent.width
             text: '<b>Active Properties (Variables)</b>'
-            font.pixelSize: 16
+            font.pixelSize: 20
             color: Colors.black
         }
     }
@@ -27,7 +27,7 @@ Item {
         model: properties.get_property_navigator_model() //get_properties_model()
         delegate: listitem_delegate
 
-        property var item_height_min: 34
+        property var item_height_min: 40
 
         anchors.top: proptitle.bottom
         anchors.bottom: parent.bottom
@@ -51,7 +51,7 @@ Item {
                 // width: parent.width
                 text: '⮬'
                 font.family: emoji.name
-                font.pixelSize: 30
+                font.pixelSize: 25
                 color: Colors.black
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -61,7 +61,7 @@ Item {
                 id: list_header_text
                 anchors.left: list_header_icon.right
                 text: 'go up'
-                font.pixelSize: 20
+                font.pixelSize: listview.item_height_min - 3 * padding
                 color: Colors.black
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -99,21 +99,23 @@ Item {
                         leftPadding: listview.model.path == '' || index == 0 ? 5 : 30
                         text: icon
                         font.family: emoji.name
-                        font.pixelSize: 20
+                        font.pixelSize: listview.item_height_min - 10
                         color: Colors.black
                         anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
                     }
 
                     Text {
                         // Property path
                         id: line_path
                         padding: 5
-                        text: expand_loader.active ? path + " [" + io + "]" : (listview.model.path == '' || index == 0 ? path : key)
-                        font.pixelSize: 20
-                        font.bold: expand_loader.active || is_propertydict
+                        text: expand_loader.active ? "[" + io + "] " + path : (listview.model.path == '' || index == 0 ? path : key)
+                        font.pixelSize: listview.item_height_min - 3 * padding
+                        font.bold: expand_loader.active || (is_propertydict ? is_propertydict : false)
                         color: Colors.black
                         anchors.left: prop_icon.right
                         anchors.right: expand_loader.active ? line_value.left : undefined
+                        anchors.verticalCenter: parent.verticalCenter
                         elide: Text.ElideRight
                     }
 
@@ -124,13 +126,14 @@ Item {
                         padding: 5
                         text: is_propertydict ? value_len + " items" : (expand_loader.active ? "" : (cache_human ? cache_human : "<i>None</i>"))
                         visible: !expand_loader.active
-                        font.pixelSize: 20
+                        font.pixelSize: listview.item_height_min - 3 * padding
                         font.bold: cache_human !== undefined
                         color: Colors.black
                         elide: expand_loader.active ? Text.ElideNone : Text.ElideLeft
 
                         anchors.left: expand_loader.active ? undefined : line_path.right
                         anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
                         width: expand_loader.active ? implicitWidth : undefined
                     }
                 }

@@ -33,7 +33,7 @@ Item {
         clip: true
 
         property var item_height_min: 50
-        spacing: 5
+        spacing: 10
         orientation: Qt.Vertical
         currentIndex: -1
         cacheBuffer: item_height_min * 4
@@ -44,15 +44,20 @@ Item {
             Rectangle {
                 id: wrapper
 
-                width: listview.width
-                height: listview.item_height_min
+                width: parent.width
+                // height: listview.item_height_min
+                height: implicitHeight
 
                 color: Colors.white
+                border.color: Colors.black
+                border.width: 1
+
                 Row {
+                    id: row1
                     anchors.top: parent.top
-                    anchors.left: parent.left
-                    spacing: 10
+                    anchors.margins: 20
                     width: parent.width
+                    height: implicitHeight
 
                     Text {
                         id: classname_text
@@ -71,6 +76,23 @@ Item {
                         visible: instancename !== undefined
                         font.pixelSize: 20
                         font.italic: true
+                        color: Colors.black
+                    }
+                }
+
+                Row {
+                    id: row2
+                    anchors.top: row1.top
+                    anchors.margins: 20
+                    width: parent.width
+                    height: implicitHeight
+
+                    Text {
+                        id: description_text
+                        anchors.leftMargin: 30
+
+                        text: description
+                        font.pixelSize: 20
                         color: Colors.black
                     }
                 }

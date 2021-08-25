@@ -6,7 +6,7 @@ from struct import calcsize, unpack
 from enum import Enum
 from pathlib import Path
 from re import compile, Match
-from typing import Set, Optional
+from typing import Set, Optional, Generator
 from io import StringIO
 from threading import Thread
 from logging import getLogger
@@ -23,6 +23,7 @@ logger = getLogger(__name__)
 
 
 _re_id = compile(r'I: Bus=([0-9a-f]{4}) Vendor=([0-9a-f]{4}) Product=([0-9a-f]{4}) Version=([0-9a-f]{4})')
+_re_dataline = compile(r'([NPSUHB]): ([A-Za-z]+)=(.*)')
 _re_name = compile(r'N: Name="(.*)"')
 _re_ev = compile(r'B: EV=(.*)')
 _re_handlers_input_nr = compile(r'H: Handlers=.*event(\d+)')
@@ -46,6 +47,86 @@ class EvTypes(Enum):
 # ToDo: add name and ev! Duplicates!
 def id_from_id_match(m: Match) -> str:
     return ''.join(m.groups())
+
+
+def _add_unique_key(d: dict):
+    if 'S_Sysfs' in d:
+        # Append last input folder of Sysfs
+        sysfs_input = '_' + d['S_Sysfs'].split('/')[-1]
+    else:
+        sysfs_input = ''
+
+    d['UNIQUE'] = PropertyDict.create_keyname(f'{d["N"]}_{d["B_EV"]}{sysfs_input}', '_')  # {d["ID"]}_
+
+
+def inputdevs_reader(file: Path) -> Generator[dict, None, None]:
+    result_template = {key: '' for key in
+                       ('ID', 'I', 'N', 'B_EV', 'H_HANDLERS_NUM', 'H_HANDLERS_EVENT', 'KEYMAP')}
+
+    with file.open(encoding="utf8") as file:
+        buffer = result_template.copy()
+
+        for line in file:
+            line = line.strip()
+            # ====== ID line ======
+            match_idline = _re_id.fullmatch(line)
+            # Next device?
+            if match_idline:
+                # Reset buffer
+                buffer = result_template.copy()
+
+                # Plain id line
+                buffer['I'] = line[3:]
+
+                # Simple identification (not unique)
+                buffer['ID'] = id_from_id_match(match_idline)
+                continue
+
+            # ====== Data line ======
+            # _re_dataline = compile(r'([NPSUHB]): ([A-Za-z]+)=(.*)')
+            match_data = _re_dataline.fullmatch(line)
+            if match_data:
+                match_name = _re_name.fullmatch(line)
+                if match_name:
+                    buffer['N'] = match_name.group(1)
+                    continue
+
+                match_ev = _re_ev.fullmatch(line)
+                if match_ev:
+                    buffer['B_EV'] = int(match_ev.group(1), 16)
+                    continue
+
+                match_handler_num = _re_handlers_input_nr.match(line)
+                if match_handler_num:
+                    handler_num = buffer['H_HANDLERS_NUM'] = int(match_handler_num.group(1))
+                    # ToDo: gcc keymap.c -o keymap
+                    p = subprocess.Popen(
+                        ["keymap/keymap", str(handler_num)],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.DEVNULL,
+                        encoding="utf8"
+                    )
+                    buffer['KEYMAP'] = p.communicate()[0].strip()
+                    buffer['H_HANDLERS_EVENT'] = f'event{handler_num}'
+                    continue
+
+                # Other types of data
+                if match_data.group(3):
+                    # Add if not empty
+                    buffer[match_data.group(1) + '_' + match_data.group(2)] = match_data.group(3)
+                continue
+
+            # ====== Empty line (dev complete) ======
+            if not line and buffer:
+                _add_unique_key(buffer)
+                yield buffer
+                buffer = None
+                continue
+
+        if buffer:
+            # No new line on end of file? FLush buffer last time.
+            _add_unique_key(buffer)
+            yield buffer
 
 
 class KeyProperty(Property):
@@ -342,75 +423,35 @@ class InputDevs(ModuleBase):
     def _check_inputdev_file(self):
         found: Set[str] = set()
 
-        with self._INFOFILE.open(encoding="utf8") as file:
-            input_id = None
-            name = None
-            ev = None
-            handler = None
-            keymap = None
-
-            def finish_last():
-                found.add(input_id)
-                if input_id not in self._pd_available_devices:
-                    prop = self._pd_available_devices[input_id] = InputDeviceProperty(
-                        desc=name, ev_int=ev, handler=handler, keymap=keymap
-                    )
-                    # Add/update
-                    prop['last_input'].events.subscribe(self._last_input_changed, Property.UPDATED_AND_CHANGED)
-                    prop['last_touch'].events.subscribe(self._last_touch_changed, Property.UPDATED_AND_CHANGED)
-
-            for line in file:
-                line = line.strip()
-                match_idline = _re_id.fullmatch(line)
-                # Next device?
-                if match_idline:
-                    # It's a new idline
-                    if input_id:
-                        # Complete. Finish last inputdev
-                        finish_last()
-
-                    # Next device
-                    input_id = id_from_id_match(match_idline)
-
-                    # Reset vars
-                    name = None
-                    ev = None
-                    handler = None
-                    keymap = None
-                    if input_id in self._pd_available_devices:
-                        # Skip it. Already in PropertyDict
-                        input_id = None
-
-                elif input_id is None:
-                    # Line is obsolete
-                    continue
-
-                # Line could be relevant
-
-                match_name = _re_name.fullmatch(line)
-                if match_name:
-                    name = match_name.group(1)
-
-                match_ev = _re_ev.fullmatch(line)
-                if match_ev:
-                    ev = int(match_ev.group(1), 16)
-
-                match_handler_num = _re_handlers_input_nr.match(line)
-                if match_handler_num:
-                    handler_num = int(match_handler_num.group(1))
-                    # ToDo: gcc keymap.c -o keymap
-                    p = subprocess.Popen(
-                        ["keymap/keymap", str(handler_num)],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.DEVNULL,
-                        encoding="utf8"
-                    )
-                    keymap = p.communicate()[0].strip()
-                    handler = f'event{handler_num}'
-
-            finish_last()
+        for dev in inputdevs_reader(self._INFOFILE):
+            try:
+                key = dev['UNIQUE']
+                found.add(key)
+                prop = self._pd_available_devices[key] = InputDeviceProperty(
+                    desc=dev['N'], ev_int=dev['B_EV'], handler=dev['H_HANDLERS_EVENT'], keymap=dev['KEYMAP']
+                )
+                # Add/update
+                prop['last_input'].events.subscribe(self._last_input_changed, Property.UPDATED_AND_CHANGED)
+                prop['last_touch'].events.subscribe(self._last_touch_changed, Property.UPDATED_AND_CHANGED)
+            except Exception as e:
+                dev['KEYMAP'] = str(len(dev['KEYMAP'])) + " chars..."  # Shorten for output
+                logger.error('Could not create InputDevice (%s): %s', dev, repr(e))
 
         # Remove disconnected input devices
         for input_id in tuple(self._pd_available_devices):
             if input_id not in found:
                 del self._pd_available_devices[input_id]
+
+
+def _test_inputdevs_reader():
+    uniques = set()
+    p = Path('/proc/bus/input/devices')
+    for d in inputdevs_reader(p):
+        d['KEYMAP'] = str(len(d['KEYMAP'])) + " chars..."
+        print(d, '\n')
+        u = d['UNIQUE']
+        if u in uniques:
+            print("ERROR. Duplicate unique:", u)
+        else:
+            uniques.add(u)
+

@@ -106,7 +106,7 @@ def get_loadorder(to_load: Set[Type[ModuleBase]]) -> List[Type[ModuleBase]]:
 
 
 class AvailableModuleClassesListModel(StandardListModel):
-    auto = AutoEnum(Qt.UserRole + 1000)
+    auto = AutoEnum(1000)
 
     ClassNameRole = auto()
     DescriptionRole = auto()
@@ -176,7 +176,7 @@ def _minst_removable(m: Module):
 
 
 class LoadedModulesListModel(StandardListModel):
-    auto = AutoEnum(Qt.UserRole + 1000)
+    auto = AutoEnum(1000)
 
     ClassNameRole = auto()
     DescriptionRole = auto()

@@ -452,7 +452,7 @@ def _set_value(prop: "Property", newvalue) -> bool:
 
 
 class PropertiesListModel(StandardListModel):
-    auto = AutoEnum(Qt.UserRole + 1000)
+    auto = AutoEnum(1000)
     RawProperty = auto()  # 1256 ...
     IDRole = auto()  # Temporary numeric id for faster and easier access.
     IORole = auto()  # Input or Output
@@ -719,7 +719,7 @@ class PropertyNavigateModel(QSortFilterProxyModel):
     def set_path(self, prop: Optional["Property"]):
         self._match_self = prop
         self._match_parentpd = prop and prop.cached_value or PropertyDict.root()
-        self.path_changed.emit()
+        self.path_changed.emit()  # ToDo: Racing condition problem
         self.invalidateFilter()
 
     @Slot()

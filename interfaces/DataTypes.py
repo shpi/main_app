@@ -268,6 +268,9 @@ def _append_unit(unit: str):
 
 def _append_autobase_unit(unit: str):
     def _append(value):
+        if not isinstance(value, (int, float)):
+            return 'None'
+
         if value == 0:
             return '0 ' + unit
 
