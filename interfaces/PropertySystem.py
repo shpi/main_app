@@ -154,6 +154,11 @@ class PropertyDict:
         return self._parentproperty_ref and self._parentproperty_ref()
 
     @property
+    def parentdict(self) -> Optional["PropertyDict"]:
+        prop = self.parentproperty
+        return prop and prop.parentdict
+
+    @property
     def is_root(self) -> bool:
         """Checks for instance is root instance."""
         return self is PropertyDict._root_instance
@@ -246,25 +251,24 @@ class PropertyDict:
         """
 
         if type(key) is not str:
-            raise TypeError("Key must be a string.")
+            raise TypeError('Key must be a string.')
 
         if not _valid_key.fullmatch(key):
-            raise TypeError("Invalid chars in key. Allowed characters for keys: A-Z, a-z, 0-9, '_': '" + key + '"')
+            raise TypeError('Invalid chars in key. Allowed characters for keys: A-Z, a-z, 0-9, "_": ' + key)
 
         if key in self._data:
-            raise TypeError("Key already present in PropertyDict.")
+            raise TypeError('Key already present in PropertyDict.')
 
         if isinstance(item, PropertyDict):
             # Wrap PropertyDict in Property
-            item = Property(datatype=DataType.PROPERTYDICT, initial_value=item,
-                            desc="Nested PropertyDict (automatically wrapped)")
+            item = PropertyDictProperty(item, 'Nested PropertyDict (automatically wrapped)')
 
         if not isinstance(item, Property):
             # Not allowed. Wrap object in new simple Property
-            raise ValueError("Items in PropertyDict must be Property or PropertyDict.")
+            raise ValueError('Items in PropertyDict must be Property or PropertyDict.')
 
         if item.parentdict is not None:
-            raise TypeError("Property already assigned to another PropertyDict")
+            raise TypeError('Property already assigned to another PropertyDict')
 
         # Link me as parent
         item._parentdict_ref = weakref.ref(self)
@@ -283,7 +287,7 @@ class PropertyDict:
 
         if self._loaded:
             # Late load instantly
-            logcall(item.load, errmsg="Exception on calling Property.load(): %s")
+            logcall(item.load, errmsg='Exception on calling Property.load(): %s')
 
         pp = self.parentproperty
         if pp and pp.events:
@@ -300,7 +304,7 @@ class PropertyDict:
 
         delitem: Property = self._data[key]
 
-        logcall(delitem.unload, errmsg="Exception on unloading Property: %s")
+        logcall(delitem.unload, errmsg='Exception on unloading Property: %s')
         del self._data[key]
 
         pp = self.parentproperty
@@ -326,12 +330,12 @@ class PropertyDict:
         loaded_status = '' if self._loaded else ' not loaded'
 
         if self.is_root:
-            return f"<{self.__class__.__name__} ROOT ({len(self._data)} elements{loaded_status})>"
+            return f'<{self.__class__.__name__} ROOT ({len(self._data)} elements{loaded_status})>'
 
         if isinstance(self.parentproperty, Property):
-            return f"<{self.__class__.__name__} key='{self.parentproperty.key}' ({len(self._data)} elements{loaded_status})>"
+            return f'<{self.__class__.__name__} {self.parentproperty.key} ({len(self._data)} elements{loaded_status})>'
 
-        return f"<{self.__class__.__name__} ORPHAN ({len(self._data)} elements{loaded_status})>"
+        return f'<{self.__class__.__name__} ORPHAN ({len(self._data)} elements{loaded_status})>'
 
     def load(self):
         if self._loaded:
@@ -339,14 +343,16 @@ class PropertyDict:
 
         for prop in self._data.values():
             if isinstance(prop, Property):
-                logcall(prop.load, errmsg=f"Exception in PropertyDict {self.__class__!s}.load()->{prop!r}.load(): %s", stack_trace=True)
+                logcall(prop.load,
+                        errmsg=f'Exception in PropertyDict {self.__class__!s}.load()->{prop!r}.load(): %s',
+                        stack_trace=True)
         self._loaded = True
 
     def unload(self):
         if self._data:
             for prop in self._data.values():
                 if isinstance(prop, Property):
-                    logcall(prop.unload, errmsg="Exception on unloading Property: %s")
+                    logcall(prop.unload, errmsg='Exception on unloading Property: %s')
 
             self._data.clear()
         self._data = None
@@ -356,6 +362,20 @@ class PropertyDict:
             pp._value = None  # remove me there
         self._parentproperty_ref = None
         self._loaded = False
+
+
+class PType(Enum):
+    Input = 1
+    # ToDo: Input sync rw funcs
+    Output = 2
+    Function = 3  # Like output
+    PropertyDict = 4
+
+
+# Speedup enum access and use
+Input = PType.Input
+Output = PType.Output
+Function = PType.Function
 
 
 def _prop_module_path(prop: "Property") -> str:
@@ -374,10 +394,34 @@ def _prop_uirelevant(prop: "Property") -> bool:
 
 def _prop_direction(prop: "Property") -> str:
     if prop.ptype is Output or prop.ptype is Function:
-        return "OUT"
+        return 'OUT'
 
     if prop.ptype is Input:
-        return "IN"
+        return 'IN'
+
+    return ''
+
+
+def _value_len(prop: "Property"):
+    if isinstance(prop.cached_value, ModuleInstancePropertyDict):
+        # Do not count hidden elements
+        return len(prop.cached_value) - len(ModuleInstancePropertyDict.reserved)
+    else:
+        return len(prop.cached_value)
+
+
+_icon_from_ptype = {
+    PType.PropertyDict: '📁',
+    PType.Input: '↘',
+    PType.Output: '↗',
+    PType.Function: '⌛',
+}
+
+
+def _prop_icon(prop: "Property") -> str:
+    if prop is None:
+        return ''
+    return _icon_from_ptype.get(prop.ptype, '')
 
 
 def _set_floatprec(prop: "Property", newvalue: int) -> bool:
@@ -385,6 +429,7 @@ def _set_floatprec(prop: "Property", newvalue: int) -> bool:
         prop.floatprec = newvalue
         return True
     except Exception as e:
+        logger.error('Could not set float precision: %s', repr(e))
         return False
 
 
@@ -393,6 +438,7 @@ def _set_interval(prop: "Property", newvalue: Optional[int]) -> bool:
         prop.poll_interval = newvalue
         return True
     except Exception as e:
+        logger.error('Could not set interval: %s', repr(e))
         return False
 
 
@@ -401,14 +447,18 @@ def _set_value(prop: "Property", newvalue) -> bool:
         prop.value = newvalue
         return True
     except Exception as e:
+        logger.error('Could not set value: %s', repr(e))
         return False
 
 
 class PropertiesListModel(StandardListModel):
     auto = AutoEnum(Qt.UserRole + 1000)
+    RawProperty = auto()  # 1256 ...
     IDRole = auto()  # Temporary numeric id for faster and easier access.
     IORole = auto()  # Input or Output
+    PTypeRole = auto()
     PathRole = auto()
+    KeyRole = auto()
     ValueRole = auto()  # Value which may be fetched first
     ValueHumanRole = auto()  # Human readable string output
     CachedRole = auto()  # Value from cache (fast)
@@ -427,12 +477,18 @@ class PropertiesListModel(StandardListModel):
     Interval = auto()
     IntervalMin = auto()
     IntervalDef = auto()
+    IsPropertyDict = auto()
+    ValueLen = auto()
+    UnicodeIcon = auto()
     # LinkedProperty = auto()
 
     rolenames = {
+        RawProperty: b'raw_property',
         IDRole: b'id',
         IORole: b'io',
+        PTypeRole: b'ptype',
         PathRole: b'path',
+        KeyRole: b'key',
         ValueRole: b'value',
         ValueHumanRole: b'value_human',
         CachedRole: b'cache',
@@ -445,17 +501,23 @@ class PropertiesListModel(StandardListModel):
         ModuleName: b'modulename',
         ModulePath: b'modulepath',
         UIRelevant: b'uirelevant',
-        IsLinked: b'islinked',
+        IsLinked: b'is_linked',
         FloatPrec: b'floatprec',
-        IsFunction: b'isfunction',
+        IsFunction: b'is_function',
         Interval: b'interval',
         IntervalMin: b'interval_min',
         IntervalDef: b'interval_def',
+        IsPropertyDict: b'is_propertydict',
+        ValueLen: b'value_len',
+        UnicodeIcon: b'icon',
     }
 
     dataroles_read_funcs = {
+        RawProperty: lambda prop: prop,
         IDRole: lambda prop: prop.id,
         IORole: _prop_direction,
+        PTypeRole: lambda prop: prop.ptype.name,
+        KeyRole: lambda prop: prop.key,
         PathRole: lambda prop: prop.path,
         ValueRole: lambda prop: str(prop.value),
         CachedRole: lambda prop: str(prop.cached_value),
@@ -475,6 +537,9 @@ class PropertiesListModel(StandardListModel):
         Interval: lambda prop: prop.poll_interval,
         IntervalMin: lambda prop: prop.poll_interval_min,
         IntervalDef: lambda prop: prop.poll_interval_def,
+        IsPropertyDict: lambda prop: prop.datatype is DataType.PROPERTYDICT,
+        ValueLen: _value_len,
+        UnicodeIcon: _prop_icon,
     }
 
     dataroles_write_funcs = {
@@ -533,7 +598,9 @@ class PropertiesListModel(StandardListModel):
                     # Simple linear insert of multiple items
                     current_size = len(self._data)
                     try:
-                        self.beginInsertRows(self._invalid_index, current_size, current_size + len(self._insert_candidates) - 1)
+                        self.beginInsertRows(self._invalid_index,
+                                             current_size,
+                                             current_size + len(self._insert_candidates) - 1)
                         self._data.extend(self._insert_candidates)
                     finally:
                         self.endInsertRows()
@@ -636,18 +703,43 @@ class PropertiesByUIRelevant(QSortFilterProxyModel):
         self.setSortRole(PropertiesListModel.PathRole)
 
 
-class PType(Enum):
-    Input = 1
-    # ToDo: Input sync rw funcs
-    Output = 2
-    Function = 3  # Like output
-    PropertyDict = 4
+class PropertyNavigateModel(QSortFilterProxyModel):
+    def __init__(self, sourcemodel: PropertiesListModel):
+        QSortFilterProxyModel.__init__(self, sourcemodel)
+        self.setSourceModel(sourcemodel)
+        self._source_model = sourcemodel
+        self.setSortRole(PropertiesListModel.PathRole)
+        self.sort(0, Qt.AscendingOrder)
+        self._match_parentpd: Optional[PropertyDict] = None  # PD to show items from
+        self._match_self: Optional[Property] = None
 
+    path_changed = Signal()
 
-# Speedup enum access and use
-Input = PType.Input
-Output = PType.Output
-Function = PType.Function
+    @Slot('QVariant')
+    def set_path(self, prop: Optional["Property"]):
+        self._match_self = prop
+        self._match_parentpd = prop and prop.cached_value or PropertyDict.root()
+        self.path_changed.emit()
+        self.invalidateFilter()
+
+    @Slot()
+    def go_up(self):
+        self.set_path(self._match_self and self._match_self.parentproperty)
+
+    def get_path(self):
+        p = (self._match_self and self._match_self.path) or ''
+        return p
+
+    path = QtProperty(str, get_path, notify=path_changed)
+
+    def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
+        index = self._source_model.index(source_row, 0, source_parent)
+
+        prop: Property = index.data(PropertiesListModel.RawProperty)
+        if not prop:
+            return False
+
+        return prop.parentdict is self._match_parentpd or prop is self._match_self
 
 
 class PropertyLink:
@@ -770,7 +862,7 @@ class Property:
                 '_owner', '__weakref__', '_link', '_ptype', '_setfunc', '_getfunc', '_log', '_poll_interval', \
                 '_poll_interval_min_default', '_value_time', '_in_model', '_floatprec', '_floatprec_default', 'as_human'
 
-    _exclude_from_model = frozenset((DataType.UNDEFINED, DataType.PROPERTYDICT, DataType.ENUM))
+    _exclude_from_model = frozenset((DataType.UNDEFINED, ))  # DataType.PROPERTYDICT, DataType.ENUM
     _classlock = RLock()  # For incrementing instance counters
     _last_id = 0
     _instances_by_id: Dict[int, "Property"] = WeakValueDictionary()
@@ -779,6 +871,7 @@ class Property:
 
     listmodel: Optional[PropertiesListModel] = None  # Raw model which contains all relevant properties
     uirelevantmodel: Optional[QSortFilterProxyModel] = None  # Raw model which contains all ui relevant properties
+    navigatemodel: Optional[PropertyNavigateModel] = None
     _models: Dict[str, QSortFilterProxyModel] = {}  # Filter models defined by string key like "datatype:TIME"
 
     # For storing meta information beyond the persistent value of the property.
@@ -805,6 +898,7 @@ class Property:
     def init_class(cls, parent: QObject):
         cls.listmodel = PropertiesListModel(parent)
         cls.uirelevantmodel = PropertiesByUIRelevant(cls.listmodel)
+        cls.navigatemodel = PropertyNavigateModel(cls.uirelevantmodel)
 
     @classmethod
     def early_stop(cls):
@@ -829,6 +923,10 @@ class Property:
         for m in cls._models.values():
             m.deleteLater()
         cls._models.clear()
+
+        if cls.navigatemodel:
+            cls.navigatemodel.deleteLater()
+            cls.navigatemodel = None
 
         if cls.uirelevantmodel:
             cls.uirelevantmodel.deleteLater()
@@ -1271,6 +1369,11 @@ class Property:
         return self._parentdict_ref and self._parentdict_ref()
 
     @property
+    def parentproperty(self) -> Optional["Property"]:
+        pd = self.parentdict
+        return pd and pd.parentproperty
+
+    @property
     def owner(self) -> Optional[ModuleBase]:
         return self._owner
 
@@ -1524,7 +1627,8 @@ class Property:
         return newpath
 
     def __repr__(self):
-        ret = f"<{self.__class__.__name__} {self._ptype.name} KEY='{self.key}', ID={self._id}, DType={self._datatype}, DEF={self._default_value}, DESC='{self.desc}'"
+        ret = f"<{self.__class__.__name__} {self._ptype.name} KEY='{self.key}', ID={self._id}, " \
+              f"DType={self._datatype}, DEF={self._default_value}, DESC='{self.desc}'"
 
         if self.parentdict is not None:
             ret += f', PARENT={self.parentdict!r}'
@@ -2187,9 +2291,9 @@ class QtPropLinkSelect(QtPropLink):
 
 
 class PropertyAccess(QObject):
-    def __init__(self, parent, propertydict: PropertyDict):
+    def __init__(self, parent, root_pd: PropertyDict):
         QObject.__init__(self, parent)
-        self._pd = propertydict
+        self._root_pd = root_pd
 
     @Slot(str, result=QObject)
     def get_properties_by_datatype_model(self, datatype: str):
@@ -2198,9 +2302,17 @@ class PropertyAccess(QObject):
             raise ValueError('DataType unknown: ' + repr(datatype))
         return Property.get_datatype_model(dt)
 
-    @Slot(bool, result=QObject)
-    def get_properties_model(self, relevant: bool):
-        return Property.uirelevantmodel if relevant else Property.listmodel
+    @Slot(result=QObject)
+    def get_property_navigator_model(self):
+        Property.navigatemodel.set_path(None)
+        return Property.navigatemodel
+
+    @Slot(result=QObject)
+    def get_properties_model(self):
+        return Property.uirelevantmodel
+
+    def unload(self):
+        self._root_pd = None
 
 
 def properties_start(parent: QObject):

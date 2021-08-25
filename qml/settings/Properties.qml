@@ -24,7 +24,7 @@ Item {
     ListView {
         id: listview
 
-        model: properties.get_properties_model(true)
+        model: properties.get_property_navigator_model() //get_properties_model()
         delegate: listitem_delegate
 
         property var item_height_min: 34
@@ -37,6 +37,44 @@ Item {
         orientation: Qt.Vertical
         currentIndex: -1
         cacheBuffer: item_height_min * 4
+
+        header: Rectangle {
+            id: go_up_area
+            width: parent.width
+            height: listview.model.path != '' ? 30 : 0
+            color: "transparent"
+            //visible: listview.model.path != ''
+
+            Text {
+                padding: 10
+                id: list_header_icon
+                // width: parent.width
+                text: '⮬'
+                font.family: emoji.name
+                font.pixelSize: 30
+                color: Colors.black
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text {
+                padding: 5
+                id: list_header_text
+                anchors.left: list_header_icon.right
+                text: 'go up'
+                font.pixelSize: 20
+                color: Colors.black
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    listview.model.go_up()
+                    listview.currentIndex = -1
+                }
+                // enabled: list_header_text.visible
+            }
+        }
 
         Component {
             id: listitem_delegate
@@ -56,14 +94,25 @@ Item {
                     height: listview.item_height_min
 
                     Text {
+                        // Icon
+                        id: prop_icon
+                        leftPadding: listview.model.path == '' || index == 0 ? 5 : 30
+                        text: icon
+                        font.family: emoji.name
+                        font.pixelSize: 20
+                        color: Colors.black
+                        anchors.left: parent.left
+                    }
+
+                    Text {
                         // Property path
                         id: line_path
                         padding: 5
-                        text: expand_loader.active ? path + " [" + io + "]": path
+                        text: expand_loader.active ? path + " [" + io + "]" : (listview.model.path == '' || index == 0 ? path : key)
                         font.pixelSize: 20
-                        font.bold: expand_loader.active
+                        font.bold: expand_loader.active || is_propertydict
                         color: Colors.black
-                        anchors.left: parent.left
+                        anchors.left: prop_icon.right
                         anchors.right: expand_loader.active ? line_value.left : undefined
                         elide: Text.ElideRight
                     }
@@ -73,10 +122,10 @@ Item {
                         id: line_value
                         horizontalAlignment: Text.AlignRight
                         padding: 5
-                        text: cache_human ? cache_human : "<i>None</i>"
+                        text: is_propertydict ? value_len + " items" : (expand_loader.active ? "" : (cache_human ? cache_human : "<i>None</i>"))
                         visible: !expand_loader.active
                         font.pixelSize: 20
-                        font.bold: true
+                        font.bold: cache_human !== undefined
                         color: Colors.black
                         elide: expand_loader.active ? Text.ElideNone : Text.ElideLeft
 
@@ -102,7 +151,16 @@ Item {
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: {listview.currentIndex = index}
+                    onClicked: {
+                        if (ptype == "PropertyDict") {
+                            // Clicked on a Property containing a PropertyDict
+                            listview.model.set_path(raw_property)
+                            listview.currentIndex = -1
+                        } else {
+                            // Clicked on a property
+                            listview.currentIndex = index
+                        }
+                    }
                     enabled: listview.currentIndex != index
                 }
             }
@@ -142,7 +200,7 @@ Item {
                     width: parent.width
                     height: implicitHeight
 
-                    visible: model.isfunction
+                    visible: model.is_function
 
                     Text {
                         text: "Automatic value read interval:"

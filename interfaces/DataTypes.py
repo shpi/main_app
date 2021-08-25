@@ -262,42 +262,42 @@ def _percent(value):
 
 def _append_unit(unit: str):
     def _append(value):
-        return str(value) + unit
+        return str(value) + ' ' + unit
     return _append
 
 
 def _append_autobase_unit(unit: str):
     def _append(value):
         if value == 0:
-            return '0' + unit
+            return '0 ' + unit
 
         neg = '-' if value < 0 else ''
         value = abs(value)
 
         if value > 1:
             if value < 1000:
-                return neg + str(value) + unit
+                return neg + str(round(value, 2)) + ' ' + unit
 
             if value < 1000000:
-                return neg + str(round(value / 1000, 2)) + 'k' + unit
+                return neg + str(round(value / 1000, 2)) + ' k' + unit
 
             if value < 1000000000:
-                return neg + str(round(value / 1000000, 4)) + 'M' + unit
+                return neg + str(round(value / 1000000, 4)) + ' M' + unit
 
-            return neg + str(round(value / 1000000000, 6)) + 'G' + unit
+            return neg + str(round(value / 1000000000, 6)) + ' G' + unit
 
         else:
             # less than 1
             if value > 0.001:
-                return neg + str(round(value * 1000)) + 'm' + unit
+                return neg + str(round(value * 1000)) + ' m' + unit
 
             if value > 0.000001:
-                return neg + str(round(value * 1000000)) + 'µ' + unit
+                return neg + str(round(value * 1000000)) + ' µ' + unit
 
             if value > 0.000000001:
-                return neg + str(round(value * 1000000000)) + 'n' + unit
+                return neg + str(round(value * 1000000000)) + ' n' + unit
 
-            return neg + str(round(value * 1000000000000)) + 'p' + unit
+            return neg + str(round(value * 1000000000000)) + ' p' + unit
 
     return _append
 
@@ -311,8 +311,8 @@ def _from_timestamp(ts: float) -> str:
 
 
 datatype_tohuman_func = {
-    DataType.TEMPERATURE: _append_unit(' °C'),
-    DataType.RPM: _append_unit(' rpm'),
+    DataType.TEMPERATURE: _append_unit('°C'),
+    DataType.RPM: _append_unit('rpm'),
     DataType.ENUM: _enum,
     DataType.BYTES: _bytes,
     DataType.LIST_OF_STRINGS: _list_of_strings,

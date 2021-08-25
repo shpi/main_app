@@ -90,6 +90,11 @@ ApplicationWindow {
         source: "/fonts/dejavu-custom.ttf"
     }
 
+    FontLoader {
+        id: emoji
+        source: "/fonts/NotoColorEmoji.ttf"
+    }
+
     Drawer {
         property string actual_setting
         id: drawer

@@ -270,7 +270,8 @@ class StandardListModel(QAbstractListModel):
         try:
             return func(item)
         except Exception as e:
-            self.logger.error('Exception on fetching data (role=%s) in %s: %s', role, type(self), repr(e))
+            self.logger.error('Exception on fetching data (role=%s) in %s for %s: %s',
+                              role, type(self), repr(item), repr(e))
             return None
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlags:

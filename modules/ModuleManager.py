@@ -492,6 +492,7 @@ class Modules(ModuleBase):
             mminst: Modules = cls._main_instance.module_instance
             mminst._mclasses_model.unload()
             mminst._loaded_modules_model.unload()
+            mminst._property_access.unload()
         logcall(Module.unload_modules)
         logcall(properties_stop)
         del cls._root_properties

@@ -43,12 +43,11 @@ Item {
 
             Rectangle {
                 id: wrapper
-                //property var itemModel: model // read 'model' from the delegate's context
 
                 width: listview.width
                 height: listview.item_height_min
 
-                color: "#dddddd"
+                color: Colors.white
                 Row {
                     anchors.top: parent.top
                     anchors.left: parent.left

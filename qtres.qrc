@@ -3,6 +3,7 @@
 <file>fonts/Colors.qml</file>
 <file>fonts/dejavu-custom.ttf</file>
 <file>fonts/Icons.qml</file>
+<file>fonts/NotoColorEmoji.ttf</file>
 <file>fonts/orkney-custom.ttf</file>
 <file>fonts/qmldir</file>
 <file>weathersprites/01d.png</file>
