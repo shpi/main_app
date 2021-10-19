@@ -1,15 +1,17 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-import Qt.labs.folderlistmodel 2.12
-import QtGraphicalEffects 1.12
+import Qt.labs.folderlistmodel 2.15
+import QtGraphicalEffects 1.15
+import QtQuick.Particles 2.15
+
 
 import "qrc:/fonts"
 
 ApplicationWindow {
     id: window
     title: "SHPI"
-    width: 480
-    height: 800
+    width: 800
+    height: 480
     visible: true
     font.family: localFont.name
 
@@ -54,6 +56,110 @@ ApplicationWindow {
                 console.error(bg.source)
         }
     }
+
+
+
+
+
+    ParticleSystem {
+        id: startparticle
+        anchors.fill: parent
+
+
+        Image {
+            source: "file://home/dell/logo-shpi.png"
+            anchors.centerIn: parent
+            width: parent.width / 1.5
+            fillMode: Image.PreserveAspectFit
+            id: bild
+
+            opacity: 1.0
+
+            Behavior on opacity {
+                PropertyAnimation {
+                    easing.type: Easing.InQuart
+                    duration: 1000
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    emitta.burst(5000)
+                    bild.opacity = 0.0
+
+
+                               }
+            }
+        }
+
+        Emitter {
+
+            anchors.centerIn: parent
+            height: bild.height
+            width: bild.width
+            id: emitta
+            emitRate: 0
+            lifeSpan: 2000
+            lifeSpanVariation: 1000
+            maximumEmitted: 6000
+            size: 10
+            endSize: 40
+            sizeVariation: 5
+            shape: MaskShape {
+                source: "file://home/dell/logo-shpi.png"
+            }
+            velocity: AngleDirection {
+                magnitudeVariation: 10
+                magnitude: 20
+                angle: 0
+                angleVariation: 360
+            }
+        }
+
+        CustomParticle {
+            vertexShader: "
+    uniform lowp float qt_Opacity;
+    varying highp float age;
+
+    void main() {
+    qt_TexCoord0 = qt_ParticleTex;
+    age = (qt_Timestamp - qt_ParticleData.x) / qt_ParticleData.y;
+    if (age < 0. || age > 1.) age = 1.0;
+    highp float size = qt_ParticleData.z;
+    highp vec2 pos = qt_ParticlePos
+    - size / 2. + size * qt_ParticleTex          // adjust size
+    + qt_ParticleVec.xy * age * qt_ParticleData.y  // apply speed vector
+    + 0.5 * qt_ParticleVec.zw * pow(age * qt_ParticleData.y, 2.);
+    gl_Position = qt_Matrix * vec4(pos.x, pos.y, 0.0, 1);
+    }"
+
+            fragmentShader: "
+    varying highp float age;
+    varying highp vec2 qt_TexCoord0;
+
+
+    void main() {
+    //*2 because this generates dark colors mostly
+    highp vec2 circlePos = qt_TexCoord0 * 2.0 - vec2(1.0, 1.0);
+    highp float dist = length(circlePos);
+    highp float circleFactor = max(min(1.0 - dist, 0.1), 0.0);
+    //highp float fade = mix(0.0, 1.0, age );
+    highp float fadeIn = min(age * 5., 1.);
+    highp float fadeOut = 1. - max(0., min((age - 0.75) * 4., 1.));
+
+    highp float red = mix(1.0, 0.3, age);
+    gl_FragColor = vec4(red, 0.4, circlePos.y, 0.0) * circleFactor * fadeIn * fadeOut;
+    }"
+        }
+    }
+
+
+
+
+
+
+
 
     Image {
         anchors.fill: parent
@@ -139,7 +245,7 @@ ApplicationWindow {
 
             Rectangle {
                 id: subrct
-                height: mainsettingsView.height
+                height: mainsettingsView.height < closebutton.height ? closebutton.height : mainsettingsView.height
                 anchors.top: parent.top
                 anchors.topMargin: 5
                 width: parent.width - 10
@@ -236,10 +342,14 @@ ApplicationWindow {
             Component {
                 id: mainsettingsDelegate
                 RoundButton {
+                    property int butwidth: parent.width / mainsettingsModel.count - parent.spacing
                     //anchors.verticalCenter: parent.verticalCenter
 
+                    Behavior on height { PropertyAnimation {}  }
+
+
                     font.family: localFont.name
-                    height: settingsstackView.depth > 0 ? 80 : 100
+                    height: settingsstackView.depth > 0 ? butwidth : 100
                     font.pixelSize: settingsstackView.depth > 0 ? size : size * 1.5
                     text: title
                     onClicked: {
@@ -290,7 +400,14 @@ ApplicationWindow {
             source: "Rooms.qml"
         }
 
-        Loader {
+/*        Loader {
+            asynchronous: true
+            id: charging
+            property bool _isCurrentItem: SwipeView.isCurrentItem
+            source: "Charging.qml"
+        }
+
+  */      Loader {
             asynchronous: true
             id: screensaver
             property bool _isCurrentItem: SwipeView.isCurrentItem
@@ -385,6 +502,18 @@ ApplicationWindow {
 
     Popup {
 
+        enter: Transition {
+
+            NumberAnimation {property: "opacity"; from: 0.0; to: 1.0}
+
+        }
+
+        exit: Transition {
+
+            NumberAnimation {property: "opacity"; from: 1.0; to: 0.0}
+
+        }
+
         id: graphPopup
         width: parent.width
         height: parent.height
@@ -432,6 +561,18 @@ ApplicationWindow {
     }
 
     Popup {
+
+        enter: Transition {
+
+            NumberAnimation {property: "opacity"; from: 0.0; to: 1.0}
+
+        }
+
+        exit: Transition {
+
+            NumberAnimation {property: "opacity"; from: 1.0; to: 0.0}
+
+        }
 
         id: keyboardPopup
         width: parent.width

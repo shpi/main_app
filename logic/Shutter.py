@@ -128,21 +128,21 @@ class Shutter(QObject):
         if value == ShutterModes.UP:
 
             self.set_down(0)
-            time.sleep(0.1)
+            time.sleep(0.01)
             self.set_up(1)
             self._state = ShutterModes.UP
 
 
         elif value == ShutterModes.DOWN:
             self.set_down(1)
-            time.sleep(0.1)
+            time.sleep(0.01)
             self.set_up(0)
             self._state = ShutterModes.DOWN
 
 
         elif value == ShutterModes.SLEEP:
             self._state = ShutterModes.SLEEP
-            time.sleep(1)
+            time.sleep(0.01)
             self.set_down(0)
             self.set_up(0)
             self._state = ShutterModes.STOP
@@ -285,7 +285,7 @@ class Shutter(QObject):
                         self.userinput = 0
                         self.time_start = time.time()
                         self.start_position = self._actual_position.value
-                    time.sleep(0.1)
+                    time.sleep(0.01)
                     self._actual_position.value = self.start_position + \
                                                   ((100 / self._down_time) * (time.time() - self.time_start))
                     self.positionChanged.emit()
@@ -307,7 +307,7 @@ class Shutter(QObject):
                         self.userinput = 0
                         self.time_start = time.time()
                         self.start_position = self._actual_position.value
-                    time.sleep(0.1)
+                    time.sleep(0.01)
                     self._actual_position.value = self.start_position - \
                                                   (100 / self._up_time) * (time.time() - self.time_start)
                     self.positionChanged.emit()

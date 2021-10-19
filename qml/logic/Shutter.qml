@@ -19,6 +19,11 @@ Rectangle {
 
         id: shutterObject
 
+
+        Behavior on height { PropertyAnimation {}  }
+
+
+
         height: parent.height * 0.75
         width: height * 0.7
         border.width: 1
@@ -68,6 +73,8 @@ Rectangle {
             width: parent.width - 2
             anchors.centerIn: parent
 
+            Behavior on value { NumberAnimation {} }
+
             enabled: shutterObject.iconview2 ? false : true
 
             stepSize: 5
@@ -76,7 +83,7 @@ Rectangle {
                                               this.value)
 
             Text {
-                text: modules.loaded_instances['Logic']['Shutter'][instancename].desired_position
+                text: modules.loaded_instances['Logic']['Shutter'][instancename].actual_position
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.horizontalCenterOffset: -parent.width * 0.07
@@ -226,6 +233,19 @@ Rectangle {
 
     Popup {
         id: popupShutter
+
+        enter: Transition {
+
+            NumberAnimation {property: "opacity"; from: 0.0; to: 1.0}
+            NumberAnimation {property: "scale"; from: 0.5; to: 1.0}
+
+        }
+
+        exit: Transition {
+
+            NumberAnimation {property: "opacity"; from: 1.0; to: 0.0}
+
+        }
 
         height: window.height
         width: window.width

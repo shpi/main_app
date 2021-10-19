@@ -210,6 +210,18 @@ Rectangle {
     }
 
     Popup {
+
+        enter: Transition {
+
+            NumberAnimation {property: "opacity"; from: 0.0; to: 1.0}
+
+        }
+
+        exit: Transition {
+
+            NumberAnimation {property: "opacity"; from: 1.0; to: 0.0}
+
+        }
         id: popupShutter
 
         height: window.height

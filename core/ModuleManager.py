@@ -22,7 +22,7 @@ class ModuleManager(QObject):
         self._modules = dict()  # saves names of loaded instances
         self._instances = dict()  # instances itself
 
-        self._available_rooms = self.settings.value(f"available_rooms", ['Screensaver'])
+        self._available_rooms = self.settings.value(f"available_rooms", ['Home'])
 
         if isinstance(self._available_rooms, str):
             self._available_rooms = [self._available_rooms]
@@ -134,10 +134,10 @@ class ModuleManager(QObject):
     def available_rooms(self, value):
 
         if isinstance(value, list):
-            if 'Screensaver' not in value:
-                value.append('Screensaver')
+            if 'Home' not in value:
+                value.append('Home')
         else:
-            value = ['Screensaver']
+            value = ['Home']
 
         for room in value:
             if room not in self._rooms:
@@ -152,7 +152,7 @@ class ModuleManager(QObject):
     @Slot(str)
     def delete_room(self, roomname):
 
-        if roomname != 'Screensaver' and roomname in self._available_rooms:
+        if roomname != 'Home' and roomname in self._available_rooms:
             self._available_rooms.remove(roomname)
             self.settings.setValue("available_rooms", self._available_rooms)
             self.roomsChanged.emit()

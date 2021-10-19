@@ -91,6 +91,18 @@ Rectangle {
 
     Popup {
 
+        enter: Transition {
+
+            NumberAnimation {property: "opacity"; from: 0.0; to: 1.0}
+
+        }
+
+        exit: Transition {
+
+            NumberAnimation {property: "opacity"; from: 1.0; to: 0.0}
+
+        }
+
         height: window.height
         width: window.width
         id: colorpopup
@@ -226,7 +238,10 @@ Rectangle {
             id: colorpicker
             border.width: 3
             z: 4
-            color: Qt.hsva(rotator.rotation / 360, 1, control.value, 1)
+            color : Qt.hsla(   (360 + (rotator.rotation % 360)) % 360 / 360,  1, control.value, 1)
+
+
+            //color: Qt.hsva(rotator.rotation / 360, 1, control.value, 1)
             border.color: "white"
             antialiasing: true
             anchors.verticalCenter: parent.verticalCenter
@@ -272,9 +287,9 @@ Rectangle {
                             calcrotation += add
                     }
 
-                    colorpicker.color = Qt.hsla(
-                                (360 + (calcrotation % 360)) % 360 / 360,
-                                1, control.value, 1)
+                    //colorpicker.color = Qt.hsla(
+                    //            (360 + (calcrotation % 360)) % 360 / 360,
+                    //            1, control.value, 1)
 
                     instance.set((colorpicker.color.r * 100).toFixed(0),
                                  (colorpicker.color.g * 100).toFixed(0),
@@ -299,13 +314,11 @@ Rectangle {
             radius: width / 2
             rotation: 90
             Behavior on rotation {
-                PropertyAnimation {
+                    PropertyAnimation {}
 
-                    onRunningChanged: colorpicker.color = Qt.hsla(
-                                          (360 + (rotator.rotation % 360)) % 360 / 360,
-                                          1, control.value, 1)
-                }
-            }
+
+               
+            } 
 
             Item {
                 id: ticks

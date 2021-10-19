@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtGraphicalEffects 1.12
 import QtQuick.Shapes 1.15
 import QtQuick.Controls 2.15
+import QtQuick.Particles 2.0
 
 import "qrc:/fonts"
 
@@ -288,10 +289,80 @@ Rectangle {
         font.pixelSize: 120
         font.family: localFont.name
         text: Icons.fire
+        opacity: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].heating_state > 0 ? 0.5 : 1.0
         color: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].heating_state > 0 ? "orange" : "grey"
 
 
+
+        ParticleSystem {
+            id: root
+            anchors.centerIn:parent
+            height: parent.height *0.5
+            width: parent.width
+            z:-1
+
+
+
+            Emitter {
+                enabled: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].heating_state > 0
+                anchors.bottom: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                id: emitta
+                emitRate: 100
+                lifeSpan: 2000
+                lifeSpanVariation: 1000
+                maximumEmitted :  1000
+                size: 20
+                endSize: 30
+                sizeVariation: 10
+
+                velocity: AngleDirection { magnitudeVariation: 20; magnitude: 40; angle: 270; angleVariation: 30 }
+                }
+
+
+            CustomParticle {
+                        vertexShader: "
+                                      uniform lowp float qt_Opacity;
+                                      varying highp float age;
+
+                                      void main() {
+                                          qt_TexCoord0 = qt_ParticleTex;
+                                          age = (qt_Timestamp - qt_ParticleData.x) / qt_ParticleData.y;
+                                          if (age < 0. || age > 1.) age = 1.0;
+                                          highp float size = qt_ParticleData.z;
+                                          highp vec2 pos = qt_ParticlePos
+                                                         - size / 2. + size * qt_ParticleTex          // adjust size
+                                                         + qt_ParticleVec.xy * age * qt_ParticleData.y  // apply speed vector
+                                                         + 0.5 * qt_ParticleVec.zw * pow(age * qt_ParticleData.y, 2.);
+                                          gl_Position = qt_Matrix * vec4(pos.x, pos.y, 0.0, 1);
+                                      }"
+
+                        fragmentShader: "
+                                        varying highp float age;
+                                        varying highp vec2 qt_TexCoord0;
+
+
+                                        void main() {
+                                            //*2 because this generates dark colors mostly
+                                            highp vec2 circlePos = qt_TexCoord0 * 2.0 - vec2(1.0, 1.0);
+                                            highp float dist = length(circlePos);
+                                            highp float circleFactor = max(min(1.0 - dist, 0.1), 0.0);
+                                            //highp float fade = mix(0.0, 1.0, age );
+                                            highp float fadeIn = min(age * 5., 1.);
+                                            highp float fadeOut = 1. - max(0., min((age - 0.75) * 4., 1.));
+
+                                            highp float red = mix(1.0, 0.3, age);
+                                            gl_FragColor = vec4(red, 0.4, circlePos.y, 0.0) * circleFactor * fadeIn * fadeOut;
+                                        }"
+                    }
+        }
+
+
     }
+
+
+
+
 
     RoundButton
     {
@@ -392,7 +463,7 @@ Rectangle {
         width: height
         anchors.verticalCenter: tickswindow.verticalCenter
         anchors.horizontalCenter: tickswindow.right
-        anchors.horizontalCenterOffset: rotator.width * 0.35
+        anchors.horizontalCenterOffset: rotator.width * 0.33
         color: "transparent"
         border.width: 1
         border.color: Colors.black
@@ -424,7 +495,7 @@ Rectangle {
                                             * ((max_temp - min_temp) / 240)) : ''
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.verticalCenterOffset: rotator.width * -0.4
+                    anchors.verticalCenterOffset: rotator.width * -0.41
                     anchors.horizontalCenterOffset: 0
                     color: Colors.black
                     rotation: 90
@@ -445,21 +516,36 @@ Rectangle {
 
     Rectangle {
 
+        id: positionindicator
         visible: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].thermostat_mode > 0
 
         anchors.verticalCenter: tickswindow.verticalCenter
+        anchors.verticalCenterOffset: -height/2
         anchors.left: rotator.left
-        anchors.rightMargin: 10
-        width: 100
-        height: 34
+        anchors.leftMargin: 2
+
+        height: rotator.width * 0.01 + 4
+        width: rotator.height * 0.05 + 4
         radius: height / 4
         color: "transparent"
-        border.width: 5
+        border.width: 3
         border.color: Colors.black
     }
 
     Popup {
         property string instancename: tickswindow.instancename != undefined ? tickswindow.instancename : modules.modules['Logic']['Thermostat'][0]
+
+        enter: Transition {
+
+            NumberAnimation {property: "opacity"; from: 0.0; to: 1.0}
+
+        }
+
+        exit: Transition {
+
+            NumberAnimation {property: "opacity"; from: 1.0; to: 0.0}
+
+        }
 
         id: thermostatPopup
         width: parent.width

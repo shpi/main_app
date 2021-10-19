@@ -1,80 +1,85 @@
-<!DOCTYPE RCC><RCC version="1.0">
-<qresource>
-<file>fonts/Colors.qml</file>
-<file>fonts/dejavu-custom.ttf</file>
-<file>fonts/Icons.qml</file>
-<file>fonts/orkney-custom.ttf</file>
-<file>fonts/qmldir</file>
-<file>info/citylist.csv</file>
-<file>weathersprites/02d.png</file>
-<file>weathersprites/09d.png</file>
-<file>weathersprites/01n.png</file>
-<file>weathersprites/50d.png</file>
-<file>weathersprites/11n.png</file>
-<file>weathersprites/13n.png</file>
-<file>weathersprites/11d.png</file>
-<file>weathersprites/03n.png</file>
-<file>weathersprites/10d.png</file>
-<file>weathersprites/02n.png</file>
-<file>weathersprites/09n.png</file>
-<file>weathersprites/03d.png</file>
-<file>weathersprites/50n.png</file>
-<file>weathersprites/10n.png</file>
-<file>weathersprites/13d.png</file>
-<file>weathersprites/04d.png</file>
-<file>weathersprites/04n.png</file>
-<file>weathersprites/01d.png</file>
-<file>qml/core/GitSettings.qml</file>
-<file>qml/core/WifiSettingsList.qml</file>
-<file>qml/core/InputsSettings.qml</file>
-<file>qml/core/WifiSettings.qml</file>
-<file>qml/core/LoggingSettings.qml</file>
-<file>qml/core/AppearanceSettings.qml</file>
-<file>qml/ModulesClasses.qml</file>
-<file>qml/Pictures.qml</file>
-<file>qml/weather/WeatherFull.qml</file>
-<file>qml/weather/WeatherGraph_old.qml</file>
-<file>qml/weather/WeatherDays.qml</file>
-<file>qml/weather/WeatherDay.qml</file>
-<file>qml/weather/WeatherGraph.qml</file>
-<file>qml/info/Weather.qml</file>
-<file>qml/info/WeatherSettings.qml</file>
-<file>qml/Room.qml</file>
-<file>qml/screensaver/Screensaver.qml</file>
-<file>qml/ui/PieChartSettings.qml</file>
-<file>qml/ui/MultiShutterSettings.qml</file>
-<file>qml/ui/MultiShutter.qml</file>
-<file>qml/ui/ShowValueSettings.qml</file>
-<file>qml/ui/Shutter.qml</file>
-<file>qml/ui/ColorPickerSettings.qml</file>
-<file>qml/ui/PieChart.qml</file>
-<file>qml/ui/ColorPicker.qml</file>
-<file>qml/ui/ShutterSettings.qml</file>
-<file>qml/ui/ShowValue.qml</file>
-<file>qml/main.qml</file>
-<file>qml/FpsItem.qml</file>
-<file>qml/Modules.qml</file>
-<file>qml/alarm/Alarm.qml</file>
-<file>qml/Clock.qml</file>
-<file>qml/RoomManager.qml</file>
-<file>qml/logic/ThermostatSettings.qml</file>
-<file>qml/logic/Shutter.qml</file>
-<file>qml/logic/ShutterSettings.qml</file>
-<file>qml/logic/Thermostat.qml</file>
-<file>qml/connections/HTTPSettings.qml</file>
-<file>qml/thermostat/ThermostatWeekDay.qml</file>
-<file>qml/thermostat/ThermostatSettings.qml</file>
-<file>qml/thermostat/ThermostatWeek.qml</file>
-<file>qml/thermostat/ThermostatWeekKnob.qml</file>
-<file>qml/thermostat/ThermostatKnobSlider.qml</file>
-<file>qml/thermostat/Thermostat.qml</file>
-<file>qml/hardware/AlsaSettings.qml</file>
-<file>qml/Graph.qml</file>
-<file>qml/fingerpaint.qml</file>
-<file>qml/Settings.qml</file>
-<file>qml/keyboard/Key.qml</file>
-<file>qml/keyboard/Keyboard.qml</file>
-<file>qml/Rooms.qml</file>
-</qresource>
-</RCC>
+<RCC>
+    <qresource prefix="/">
+        <file>fonts/Colors.qml</file>
+        <file>fonts/dejavu-custom.ttf</file>
+        <file>fonts/Icons.qml</file>
+        <file>fonts/orkney-custom.ttf</file>
+        <file>fonts/qmldir</file>
+        <file>info/citylist.csv</file>
+        <file>qml/photovoltaic.png</file>
 
+<file>qml/lightning.png</file>
+
+        <file>qml/Charging.qml</file>
+        <file>weathersprites/02d.png</file>
+        <file>weathersprites/09d.png</file>
+        <file>weathersprites/01n.png</file>
+        <file>weathersprites/50d.png</file>
+        <file>weathersprites/11n.png</file>
+        <file>weathersprites/13n.png</file>
+        <file>weathersprites/11d.png</file>
+        <file>weathersprites/03n.png</file>
+        <file>weathersprites/10d.png</file>
+        <file>weathersprites/02n.png</file>
+        <file>weathersprites/09n.png</file>
+        <file>weathersprites/03d.png</file>
+        <file>weathersprites/50n.png</file>
+        <file>weathersprites/10n.png</file>
+        <file>weathersprites/13d.png</file>
+        <file>weathersprites/04d.png</file>
+        <file>weathersprites/04n.png</file>
+        <file>weathersprites/01d.png</file>
+        <file>qml/core/GitSettings.qml</file>
+        <file>qml/core/WifiSettingsList.qml</file>
+        <file>qml/core/InputsSettings.qml</file>
+        <file>qml/core/WifiSettings.qml</file>
+        <file>qml/core/LoggingSettings.qml</file>
+        <file>qml/core/AppearanceSettings.qml</file>
+        <file>qml/ModulesClasses.qml</file>
+        <file>qml/Pictures.qml</file>
+        <file>qml/weather/WeatherFull.qml</file>
+        <file>qml/weather/WeatherGraph_old.qml</file>
+        <file>qml/weather/WeatherDays.qml</file>
+        <file>qml/weather/WeatherDay.qml</file>
+        <file>qml/weather/WeatherGraph.qml</file>
+        <file>qml/info/Weather.qml</file>
+        <file>qml/info/WeatherSettings.qml</file>
+        <file>qml/Room.qml</file>
+        <file>qml/screensaver/Screensaver.qml</file>
+        <file>qml/ui/PieChartSettings.qml</file>
+        <file>qml/ui/MultiShutterSettings.qml</file>
+        <file>qml/ui/MultiShutter.qml</file>
+        <file>qml/ui/ShowValueSettings.qml</file>
+        <file>qml/ui/Shutter.qml</file>
+        <file>qml/ui/ColorPickerSettings.qml</file>
+        <file>qml/ui/PieChart.qml</file>
+        <file>qml/ui/ColorPicker.qml</file>
+        <file>qml/ui/ShutterSettings.qml</file>
+        <file>qml/ui/ShowValue.qml</file>
+        <file>qml/main.qml</file>
+        <file>qml/FpsItem.qml</file>
+        <file>qml/Modules.qml</file>
+        <file>qml/alarm/Alarm.qml</file>
+        <file>qml/Clock.qml</file>
+        <file>qml/RoomManager.qml</file>
+        <file>qml/logic/ThermostatSettings.qml</file>
+        <file>qml/logic/Shutter.qml</file>
+        <file>qml/logic/ShutterSettings.qml</file>
+        <file>qml/logic/Thermostat.qml</file>
+        <file>qml/connections/HTTPSettings.qml</file>
+        <file>qml/thermostat/ThermostatWeekDay.qml</file>
+        <file>qml/thermostat/ThermostatSettings.qml</file>
+        <file>qml/thermostat/ThermostatWeek.qml</file>
+        <file>qml/thermostat/ThermostatWeekKnob.qml</file>
+        <file>qml/thermostat/ThermostatKnobSlider.qml</file>
+        <file>qml/thermostat/Thermostat.qml</file>
+        <file>qml/hardware/AlsaSettings.qml</file>
+        <file>qml/Graph.qml</file>
+        <file>qml/fingerpaint.qml</file>
+        <file>qml/Settings.qml</file>
+        <file>qml/keyboard/Key.qml</file>
+        <file>qml/keyboard/Keyboard.qml</file>
+        <file>qml/Rooms.qml</file>
+        <file>qml/particle.png</file>
+    </qresource>
+</RCC>

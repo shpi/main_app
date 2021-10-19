@@ -52,7 +52,7 @@ Item {
 
                 Repeater {
                     id: screensaverRow
-                    model: modules.rooms['Screensaver']
+                    model: modules.rooms['Home']
 
 
                     Rectangle {
@@ -108,7 +108,7 @@ Item {
                 function onRoomsChanged() {
 
 
-                    console.log(modules.rooms['Screensaver'])
+                    console.log(modules.rooms['Home'])
 
                 }
 
