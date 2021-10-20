@@ -83,6 +83,8 @@ class IIO:
                 return (rf.write(str(value)))
 
         except Exception as e:
+            exception_type, exception_object, exception_traceback = sys.exc_info()
+            line_number = exception_traceback.tb_lineno
             logging.error(f'channel: {channel} error: {e} in line {line_number}')
             return None
 

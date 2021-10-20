@@ -187,7 +187,7 @@ ApplicationWindow {
                 palette.button: settingsstackView.depth > 0 ? "darkred" : "#11000000"
                 palette.buttonText: settingsstackView.depth > 0 ? "white" : Colors.black
                 
-                Behavior on height { PropertyAnimation {}  }
+                //Behavior on height { PropertyAnimation {}  }
 
                 height: settingsstackView.depth > 0 ? 100: 150
                 font.pixelSize: height * 0.8
@@ -251,7 +251,7 @@ ApplicationWindow {
                     property int butwidth: parent.width / mainsettingsModel.count - parent.spacing
                     //anchors.verticalCenter: parent.verticalCenter
 
-                    Behavior on height { PropertyAnimation {}  }
+                    //Behavior on height { PropertyAnimation {}  }
 
 
                     font.family: localFont.name

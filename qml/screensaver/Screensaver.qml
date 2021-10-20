@@ -48,7 +48,6 @@ Item {
                 width: parent.width - mar
 
 
-                Component.onCompleted: console.error(mar)
 
                 Repeater {
                     id: screensaverRow
@@ -101,17 +100,5 @@ Item {
         }
     }
 
-   /* Connections {
-                id: screensaverconn
-                target: modules
-
-                function onRoomsChanged() {
-
-
-                    console.log(modules.rooms['Home'])
-
-                }
-
-} */
 
 }

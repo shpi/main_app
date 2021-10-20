@@ -73,7 +73,8 @@ class Shutter(QObject):
         self.movethread = threading.Thread(target=self.move)
         self._state = ShutterModes.STOP
 
-        self.inputs['core/mqtt/general_shutter_call'].events.append(self.general_call)
+        if 'core/mqtt/general_shutter_call' in self.inputs:
+            self.inputs['core/mqtt/general_shutter_call'].events.append(self.general_call)
 
 
 
