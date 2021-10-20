@@ -33,7 +33,8 @@
         <file>qml/core/WifiSettingsList.qml</file>
         <file>qml/core/InputsSettings.qml</file>
         <file>qml/core/WifiSettings.qml</file>
-        <file>qml/core/LoggingSettings.qml</file>
+        <file>qml/core/MQTTSettings.qml</file>
+         <file>qml/core/LoggingSettings.qml</file>
         <file>qml/core/AppearanceSettings.qml</file>
         <file>qml/ModulesClasses.qml</file>
         <file>qml/Pictures.qml</file>

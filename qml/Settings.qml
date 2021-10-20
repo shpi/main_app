@@ -23,6 +23,12 @@ Item {
 
 
         ListElement {
+            title: "MQTT Client"
+            page: "core/MQTTSettings.qml"
+        }
+
+
+        ListElement {
             title: "Screensaver Pictures"
             page: "Pictures.qml"
         }

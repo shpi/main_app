@@ -21,6 +21,7 @@ from core.Logger import LogModel, MessageHandler
 from core.MLX90615 import MLX90615
 from core.ModuleManager import ModuleManager
 from core.Wifi import Wifi
+from core.MQTT import MQTTClient
 from hardware.Alsa import AlsaMixer
 from hardware.Backlight import Backlight
 from hardware.CPU import CPU
@@ -131,7 +132,7 @@ core_modules['wifi'] = Wifi(settings)
 core_modules['httpserver'] = HTTPServer(inputs, settings)
 core_modules['mlx90615'] = MLX90615(inputs, settings)
 core_modules['alsamixer'] = AlsaMixer(inputs, settings)
-
+core_modules['mqttclient'] = MQTTClient(inputs, settings)
 
 for core_module in core_modules:
     inputs.add(core_modules[core_module].get_inputs())
@@ -175,6 +176,8 @@ engine.rootContext().setContextProperty("inputs", inputs)
 engine.rootContext().setContextProperty('wifi', core_modules['wifi'])
 engine.rootContext().setContextProperty('git', core_modules['git'])
 engine.rootContext().setContextProperty("appearance", core_modules['appearance'])
+engine.rootContext().setContextProperty("mqttclient", core_modules['mqttclient'])
+
 engine.rootContext().setContextProperty("modules", modules)
 
 qt_check_loop = 'THREAD_STATS' not in sys.argv

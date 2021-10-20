@@ -270,7 +270,7 @@ Rectangle {
 
         Text {
 
-            visible: modules.loaded_instances['Logic']['Thermostat'][instancename].offset === 0
+            visible: temptext.opacity == 0 ? true : false
             text:  '°C'
             anchors.left: parent.right
             anchors.bottom: parent.bottom
@@ -379,7 +379,7 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.horizontalCenterOffset: -wheel.width / 2
         anchors.top:actualtemp.bottom
-        anchors.topMargin: 40
+        anchors.topMargin: 20
         width: height
         font.family: localFont.name
 

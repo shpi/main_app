@@ -7,6 +7,7 @@ Item {
 
     id: root
     property string roomname: ''
+    property alias roomview: roomview
 
     ListView {
 
@@ -165,8 +166,9 @@ Item {
                                        //roomarr = modules.rooms[roomname]
                                        //roomarr.splice(parent.parent.index, 1)
                                        modules.del_from_room(roomname,modelData )
-                                       parent.parent.parent.model = modules.rooms[roomname]
-                                       roomview.forceLayout()
+                                       roomview.model = modules.rooms[roomname]
+                                       //parent.parent.parent.model = modules.rooms[roomname]
+                                       //roomview.forceLayout()
                                    }
                         enabled: roomname === '' ? false : true
                     }

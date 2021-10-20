@@ -36,12 +36,21 @@ Flickable {
             font.pixelSize: 32
             anchors.right: parent.right
 
+            textFromValue: function (value, locale) {
+                    return Number(value) + "s"
+                }
+
+                valueFromText: function (text, locale) {
+                    return Number.fromLocaleString(locale, text)
+                }
+
+
             Label {
                 anchors.right: parent.left
                 anchors.rightMargin: 10
                 anchors.verticalCenter: parent.verticalCenter
                 color: Colors.black
-                text: "Update Interval in seconds"
+                text: "Update Interval"
             }
         }
 

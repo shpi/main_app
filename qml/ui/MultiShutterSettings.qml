@@ -31,16 +31,30 @@ Rectangle {
             spacing: 20
 
 
-
             Text {
                 text: "Selected Outputs"
                 color: Colors.black
                 font.bold: true
                 anchors.topMargin: 20
             }
+
+
+    Label {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 10
+                    text: "Outputs"
+                    font.family: localFont.name
+                    color: Colors.black
+                }
+
+
             Row {
                 width: parent.width
                 spacing: 10
+
+
+
+
             ComboBox
             {
                 id: combo_desired_position_path
@@ -49,16 +63,6 @@ Rectangle {
                 model: inputs.outputList
                 textRole: 'path'
 
-
-
-                Label {
-                    anchors.right: parent.left
-                    anchors.rightMargin: 10
-                    text: "Desired Position"
-
-                    font.family: localFont.name
-                    color: Colors.black
-                }
             }
 
             RoundButton {
@@ -72,6 +76,16 @@ Rectangle {
             }
 
 }
+
+    Label {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 10
+                    text: "Selected"
+                    font.family: localFont.name
+                    color: Colors.black
+                }
+
+
             Repeater {
 
                 model: modules.loaded_instances['UI']['MultiShutter'][instancename] ? modules.loaded_instances['UI']['MultiShutter'][instancename].desired_position_path : 0

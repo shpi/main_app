@@ -61,100 +61,6 @@ ApplicationWindow {
 
 
 
-    ParticleSystem {
-        id: startparticle
-        anchors.fill: parent
-
-
-        Image {
-            source: "file://home/dell/logo-shpi.png"
-            anchors.centerIn: parent
-            width: parent.width / 1.5
-            fillMode: Image.PreserveAspectFit
-            id: bild
-
-            opacity: 1.0
-
-            Behavior on opacity {
-                PropertyAnimation {
-                    easing.type: Easing.InQuart
-                    duration: 1000
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    emitta.burst(5000)
-                    bild.opacity = 0.0
-
-
-                               }
-            }
-        }
-
-        Emitter {
-
-            anchors.centerIn: parent
-            height: bild.height
-            width: bild.width
-            id: emitta
-            emitRate: 0
-            lifeSpan: 2000
-            lifeSpanVariation: 1000
-            maximumEmitted: 6000
-            size: 10
-            endSize: 40
-            sizeVariation: 5
-            shape: MaskShape {
-                source: "file://home/dell/logo-shpi.png"
-            }
-            velocity: AngleDirection {
-                magnitudeVariation: 10
-                magnitude: 20
-                angle: 0
-                angleVariation: 360
-            }
-        }
-
-        CustomParticle {
-            vertexShader: "
-    uniform lowp float qt_Opacity;
-    varying highp float age;
-
-    void main() {
-    qt_TexCoord0 = qt_ParticleTex;
-    age = (qt_Timestamp - qt_ParticleData.x) / qt_ParticleData.y;
-    if (age < 0. || age > 1.) age = 1.0;
-    highp float size = qt_ParticleData.z;
-    highp vec2 pos = qt_ParticlePos
-    - size / 2. + size * qt_ParticleTex          // adjust size
-    + qt_ParticleVec.xy * age * qt_ParticleData.y  // apply speed vector
-    + 0.5 * qt_ParticleVec.zw * pow(age * qt_ParticleData.y, 2.);
-    gl_Position = qt_Matrix * vec4(pos.x, pos.y, 0.0, 1);
-    }"
-
-            fragmentShader: "
-    varying highp float age;
-    varying highp vec2 qt_TexCoord0;
-
-
-    void main() {
-    //*2 because this generates dark colors mostly
-    highp vec2 circlePos = qt_TexCoord0 * 2.0 - vec2(1.0, 1.0);
-    highp float dist = length(circlePos);
-    highp float circleFactor = max(min(1.0 - dist, 0.1), 0.0);
-    //highp float fade = mix(0.0, 1.0, age );
-    highp float fadeIn = min(age * 5., 1.);
-    highp float fadeOut = 1. - max(0., min((age - 0.75) * 4., 1.));
-
-    highp float red = mix(1.0, 0.3, age);
-    gl_FragColor = vec4(red, 0.4, circlePos.y, 0.0) * circleFactor * fadeIn * fadeOut;
-    }"
-        }
-    }
-
-
 
 
 
@@ -237,7 +143,6 @@ ApplicationWindow {
             opacity: 0.9
             anchors.horizontalCenter: parent.horizontalCenter
             width: parent.width - 10
-            //height: mainsettingsView.height
             height: subrct.height + 10
             anchors.top: parent.top
             radius: 20
@@ -257,10 +162,7 @@ ApplicationWindow {
 
             Flow {
 
-                //height: settingsstackView.depth > 0 ? 85 : 130
                 id: mainsettingsView
-                //orientation: ListView.Horizontal
-                //anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width - closebutton.width - 5
                 anchors.right: parent.right
 
@@ -277,17 +179,21 @@ ApplicationWindow {
 
             RoundButton {
                 id: closebutton
-                //anchors.left: parent.left
-                //anchors.top: parent.top
                 font.family: localFont.name
-                //settingsstackView.depth > 0 ? true : false
                 text: settingsstackView.depth > 1 ? Icons.arrow : settingsstackView.depth
                                                     > 0 ? Icons.close : Icons.arrow
                 rotation: settingsstackView.depth == 0 ? 180 : 90
                 width: height
                 palette.button: settingsstackView.depth > 0 ? "darkred" : "#11000000"
                 palette.buttonText: settingsstackView.depth > 0 ? "white" : Colors.black
-                font.pixelSize: settingsstackView.depth > 0 ? 50 : 50
+                
+                Behavior on height { PropertyAnimation {}  }
+
+                height: settingsstackView.depth > 0 ? 100: 150
+                font.pixelSize: height * 0.8
+
+
+
                 onClicked: {
                     if (settingsstackView.depth === 0)
                         //drawer.position = 0.0
@@ -307,34 +213,34 @@ ApplicationWindow {
                 id: mainsettingsModel
                 ListElement {
                     title: "LOG" // Icons.sun
-                    size: 20
+                    size: 0.33
                     page: "core/LoggingSettings.qml"
                 }
                 ListElement {
                     title: "\uE00C" // Icons.sun
-                    size: 50
+                    size: 1
                     page: "core/AppearanceSettings.qml"
                 }
                 ListElement {
                     title: "\uE016" // Icons.wifi
-                    size: 50
+                    size: 1
                     page: "core/WifiSettings.qml"
                 }
                 ListElement {
                     title: "\uE046" // Icons.speaker
-                    size: 50
+                    size: 1
                     page: "hardware/AlsaSettings.qml"
                 }
 
                 ListElement {
                     title: "\uE045" // Icons.reset
-                    size: 50
+                    size: 1
                     page: "core/GitSettings.qml"
                 }
 
                 ListElement {
                     title: "\uE010" // Icons.settings
-                    size: 50
+                    size: 1
                     page: "Settings.qml"
                 }
             }
@@ -349,8 +255,8 @@ ApplicationWindow {
 
 
                     font.family: localFont.name
-                    height: settingsstackView.depth > 0 ? butwidth : 100
-                    font.pixelSize: settingsstackView.depth > 0 ? size : size * 1.5
+                    height: settingsstackView.depth > 0 ? butwidth : 1.9 * butwidth
+                    font.pixelSize: size * height * 0.8
                     text: title
                     onClicked: {
                         settingsstackView.clear()
