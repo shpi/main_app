@@ -39,17 +39,12 @@ Item {
             spacing: 20
             padding: 10
 
-            Text {
-                text: "Controlled Outputs"
-                color: Colors.black
-                font.bold: true
-                anchors.topMargin: 20
-            }
+
 
             ComboBox {
                 id: combo_boolean_up
-                anchors.right: parent.right
-                width: parent.width * 0.9
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width * 0.9 -20
                 model: inputs.outputList
                 textRole: 'path'
 
@@ -63,6 +58,7 @@ Item {
                              = this.currentText
 
                 Label {
+                    width: 20
                     anchors.right: parent.left
                     anchors.rightMargin: 10
                     text: Icons.arrow
@@ -72,12 +68,19 @@ Item {
                 }
             }
 
+
+
+
+
             ComboBox {
                 id: combo_boolean_down
-                anchors.right: parent.right
-                width: parent.width * 0.9
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width * 0.9 - 20
                 model: inputs.outputList
                 textRole: 'path'
+                height: 50
+
+
 
                 Component.onCompleted: {
 
@@ -92,8 +95,37 @@ Item {
                     anchors.right: parent.left
                     anchors.rightMargin: 10
                     text: Icons.arrow
+                    rotation: 0
+                    width: 20
                     font.family: localFont.name
                     color: Colors.black
+                }
+
+            }
+
+            Flow {
+                width: parent.width
+                height: implicitHeight
+
+                Text {
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: "General Call"
+                    font.pixelSize: 24
+                    color: Colors.black
+                    wrapMode: Text.WordWrap
+                    width: parent.width < 500 ? parent.width : parent.width * 0.3
+                    height: 50
+                }
+
+                CheckBox {
+
+                    width: parent.width < 500 ? parent.width : parent.width * 0.7
+                    Component.onCompleted: this.checked = modules.loaded_instances['Logic']['Shutter'][instancename].listen_general
+
+                    onCheckStateChanged: {
+                        modules.loaded_instances['Logic']['Shutter'][instancename].listen_general = this.checked ? 1 : 0
+                    }
                 }
             }
 

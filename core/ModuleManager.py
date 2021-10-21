@@ -7,6 +7,17 @@ from PySide2.QtCore import QSettings, QObject, Property, Signal, Slot
 
 from core.Toolbox import Pre_5_15_2_fix
 
+import logic.Shutter
+import logic.Thermostat
+import info.Weather
+import ui.Shutter
+import ui.ShowValue
+import ui.ShowVideo
+import ui.MultiShutter
+import ui.PieChart
+import ui.ColorPicker
+import connections.HTTP
+
 
 class ModuleManager(QObject):
     def __init__(self, inputs, settings: QSettings):
@@ -16,8 +27,27 @@ class ModuleManager(QObject):
         self.inputs = inputs
         self.available_modules = {'Logic': ['Shutter', 'Thermostat'],
                                   'Info': ['Weather'],
-                                  'UI': ['Shutter', 'ShowValue', 'ShowVideo' ,'MultiShutter', 'PieChart', 'ColorPicker'],
+                                  'UI': ['Shutter', 'ShowValue', 'ShowVideo' ,'MultiShutter',
+                                         'PieChart', 'ColorPicker'],
                                   'Connections': ['HTTP']}
+
+        self.loaded_modules = dict()
+        self.loaded_modules['Logic'] = dict()
+        self.loaded_modules['Info'] = dict()
+        self.loaded_modules['UI'] = dict()
+        self.loaded_modules['Connections'] = dict()
+
+        self.loaded_modules['Logic']['Shutter'] = getattr(logic.Shutter, 'Shutter')
+        self.loaded_modules['Logic']['Thermostat'] = getattr(logic.Thermostat, 'Thermostat')
+        self.loaded_modules['Info']['Weather'] = getattr(info.Weather, 'Weather')
+        self.loaded_modules['UI']['Shutter'] = getattr(ui.Shutter, 'Shutter')
+        self.loaded_modules['UI']['ShowValue'] = getattr(ui.ShowValue, 'ShowValue')
+        self.loaded_modules['UI']['ShowVideo'] = getattr(ui.ShowVideo, 'ShowVideo')
+        self.loaded_modules['UI']['MultiShutter'] = getattr(ui.MultiShutter, 'MultiShutter')
+        self.loaded_modules['UI']['PieChart'] = getattr(ui.PieChart, 'PieChart')
+        self.loaded_modules['UI']['ColorPicker'] = getattr(ui.ColorPicker, 'ColorPicker')
+        self.loaded_modules['Connections']['HTTP'] = getattr(connections.HTTP, 'HTTP')
+
 
         self._modules = dict()  # saves names of loaded instances
         self._instances = dict()  # instances itself
@@ -58,11 +88,15 @@ class ModuleManager(QObject):
 
             for classname, instancenames in value.items():
                 self._instances[category][classname] = dict()
-                tempclass = getattr(importlib.import_module(category.lower() + '.' + classname), classname)
+                #tempclass = getattr(importlib.import_module(category.lower() + '.' + classname), classname)
+
+
                 if isinstance(instancenames, list):
                     for instancename in instancenames:
                         logging.debug(f'Initiating {category}:{classname}:{instancename}')
-                        self._instances[category][classname][instancename] = tempclass(instancename, inputs, settings)
+                        self._instances[category][classname][instancename] = self.loaded_modules[category][classname](instancename, inputs, settings)
+
+                        #tempclass(instancename, inputs, settings)
 
                         # try:
                         if hasattr(self._instances[category][classname][instancename], 'get_inputs'):
@@ -70,21 +104,7 @@ class ModuleManager(QObject):
                         # except Exception as e:
                         #    logging.debug('here:' + str(e))
 
-    """
 
-    We use time scheduler of inputs class and register module as input vars,
-    this approach uses fewer ressources and modules should be event driven, if possible
-
-    def update(self):
-        for category in self._instances:
-            for classname in self._instances[category]:
-                for instance in self._instances[category][classname]:
-                    try:
-                        logging.debug(f'calling update function of {category}:{classname}:{instance}')
-                        self._instances[category][classname][instance].update()
-                    except AttributeError:
-                        pass
-    """
 
     @Signal
     def modulesChanged(self):

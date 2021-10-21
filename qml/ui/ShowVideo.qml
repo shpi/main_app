@@ -44,7 +44,7 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             font.pixelSize: 90
             font.family: localFont.name
-            z: camstream.z + 1
+            z: camStream.z + 1
         }
 
     }

@@ -42,6 +42,8 @@ class Shutter(QObject):
         self._relay_up = settings.value('shutter/' + self.name + "/relay_up", '')
         self._relay_down = settings.value('shutter/' + self.name + "/relay_down", '')
 
+        self._listen_general = int(settings.value('shutter/' + self.name + "/listen_general", 0))
+
         self.userinput = 0
 
         self._module = EntityProperty(parent=self,
@@ -73,7 +75,7 @@ class Shutter(QObject):
         self.movethread = threading.Thread(target=self.move)
         self._state = ShutterModes.STOP
 
-        if 'core/mqtt/general_shutter_call' in self.inputs:
+        if 'core/mqtt/general_shutter_call' in self.inputs and self._listen_general > 0:
             self.inputs['core/mqtt/general_shutter_call'].events.append(self.general_call)
 
 
@@ -87,7 +89,6 @@ class Shutter(QObject):
 
 
     def set_up(self, value):
-        logging.error('UP control: ' + str(value))
 
 
         if self._relay_up in self.inputs:
@@ -112,7 +113,7 @@ class Shutter(QObject):
         self._module.value = status
 
     def set_down(self, value):
-        logging.error('DOWN control: ' + str(value))
+
         if self._relay_down in self.inputs:
             if self.inputs[self._relay_down].type == DataType.BOOL:
                 if self.inputs[self._relay_down].is_output:
@@ -260,6 +261,27 @@ class Shutter(QObject):
         self._down_time = float(value / 100)
         self.settings.setValue('shutter/' + self.name + "/down_time", value)
         self.configChanged.emit()
+
+
+    # @Property(float,notify=configChanged)
+    def listen_general(self):
+            return (self._listen_general)
+
+    # @up_time.setter
+    @Pre_5_15_2_fix(int, listen_general, notify=configChanged)
+    def listen_general(self, value):
+            self._listen_general = int(value)
+            self.settings.setValue('shutter/' + self.name + "/listen_general", value)
+            try:
+               if 'core/mqtt/general_shutter_call' in self.inputs and self._listen_general > 0:
+                   self.inputs['core/mqtt/general_shutter_call'].events.append(self.general_call)
+               if 'core/mqtt/general_shutter_call' in self.inputs and self._listen_general < 1:
+                   self.inputs['core/mqtt/general_shutter_call'].events.remove(self.general_call)
+            except:
+                logging.error('Error Event GENERAL CALL')
+            self.configChanged.emit()
+
+
 
     # @Property(float,notify=configChanged)
     def up_time(self):

@@ -48,7 +48,7 @@ class MQTTClient(QObject):
 
             if msg.topic == self._path + "/general_shutter_call":
                self.properties['general_shutter_call'].value = int(msg.payload.decode("utf-8"))
-               print("GENERAL SHUTTER CALL " + str(self.properties['general_shutter_call'].value))
+               logging.info("GENERAL SHUTTER CALL " + str(self.properties['general_shutter_call'].value))
             #client.username_pw_set(config.MQTT_USER, config.MQTT_PW)
 
 

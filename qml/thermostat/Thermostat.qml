@@ -303,11 +303,13 @@ Rectangle {
             height: parent.height *0.5
             width: parent.width
             z:-1
+            running: parent.parent._isCurrentItem
 
 
 
             Emitter {
                 enabled: modules.loaded_instances['Logic']['Thermostat'][tickswindow.instancename].heating_state > 0
+
                 anchors.bottom: parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
                 id: emitta

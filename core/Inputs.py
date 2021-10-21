@@ -389,7 +389,7 @@ class InputsDict(QObject):
             if self.entries[key].logging > 0:
                 self.buffer[key].append(float(self.entries[key].value), self.entries[key].last_update)
 
-            if self.entries[key].exposed > 0:
+            if self.entries[key].exposed > 0 and self.mqttclient.enabled > 0:
                 self.mqttclient.publish(self.mqttclient._path + '/' + key, value)
 
         except KeyError as e:
