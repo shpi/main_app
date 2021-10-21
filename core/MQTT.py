@@ -14,7 +14,9 @@ from functools import partial
 
 
 class MQTTClient(QObject):
-    def __init__(self, inputs, settings: QSettings):
+    inputs = None
+
+    def __init__(self, settings: QSettings):
         super().__init__()
 
         self.settings = settings

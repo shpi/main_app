@@ -42,11 +42,31 @@ Rectangle {
 
     color: "transparent"
 
+
+
+    Flickable {
+        anchors.fill: parent
+        contentHeight: list.implicitHeight + 100
+
+
+        Text {
+            id: title
+            anchors.left: parent.left
+            text: 'ShowValue > ' + instancename
+            color: Colors.black
+            font.bold: true
+            font.pixelSize: 32
+            height: 70
+            padding: 10
+        }
+
     Column {
         width: parent.width * 0.9
         anchors.horizontalCenter: parent.horizontalCenter
         id: list
-        spacing: 10
+         anchors.top: title.bottom
+         spacing: 20
+         padding: 10
 
         Text {
 
@@ -173,4 +193,5 @@ Rectangle {
                     modules.loaded_instances['UI']['ShowValue'][instancename].icon,
                     icons)
     }
+}
 }

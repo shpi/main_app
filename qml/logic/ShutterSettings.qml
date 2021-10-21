@@ -16,14 +16,28 @@ Item {
 
     Flickable {
         anchors.fill: parent
-        contentHeight: list.implicitHeight + 10
+        contentHeight: list.implicitHeight + 100
 
-        // Operationsmodus, Ausgänge,  Autmatisch hochfahren uhrzeit, Autmatisch runterfahren uhrzeit
+        Text {
+            id: title
+            anchors.left: parent.left
+            text: 'Shutter > ' + instancename
+            color: Colors.black
+            font.bold: true
+            font.pixelSize: 32
+            height: 70
+            padding: 10
+        }
+
+
+
         Column {
+             anchors.top: title.bottom
             width: parent.width * 0.9
             anchors.horizontalCenter: parent.horizontalCenter
             id: list
             spacing: 20
+            padding: 10
 
             Text {
                 text: "Controlled Outputs"
@@ -35,7 +49,7 @@ Item {
             ComboBox {
                 id: combo_boolean_up
                 anchors.right: parent.right
-                width: 550
+                width: parent.width * 0.9
                 model: inputs.outputList
                 textRole: 'path'
 
@@ -61,7 +75,7 @@ Item {
             ComboBox {
                 id: combo_boolean_down
                 anchors.right: parent.right
-                width: 550
+                width: parent.width * 0.9
                 model: inputs.outputList
                 textRole: 'path'
 
@@ -116,7 +130,7 @@ Item {
                 Label {
                     anchors.right: parent.left
                     anchors.rightMargin: 10
-                    text: "UP running time"
+                    text: "UP time"
                     color: Colors.black
                 }
             }
@@ -154,7 +168,7 @@ Item {
                 Label {
                     anchors.right: parent.left
                     anchors.rightMargin: 10
-                    text: "DOWN running time"
+                    text: "DOWN time"
                     color: Colors.black
                 }
             }
@@ -194,7 +208,7 @@ Item {
                             //time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
                         }
                     }
-                    font.pixelSize: 36
+                    font.pixelSize: 32
 
                     contentItem: Text {
                         text: control.text
@@ -248,7 +262,7 @@ Item {
                             //time.text = ((new Date().getTime() - time.startTime) / 1000).toFixed(1) + "s"
                         }
                     }
-                    font.pixelSize: 36
+                    font.pixelSize: 32
 
                     contentItem: Text {
                         text: controlup.text

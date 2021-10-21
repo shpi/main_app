@@ -5,18 +5,33 @@ import "qrc:/fonts"
 
 Item {
 
-    Column {
-        spacing: 13
+    Flickable {
         anchors.fill: parent
+        contentHeight: list.implicitHeight + 100
+
 
         Text {
-            padding: 5
+            padding: 10
             id: title
             width: parent.width
-            text: '<b>Wifi Status</b>'
+            text: 'Wifi Status'
+            font.bold: true
             font.pixelSize: 32
             color: Colors.black
+            anchors.left: parent.left
+            height: 70
+
         }
+
+
+    Column {
+        spacing: 20
+        padding: 10
+        id:list
+        anchors.top: title.bottom
+        width: parent.width * 0.9
+
+
 
 
         Row {
@@ -208,4 +223,4 @@ Item {
 
         }
     }
-}
+}}

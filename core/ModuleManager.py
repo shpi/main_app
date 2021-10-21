@@ -16,7 +16,7 @@ class ModuleManager(QObject):
         self.inputs = inputs
         self.available_modules = {'Logic': ['Shutter', 'Thermostat'],
                                   'Info': ['Weather'],
-                                  'UI': ['Shutter', 'ShowValue', 'MultiShutter', 'PieChart', 'ColorPicker'],
+                                  'UI': ['Shutter', 'ShowValue', 'ShowVideo' ,'MultiShutter', 'PieChart', 'ColorPicker'],
                                   'Connections': ['HTTP']}
 
         self._modules = dict()  # saves names of loaded instances

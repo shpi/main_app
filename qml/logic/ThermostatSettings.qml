@@ -17,74 +17,104 @@ Item {
 
     Flickable {
         anchors.fill: parent
-        contentHeight: list.implicitHeight + 10
+        contentHeight: list.implicitHeight + 100
 
+
+        Text {
+            id: title
+            anchors.left: parent.left
+            text: 'Thermostat > ' + instancename
+            color: Colors.black
+            font.bold: true
+            font.pixelSize: 32
+            height: 70
+            padding: 10
+        }
 
 
 
     Column {
 
         id: list
+         anchors.top: title.bottom
         width:parent.width * 0.9
         anchors.horizontalCenter: parent.horizontalCenter
-
-
         spacing: 20
-
-        Text {
-            text: "Thermostat Settings"
-            color: Colors.black
-            font.bold: true
-            anchors.topMargin: 20
-        }
+        padding: 10
 
 
-        ComboBox {
-            id: combo_temperature1
-            anchors.right: parent.right
-            width: 550
-            model: inputs.typeList
-            textRole: 'path'
-            onActivated:  modules.loaded_instances['Logic']['Thermostat'][instancename].temp_path = this.currentText
 
-            Component.onCompleted: {
+        Flow {
+            width: parent.width
+            height: implicitHeight
 
-                combo_temperature1.currentIndex = getIndex(modules.loaded_instances['Logic']['Thermostat'][instancename].temp_path, inputs.typeList)
-            }
-
-            Label {
-                anchors.right: parent.left
-                anchors.rightMargin: 10
+            Text {
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                //anchors.verticalCenter: parent.width < 500 ? undefined : pathtextfield.verticalCenter
                 text: "Room Temp."
-
-                font.family: localFont.name
+                font.pixelSize: 24
                 color: Colors.black
+                wrapMode: Text.WordWrap
+                width: parent.width < 500 ? parent.width : parent.width * 0.2
+                height: 50
+            }
+
+            ComboBox {
+                id: combo_temperature1
+                width: parent.width < 500 ? parent.width : parent.width * 0.8
+                font.pixelSize: 20
+                model: inputs.typeList
+                textRole: 'path'
+                onActivated:  modules.loaded_instances['Logic']['Thermostat'][instancename].temp_path = this.currentText
+
+                Component.onCompleted: {
+
+                    combo_temperature1.currentIndex = getIndex(modules.loaded_instances['Logic']['Thermostat'][instancename].temp_path, inputs.typeList)
+                }
+
+
+            }
+        }
+
+        Flow {
+            width: parent.width
+            height: implicitHeight
+
+            Text {
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                //anchors.verticalCenter: parent.width < 500 ? undefined : pathtextfield.verticalCenter
+                text: "Heating Output"
+                font.pixelSize: 24
+                color: Colors.black
+                wrapMode: Text.WordWrap
+                width: parent.width < 500 ? parent.width : parent.width * 0.2
+                height: 50
+            }
+
+            ComboBox {
+                id: combo_heatingcontact
+
+                width: parent.width < 500 ? parent.width : parent.width * 0.8
+                font.pixelSize: 20
+                 model: inputs.outputList
+                textRole: 'path'
+                onActivated:  modules.loaded_instances['Logic']['Thermostat'][instancename].heating_contact_path = this.currentText
+
+                Component.onCompleted: {
+
+                    combo_heatingcontact.currentIndex = getIndex(modules.loaded_instances['Logic']['Thermostat'][instancename].heating_contact_path, inputs.outputList)
+                }
+
+
             }
         }
 
 
-        ComboBox {
-            id: combo_heatingcontact
-            anchors.right: parent.right
-            width: 550
-            model: inputs.outputList
-            textRole: 'path'
-            onActivated:  modules.loaded_instances['Logic']['Thermostat'][instancename].heating_contact_path = this.currentText
 
-            Component.onCompleted: {
 
-                combo_heatingcontact.currentIndex = getIndex(modules.loaded_instances['Logic']['Thermostat'][instancename].heating_contact_path, inputs.outputList)
-            }
 
-            Label {
-                anchors.right: parent.left
-                anchors.rightMargin: 10
-                text: "Heating Contact"
-
-                font.family: localFont.name
-                color: Colors.black
-            }
-        }
 
 
         Row {

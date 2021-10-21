@@ -191,7 +191,13 @@ Rectangle {
 
         Flow {
             id: keyboardFlow
-            anchors.fill: parent
+            width: parent.width * 0.9
+            height: parent.height * 0.95
+            anchors.top: parent.top
+            anchors.left: parent.left
+
+            anchors.leftMargin: parent.width * 0.05
+
             padding: 10
 
             Rectangle {
@@ -216,7 +222,6 @@ Rectangle {
                     Repeater {
                         id: keyRepeater
                         anchors.fill: parent
-
 
                         model: keyboard_de
 

@@ -65,8 +65,9 @@ Rectangle {
 
     Slider {
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 10
+        anchors.bottomMargin: parent.height * 0.1
         anchors.horizontalCenter: parent.horizontalCenter
+        anchors.horizontalCenterOffset: -parent.width * 0.1
 
         id: control
         property real radius: 25
@@ -232,6 +233,7 @@ Rectangle {
         color: Colors.black
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenterOffset: parent.height * -0.1
         font.pixelSize: tickswindow.width * 0.17
          anchors.horizontalCenterOffset: -wheel.width / 2
 
@@ -264,6 +266,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenterOffset: -wheel.width / 2
         anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenterOffset: parent.height * -0.1
         font.pixelSize: window.minsize * 0.17
         opacity: temptext.opacity == 0 ? 1 : 0
 

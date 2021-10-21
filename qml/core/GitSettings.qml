@@ -8,10 +8,33 @@ Rectangle {
     color: "transparent"
     anchors.fill: parent
 
-    Column {
-        padding: 5
-        spacing: 10
+
+    Flickable {
         anchors.fill: parent
+        contentHeight: list.implicitHeight + 100
+
+
+        Text {
+            id: title
+            anchors.left: parent.left
+            text: 'OTA Update'
+            color: Colors.black
+            font.bold: true
+            font.pixelSize: 32
+            height: 70
+            padding: 10
+        }
+
+
+
+
+
+    Column {
+        spacing: 20
+        padding: 10
+        id: list
+        anchors.top: title.bottom
+        width:parent.width
 
         Text {
             visible: git.updates_remote === 0
@@ -225,4 +248,5 @@ Rectangle {
             }
         }
     }
+}
 }

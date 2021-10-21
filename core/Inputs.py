@@ -170,9 +170,10 @@ class InputListModel(QAbstractListModel):
 
 
 class InputsDict(QObject):
-    def __init__(self, settings):
+    def __init__(self, settings, mqttclient):
         super(InputsDict, self).__init__()
         self.settings = settings
+        self.mqttclient = mqttclient
         self.entries = dict()
         self.buffer = dict()
 
@@ -387,6 +388,9 @@ class InputsDict(QObject):
             self.completelist.updateListView(key)
             if self.entries[key].logging > 0:
                 self.buffer[key].append(float(self.entries[key].value), self.entries[key].last_update)
+
+            if self.entries[key].exposed > 0:
+                self.mqttclient.publish(self.mqttclient._path + '/' + key, value)
 
         except KeyError as e:
             logging.error(key + ' does not exists yet, you can ignore this message, if it onlys happens during startup')

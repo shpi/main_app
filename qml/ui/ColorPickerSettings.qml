@@ -18,20 +18,48 @@ Rectangle {
 
     }
 
+
+    Text {
+        id: title
+        anchors.left: parent.left
+        text: 'ColorPicker > ' + instancename
+        color: Colors.black
+        font.bold: true
+        font.pixelSize: 32
+        height: 70
+        padding: 10
+    }
+
     Column {
         width: parent.width * 0.9
         anchors.horizontalCenter: parent.horizontalCenter
         id: list
-        spacing: 10
+        spacing: 20
+        padding: 10
+         anchors.top: title.bottom
 
 
 
+        Flow {
+            width: parent.width
+            height: implicitHeight
+
+            Text {
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: "Red"
+                font.pixelSize: 24
+                color: Colors.black
+                wrapMode: Text.WordWrap
+                width: parent.width < 500 ? parent.width : parent.width * 0.2
+                height: 50
+            }
 
 
         ComboBox {
             id: combo_red_path
-            anchors.right: parent.right
-            width: 550
+            width: parent.width < 500 ? parent.width : parent.width * 0.8
+            height: 50
             model: inputs.outputList
             textRole: 'path'
             Component.onCompleted: {
@@ -43,20 +71,28 @@ Rectangle {
 
             onActivated: modules.loaded_instances['UI']['ColorPicker'][instancename].red_path  = combo_red_path.currentText
 
-            Label {
-                anchors.right: parent.left
-                anchors.rightMargin: 10
-                text: "Red Path"
-                font.family: localFont.name
-                color: Colors.black
-            }
-        }
 
+        }}
+
+        Flow {
+            width: parent.width
+            height: implicitHeight
+
+            Text {
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: "Red"
+                font.pixelSize: 24
+                color: Colors.black
+                wrapMode: Text.WordWrap
+                width: parent.width < 500 ? parent.width : parent.width * 0.2
+                height: 50
+            }
 
         ComboBox {
             id: combo_green_path
-            anchors.right: parent.right
-            width: 550
+            width: parent.width < 500 ? parent.width : parent.width * 0.8
+            height: 50
             model: inputs.outputList
             textRole: 'path'
             Component.onCompleted: {
@@ -68,20 +104,27 @@ Rectangle {
 
             onActivated: modules.loaded_instances['UI']['ColorPicker'][instancename].green_path  = combo_green_path.currentText
 
-            Label {
-                anchors.right: parent.left
-                anchors.rightMargin: 10
-                text: "Green Path"
-                font.family: localFont.name
+
+        }}
+
+        Flow {
+            width: parent.width
+            height: implicitHeight
+
+            Text {
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: "Blue"
+                font.pixelSize: 24
                 color: Colors.black
+                wrapMode: Text.WordWrap
+                width: parent.width < 500 ? parent.width : parent.width * 0.2
+                height: 50
             }
-        }
-
-
         ComboBox {
             id: combo_blue_path
-            anchors.right: parent.right
-            width: 550
+            width: parent.width < 500 ? parent.width : parent.width * 0.8
+            height: 50
             model: inputs.outputList
             textRole: 'path'
             Component.onCompleted: {
@@ -93,14 +136,8 @@ Rectangle {
 
             onActivated: modules.loaded_instances['UI']['ColorPicker'][instancename].blue_path  = combo_blue_path.currentText
 
-            Label {
-                anchors.right: parent.left
-                anchors.rightMargin: 10
-                text: "Blue Path"
-                font.family: localFont.name
-                color: Colors.black
-            }
-        }
+
+        }}
 
 
 

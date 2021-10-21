@@ -10,20 +10,23 @@ Item {
         header: Rectangle {
 
             width: parent.width
-            height: 50
+            height: 70
             color: "transparent"
 
             Text {
                 padding: 10
                 id: inputtitle
                 width: parent.width
-                text: '<b>Available Variables</b>'
+                text: 'Available Variables'
+                font.bold: true
                 font.pixelSize: 32
                 color: Colors.black
+                height: 70
+
             }
         }
 
-        cacheBuffer: 50
+        cacheBuffer: 200
         height: parent.height
         width: parent.width
         //clip: true

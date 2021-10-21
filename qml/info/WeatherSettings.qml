@@ -3,90 +3,119 @@ import QtQuick.Controls 2.15
 
 import "qrc:/fonts"
 
-Flickable {
+Item {
 
-    id: flickable
     property string category
     property string classname
     property string instancename
-    contentHeight: weathercolumn.implicitHeight + cityview.height + 100
+
+
+Flickable {
+
+    id: flickable
+    anchors.fill: parent
+    contentHeight: weathercolumn.implicitHeight + cityview.height + 200
+
 
     Text {
-        id: header
-        //padding: 10
+        id: title
         anchors.left: parent.left
-        text: '<b>Weather > ' + instancename + '</b>'
+        text: 'Weather > ' + instancename
         color: Colors.black
         font.bold: true
+        font.pixelSize: 32
+        height: 70
+        padding: 10
     }
 
+
+
     Column {
-        anchors.top: header.bottom
+        anchors.top: title.bottom
         id: weathercolumn
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: 20
+        padding: 10
+        width:parent.width * 0.9
 
-        SpinBox {
-            value: modules.loaded_instances['Info']['Weather'][instancename].interval
-            stepSize: 60
-            onValueChanged: modules.loaded_instances['Info']['Weather'][instancename].interval
-                            = this.value
-            from: 600
-            to: 10000
-            font.pixelSize: 32
-            anchors.right: parent.right
 
-            textFromValue: function (value, locale) {
+        Flow {
+            width: parent.width
+            height: implicitHeight
+
+            Text {
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: "Update Interval"
+                font.pixelSize: 24
+                color: Colors.black
+                wrapMode: Text.WordWrap
+                width: parent.width < 500 ? parent.width : parent.width * 0.3
+                height: 50
+            }
+
+            SpinBox {
+                value: modules.loaded_instances['Info']['Weather'][instancename].interval
+                stepSize: 60
+                width: parent.width < 500 ? parent.width : parent.width * 0.7
+                onValueChanged: modules.loaded_instances['Info']['Weather'][instancename].interval
+                                = this.value
+                from: 600
+                to: 10000
+                font.pixelSize: 32
+                textFromValue: function (value, locale) {
                     return Number(value) + "s"
                 }
 
                 valueFromText: function (text, locale) {
                     return Number.fromLocaleString(locale, text)
                 }
-
-
-            Label {
-                anchors.right: parent.left
-                anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
-                color: Colors.black
-                text: "Update Interval"
             }
         }
 
-        TextField {
-            anchors.right: parent.right
-            onActiveFocusChanged: keyboard(this)
-            width: 400
-            font.pixelSize: 32
-            text: modules.loaded_instances['Info']['Weather'][instancename].api_key
-            onEditingFinished: modules.loaded_instances['Info']['Weather'][instancename].api_key
-                               = text
+        Flow {
+            width: parent.width
+            height: implicitHeight
 
-            Label {
-                anchors.right: parent.left
-                anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
+            Text {
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: "OWM API Key"
+                font.pixelSize: 24
                 color: Colors.black
-                text: "OWM Key"
+                wrapMode: Text.WordWrap
+                width: parent.width < 500 ? parent.width : parent.width * 0.3
+                height: 50
+            }
+            TextField {
+                onActiveFocusChanged: keyboard(this)
+                width: parent.width < 500 ? parent.width : parent.width * 0.7
+                height: 50
+                font.pixelSize: 32
+                text: modules.loaded_instances['Info']['Weather'][instancename].api_key
+                onEditingFinished: modules.loaded_instances['Info']['Weather'][instancename].api_key
+                                   = text
             }
         }
 
-        TextField {
-            anchors.right: parent.right
-            onActiveFocusChanged: keyboard(this)
-            width: 400
-            id: city_tf
-            text: modules.loaded_instances['Info']['Weather'][instancename].city
-            placeholderText: qsTr("City")
-            font.pixelSize: 32
+        Flow {
+            width: parent.width
+            height: implicitHeight
 
+            TextField {
+
+                onActiveFocusChanged: keyboard(this)
+                width: parent.width < 500 ? parent.width : parent.width * 0.7
+                height: 50
+                id: city_tf
+                text: modules.loaded_instances['Info']['Weather'][instancename].city
+                placeholderText: qsTr("City")
+                font.pixelSize: 32
+            }
             RoundButton {
-                anchors.right: parent.left
-                anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width < 500 ? parent.width : parent.width * 0.3
+                height: 50
                 text: "Search"
-
                 onClicked: {
                     modules.loaded_instances['Info']['Weather'][instancename].update_cities(
                                 city_tf.text)
@@ -97,18 +126,12 @@ Flickable {
     ListView {
 
         id: cityview
-
         anchors.top: weathercolumn.bottom
         anchors.topMargin: 20
-
         model: modules.loaded_instances['Info']['Weather'][instancename].cities
-
         delegate: contactDelegate
-
         width: flickable.width
-
         onCountChanged: cityview.height = cityview.count * 100
-
         clip: true
 
         Component {
@@ -118,7 +141,6 @@ Flickable {
                 property int delindex: index
                 id: wrapper
                 height: 100
-
                 color: index % 2 === 0 ? "transparent" : Colors.white
 
                 Column {
@@ -128,8 +150,8 @@ Flickable {
                     Row {
                         spacing: 10
                         height: 70
-                        //leftPadding: 10
 
+                        //leftPadding: 10
                         RadioButton {
                             //radius: height / 2
                             anchors.verticalCenter: parent.verticalCenter
@@ -177,7 +199,7 @@ Flickable {
         text: 'Delete Instance'
         palette.button: "darkred"
         palette.buttonText: "white"
-        font.pixelSize: 40
+        font.pixelSize: 32
         onClicked: {
 
             settingsstackView.pop()
@@ -194,4 +216,5 @@ Flickable {
             cityview.update()
         }
     }
+}
 }

@@ -7,28 +7,37 @@ Item {
 
     Component.onCompleted: inputs.set_searchList('sound')
 
-    Column {
-        anchors.fill: parent
-
-        Text {
-            id: audioheader
-            padding: 10
-            text: "Audio Settings"
-            color: Colors.black
-            font.bold: true
-        }
 
         ListView {
             cacheBuffer: 20
+            anchors.fill:parent
 
-            height: parent.height - audioheader.height
-            width: parent.width
             clip: true
             orientation: Qt.Vertical
             id: inputsview
 
             model: inputs.searchList
             delegate: inputDelegate
+
+            header:  Rectangle {
+
+                width: parent.width
+                height: 70
+                color: "transparent"
+
+                Text {
+
+                id: title
+                width: parent.width
+                text: 'Audio Settings'
+                font.bold: true
+                font.pixelSize: 32
+                color: Colors.black
+                anchors.left: parent.left
+                height: 70
+                padding: 10
+            }}
+
 
             Component {
                 id: inputDelegate
@@ -225,4 +234,4 @@ Item {
             }
         }
     }
-}
+

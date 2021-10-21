@@ -39,13 +39,16 @@ Item {
         Column {
             id: settingscolumn
             anchors.fill: parent
-            spacing: 15
+            spacing: 20
             padding: 10
 
             Text {
                 text: "Backlight Range"
                 color: Colors.black
                 font.bold: true
+                padding: 10
+                font.pixelSize: 32
+
             }
 
             RangeSlider {
@@ -110,8 +113,8 @@ Item {
 
             SpinBox {
                 value: appearance.dim_timer
-                anchors.right: parent.right
-                anchors.rightMargin: 5
+                anchors.left: parent.horizontalCenter
+
                 font.pixelSize:32
                 stepSize: 1
                 onValueChanged: appearance.dim_timer = this.value
@@ -131,6 +134,7 @@ Item {
 
 
                 Label {
+                    anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.left
                     anchors.rightMargin: 10
                     font.pixelSize: 25
@@ -141,8 +145,8 @@ Item {
 
             SpinBox {
                 value: appearance.off_timer
-                anchors.right: parent.right
-                anchors.rightMargin: 5
+                anchors.left: parent.horizontalCenter
+
                 font.pixelSize:32
                 stepSize: 1
 
@@ -159,6 +163,7 @@ Item {
 
 
                 Label {
+                    anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.left
                     anchors.rightMargin: 10
                     font.pixelSize: 25
@@ -169,8 +174,7 @@ Item {
 
             SpinBox {
                 value: appearance.jump_timer
-                anchors.right: parent.right
-                anchors.rightMargin: 5
+                anchors.left: parent.horizontalCenter
                 font.pixelSize:32
                 stepSize: 1
                 onValueChanged: appearance.jump_timer = this.value
@@ -194,6 +198,7 @@ Item {
                 }
 */
                 Label {
+                    anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.left
                     anchors.rightMargin: 10
                     text: "Jump to home after"
@@ -204,9 +209,12 @@ Item {
 
             Text {
                 text: "Nightmode"
-                color: Colors.black
                 font.bold: true
+                padding: 10
+                font.pixelSize: 32
+                color: Colors.black
                 anchors.topMargin: 20
+
             }
 
             Component {
@@ -225,7 +233,7 @@ Item {
             }
 
             Flow {
-                width: parent.width
+                anchors.horizontalCenter: parent.horizontalCenter
                 RadioButton {
                     checked: appearance.night_mode === 0
                     onReleased: {
@@ -421,8 +429,10 @@ Item {
 
             Text {
                 text: "Nightmode Settings"
-                color: Colors.black
                 font.bold: true
+                padding: 10
+                font.pixelSize: 32
+                color: Colors.black
                 anchors.topMargin: 20
             }
 
@@ -501,6 +511,7 @@ Item {
                   }
     }*/
             CheckBox {
+                anchors.leftMargin: 20
                 Text {
 
 
@@ -508,7 +519,7 @@ Item {
 
                     wrapMode: Text.WordWrap
                     width: parent.parent.width - 40
-
+                    anchors.topMargin: 20
                     anchors.left: parent.right
                     anchors.leftMargin: 10
                     color: Colors.black
@@ -524,9 +535,11 @@ Item {
 
             Text {
 
-                text: "\nTracked Input Devices"
-                color: Colors.black
+                text: "Tracked Input Devices"
                 font.bold: true
+                padding: 10
+                font.pixelSize: 32
+                color: Colors.black
                 anchors.topMargin: 30
             }
 
@@ -534,7 +547,7 @@ Item {
                 width: parent.width
                 model: appearance.devices
                 CheckBox {
-
+                    anchors.leftMargin: 20
                     checked: appearance.selected_device(modelData)
                     height: subtext.height + 10
 

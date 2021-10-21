@@ -51,6 +51,8 @@
         <file>qml/ui/MultiShutterSettings.qml</file>
         <file>qml/ui/MultiShutter.qml</file>
         <file>qml/ui/ShowValueSettings.qml</file>
+        <file>qml/ui/ShowVideoSettings.qml</file>
+        <file>qml/ui/ShowVideo.qml</file>
         <file>qml/ui/Shutter.qml</file>
         <file>qml/ui/ColorPickerSettings.qml</file>
         <file>qml/ui/PieChart.qml</file>

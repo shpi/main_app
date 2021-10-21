@@ -6,6 +6,9 @@ import "qrc:/fonts"
 Item {
     property string instancename
 
+
+
+
     ListView {
 
         header: Rectangle {
@@ -18,10 +21,13 @@ Item {
                 width: parent.width
 
                 Text {
-                    padding: 10
+
+
                     id: inputtitle
                     width: parent.width
-                    text: '<b>Available Variables</b>'
+                    text: 'Available Variables'
+                    font.bold: true
+                    padding: 10
                     font.pixelSize: 32
                     color: Colors.black
                 }

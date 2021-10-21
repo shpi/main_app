@@ -115,9 +115,12 @@ def check_loop(interval: int = None):
 
 
 settings = QSettings('settings.ini', QSettings.IniFormat)
-inputs = InputsDict(settings)
 
 core_modules = dict()
+core_modules['mqttclient'] = MQTTClient(settings)
+inputs = InputsDict(settings, core_modules['mqttclient'])
+
+core_modules['mqttclient'].inputs = inputs
 
 core_modules['systeminfo'] = SystemInfo()
 core_modules['cpu'] = CPU()
@@ -132,7 +135,6 @@ core_modules['wifi'] = Wifi(settings)
 core_modules['httpserver'] = HTTPServer(inputs, settings)
 core_modules['mlx90615'] = MLX90615(inputs, settings)
 core_modules['alsamixer'] = AlsaMixer(inputs, settings)
-core_modules['mqttclient'] = MQTTClient(inputs, settings)
 
 for core_module in core_modules:
     inputs.add(core_modules[core_module].get_inputs())

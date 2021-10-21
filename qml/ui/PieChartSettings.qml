@@ -14,52 +14,67 @@ Rectangle {
 
     color: "transparent"
 
+
+
     Flickable {
         anchors.fill: parent
-        contentHeight: list.implicitHeight + 10
+        contentHeight: list.implicitHeight + 100
+
+
+
+        Text {
+            id: title
+            anchors.left: parent.left
+            text: 'PieChart > ' + instancename
+            color: Colors.black
+            font.bold: true
+            font.pixelSize: 32
+            height: 70
+            padding: 10
+
+        }
+
 
         Column {
+
             width: parent.width * 0.9
             anchors.horizontalCenter: parent.horizontalCenter
             id: list
-            spacing: 20
+             anchors.top: title.bottom
+             spacing: 20
+             padding: 10
 
 
 
-            Text {
-                text: "Selected Variables"
-                color: Colors.black
-                font.bold: true
-                anchors.topMargin: 20
-            }
-            Row {
+            Flow {
                 width: parent.width
-                spacing: 10
+                height: implicitHeight
+
+                Text {
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: "Value"
+                    font.pixelSize: 24
+                    color: Colors.black
+                    wrapMode: Text.WordWrap
+                    width: parent.width < 500 ? parent.width : parent.width * 0.2
+                    height: 50
+                }
+
             ComboBox
             {
                 id: combo_desired_position_path
-
-                width: 450
+                width: parent.width < 500 ? parent.width : parent.width * 0.8
+                height: 50
                 model: inputs.inputList
                 textRole: 'path'
 
-
-
-                Label {
-                    anchors.right: parent.left
-                    anchors.rightMargin: 10
-                    text: "Desired Position"
-
-                    font.family: localFont.name
-                    color: Colors.black
-                }
             }
 
             RoundButton {
                 text: 'add'
                 palette.button: "darkred"
                 palette.buttonText: "white"
-
                 font.pixelSize: 24
                 font.family: localFont.name
                 onClicked: modules.loaded_instances['UI']['PieChart'][instancename].add_path(combo_desired_position_path.currentText)

@@ -97,7 +97,7 @@ Rectangle {
             text: 'Schedule'
             color: Colors.black
             font.bold: true
-            font.pixelSize:40
+            font.pixelSize:32
         }
 
         Row {

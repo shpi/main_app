@@ -7,27 +7,26 @@ Rectangle {
 
     color: "transparent"
 
-
-
     Flickable {
         anchors.fill: parent
-        contentHeight: list.implicitHeight + 10
+        contentHeight: list.implicitHeight + 100
 
-          Rectangle {
-            id: title
-            width: parent.width
-            height: 50
-            color: "transparent"
+
 
             Text {
-                padding: 10
-                id: inputtitle
+                id: title
                 width: parent.width
-                text: '<b>MQTT Client</b>'
+                text: 'MQTT Client'
+                font.bold: true
                 font.pixelSize: 32
                 color: Colors.black
+                anchors.left: parent.left
+                height: 70
+                padding: 10
             }
-        }
+
+
+
 
         Column {
             anchors.top: title.bottom
@@ -35,99 +34,117 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             id: list
             spacing: 20
+            padding: 10
 
+            Flow {
+                width: parent.width
+                height: implicitHeight
 
-
-
-
-            TextField {
-            anchors.right: parent.right
-            onActiveFocusChanged: keyboard(this)
-            width: 400
-            font.pixelSize: 32
-            text: mqttclient.path
-            onEditingFinished: mqttclient.path = text
-
-            Label {
-                anchors.right: parent.left
-                anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
-                color: Colors.black
-                text: "MQTT Client Path"
-             }
-
-             }
-
-
-
-        TextField {
-            anchors.right: parent.right
-            onActiveFocusChanged: keyboard(this)
-            width: 400
-            font.pixelSize: 32
-            text: mqttclient.host
-            onEditingFinished: mqttclient.host = text
-
-            Label {
-                anchors.right: parent.left
-                anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
-                color: Colors.black
-                text: "Server"
-             }
-
-             }
-
-
-        TextField {
-            anchors.right: parent.right
-            onActiveFocusChanged: keyboard(this)
-            width: 400
-            font.pixelSize: 32
-            text: mqttclient.port
-            onEditingFinished: mqttclient.port = text
-
-            Label {
-                
-                anchors.right: parent.left
-                anchors.rightMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
-                color: Colors.black
-                text: "Port"
-             }
-
-             }
-
-
-
-
-
-         
                 Text {
-
-
-                    wrapMode: Text.WordWrap
-                    width: 300
-                    anchors.left: parent.left
-                    anchors.leftMargin: 10
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    //anchors.verticalCenter: parent.width < 500 ? undefined : pathtextfield.verticalCenter
+                    text: "MQTT MainPath"
+                    font.pixelSize: 24
                     color: Colors.black
-                    text: 'Client enabled'
+                    wrapMode: Text.WordWrap
+                    width: parent.width < 500 ? parent.width : parent.width * 0.3
+                    height: 50
+                }
 
-                    
-               CheckBox {
+                TextField {
+                    id: pathtextfield
+                    onActiveFocusChanged: keyboard(this)
+                    width: parent.width < 500 ? parent.width : parent.width * 0.7
+                    height: 50
+                    font.pixelSize: 32
+                    text: mqttclient.path
+                    onEditingFinished: mqttclient.path = text
 
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.right
-                
-                Component.onCompleted: this.checked = mqttclient.enabled
-
-                onCheckStateChanged: {
-                    mqttclient.enabled = this.checked ? 1 : 0
                 }
             }
-}
 
+            Flow {
+                width: parent.width
+                height: implicitHeight
+
+                Text {
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    //anchors.verticalCenter: parent.width < 500 ? undefined : pathtextfield.verticalCenter
+                    text: "Server"
+                    font.pixelSize: 24
+                    color: Colors.black
+                    wrapMode: Text.WordWrap
+                    width: parent.width < 500 ? parent.width : parent.width * 0.3
+                    height: 50
+                }
+
+                TextField {
+
+
+                    onActiveFocusChanged: keyboard(this)
+                    height: 50
+                    width: parent.width < 500 ? parent.width : parent.width * 0.7
+                    font.pixelSize: 32
+                    text: mqttclient.host
+                    onEditingFinished: mqttclient.host = text
                 }
             }
 
+            Flow {
+                width: parent.width
+                height: implicitHeight
+
+                Text {
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    //anchors.verticalCenter: parent.width < 500 ? undefined : pathtextfield.verticalCenter
+                    text: "Port"
+                    font.pixelSize: 24
+                    color: Colors.black
+                    wrapMode: Text.WordWrap
+                    width: parent.width < 500 ? parent.width : parent.width * 0.3
+                    height: 50
+                }
+
+                TextField {
+                    height: 50
+
+                    onActiveFocusChanged: keyboard(this)
+                    width: parent.width < 500 ? parent.width : parent.width * 0.7
+                    font.pixelSize: 32
+                    text: mqttclient.port
+                    onEditingFinished: mqttclient.port = text
+                }
+            }
+
+            Flow {
+                width: parent.width
+                height: implicitHeight
+
+                Text {
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    //anchors.verticalCenter: parent.width < 500 ? undefined : pathtextfield.verticalCenter
+                    text: "Client enabled"
+                    font.pixelSize: 24
+                    color: Colors.black
+                    wrapMode: Text.WordWrap
+                    width: parent.width < 500 ? parent.width : parent.width * 0.3
+                    height: 50
+                }
+
+                CheckBox {
+
+                    width: parent.width < 500 ? parent.width : parent.width * 0.7
+                    Component.onCompleted: this.checked = mqttclient.enabled
+
+                    onCheckStateChanged: {
+                        mqttclient.enabled = this.checked ? 1 : 0
+                    }
+                }
+            }
+        }
+    }
 }
