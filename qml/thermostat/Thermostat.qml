@@ -303,7 +303,7 @@ Rectangle {
             height: parent.height *0.5
             width: parent.width
             z:-1
-            running: parent.parent._isCurrentItem
+            running: parent.parent.parent._isCurrentItem
 
 
 

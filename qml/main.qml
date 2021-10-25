@@ -329,6 +329,7 @@ ApplicationWindow {
             delegate: Loader {
                 asynchronous: true
                 id: thermostatslide
+                property bool _isCurrentItem: SwipeView.isCurrentItem
                 source: "thermostat/Thermostat.qml"
                 visible: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
                 active: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
