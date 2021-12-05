@@ -36,7 +36,8 @@ Rectangle {
             spacing: 20
             padding: 10
 
-            Flow {
+
+           Flow {
                 width: parent.width
                 height: implicitHeight
 
@@ -44,7 +45,7 @@ Rectangle {
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                     //anchors.verticalCenter: parent.width < 500 ? undefined : pathtextfield.verticalCenter
-                    text: "MQTT MainPath"
+                    text: "MQTT User"
                     font.pixelSize: 24
                     color: Colors.black
                     wrapMode: Text.WordWrap
@@ -54,6 +55,62 @@ Rectangle {
 
                 TextField {
                     id: pathtextfield
+                    onActiveFocusChanged: keyboard(this)
+                    width: parent.width < 500 ? parent.width : parent.width * 0.7
+                    height: 50
+                    font.pixelSize: 32
+                    text: mqttclient.user
+                    onEditingFinished: mqttclient.user = text
+
+                }
+            }
+
+
+           Flow {
+                width: parent.width
+                height: implicitHeight
+
+                Text {
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: "MQTT Password"
+                    font.pixelSize: 24
+                    color: Colors.black
+                    wrapMode: Text.WordWrap
+                    width: parent.width < 500 ? parent.width : parent.width * 0.3
+                    height: 50
+                }
+
+                TextField {
+                    onActiveFocusChanged: keyboard(this)
+                    width: parent.width < 500 ? parent.width : parent.width * 0.7
+                    height: 50
+                    echoMode: TextInput.Password
+                    font.pixelSize: 32
+                    text: mqttclient.password
+                    onEditingFinished: mqttclient.password = text
+
+                }
+            }
+
+
+
+            Flow {
+                width: parent.width
+                height: implicitHeight
+
+                Text {
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    text: "MQTT MainPath"
+                    font.pixelSize: 24
+                    color: Colors.black
+                    wrapMode: Text.WordWrap
+                    width: parent.width < 500 ? parent.width : parent.width * 0.3
+                    height: 50
+                }
+
+                TextField {
                     onActiveFocusChanged: keyboard(this)
                     width: parent.width < 500 ? parent.width : parent.width * 0.7
                     height: 50
@@ -119,6 +176,38 @@ Rectangle {
                 }
             }
 
+
+           Flow {
+                width: parent.width
+                height: implicitHeight
+
+                Text {
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    //anchors.verticalCenter: parent.width < 500 ? undefined : pathtextfield.verticalCenter
+                    text: "TLS enabled"
+                    font.pixelSize: 24
+                    color: Colors.black
+                    wrapMode: Text.WordWrap
+                    width: parent.width < 500 ? parent.width : parent.width * 0.3
+                    height: 50
+                }
+
+                CheckBox {
+
+                    width: parent.width < 500 ? parent.width : parent.width * 0.7
+                    Component.onCompleted: this.checked = mqttclient.tls_enabled
+
+                    onCheckStateChanged: {
+                        mqttclient.tls_enabled = this.checked ? 1 : 0
+                    }
+                }
+
+
+
+            }
+
+
             Flow {
                 width: parent.width
                 height: implicitHeight
@@ -144,6 +233,9 @@ Rectangle {
                         mqttclient.enabled = this.checked ? 1 : 0
                     }
                 }
+
+
+
             }
         }
     }

@@ -4,6 +4,8 @@ import logging
 import sys
 import time
 import paho.mqtt.client as mqtt
+import ssl
+
 
 from PySide2.QtCore import QSettings, QObject, Signal
 
@@ -23,6 +25,12 @@ class MQTTClient(QObject):
         self._port = int(settings.value("mqtt/port", 1883))
         self._host = str(settings.value("mqtt/host", 'broker.hivemq.com'))
         self._path = str(settings.value("mqtt/path", 'shpi'))
+        self._tls_enabled = str(settings.value("mqtt/tls_enabled", '0'))
+        self._user = str(settings.value("mqtt/user", ''))
+        self._password = str(settings.value("mqtt/password", ''))
+
+
+
         self._enabled = int(settings.value("mqtt/enabled", 1))
 
         self.properties = dict()
@@ -62,6 +70,13 @@ class MQTTClient(QObject):
     def start_mqtt(self):
             logging.info("Starting MQTT Client ...")
             try:
+                if self._tls > 0:
+                    #openssl s_client -host mqtt.broker.hostname.com -port 8883 -showcerts
+                    self.client.tls_set() #tls_version=ssl.PROTOCOL_TLSv1_2)
+                    self.client.tls_insecure_set(True)
+                if self._user != '':
+                    self.client.username_pw_set(username=self._user, password=self._password)
+
                 self.client.connect(self._host, self._port, 60)
                 self.client.loop_start()
             except:
@@ -159,3 +174,45 @@ class MQTTClient(QObject):
             self.start_mqtt()
 
 
+   # @Property(str, notify=settings_changed)
+    def user(self):
+        return self._user
+
+    # @host.setter
+    @Pre_5_15_2_fix(str, user, notify=settings_changed)
+    def user(self, key):
+        self._user = key
+        self.settings.setValue('mqtt/user', key)
+        
+        if self._enabled:
+            self.stop_mqtt()
+            self.start_mqtt()
+
+   # @Property(str, notify=settings_changed)
+    def password(self):
+        return self._password
+
+    # @host.setter
+    @Pre_5_15_2_fix(str, password, notify=settings_changed)
+    def password(self, key):
+        self._password = key
+        self.settings.setValue('mqtt/password', key)
+        
+        if self._enabled:
+            self.stop_mqtt()
+            self.start_mqtt()
+
+
+   # @Property(int, notify=settings_changed)
+    def tls_enabled(self):
+        return self._tls_enabled
+
+    # @host.setter
+    @Pre_5_15_2_fix(int, tls_enabled, notify=settings_changed)
+    def tls_enabled(self, key):
+        self._tls_enabled = key
+        self.settings.setValue('mqtt/tls_enabled', key)
+        
+        if self._enabled:
+            self.stop_mqtt()
+            self.start_mqtt()
