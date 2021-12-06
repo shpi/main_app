@@ -25,7 +25,7 @@ class MQTTClient(QObject):
         self._port = int(settings.value("mqtt/port", 1883))
         self._host = str(settings.value("mqtt/host", 'broker.hivemq.com'))
         self._path = str(settings.value("mqtt/path", 'shpi'))
-        self._tls_enabled = str(settings.value("mqtt/tls_enabled", '0'))
+        self._tls_enabled = int(settings.value("mqtt/tls_enabled", '0'))
         self._user = str(settings.value("mqtt/user", ''))
         self._password = str(settings.value("mqtt/password", ''))
 
@@ -70,13 +70,12 @@ class MQTTClient(QObject):
     def start_mqtt(self):
             logging.info("Starting MQTT Client ...")
             try:
-                if self._tls > 0:
+             if self._tls_enabled > 0:
                     #openssl s_client -host mqtt.broker.hostname.com -port 8883 -showcerts
                     self.client.tls_set() #tls_version=ssl.PROTOCOL_TLSv1_2)
                     self.client.tls_insecure_set(True)
-                if self._user != '':
-                    self.client.username_pw_set(username=self._user, password=self._password)
-
+             if self._user != '':
+                self.client.username_pw_set(username=self._user, password=self._password)
                 self.client.connect(self._host, self._port, 60)
                 self.client.loop_start()
             except:
