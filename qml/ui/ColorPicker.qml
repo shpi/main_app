@@ -138,6 +138,16 @@ Rectangle {
             }
         }
 
+              Connections {
+        target: appearance
+        function onJump_stateChanged() {
+            if (appearance.jump_state) {
+         colorpopup.close()
+            }
+        }
+    }
+
+
         Slider {
             id: control
 

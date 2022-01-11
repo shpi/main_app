@@ -372,6 +372,9 @@ ApplicationWindow {
         function onJump_stateChanged() {
             if (appearance.jump_state) {
                 view.currentIndex = 1
+                graphPopup.close()
+                graphLoader.sensorpath = ''
+                graphLoader.divider = 0
                 //console.log('JumpState: ' + appearance.jump_state)
             }
         }

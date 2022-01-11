@@ -268,7 +268,7 @@ Rectangle {
         target: appearance
         function onJump_stateChanged() {
             if (appearance.jump_state) {
-            popupShutter.close()
+            shutterObject.iconview2 = true; shutterObject.parent = shutterFrame; popupShutter.close()
             }
         }
     }
