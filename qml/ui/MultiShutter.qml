@@ -264,6 +264,17 @@ Rectangle {
         }
 
 
+     Connections {
+        target: appearance
+        function onJump_stateChanged() {
+            if (appearance.jump_state) {
+            popupShutter.close()
+            }
+        }
+    }
+
+
+
 
     }
 

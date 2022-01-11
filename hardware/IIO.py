@@ -127,7 +127,7 @@ class IIO:
                     elif channel_attr == 'input':
                         self.properties[f'{dev.name}/{channel.id}'].value = channel.attrs[
                             channel_attr].value
-                        self.properties[f'{dev.name}/{channel.id}'].call = partial(IIO.read_iio, dev.id, path)
+                        self.properties[f'{dev.name}/{channel.id}'].call = partial(IIO.read_iio, dev.id, channel.attrs[channel_attr].filename)
 
                     elif channel_attr == 'raw':
                         raw = channel.attrs[channel_attr].value
@@ -171,9 +171,9 @@ class IIO:
                             IIO.read_iio, dev.id, path)
 
                         try:
-                            IIO.write_iio(dev.id, path, channel.attrs[channel_attr].value)
+                            #IIO.write_iio(dev.id, channel.attrs['raw'].filename, channel.attrs[channel_attr].value)
                             self.properties[f'{dev.name}/{channel.id}/{channel_attr}'].set = partial(
-                                IIO.write_iio, dev.id, path)
+                                IIO.write_iio, dev.id, channel.attrs['raw'].filename)
 
                         except Exception as e:
                             logging.error('error iio: ' + str(e))
@@ -236,9 +236,9 @@ class IIO:
                         IIO.read_iio, dev.id, dev.attrs[device_attr].filename)
 
                     try:
-                        IIO.write_iio(dev.id, path, dev.attrs[device_attr].value)
+                        IIO.write_iio(dev.id, dev.attrs[device_attr].filename, dev.attrs[device_attr].value)
                         self.properties[f'{dev.name}/{channel.id}/{device_attr}'].set = partial(
-                            IIO.write_iio, dev.id, path)
+                            IIO.write_iio, dev.id, dev.attrs[device_attr].filename)
 
                     except Exception as e:
                         logging.error(str(e))
