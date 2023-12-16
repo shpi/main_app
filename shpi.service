@@ -8,8 +8,8 @@ After=multi-user.target
 Environment=QT_QPA_PLATFORM=eglfs
 Environment=LD_LIBRARY_PATH=/usr/local/qt5pi/lib
 Environment=QT_QPA_PLATFORM_PLUGIN_PATH=/usr/local/qt5pi/plugins/platforms
-ExecStart=/usr/bin/python3 /home/pi/qmlui/main.py
-WorkingDirectory=/home/pi/qmlui
+ExecStart=python3 /home/pi/main_app_dev/main.py
+WorkingDirectory=/home/pi/main_app_dev
 StandardOutput=inherit
 StandardError=inherit
 Restart=always
