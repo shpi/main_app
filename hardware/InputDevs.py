@@ -64,17 +64,10 @@ class InputDevs:
                                                       category='core',
                                                       entity='input_dev',
                                                       name='lastinput',
-                                                      description='Last active input device',
+                                                      description='Last active input',
                                                       type=DataType.STRING,
                                                       interval=-1)
 
-        self.properties['lasttouch'] = EntityProperty(parent=self,
-                                                      category='core',
-                                                      entity='input_dev',
-                                                      name='lasttouch',
-                                                      description='Last touch input device',
-                                                      type=DataType.STRING,
-                                                      interval=-1)
 
         with open(self.FILENAME, 'r') as f:
 
@@ -163,16 +156,11 @@ class InputDevs:
                     if evtype == 1:  # type 1 = key, we watch only keys!
 
                         try:
+                            if ismouse: self.properties['lastinput'].value = 2
 
-                            if ismouse:
-                                self.properties['lasttouch'].value = value
-
-                            if value != self.properties['lastinput'].value:
-                                logging.debug(devpath + ' key: ' + str(keycode) + ', ' + str(value))
-
-                            self.properties['lastinput'].value = value
-                            self.properties[f'{id}/thread'].value = 1  # helping to track activity on input device
-                            self.properties[f'{id}/key_{str(keycode)}'].value = value
+                            else:
+                                self.properties[f'{id}/thread'].value = 1  # helps to track activity on input device
+                                self.properties[f'{id}/key_{str(keycode)}'].value = value
 
                         except KeyError:
                             self.properties[f'{id}/key_{str(keycode)}'] = EntityProperty(parent=self,

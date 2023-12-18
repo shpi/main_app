@@ -67,7 +67,7 @@ class HWMon:
                                                       set=partial(self.write_hwmon, sensor_id,
                                                                   channel_channel) if channel_is_output else None,
                                                       call=partial(self.read_hwmon, sensor_id, channel_channel),
-                                                      interval=20))
+                                                      interval=60))
 
             for channeltype in ('pwm', 'buzzer', 'relay'):
                 for filename in glob.iglob(f"/sys/class/hwmon/{sensor_id}/{channeltype}[0-9]"):
@@ -88,7 +88,7 @@ class HWMon:
                                                       set=partial(self.write_hwmon, sensor_id,
                                                                   channel_channel) if channel_is_output else None,
                                                       call=partial(self.read_hwmon, sensor_id, channel_channel),
-                                                      interval=20))
+                                                      interval=60)) # we dont supspect other programs accessing this
 
     def get_inputs(self) -> list:
         return self._hwmon

@@ -62,7 +62,7 @@ class AlsaMixer:
                     if ']:' in line:
                         system_cards.append(line.strip())
         except IOError as e:
-            logging.error(str(e))
+            logging.info(str(e))
             if e.errno != errno.ENOENT:
                 raise e
 

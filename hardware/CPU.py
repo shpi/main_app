@@ -11,6 +11,9 @@ class CPU:
 
         self.properties = list()
 
+        """
+        we don't need that 
+
         self.properties.append(EntityProperty(name='cpu_freq',
                                               category='core',
                                               entity='cpu',
@@ -19,6 +22,7 @@ class CPU:
                                               description='CPU freq sum over all cores (slow function)',
                                               type=DataType.INT,
                                               interval=60))
+        """
 
         self.properties.append(EntityProperty(name='cpu_load',
                                               category='core',

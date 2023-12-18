@@ -5,6 +5,7 @@ import os
 import threading
 import time
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
 
 from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
 
@@ -30,6 +31,8 @@ class NightModes:
 class Appearance(QObject):
     def __init__(self, inputs, settings: QSettings):
         super().__init__()
+        self.executor = ThreadPoolExecutor(max_workers=2)
+
 
         self.path = 'appearance'
         self.inputs = inputs.entries
@@ -63,13 +66,14 @@ class Appearance(QObject):
         self._jump_state = 0
         self._dim_timer = int(settings.value("appearance/dim_timer", 100))
         self._off_timer = int(settings.value("appearance/off_timer", 300))
+
         self.lastuserinput = time.time()
         self.state = 'ACTIVE'  # Enum('ACTIVE','SLEEP','OFF')
         self._night = False
 
         self.possible_devs = list()
 
-        inputs.entries['core/input_dev/lasttouch'].events.append(self.tinterrupt)
+        inputs.entries['core/input_dev/lastinput'].events.append(self.interrupt)
 
         for key in self.inputs.keys():
             if key.startswith('module/input_dev') and self.inputs[key].type == DataType.THREAD:
@@ -401,8 +405,8 @@ class Appearance(QObject):
         return bool(self._jump_state)
 
     def set_backlight(self, value):
-        setthread = threading.Thread(target=self._set_backlight, args=(value,))
-        setthread.start()
+        self.executor.submit(self._set_backlight, value)
+
 
     def _set_backlight(self, value):
         value = int(value)
@@ -410,9 +414,9 @@ class Appearance(QObject):
             if value < 1:
                 self.inputs['core/backlight/brightness'].set(0)
 
-            elif value < 30:
-                self.inputs['core/backlight/brightness'].set(1)
-                self._blackfilter = ((100 - (value * 3.3)) / 100)
+            #elif value < 30:
+            #    self.inputs['core/backlight/brightness'].set(1)
+            #    self._blackfilter = ((100 - (value * 3.3)) / 100)
 
             elif value <= 100:
                 self.inputs['core/backlight/brightness'].set(value)
@@ -422,31 +426,29 @@ class Appearance(QObject):
             self.blackChanged.emit()
             self._backlightlevel = value
 
-    def interrupt(self, key, value):
-        # logging.debug(f"interrupt key: {key}, value: {value}")
-        if self.state != 'ACTIVE' and value > 0:
-            self.lastuserinput = time.time() - self._dim_timer
-            if self.state == 'OFF':
-                logging.debug(f"changing nightmode to SLEEP, old state: {self.state}, lastinput: {self.lastuserinput}")
-                self.state = 'SLEEP'
-                if self._night:
-                    self.set_backlight(self._min_backlight_night)
-                else:
-                    self.set_backlight(self._min_backlight)
 
-    def tinterrupt(self, key, value):
-        # logging.debug(f"tinterrupt key: {key}, value: {value}")
-        self.lastuserinput = time.time()
-        self._jump_state = 0
-        self.jump_stateChanged.emit()
+    def interrupt(self, key, value):
+     #logging.error(f"touch interrupt called, {key} {value}")
+     if value > 0:
+      self.lastuserinput = time.time()
+
+      if value > 1:
         if self.state in ('OFF', 'SLEEP'):
-            logging.debug(
-                f"changing nightmode to ACTIVE, old state: {self.state}, lastinput: {self.lastuserinput}")
             self.state = 'ACTIVE'
-            if self._night:
-                self.set_backlight(self._max_backlight_night)
-            else:
-                self.set_backlight(self._max_backlight)
+            self._jump_state = 0
+            self.jump_stateChanged.emit()
+            self.set_backlight(self._max_backlight_night if self._night else self._max_backlight)
+
+
+      elif value == 1:
+        if self.state != 'ACTIVE':
+            self.lastuserinput -= self._dim_timer
+            if self.state == 'OFF':
+                self.state = 'SLEEP'
+                self.set_backlight(self._min_backlight_night if self._night else self._min_backlight)
+      logging.debug(f"Changed state to {self.state}, last input: {self.lastuserinput}")
+
+
 
     @Slot(str, int)
     def setDeviceTrack(self, path, value):

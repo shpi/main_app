@@ -30,7 +30,7 @@ class DiskStats:
                                                    description='disk stats module',
                                                    type=DataType.MODULE,
                                                    call=self.update,
-                                                   interval=60)
+                                                   interval=600)
 
         self.properties['module'].last_update = time.time() - DiskStats.get_uptime()
 

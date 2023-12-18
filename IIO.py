@@ -217,4 +217,11 @@ class IIO:
 
 # Add any additional functionality or script entry point below if needed
 
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    iio_instance = IIO()
+    # Add any other calls you want to make for standalone execution
+    # For example, to print the inputs or test other methods
+    print(iio_instance.get_inputs())
+
 

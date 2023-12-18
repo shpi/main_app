@@ -395,6 +395,7 @@ class InputsDict(QObject):
         except KeyError as e:
             logging.error(key + ' does not exists yet, you can ignore this message, if it onlys happens during startup')
 
+
     def register_event(self, key, eventfunction):
         try:
             logging.info(key + ' : ' + str(eventfunction))

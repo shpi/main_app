@@ -40,8 +40,8 @@ logs = LogModel()
 handler = MessageHandler(logs)
 
 logging.basicConfig(
-    level=logging.WARNING,
-    format='%(asctime)s.%(msecs)03d %(module)s - %(funcName)s: %(message)s',
+    level=logging.ERROR,
+    format='%(asctime)s %(msecs)03d %(module)s - %(funcName)s: %(message)s',
     datefmt='%m-%d %H:%M:%S',
     handlers=[
         logging.StreamHandler(),
@@ -190,9 +190,9 @@ if not qt_check_loop:
     t.start()
 
 
-# filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "qml/main.qml")
-engine.load("qrc:/qml/main.qml")
-#engine.load("qml/main.qml")
+filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "qml/main.qml")
+#engine.load("qrc:/qml/main.qml")
+engine.load("qml/main.qml")
 
 if not engine.rootObjects():
     sys.exit(-1)

@@ -75,7 +75,7 @@ class MLX90615:
                                                       description='Room temperature compensation module',
                                                       type=DataType.MODULE,
                                                       call=self.update,
-                                                      interval=10)
+                                                      interval=60)
 
                         self._thread = ThreadProperty(entity='input_dev',
                                                       name='mlx90615',
@@ -236,18 +236,22 @@ class MLX90615:
                     if abs(tempobj - self.object_mean) > self.delta:
                         logging.info('fast temp change: ' + str((self.object_mean - tempobj) * 50 / 1000))
                         self.last_movement = time.time()
+
                         for function in self.inputs.entries['module/input_dev/mlx90615'].events:
-                            function('module/input_dev/mlx90615', abs(self.object_mean - tempobj))
+                            function('module/input_dev/mlx90615', 1) #abs(self.object_mean - tempobj))
 
                     self.object_mean = (self.object_mean * 9 + tempobj) // 10
 
                     try:
-                        while (time.time() - self.inputs.entries['core/input_dev/lasttouch'].last_update) < 5:
-                            logging.debug('halted mlx90615 thread due touch inputs')
+                        while (time.time() - self.inputs.entries['core/input_dev/lastinput'].last_update) < 5:
+                            logging.debug('halted mlx90615 thread due to inputdevice actions')
                             self.buffer_enable(0)
-                            time.sleep(6)
+                            time.sleep(5)
 
                         self.buffer_enable(1)
+                        self.object_temperature = self.single_shot('in_temp_object_raw')
+                        self.object_mean = self.object_temperature
+
                     except Exception as e:
                         exception_type, exception_object, exception_traceback = sys.exc_info()
                         line_number = exception_traceback.tb_lineno
