@@ -156,10 +156,10 @@ class InputDevs:
                     if evtype == 1:  # type 1 = key, we watch only keys!
 
                         try:
-                            if ismouse: self.properties['lastinput'].value = 2
+                            if ismouse: self.properties['lastinput'].value = 2 if value else 0
 
                             else:
-                                self.properties[f'{id}/thread'].value = 1  # helps to track activity on input device
+                                if value: self.properties[f'{id}/thread'].value = 1  # helps to track activity on input device
                                 self.properties[f'{id}/key_{str(keycode)}'].value = value
 
                         except KeyError:

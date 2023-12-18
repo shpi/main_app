@@ -204,8 +204,12 @@ class ModuleManager(QObject):
     def remove_instance(self, category, classname, instancename):
         self._modules[category][classname].remove(instancename)
         self.settings.setValue(category + "/" + classname, self._modules[category][classname])
-        # logging.warning(self.settings.value(category + "/" + classname))
-        self._instances[category][classname][instancename].delete_inputs()
+
+        for subproperty in self._instances[category][classname][instancename].get_inputs():
+            if subproperty.path in self.inputs.entries:
+                del self.inputs.entries[subproperty.path]
+
+
         del self._instances[category][classname][instancename]
         self.modulesChanged.emit()
 

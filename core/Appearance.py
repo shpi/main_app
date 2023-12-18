@@ -438,7 +438,7 @@ class Appearance(QObject):
             self._jump_state = 0
             self.jump_stateChanged.emit()
             self.set_backlight(self._max_backlight_night if self._night else self._max_backlight)
-
+            logging.debug(f"Changed state to {self.state}, last input: {self.lastuserinput}")
 
       elif value == 1:
         if self.state != 'ACTIVE':
@@ -446,7 +446,7 @@ class Appearance(QObject):
             if self.state == 'OFF':
                 self.state = 'SLEEP'
                 self.set_backlight(self._min_backlight_night if self._night else self._min_backlight)
-      logging.debug(f"Changed state to {self.state}, last input: {self.lastuserinput}")
+                logging.debug(f"Changed state to {self.state}, last input: {self.lastuserinput}")
 
 
 

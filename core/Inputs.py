@@ -420,12 +420,15 @@ class InputsDict(QObject):
                 for key in self.timerschedule[timeinterval]:
                     try:
                         self.entries[key].update()
+                    except KeyError:
+                       # Handle the KeyError separately
+                       logging.error(f'Property not found: {key} will be removed from timerschedule ')
+                       self.timerschedule[timeinterval].remove(key)
                     except Exception as e:
-                        exception_type, exception_object, exception_traceback = sys.exc_info()
-                        # print(exception_type)
-                        line_number = exception_traceback.tb_lineno
-                        logging.error(f'{e}, removed ' + key + ' from timer_schedule, in line: ' + str(line_number))
-                        # self.timerschedule[timeinterval].remove(key)
+                     # Handle other exceptions
+                     exception_type, exception_object, exception_traceback = sys.exc_info()
+                     line_number = exception_traceback.tb_lineno
+                     logging.error(f'{e}, {exception_type}  {line_number}')
 
     @Slot(str, str)
     def set(self, key, value):

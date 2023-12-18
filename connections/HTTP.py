@@ -233,8 +233,8 @@ class HTTP(QObject):
 
     def delete_inputs(self):
         for key in self.properties:
-            if key in self.inputs.entries:
-                del self.inputs.entries[key]
+            if key.path in self.inputs.entries:
+                del self.inputs.entries[key.path]
 
     @Slot(str)
     def add_var(self, key):

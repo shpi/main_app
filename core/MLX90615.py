@@ -153,8 +153,7 @@ class MLX90615:
     def update(self):
 
         self.cpu_temp_mean = (self.cpu_temp_mean * 9 + self.get_cpu_temp()) / 10
-        self.sensor_temp_mean = (self.sensor_temp_mean * 9 + (
-                self.single_shot('in_temp_ambient_raw') or self.sensor_temp_mean)) / 10
+        self.sensor_temp_mean = (self.sensor_temp_mean * 9 + (self.single_shot('in_temp_ambient_raw') or self.sensor_temp_mean)) / 10
 
         self.fan_speed_mean = (self.fan_speed_mean * 9 + self.get_input_value(self._fan_path)) / 10
         logging.debug('fan spead mean:' + str(self.fan_speed_mean))
@@ -195,7 +194,7 @@ class MLX90615:
             logging.error('Cannot activate IIO scan channels for MLX ' + str(e))
 
     def single_shot(self, channel='/in_temp_object_raw'):
-
+        logging.error(self.ospath + '/' + channel)
         if os.path.isfile(self.ospath + '/' + channel):
             with open(self.ospath + '/' + channel, 'r') as rf:
                 return int(rf.read().rstrip())
@@ -243,14 +242,13 @@ class MLX90615:
                     self.object_mean = (self.object_mean * 9 + tempobj) // 10
 
                     try:
-                        while (time.time() - self.inputs.entries['core/input_dev/lastinput'].last_update) < 5:
+                        while (time.time() - self.inputs.entries['core/input_dev/lastinput'].last_update) < 1:
                             logging.debug('halted mlx90615 thread due to inputdevice actions')
                             self.buffer_enable(0)
-                            time.sleep(5)
-
-                        self.buffer_enable(1)
-                        self.object_temperature = self.single_shot('in_temp_object_raw')
-                        self.object_mean = self.object_temperature
+                            time.sleep(3)
+                            if (time.time() - self.inputs.entries['core/input_dev/lastinput'].last_update) > 2:
+                                self.object_mean = self.single_shot('in_temp_object_raw')
+                                self.buffer_enable(1)
 
                     except Exception as e:
                         exception_type, exception_object, exception_traceback = sys.exc_info()

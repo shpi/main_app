@@ -27,8 +27,8 @@ class AlsaMixer:
 
     def delete_inputs(self):
         for key in self.cards:
-            if key in self.inputs.entries:
-                del self.inputs.entries[key]
+            if key.path in self.inputs.entries:
+                del self.inputs.entries[key.path]
 
     def play(self, file='/usr/share/sounds/alsa/Front_Center.wav'):
         for key in self.playback_cards:

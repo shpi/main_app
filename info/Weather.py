@@ -152,8 +152,7 @@ class Weather(QObject):
         return list(self._properties.values())
 
     def delete_inputs(self):
-        for key in self._properties:
-            del self.inputs.entries[key]
+        return [prop.path for prop in self._properties]
 
     @property
     def manager(self) -> QNetworkAccessManager:

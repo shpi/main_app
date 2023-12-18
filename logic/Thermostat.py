@@ -130,8 +130,11 @@ class Thermostat(QObject):
                                       interval=10)
 
     def get_inputs(self) -> list:
-
         return [self._module, ]
+
+    def delete_inputs(self):
+            del self.inputs.entries[self._module.path]
+
 
     @Signal
     def offsetChanged(self):

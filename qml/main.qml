@@ -318,36 +318,36 @@ ApplicationWindow {
             source: "screensaver/Screensaver.qml"
         }
 
-        Repeater {
 
-            id: thermostatrepeater
-            model: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
-            visible: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
 
-            delegate: Loader {
-                asynchronous: true
-                id: thermostatslide
-                property bool _isCurrentItem: SwipeView.isCurrentItem
-                source: "thermostat/Thermostat.qml"
-                visible: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
-                active: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
-            }
-        }
+Repeater {
+    id: thermostatrepeater
+    model: modules.modules['Logic']['Thermostat'].length > 0 ? 1 : 0
 
-        Repeater {
+    delegate: Loader {
+        asynchronous: true
+        id: thermostatslide
+        property bool _isCurrentItem: SwipeView.isCurrentItem
+        source: "thermostat/Thermostat.qml"
 
-            id: weatherrepeater
-            model: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
-            visible: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
+    }
+}
 
-            delegate: Loader {
-                asynchronous: true
-                id: weatherslide
-                source: "weather/WeatherFull.qml"
-                visible: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
-                active: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
-            }
-        }
+Repeater {
+    id: weatherrepeater
+    model: modules.modules['Info']['Weather'].length > 0 ? 1 : 0
+
+    delegate: Loader {
+        asynchronous: true
+        id: weatherslide
+        property bool _isCurrentItem: SwipeView.isCurrentItem
+        source: "weather/WeatherFull.qml"
+        visible: parent.visible
+    }
+}
+
+
+
     }
 
     PageIndicator {

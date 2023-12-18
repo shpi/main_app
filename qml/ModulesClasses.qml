@@ -117,8 +117,7 @@ Item {
                     modules.add_instance(category, classname, instancename.text)
                     instantview.model = modules.instances(category, classname)
                     instantview.forceLayout()
-
-                    weatherrepeater.model = 1
+                    
                 }
             }
         }

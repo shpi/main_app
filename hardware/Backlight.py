@@ -62,7 +62,8 @@ class Backlight:
             self._properties = [self._module, self._brightness]
 
     def delete_inputs(self) -> list:
-        [prop.path for prop in self._properties]
+        pass
+        #[prop.path for prop in self._properties]
 
     def get_inputs(self) -> list:
         return self._properties
