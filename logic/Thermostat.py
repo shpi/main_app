@@ -360,6 +360,36 @@ class Thermostat(QObject):
             return 'ERROR'
 
     def convert_schedule(self, value):
+        if not value.strip():
+            return []  # Return an empty array if input is empty
+
+        schedule = []
+        daily_schedules = value.strip().split('\n')
+
+        for daily_schedule in daily_schedules:
+            day_schedule = []
+            for time_range in daily_schedule.strip(';').split(';'):
+                if ':' in time_range:
+                    try:
+                        time_range_parts = list(map(int, time_range.split(':')))
+                        if len(time_range_parts) == 2:
+                            day_schedule.append(time_range_parts)
+                    except ValueError:
+                        # Handle the case where conversion to int fails
+                        pass
+
+            if day_schedule:
+                try:
+                     day_schedule = sorted(day_schedule, key=lambda tup: tup[0])
+                     schedule.append(day_schedule)
+                except IndexError:
+                    # Handle cases where the tuple structure is not as expected
+                    pass
+
+        return schedule
+
+
+    def convert_schedule_old(self, value):
         value = [i.strip(';').split(';') for i in value.strip().split('\n')]
 
         for a in range(0, len(value)):

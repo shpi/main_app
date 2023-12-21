@@ -295,7 +295,7 @@ class Appearance(QObject):
         status = 'OK'
 
         if not NightModes.is_valid(self._night_mode):
-            logging.debug(f"unknown nightmode: {self._night_mode}")
+            logging.error(f"unknown nightmode: {self._night_mode}")
             return 'ERROR'
 
         if self._night_mode in (NightModes.Off, NightModes.On):
@@ -309,7 +309,7 @@ class Appearance(QObject):
 
             # Read start/end from inputs
             if self._start_input_key not in self.inputs or self._stop_input_key not in self.inputs:
-                logging.debug('Missing start and/or stop for automatic nightmode. Resetting to FromTimer.')
+                logging.error('Missing start and/or stop for automatic nightmode. Resetting to FromTimer.')
                 # self.night_mode = NightModes.FromTimer
                 return 'ERROR'
 
@@ -317,7 +317,7 @@ class Appearance(QObject):
             stop_input = self.inputs[self._stop_input_key]
 
             if start_input.type != DataType.TIME or stop_input.type != DataType.TIME:
-                logging.debug('Unknown start/stop type. Resetting to FromTimer.')
+                logging.error('Unknown start/stop type. Resetting to FromTimer.')
                 # self.night_mode = NightModes.FromTimer
                 return 'ERROR'
 
@@ -333,12 +333,14 @@ class Appearance(QObject):
         try:
             start_time = datetime.strptime(start_str, '%H:%M').time()
             stop_time = datetime.strptime(stop_str, '%H:%M').time()
-        except ValueError:
+        except ValueError as e:
+            logging.error(f' Appearance status error: {e}')
             start_time = datetime.strptime("00:00", '%H:%M').time()
             stop_time = datetime.strptime("00:00", '%H:%M').time()
             status = 'ERROR'
 
         if start_time == stop_time:
+            logging.error('start_time = stoptime')
             # Invalid config. Do nothing.
             return 'ERROR'
 

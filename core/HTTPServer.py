@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-
+import json
+import functools
 import logging
 import sys
 import threading
@@ -20,11 +21,20 @@ class ServerHandler(BaseHTTPRequestHandler):
         start_time = time.time()
         try:
             success = True
-
             if "?" in self.path:
                 query = dict(urlparse.parse_qsl(self.path.split("?")[1], True))
             else:
                 success = False
+
+
+            if query.get('debug') == 'true':
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                debug_message = self.format_debug_message()
+                self.wfile.write(bytes(debug_message, "utf8"))
+                self.connection.close()
+                return
 
             if success and ('key' in query) and (query['key'] in self.inputs) and self.inputs[query['key']].exposed:
 
@@ -100,6 +110,52 @@ class ServerHandler(BaseHTTPRequestHandler):
         logging.debug("request finished in:  %s seconds" %
                       (time.time() - start_time))
         # return
+
+    def format_debug_message(self):
+     debug_dict = {}
+     for key, value in self.inputs.items():
+        entry = {}
+        attributes = ['description', 'type', 'last_update', 'interval', 'value', 'set']
+        for attr in attributes:
+            if hasattr(value, attr):
+                attr_value = getattr(value, attr)
+                if attr == 'type':
+                    attr_value = Convert.type_to_str(attr_value)
+                elif isinstance(attr_value, functools.partial):  # Handle functools.partial objects
+                    func_name = attr_value.func.__name__
+                    attr_value = f"partial function: {func_name}"
+                elif callable(attr_value):  # Handle other callable attributes like functions and methods
+                    attr_value = getattr(attr_value, '__qualname__', getattr(attr_value, '__name__', 'callable'))
+                entry[attr] = attr_value
+        debug_dict[key] = entry
+
+     return json.dumps(debug_dict, indent=4)
+
+    def format_debug_message2(self):
+    # Format the debug message with the contents of the inputs dictionary
+     debug_message = '{'
+     for key, value in self.inputs.items():
+        debug_message += f'"{key}": {{'
+        attributes = ['description', 'type', 'last_update', 'interval', 'value', 'set']  # List all possible attributes
+        for attr in attributes:
+            if hasattr(value, attr):
+                attr_value = getattr(value, attr)
+                if attr == 'type':  # Special handling for type attribute
+                    attr_value = Convert.type_to_str(attr_value)
+                if isinstance(attr_value, str):
+                    debug_message += f'"{attr}": "{attr_value}",'
+                else:
+                    debug_message += f'"{attr}": {attr_value},'
+        if debug_message.endswith(','):
+            debug_message = debug_message[:-1]  # Remove the last comma
+        debug_message += '},'
+     if debug_message.endswith(','):
+        debug_message = debug_message[:-1]  # Remove the last comma
+     debug_message += '}'
+     return debug_message
+
+
+
 
     def log_message(self, format, *args):
         logging.info("%s - [%s] %s" % (self.address_string(), self.log_date_time_string(), format % args))

@@ -163,22 +163,32 @@ Rectangle {
 
                     even: index % 2 ? true : false
 
-                    Repeater {
 
-                        id: knobrepeater
-                        property real settemp: modules.loaded_instances['Logic']['Thermostat'][root.instancename].set_temp
-                        property int dayindex: index
-                        model: modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[index] !== undefined ? modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[index].length : 1
+Repeater {
+    id: knobrepeater
+    property real settemp: modules.loaded_instances['Logic']['Thermostat'][root.instancename].set_temp
+    property int dayindex: index
 
-                        ThermostatWeekKnob {
-                            value:  modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex][index] !== undefined ? modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex][index][0] : 1440
-                            offset: modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex][index] !== undefined ? modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex][index][1] : 0
+    model: (modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[dayindex] !== undefined && Array.isArray(modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[dayindex]))
+        ? modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[dayindex].length
+        : 0
+
+    ThermostatWeekKnob {
+        value: (modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex] !== undefined && modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex].length > index)
+            ? modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex][index][0]
+            : 1440  // Default value for 'value'
+
+        offset: (modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex] !== undefined && modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex].length > index)
+            ? modules.loaded_instances['Logic']['Thermostat'][root.instancename].schedule[knobrepeater.dayindex][index][1]
+            : 0  // Default value for 'offset'
+
+        to: 1440
+        from: 0
+    }
+}
 
 
-                            to: 1440
-                            from: 0
-                        }
-                    }
+
                 }
             }
         }

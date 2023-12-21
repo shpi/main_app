@@ -429,10 +429,10 @@ Rectangle {
 
                 velocity = (velocity + mouse.y - xPrev) / 2
 
-                if (Math.abs(velocity) > 5) {
+                if (Math.abs(velocity) > 3) {
                 xPrev = mouse.y
 
-                calcrotation -= (velocity / 8)
+                calcrotation -= (velocity / 6)
 
                 if (calcrotation   > 240)    calcrotation = 240
                 else if  (calcrotation   < 0)    calcrotation = 0
