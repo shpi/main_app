@@ -179,6 +179,11 @@ class InputsDict(QObject):
 
         self.timerschedule = dict()
 
+        self._currentPath = None
+        self.actualFolders = set()
+        self.actualFiles = set()
+
+
         self.completelist = InputListModel(self.entries)
 
         self.outputs = QSortFilterProxyModel()
@@ -190,6 +195,7 @@ class InputsDict(QObject):
         self.outputssearch.setSourceModel(self.outputs)
         self.outputssearch.setFilterRole(self.completelist.TypeRole)
         self.outputssearch.setFilterFixedString('')
+
 
         self.proxy = QSortFilterProxyModel()
         self.proxy.setSourceModel(self.completelist)
@@ -206,6 +212,10 @@ class InputsDict(QObject):
     def dataChanged(self):
         pass
 
+    @Signal
+    def pathChanged(self):
+        pass
+
     @Property(QObject, notify=dataChanged)
     def inputList(self):
         self.completelist.filter = None
@@ -213,7 +223,7 @@ class InputsDict(QObject):
 
     @Property(QObject, notify=dataChanged)
     def outputList(self):
-        return self.outputssearch
+        return self.outputs
 
     @Property(QObject, notify=dataChanged)
     def typeList(self):
@@ -291,6 +301,45 @@ class InputsDict(QObject):
 
         self.completelist.updateKeys()
         self.dataChanged.emit()
+
+
+    @Property('QVariantList', notify=pathChanged)
+    def folders(self):
+        return list(self.actualFolders)
+
+    @Property('QVariantList', notify=pathChanged)
+    def files(self):
+        return list(self.actualFiles)
+
+
+    @Property(str, notify=pathChanged)
+    def currentPath(self):
+        return self._currentPath
+
+
+
+    @Slot(str)
+    def set_path(self, path):
+     self._currentPath = path.strip('/')
+     self.actualFolders = set()
+     self.actualFiles = set()
+
+     for subpath in self.entries:
+        if subpath.startswith(self._currentPath):
+            # Correctly handling the case where currentPath is empty
+            remaining_path = subpath if self._currentPath == "" else subpath[len(self._currentPath):].strip("/")
+
+            parts = remaining_path.split("/", 1)  # Split only once
+            if len(parts) > 1 and parts[1]:  # If there's more than one part and the second part is not empty
+                self.actualFolders.add(parts[0])  # It's a folder
+            else:
+                self.actualFiles.add(parts[0])  # It's a file
+
+     print(self.actualFolders)
+     self.pathChanged.emit()
+
+
+
 
     @Slot(str, result='QVariantList')
     @Slot(str, 'long long', float, result='QVariantList')

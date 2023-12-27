@@ -3,13 +3,13 @@ import QtQuick.Controls 2.15
 
 import "qrc:/fonts"
 
-
 Item {
     id: root
+    property string roomname
 
     ListView {
         id: roomview
-        model: modules.available_rooms
+        model: modules.rooms[roomname]
         anchors.fill: parent
         delegate: listDelegate
 
@@ -20,7 +20,7 @@ Item {
             Text {
                 padding: 10
                 width: parent.width
-                text: '<b>Available Rooms</b>'
+                text: '<b>Room: ' + roomname + '</b>'
                 color: Colors.black
                 font.pixelSize: 32
             }
@@ -36,15 +36,13 @@ Item {
                 height: 100
                 anchors.horizontalCenter: parent.horizontalCenter
 
-                TextField {
+                ComboBox {
                     anchors.verticalCenter: parent.verticalCenter
-                    id: roomname_text
-                    font.pixelSize: 32
+                    id: combo_value_path
                     height: 50
                     width: 600
-                    placeholderText: 'Add new room'
+                    model: modules.all_instances()
                     visible: true
-                    onActiveFocusChanged: keyboard(this)
                 }
 
                 RoundButton {
@@ -56,13 +54,29 @@ Item {
                     font.pixelSize: 32
 
                     onClicked: {
-                        var roomarr = modules.available_rooms
-                        roomarr.push(roomname_text.text)
-                        modules.available_rooms = roomarr
-                        roomview.model = modules.available_rooms
+                        modules.add_to_room(roomname, combo_value_path.currentText)
+                        roomview.model = modules.rooms[roomname]
                         roomview.forceLayout()
                     }
                 }
+            }
+
+            RoundButton {
+                text: 'Delete Room'
+                palette.button: "darkred"
+                palette.buttonText: "white"
+                font.pixelSize: 32
+                font.family: localFont.name
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                onClicked: {
+                    modules.delete_room(roomname)
+                    roomview.forceLayout()
+                    roomview.model =  modules.rooms[roomname]
+                    settingsstackView.pop()
+                }
+
+                visible: roomview.count == 0 ? true : false
             }
         }
 
@@ -86,7 +100,6 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
                     anchors.leftMargin: 30
-
                 }
 
                 Rectangle {
@@ -97,33 +110,25 @@ Item {
                     color: "#424246"
                 }
 
-               Text {
+                Text {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     anchors.rightMargin: 20
                     font.pixelSize: 60
-                    text: Icons.arrow
-                    rotation: 270 
+                    text: Icons.trash
+                    rotation: 0
                     font.family: localFont.name
                     color: Colors.black
 
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            modules.del_from_room(roomname, modelData)
+                            roomview.model = modules.rooms[roomname]
+                        }
+                        enabled: true
                     }
-
-
-
-                MouseArea {
-
-
-                    id: mouse
-                    anchors.fill: parent
-                    onClicked: 
-                                   settingsstackView.push(Qt.resolvedUrl(
-                                                              'RoomEdit.qml'), {
-                                                              "roomname": modelData
-                                                          })
-                    enabled: true
                 }
-             
             }
         }
     }

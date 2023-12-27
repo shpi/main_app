@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import os
+from PIL import Image
+from io import BytesIO
+import cgi
 import json
 import functools
 import logging
@@ -17,14 +21,115 @@ from core.Toolbox import Pre_5_15_2_fix
 class ServerHandler(BaseHTTPRequestHandler):
     inputs = None
 
+
+
+    def do_POST(self):
+     logging.debug("POST request received")
+
+     try:
+        form = cgi.FieldStorage(
+            fp=self.rfile, 
+            headers=self.headers,
+            environ={'REQUEST_METHOD': 'POST'}
+        )
+        logging.debug("Form parsed")
+
+        if 'file' in form:
+            file_item = form['file']
+            if file_item.filename:
+                logging.debug(f"Received file: {file_item.filename}")
+                file_data = file_item.file.read()
+                image = Image.open(BytesIO(file_data))
+
+                # Konvertieren nach JPG, wenn PNG
+                if file_item.filename.lower().endswith('.png'):
+                    logging.debug("Converting PNG to JPG")
+                    image = image.convert('RGB')
+                    file_path = os.path.join('backgrounds', os.path.splitext(file_item.filename)[0] + '.jpg')
+                else:
+                    file_path = os.path.join('backgrounds', file_item.filename)
+
+                # Zielgröße
+                target_width, target_height = 800, 480
+
+                # Bildseitenverhältnis beibehalten und sicherstellen, dass es die Zielgröße füllt
+                image_ratio = image.width / image.height
+                target_ratio = target_width / target_height
+
+                if image_ratio > target_ratio:
+                    # Bild ist breiter als Zielverhältnis
+                    scale = target_height / image.height
+                else:
+                    # Bild ist höher als Zielverhältnis
+                    scale = target_width / image.width
+
+                new_size = (int(image.width * scale), int(image.height * scale))
+                image = image.resize(new_size, Image.ANTIALIAS)
+
+                # Überschüssiges Bild abschneiden
+                left = (image.width - target_width) / 2
+                top = (image.height - target_height) / 2
+                right = (image.width + target_width) / 2
+                bottom = (image.height + target_height) / 2
+                image = image.crop((left, top, right, bottom))
+
+                # Bild speichern
+                image.save(file_path + '.tmp', format='JPEG')
+                os.rename(file_path + '.tmp', file_path)
+
+                logging.debug(f"Image saved at {file_path}")
+
+                self.send_response(200)
+                self.end_headers()
+                response = {'status': 'success', 'message': 'Image uploaded, converted, and resized'}
+                self.wfile.write(json.dumps(response).encode())
+                logging.debug("Response sent to client")
+                return
+            else:
+                logging.error("No filename in the uploaded file")
+                self.send_error(400, "No filename")
+                return
+        else:
+            logging.error("No file field in the form")
+            self.send_error(400, "No file field")
+            return
+     except Exception as e:
+        logging.exception("Exception occurred in POST request")
+        self.send_error(500, f"Server error: {e}")
+        return
+
+
+
+
     def do_GET(self):
         start_time = time.time()
+        query = {}  # Initialize query as an empty dictionary
+
         try:
             success = True
             if "?" in self.path:
                 query = dict(urlparse.parse_qsl(self.path.split("?")[1], True))
             else:
                 success = False
+
+
+            if self.path == '/upload':
+             self.send_response(200)
+             self.send_header('Content-type', 'text/html')
+             self.end_headers()
+
+             html_form = """
+             <html><body>
+             <h2>Upload Image</h2>
+             <form method="POST" action="/upload" enctype="multipart/form-data">
+                <input type="file" name="file" accept="image/*">
+                <input type="submit" value="Upload">
+             </form>
+             </body></html>
+             """
+             self.wfile.write(html_form.encode())
+             return
+
 
 
             if query.get('debug') == 'true':
@@ -160,8 +265,6 @@ class ServerHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         logging.info("%s - [%s] %s" % (self.address_string(), self.log_date_time_string(), format % args))
 
-    def do_POST(self):
-        self.do_GET()
 
     def end_headers(self):
         try:

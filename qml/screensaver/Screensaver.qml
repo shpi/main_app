@@ -53,7 +53,6 @@ Item {
                     id: screensaverRow
                     model: modules.rooms['Home']
 
-
                     Rectangle {
 
                         property var model: modelData.split('/')

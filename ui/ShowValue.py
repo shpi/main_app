@@ -46,8 +46,8 @@ class ShowValue(QObject):
     def preview(self):
         return self.buffer.preview(width=100, height=100, divider=self._divider)
 
-    def delete_inputs(self):
-        pass
+    def get_inputs(self):
+        return []
 
     def ui_event(self, path, value):
         try:

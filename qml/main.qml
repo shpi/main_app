@@ -5,7 +5,8 @@ import QtGraphicalEffects 1.15
 import QtQuick.Particles 2.15
 
 
-import "qrc:/fonts"
+import "../fonts"
+
 
 ApplicationWindow {
     id: window
@@ -47,18 +48,19 @@ ApplicationWindow {
         caseSensitive: false
         id: folderModel
         folder: "file://" + applicationDirPath + "/backgrounds/"
-
         nameFilters: ["*.png", "*.jpg"]
+
         onCountChanged: {
-            if (folderModel.count > 0)
-                bg.source = folderModel.get(i, "fileURL")
+        if (folderModel.count > 0) {
+        bg.source = folderModel.get(i, "fileURL")
         }
+
+        }
+
+
+
+
     }
-
-
-
-
-
 
 
 
@@ -68,7 +70,6 @@ ApplicationWindow {
     Image {
         anchors.fill: parent
         id: bg
-        source: ""
         fillMode: Image.Stretch
         visible: appearance.night === 0
                  || appearance.background_night > 0 ? true : false
@@ -111,11 +112,19 @@ ApplicationWindow {
                 }
             }
         }
+    
+        source: ""
+
+
+
+
+
+
     }
 
     FontLoader {
         id: localFont
-        source: "/fonts/dejavu-custom.ttf"
+        source: "../fonts/dejavu-custom.ttf"
     }
 
     Drawer {
@@ -406,6 +415,9 @@ Repeater {
     Component.onCompleted: {
 
         Colors.night = appearance.night
+
+
+
     }
 
     Popup {
@@ -504,6 +516,8 @@ Repeater {
             source: "keyboard/Keyboard.qml"
         }
     }
+
+
 
 
 

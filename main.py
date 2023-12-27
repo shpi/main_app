@@ -40,7 +40,7 @@ logs = LogModel()
 handler = MessageHandler(logs)
 
 logging.basicConfig(
-    level=logging.WARNING,
+    level=logging.DEBUG,
     format='%(asctime)s %(msecs)03d %(module)s - %(funcName)s: %(message)s',
     datefmt='%m-%d %H:%M:%S',
     handlers=[
@@ -56,6 +56,7 @@ def qml_log(mode, context, message):
         logging.info("%s (%d, %s)" % (message, context.line, context.file))
     elif mode == QtCore.QtWarningMsg:
         logging.warning("%s (%d, %s)" % (message, context.line, context.file))
+
     elif mode == QtCore.QtCriticalMsg:
         logging.critical("%s (%d, %s)" % (message, context.line, context.file))
     elif mode == QtCore.QtFatalMsg:

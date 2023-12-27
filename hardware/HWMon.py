@@ -31,8 +31,12 @@ class HWMon:
 
                     channel_desc = ''
                     if os.path.isfile(filename[0:-len(channeltype)] + "label"):
-                        with open(filename[0:-len(channeltype)] + "label", 'r') as rf:
+                        try:
+                          with open(filename[0:-len(channeltype)] + "label", 'r') as rf:
                             channel_desc = (rf.read().rstrip())
+                        except:
+                            channel_desc = "read error"
+                            pass
                     channel_type = DataType.UNDEFINED
                     channel_is_output = (os.stat(filename).st_mode & 0o444 == 0o444)
 
