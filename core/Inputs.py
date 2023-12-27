@@ -223,7 +223,7 @@ class InputsDict(QObject):
 
     @Property(QObject, notify=dataChanged)
     def outputList(self):
-        return self.outputs
+        return self.outputssearch
 
     @Property(QObject, notify=dataChanged)
     def typeList(self):
