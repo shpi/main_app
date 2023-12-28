@@ -53,13 +53,13 @@ Item {
                 onClicked: {
 
     if (category === '') {
-        settingsStackView.push(
+        settingsstackView.push(
             Qt.resolvedUrl('Modules.qml'), {
                 "category": modelData
             }
         );
     } else if (modules.is_singleton(category, modelData) === 1) {
-        settingsStackView.push(
+        settingsstackView.push(
             Qt.resolvedUrl(category.toLowerCase() + '/' + modelData + 'Settings.qml'), 
             {
                 "instancename": "Instance", 
@@ -68,7 +68,7 @@ Item {
             }
         );
     } else {
-        settingsStackView.push(
+        settingsstackView.push(
             Qt.resolvedUrl('ModulesClasses.qml'), {
                 "category": category,
                 "classname": modelData

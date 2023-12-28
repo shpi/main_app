@@ -26,7 +26,7 @@ class BT_MJ_HT_V1(QObject):
         self.name = "INSTANCE"  # this class has max. one instance!
         self.inputs = inputs
         self.settings = settings
-        self._sensors = (settings.value(self.path + "/sensors", {}))
+        self._sensors = (settings.value("/module/connections/bt_mj_ht_v1/sensors", {}))
         self.adapter = pygatt.GATTToolBackend()
         self._discovered_devices = {}
         self.properties = dict()
@@ -36,7 +36,7 @@ class BT_MJ_HT_V1(QObject):
                                                    entity='connections',
                                                    name='bt_mj_ht_v1',
                                                    value='NOT_INITIALIZED',
-                                                   call=self.update_vars,
+                                                   call=self.update,
                                                    description='BT Module for MJ_HT_V1 Sensors',
                                                    type=DataType.MODULE,
                                                    interval=60)
@@ -69,16 +69,20 @@ class BT_MJ_HT_V1(QObject):
 
 
 
+    def update(self):
+        pass
+
 
     def get_inputs(self) -> list:
         return list(self.properties.values())
 
-    def _scan_for_devices(self, timeout=10):
+    def _scan_devices(self, timeout=5):
         #print("Scanning for BLE devices...")
         try:
             self.adapter.start()
             self._discovered_devices = {}
             self._discovered_devices = self.adapter.scan(timeout=timeout)
+            self.adapter.reset()
             for device in self.discovered_devices:
                 logging.info(f"Found device: {device['address']} with name: {device['name']}")
         except Exception as e:
@@ -86,11 +90,11 @@ class BT_MJ_HT_V1(QObject):
 
         finally:
            self.adapter.stop()
-           self.devicesScaned.emit()
+           self.devicesScanned.emit()
 
-
-    def scan_for_devices(self):
-        scan_thread = threading.Thread(target=_scan_for_devices)
+    @Slot()
+    def scan_devices(self):
+        scan_thread = threading.Thread(target=self._scan_devices)
         scan_thread.start()
 
 
@@ -98,6 +102,10 @@ class BT_MJ_HT_V1(QObject):
     def devicesScanned(self):
         pass
 
+
+    @Property(int)
+    def singleton(self):
+        return singleton
 
     @Property('QVariantMap', notify=devicesScanned)
     def discovered_devices(self):

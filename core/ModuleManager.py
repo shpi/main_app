@@ -189,14 +189,14 @@ class ModuleManager(QObject):
 
     @Slot(str, str, result=int)
     def is_singleton(self, category, classname):
-        if hasattr(self._modules[category][classname], 'singleton') and self._modules[category][classname].singleton == 1:
-            return 1
+        if hasattr(self.loaded_modules[category][classname], 'singleton'):
+           return 1
         return 0
 
     @Slot(str, str, str)
     def add_instance(self, category, classname, instancename):
 
-        if hasattr(self._modules[category][classname], 'singleton') and self._modules[category][classname].singleton == 1:
+        if hasattr(self.loaded_modules[category][classname], 'singleton') :
            instancename = "Instance"
 
         if instancename not in self._modules[category][classname]:
