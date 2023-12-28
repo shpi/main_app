@@ -50,18 +50,35 @@ Item {
             MouseArea {
                 id: mouse
                 anchors.fill: parent
-                onClicked: if (category == '')
-                               settingsstackView.push(Qt.resolvedUrl(
-                                                          'Modules.qml'), {
-                                                          "category": modelData
-                                                      })
-                           else
-                               settingsstackView.push(
-                                           Qt.resolvedUrl(
-                                               'ModulesClasses.qml'), {
-                                               "category": category,
-                                               "classname": modelData
-                                           })
+                onClicked: {
+
+    if (category === '') {
+        settingsStackView.push(
+            Qt.resolvedUrl('Modules.qml'), {
+                "category": modelData
+            }
+        );
+    } else if (modules.is_singleton(category, modelData) === 1) {
+        settingsStackView.push(
+            Qt.resolvedUrl(category.toLowerCase() + '/' + modelData + 'Settings.qml'), 
+            {
+                "instancename": "Instance", 
+                "classname": modelData, 
+                "category": category
+            }
+        );
+    } else {
+        settingsStackView.push(
+            Qt.resolvedUrl('ModulesClasses.qml'), {
+                "category": category,
+                "classname": modelData
+            }
+        );
+    }
+}
+
+
+
             }
         }
     }

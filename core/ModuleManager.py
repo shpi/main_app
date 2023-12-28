@@ -17,7 +17,7 @@ import ui.MultiShutter
 import ui.PieChart
 import ui.ColorPicker
 import connections.HTTP
-
+import connections.BT_MJ_HT_V1
 
 class ModuleManager(QObject):
     def __init__(self, inputs, settings: QSettings):
@@ -29,7 +29,7 @@ class ModuleManager(QObject):
                                   'Info': ['Weather'],
                                   'UI': ['Shutter', 'ShowValue', 'ShowVideo' ,'MultiShutter',
                                          'PieChart', 'ColorPicker'],
-                                  'Connections': ['HTTP']}
+                                  'Connections': ['HTTP','BT_MJ_HT_V1']}
 
         self.loaded_modules = dict()
         self.loaded_modules['Logic'] = dict()
@@ -47,6 +47,8 @@ class ModuleManager(QObject):
         self.loaded_modules['UI']['PieChart'] = getattr(ui.PieChart, 'PieChart')
         self.loaded_modules['UI']['ColorPicker'] = getattr(ui.ColorPicker, 'ColorPicker')
         self.loaded_modules['Connections']['HTTP'] = getattr(connections.HTTP, 'HTTP')
+        self.loaded_modules['Connections']['BT_MJ_HT_V1'] = getattr(connections.BT_MJ_HT_V1, 'BT_MJ_HT_V1')
+
 
 
         self._modules = dict()  # saves names of loaded instances
@@ -185,8 +187,18 @@ class ModuleManager(QObject):
     def modules(self):
         return self._modules
 
+    @Slot(str, str, result=int)
+    def is_singleton(self, category, classname):
+        if hasattr(self._modules[category][classname], 'singleton') and self._modules[category][classname].singleton == 1:
+            return 1
+        return 0
+
     @Slot(str, str, str)
     def add_instance(self, category, classname, instancename):
+
+        if hasattr(self._modules[category][classname], 'singleton') and self._modules[category][classname].singleton == 1:
+           instancename = "Instance"
+
         if instancename not in self._modules[category][classname]:
             self._modules[category][classname].append(instancename)
             self.settings.setValue(category + "/" + classname, self._modules[category][classname])

@@ -64,6 +64,11 @@ Item {
                                    "instancename": modelData
                                })
             }
+
+
+
+
+
         }
     }
 
@@ -72,6 +77,9 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
 
         id: instantview
+
+
+
 
         header: Rectangle {
 
@@ -122,4 +130,8 @@ Item {
             }
         }
     }
+
+
+
+
 }
