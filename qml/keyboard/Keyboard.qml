@@ -281,10 +281,13 @@ Rectangle {
         }
 
         onEnterClicked: {
-            textfield.text = valueText.text
-            textfield.focus = false
-            textfield = undefined
-            keyboardPopup.close()
+        
+   if (textfield) {
+        textfield.text = valueText.text;
+        textfield.focus = false;
+    }
+    textfield = undefined;
+    keyboardPopup.close();
         }
 
         onBackspaceClicked: valueText.text = valueText.text.substring(0, valueText.text.length - 1)

@@ -17,7 +17,7 @@ import ui.MultiShutter
 import ui.PieChart
 import ui.ColorPicker
 import connections.HTTP
-import connections.BT_MJ_HT_V1
+import connections.BT_Xiaomi
 
 class ModuleManager(QObject):
     def __init__(self, inputs, settings: QSettings):
@@ -29,7 +29,7 @@ class ModuleManager(QObject):
                                   'Info': ['Weather'],
                                   'UI': ['Shutter', 'ShowValue', 'ShowVideo' ,'MultiShutter',
                                          'PieChart', 'ColorPicker'],
-                                  'Connections': ['HTTP','BT_MJ_HT_V1']}
+                                  'Connections': ['HTTP','BT_Xiaomi']}
 
         self.loaded_modules = dict()
         self.loaded_modules['Logic'] = dict()
@@ -47,7 +47,7 @@ class ModuleManager(QObject):
         self.loaded_modules['UI']['PieChart'] = getattr(ui.PieChart, 'PieChart')
         self.loaded_modules['UI']['ColorPicker'] = getattr(ui.ColorPicker, 'ColorPicker')
         self.loaded_modules['Connections']['HTTP'] = getattr(connections.HTTP, 'HTTP')
-        self.loaded_modules['Connections']['BT_MJ_HT_V1'] = getattr(connections.BT_MJ_HT_V1, 'BT_MJ_HT_V1')
+        self.loaded_modules['Connections']['BT_Xiaomi'] = getattr(connections.BT_Xiaomi, 'BT_Xiaomi')
 
 
 

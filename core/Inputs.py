@@ -246,7 +246,7 @@ class InputsDict(QObject):
         return self.completeList._keys.index(path)
 
     @Slot(str)
-    def set_searchList(self, type_):
+    def set_searchlist(self, type_):
         self.search.setFilterFixedString(type_)
 
     def register_timerschedule(self, key, interval):
@@ -335,7 +335,6 @@ class InputsDict(QObject):
             else:
                 self.actualFiles.add(parts[0])  # It's a file
 
-     print(self.actualFolders)
      self.pathChanged.emit()
 
 
