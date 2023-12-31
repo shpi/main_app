@@ -5,19 +5,16 @@ import "qrc:/fonts"
 Item {
     Flickable {
         anchors.fill: parent
-        contentHeight: columnLayout.height
-
-        Column {
-            id: columnLayout
-            width: parent.width
+        contentHeight:  inputsview_folder.height + inputsview.height
 
             // First ListView (Folders)
             ListView {
+                interactive: false
+                anchors.top: parent.top
                 id: inputsview_folder
                 width: parent.width
                 model: inputs.folders
                 delegate: pathDelegate
-                clip: true
 
                 header: Rectangle {
                     width: parent.width
@@ -32,7 +29,6 @@ Item {
                         text: "/" + inputs.currentPath
                         font.pixelSize: 30
                         color: Colors.black
-                        height: 70
                     }
 
                     Text {
@@ -44,11 +40,10 @@ Item {
                         font.bold: true
                         font.pixelSize: 32
                         color: Colors.black
-                        height: 70
                     }
                 }
 
-                height: 70 + inputsview_folder.count * 70
+                height: (70 + (inputsview_folder.count  * 100))
                 cacheBuffer: 100
 
                 Component.onCompleted: {
@@ -58,17 +53,18 @@ Item {
 
             // Second ListView (Available Variables)
             ListView {
+                interactive: false
                 id: inputsview
+                anchors.top: inputsview_folder.bottom
                 width: parent.width
                 model: inputs.searchList
                 delegate: inputDelegate
-                clip: true
                 visible:  inputs.files.length > 0
-                height: inputsview.count * 150
+                height: (200 + (inputsview.count * 80))
                 cacheBuffer: 100
             }
         }
-    }
+    
 
     Component {
         id: fileDelegate
@@ -106,7 +102,7 @@ Item {
         id: pathDelegate
         Item {
             width: parent.width
-            height: 60
+            height: 100
             Rectangle {
                 anchors.fill: parent
                 color: index % 2 === 0 ? "transparent" : Colors.white

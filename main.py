@@ -31,6 +31,7 @@ from hardware.IIO import IIO
 from hardware.InputDevs import InputDevs
 from hardware.Leds import Led
 from hardware.System import SystemInfo
+#from connections.BT_Xiaomi import BT_Xiaomi
 
 import files
 
@@ -136,6 +137,7 @@ core_modules['wifi'] = Wifi(settings)
 core_modules['httpserver'] = HTTPServer(inputs, settings)
 core_modules['mlx90615'] = MLX90615(inputs, settings)
 core_modules['alsamixer'] = AlsaMixer(inputs, settings)
+#core_modules['bt_xiaomi'] = BT_Xiaomi(inputs, settings)
 
 for core_module in core_modules:
     inputs.add(core_modules[core_module].get_inputs())

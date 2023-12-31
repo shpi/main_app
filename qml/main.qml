@@ -266,6 +266,7 @@ ApplicationWindow {
                     font.pixelSize: size * height * 0.8
                     text: title
                     onClicked: {
+                        if (page == "hardware/AlsaSettings.qml") {inputs.set_searchlist('sound');}
                         settingsstackView.clear()
                         settingsstackView.push(Qt.resolvedUrl(page))
                         drawer.actual_setting = page

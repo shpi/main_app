@@ -86,6 +86,7 @@ Item {
             ListView {
                 id: devicesList
                 width: parent.width
+                 interactive: false
                 height: 60 * devicesList.count + 110  // Adjust this height as needed
                 clip: true
                 orientation: Qt.Vertical
