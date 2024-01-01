@@ -83,9 +83,18 @@ class HWMon:
                     channel_is_output = (os.stat(filename).st_mode & 0o444 == 0o444)
                     filename = filename.split('/')
                     channel_channel = filename[-1]
+                    min=0
+                    step=1
+                    max=1
+                    if channeltype == 'pwm':
+                        max=255
+
                     self._hwmon.append(EntityProperty(parent=self,
                                                       category='output',
                                                       entity=sensor_name,
+                                                      min=min,
+                                                      step=step,
+                                                      max=max,
                                                       name=channel_channel,
                                                       description=channel_desc,
                                                       type=channel_type,

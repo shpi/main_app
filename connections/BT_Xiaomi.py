@@ -2,7 +2,6 @@
 
 import logging
 from functools import partial
-import pygatt
 import threading
 import time
 import subprocess
@@ -43,7 +42,7 @@ class BT_Xiaomi(QObject):
         self.settings = settings
 
         try:
-            self._sensors = json.loads(settings.value("/module/connections/bt_xiaomi/sensors", ""))
+            self._sensors = json.loads(settings.value("/module/connections/bt_xiaomi/sensors", "{}"))
 
         except Exception as e:
             # Handle the case where the string is not a valid JSON
@@ -51,9 +50,8 @@ class BT_Xiaomi(QObject):
             self._sensors = {}
 
 
-        self.adapter = pygatt.GATTToolBackend()
+        #self.adapter = pygatt.GATTToolBackend()
         self._discovered_devices = {}
-        self.interface = 'hci0'
         self.timeout = 10
         self.process = None
         self._scanning = False
@@ -71,6 +69,7 @@ class BT_Xiaomi(QObject):
                                                    interval=120)
 
         self.init_sensors()
+        self.scan_devices()
 
     def init_sensors(self):
 
@@ -152,9 +151,9 @@ class BT_Xiaomi(QObject):
     def run_gatttool(self, handle, mac, command=""):
      """Runs gatttool command and returns the output."""
      if command:
-        cmd = f"gatttool -b {mac} --char-write-req -a {handle} -n {command}"
+        cmd = f"sudo gatttool -b {mac} --char-write-req -a {handle} -n {command}"
         subprocess.check_output(cmd, shell=True)
-     cmd = f"gatttool -b {mac} --char-read -a {handle}"
+     cmd = f"sudo gatttool -b {mac} --char-read -a {handle}"
      output = subprocess.check_output(cmd, shell=True)
      return output
 
@@ -227,6 +226,19 @@ class BT_Xiaomi(QObject):
             self._scanning = value
             self.scanningChanged.emit(self._scanning)
 
+    @Slot()
+    def scan_devices(self):
+        logging.error('start bluetooth scanning..')
+        self.stop_scan()  # Ensure no previous scan is running
+        self.scanning = True
+        #btmgmt -i hci0 power on
+        cmd = ['/usr/bin/stdbuf', '-oL', '/usr/bin/btmgmt', '-i', 'hci0', 'find']
+        self.process = subprocess.Popen(cmd,stdin=subprocess.PIPE ,stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, universal_newlines=True)
+        output_thread = threading.Thread(target=self.parse_output)
+        output_thread.start()
+        timer = threading.Timer(self.timeout, self.stop_scan)
+        timer.start()
+
 
 
     def parse_output(self):
@@ -236,12 +248,12 @@ class BT_Xiaomi(QObject):
                 if device_info:  # If there is a previous device, save it
                     if device_info['address'] not in self._discovered_devices:
                         self._discovered_devices[device_info['address']] = device_info
-                        
                     else:
                        if device_info['name'] != None:
                            self._discovered_devices[device_info['address']]['name'] = device_info['name']
                        self._discovered_devices[device_info['address']]['rssi'] = device_info['rssi']
                     self._discovered_devices[device_info['address']]['type'] = self.detection_type(device_info)
+
 
                     self.devicesScanned.emit()
                 parts = line.split(' ')
@@ -283,23 +295,13 @@ class BT_Xiaomi(QObject):
         return 'unknown'
 
 
-    @Slot()
-    def scan_devices(self):
-        self.stop_scan()  # Ensure no previous scan is running
-        self.scanning = True
-        cmd = ['sudo','stdbuf', '-oL', 'btmgmt', '-i', self.interface, 'find']
-        self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, universal_newlines=True)
-        output_thread = threading.Thread(target=self.parse_output)
-        output_thread.daemon = True
-        output_thread.start()
-        timer = threading.Timer(self.timeout, self.stop_scan)
-        timer.start()
 
 
     def stop_scan(self):
      self.scanning = False
 
      if self.process:
+        logging.info("bluetooth scanning process was still active... killing.")
         # Attempt to terminate the process
         try:
             self.process.terminate()
@@ -320,7 +322,7 @@ class BT_Xiaomi(QObject):
 
         # Stop the find command for the Bluetooth interface
         try:
-            subprocess.run(['sudo', 'btmgmt', '-i', self.interface, 'stop-find'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run(['btmgmt', '-i', 'hci0', 'stop-find'],input="")
         except Exception as e:
             print(f"Error stopping Bluetooth find: {e}")
 
