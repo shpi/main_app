@@ -556,13 +556,14 @@ Row {
         id: continentComboBox
         width: 250
         model: appearance.continents()
+        onCurrentTextChanged: cityComboBox.model = appearance.cities(currentText)
     }
 
     ComboBox {
         id: cityComboBox
         width: 250
         visible: cityComboBox.count > 0       
-        model: appearance.cities(continentComboBox.currentText)
+        model: []
     }
 
     Button {
@@ -580,6 +581,11 @@ Row {
        if (index !== -1) {
             continentComboBox.currentIndex = index;
         }
+
+       if (cityComboBox.model.count == 0) {
+        cityComboBox.model = appearance.cities(continentComboBox.currentText)
+        }
+
 
         var index = cityComboBox.model.indexOf(city);
         if (index !== -1) {

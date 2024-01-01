@@ -194,11 +194,9 @@ class MLX90615:
             logging.error('Cannot activate IIO scan channels for MLX ' + str(e))
 
     def single_shot(self, channel='/in_temp_object_raw'):
-        logging.error(self.ospath + '/' + channel)
         if os.path.isfile(self.ospath + '/' + channel):
             with open(self.ospath + '/' + channel, 'r') as rf:
                 return int(rf.read().rstrip())
-
         return None
 
     def get_cpu_temp(self):  # only for now

@@ -5,7 +5,6 @@ import "qrc:/fonts"
 
 Item {
 
-    Component.onCompleted: inputs.set_searchList('sound')
 
 
         ListView {

@@ -9,6 +9,9 @@ from concurrent.futures import ThreadPoolExecutor
 import sys
 import subprocess
 from collections import Counter
+from collections import defaultdict
+
+
 
 from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
 
@@ -32,8 +35,6 @@ class NightModes:
 
 
 class Appearance(QObject):
-
-
 
 
     def __init__(self, inputs, settings: QSettings):
@@ -78,8 +79,7 @@ class Appearance(QObject):
         self.state = 'ACTIVE'  # Enum('ACTIVE','SLEEP','OFF')
         self._night = False
 
-
-
+        self._timezones = self.build_timezone_dict()
 
         self.possible_devs = list()
 
@@ -94,24 +94,30 @@ class Appearance(QObject):
                     logging.debug(f"add to dev interrupt: {key}")
                     inputs.entries[key].events.append(self.interrupt)
 
-    @Slot(result='QVariantList')
-    def continentsold(self):
+
+
+    def build_timezone_dict(self):
         result = subprocess.run(["timedatectl", "list-timezones"], capture_output=True, text=True)
         timezones = result.stdout.splitlines()
-        continents = sorted(set(tz.split('/')[0] for tz in timezones))
-        return continents
+        
+        timezone_dict = defaultdict(list)
+        for tz in timezones:
+            parts = tz.split('/')
+            if len(parts) == 2:
+                continent, city = parts
+                timezone_dict[continent].append(city)
+
+        # Sort cities within each continent
+        for continent in timezone_dict:
+            timezone_dict[continent].sort()
+
+        return timezone_dict
+
 
 
     @Slot(result='QVariantList')
     def continents(self):
-     result = subprocess.run(["timedatectl", "list-timezones"], capture_output=True, text=True)
-     timezones = result.stdout.splitlines()
-     continent_counts = Counter(tz.split('/')[0] for tz in timezones)
-    
-     # Sort continents based on their counts (most frequent first)
-     sorted_continents = sorted(continent_counts, key=continent_counts.get, reverse=True)
-     return sorted_continents
-
+     return sorted(self._timezones.keys())
 
 
     @Slot(result=str)
@@ -144,11 +150,18 @@ class Appearance(QObject):
      return city
 
     @Slot(str, result='QVariantList')
-    def cities(self, continent):
+    def cities_old(self, continent):
+        #timedatectl list-timezones | grep 'Europe'
         result = subprocess.run(["timedatectl", "list-timezones"], capture_output=True, text=True)
         timezones = result.stdout.splitlines()
         cities = sorted(tz.split('/')[1] for tz in timezones if tz.startswith(continent + '/'))
         return cities
+
+
+    @Slot(str, result='QVariantList')
+    def cities(self, continent):
+        return self._timezones.get(continent, [])
+
 
 
     @Slot(str, str)
