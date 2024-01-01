@@ -533,6 +533,75 @@ Item {
                 }
             }
 
+
+
+            Text {
+
+                text: "Timezone"
+                font.bold: true
+                padding: 10
+                font.pixelSize: 32
+                color: Colors.black
+                anchors.topMargin: 30
+            }
+
+
+Row {
+
+   spacing: 10
+   anchors.horizontalCenter: parent.horizontalCenter
+
+
+    ComboBox {
+        id: continentComboBox
+        width: 250
+        model: appearance.continents()
+    }
+
+    ComboBox {
+        id: cityComboBox
+        width: 250
+        visible: cityComboBox.count > 0       
+        model: appearance.cities(continentComboBox.currentText)
+    }
+
+    Button {
+        text: "Set"
+        onClicked: appearance.set_timezone(continentComboBox.currentText, cityComboBox.currentText)
+    }
+
+
+
+  Component.onCompleted: {
+        var continent = appearance.get_current_continent();
+        var city = appearance.get_current_city();
+        var index = continentComboBox.model.indexOf(continent);
+ 
+       if (index !== -1) {
+            continentComboBox.currentIndex = index;
+        }
+
+        var index = cityComboBox.model.indexOf(city);
+        if (index !== -1) {
+            cityComboBox.currentIndex = index;
+        }
+
+
+
+    }
+
+
+
+}
+
+
+
+
+
+
+
+
+
             Text {
 
                 text: "Tracked Input Devices"

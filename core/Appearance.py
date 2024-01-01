@@ -6,6 +6,9 @@ import threading
 import time
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
+import sys
+import subprocess
+from collections import Counter
 
 from PySide2.QtCore import QSettings, QObject, Signal, Slot, Property
 
@@ -29,6 +32,10 @@ class NightModes:
 
 
 class Appearance(QObject):
+
+
+
+
     def __init__(self, inputs, settings: QSettings):
         super().__init__()
         self.executor = ThreadPoolExecutor(max_workers=2)
@@ -71,6 +78,9 @@ class Appearance(QObject):
         self.state = 'ACTIVE'  # Enum('ACTIVE','SLEEP','OFF')
         self._night = False
 
+
+
+
         self.possible_devs = list()
 
         inputs.entries['core/input_dev/lastinput'].events.append(self.interrupt)
@@ -83,6 +93,75 @@ class Appearance(QObject):
                 if active:
                     logging.debug(f"add to dev interrupt: {key}")
                     inputs.entries[key].events.append(self.interrupt)
+
+    @Slot(result='QVariantList')
+    def continentsold(self):
+        result = subprocess.run(["timedatectl", "list-timezones"], capture_output=True, text=True)
+        timezones = result.stdout.splitlines()
+        continents = sorted(set(tz.split('/')[0] for tz in timezones))
+        return continents
+
+
+    @Slot(result='QVariantList')
+    def continents(self):
+     result = subprocess.run(["timedatectl", "list-timezones"], capture_output=True, text=True)
+     timezones = result.stdout.splitlines()
+     continent_counts = Counter(tz.split('/')[0] for tz in timezones)
+    
+     # Sort continents based on their counts (most frequent first)
+     sorted_continents = sorted(continent_counts, key=continent_counts.get, reverse=True)
+     return sorted_continents
+
+
+
+    @Slot(result=str)
+    def get_current_continent(self):
+     result = subprocess.run(["timedatectl", "show", "--property=Timezone"], capture_output=True, text=True)
+     current_timezone = result.stdout.strip().split('=')[-1]
+     parts = current_timezone.split('/', 1)
+
+     if len(parts) == 2:
+        continent, city = parts
+     else:
+        continent = parts[0]
+        city = ""  # Default to an empty string if no city is available
+
+     return continent
+
+
+    @Slot(result=str)
+    def get_current_city(self):
+     result = subprocess.run(["timedatectl", "show", "--property=Timezone"], capture_output=True, text=True)
+     current_timezone = result.stdout.strip().split('=')[-1]
+     parts = current_timezone.split('/', 1)
+
+     if len(parts) == 2:
+        continent, city = parts
+     else:
+        continent = parts[0]
+        city = ""  # Default to an empty string if no city is available
+
+     return city
+
+    @Slot(str, result='QVariantList')
+    def cities(self, continent):
+        result = subprocess.run(["timedatectl", "list-timezones"], capture_output=True, text=True)
+        timezones = result.stdout.splitlines()
+        cities = sorted(tz.split('/')[1] for tz in timezones if tz.startswith(continent + '/'))
+        return cities
+
+
+    @Slot(str, str)
+    def set_timezone(self, continent, city):
+        timezone = continent
+        logging.info(f"{city} length: {len(city)}")
+        if len(city) > 0 :
+            timezone = continent + '/' + city
+
+        logging.info(f"Set time zone to {continent}/{city}")
+
+        subprocess.run(["timedatectl", "set-timezone", timezone])
+
 
     @Slot(str, result=str)
     def device_description(self, path) -> str:

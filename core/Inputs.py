@@ -205,7 +205,8 @@ class InputsDict(QObject):
         self.search = QSortFilterProxyModel()
         self.search.setSourceModel(self.completelist)
         self.search.setFilterRole(self.completelist.PathRole)
-        self.search.setFilterFixedString('')
+        self.search.setFilterRegExp('')
+        #self.search.setFilterFixedString('')
         # proxy.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
     @Signal
@@ -247,7 +248,7 @@ class InputsDict(QObject):
 
     @Slot(str)
     def set_searchlist(self, type_):
-        self.search.setFilterFixedString(type_)
+        self.search.setFilterRegExp('^' + type_)
 
     def register_timerschedule(self, key, interval):
         interval = int(interval)
