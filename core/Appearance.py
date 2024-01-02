@@ -85,7 +85,7 @@ class Appearance(QObject):
         inputs.entries['input_dev/lastinput'].events.append(self.interrupt)
 
         for key in self.inputs.keys():
-            if key.startswith('module/input_thread') and self.inputs[key].type == DataType.THREAD:
+            if key.startswith('threads/input_dev') and self.inputs[key].type == DataType.THREAD:
                 logging.debug(f"add to possible_devs: {key}")
                 self.possible_devs.append(key)
                 active = int(settings.value("appearance/" + key, 1))

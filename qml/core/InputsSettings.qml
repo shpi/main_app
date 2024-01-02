@@ -142,7 +142,6 @@ Item {
                                }
                                newPath += modelData;
 
-                               console.log(newPath);
                                inputs.set_searchlist(newPath);
                                inputs.set_path(newPath);
                            }
