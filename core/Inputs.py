@@ -17,6 +17,10 @@ from core.DataTypes import Convert
 from core.DataTypes import DataType
 
 
+
+
+
+
 class InputListModelDict(QAbstractListModel):
     PathRole = Qt.UserRole + 1000
     ValueRole = Qt.UserRole + 1001
@@ -85,6 +89,10 @@ class InputListModelDict(QAbstractListModel):
         return roles
 
 
+
+
+
+
 class InputListModel(QAbstractListModel):
     PathRole = Qt.UserRole + 1000
     ValueRole = Qt.UserRole + 1001
@@ -98,6 +106,7 @@ class InputListModel(QAbstractListModel):
     MinRole = Qt.UserRole + 1009
     MaxRole = Qt.UserRole + 1010
     StepRole = Qt.UserRole + 1011
+    RawvalueRole = Qt.UserRole + 1012
 
     def __init__(self, dictionary, parent=None):
         super(InputListModel, self).__init__(parent)
@@ -116,14 +125,53 @@ class InputListModel(QAbstractListModel):
         keyindex = self.index(self._keys.index(key))
         self.dataChanged.emit(keyindex, keyindex, [self.ValueRole])
 
+
     def data(self, index, role=Qt.DisplayRole):
+     if not (0 <= index.row() < self.rowCount() and index.isValid()):
+        return None
+
+     item = self.entries[self._keys[index.row()]]
+
+     role_dispatcher = {
+        InputListModel.PathRole: self._keys[index.row()],
+        InputListModel.RawvalueRole: str(item.value),
+        InputListModel.OutputRole: item.is_output,
+        InputListModel.TypeRole: Convert.type_to_str(item.type),
+        InputListModel.DescriptionRole: item.description,
+        InputListModel.IntervalRole: item.interval,
+        InputListModel.ExposedRole: item.exposed,
+        InputListModel.LoggingRole: item.logging,
+        InputListModel.AvailableRole: item.available,
+        InputListModel.MinRole: item.min,
+        InputListModel.MaxRole: item.max,
+        InputListModel.StepRole: item.step,
+        InputListModel.ValueRole: Convert.rawvalue_to_readable(item.type,item.value)
+     }
+
+
+
+     return role_dispatcher.get(role, 'unknown role')
+
+
+
+    def dataold(self, index, role=Qt.DisplayRole):
         if 0 <= index.row() < self.rowCount() and index.isValid():
             item = self.entries[self._keys[index.row()]]
             try:
                 if role == InputListModel.PathRole:
                     return self._keys[index.row()]
+
+                elif role == InputListModel.RawvalueRole:
+                   return str(item.value)
+
                 elif role == InputListModel.ValueRole:
+                    if item.type == DataType.TEMPERATURE:
+                     if item.value is not None:
+                        return str( round(item.value / 1000, 2) ) + "°C"
+                     else:
+                        return "None"
                     return str(item.value)
+
                 elif role == InputListModel.OutputRole:
                     return item.is_output
                 elif role == InputListModel.TypeRole:

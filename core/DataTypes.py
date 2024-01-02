@@ -84,20 +84,24 @@ class DataType(Enum):
 
 
 class Convert:
+
     @staticmethod
     def str_to_tight_datatype(value_str):
-        # Convert a number stored as a string to a <float> or an <int>, <str> as fallback
         try:
-            value = float(value_str)
-
-            if value == int(value):
-                return int(value)
-
-            return value
-
+            # First, try converting to an integer
+            return int(value_str)
+        except ValueError:
+            # If that fails, try converting to a float
+            try:
+                return float(value_str)
+            except ValueError:
+                # If it's neither an int nor a float, return the original string
+                return value_str
         except Exception as e:
+            # Log other unexpected exceptions
             logging.error(str(e))
             return str(value_str)
+
 
     @staticmethod
     def iio_to_shpi(iio: ChannelType):
@@ -112,6 +116,18 @@ class Convert:
             return Convert._mapping_type_str[datatype]
         else:
             return 'unknown'
+
+
+    @staticmethod
+    def rawvalue_to_readable(type,value):
+
+        if type == DataType.TEMPERATURE:
+            if value is not None:
+                return f"{value / 1000:.2f}°C"
+            else:
+                return "None"
+        return str(value)
+
 
     @staticmethod
     def str_to_type(datatype: str):

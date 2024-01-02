@@ -145,7 +145,7 @@ class ThreadProperty(ModuleThread):
 
     __slots__ = ['category', 'name', 'description', '_value', 'type',
                  'last_update', 'last_change', '_logging', 'exposed', 'events', 'is_exclusive_output',
-                 'interval', 'function', 'thread']
+                 'interval', 'function', 'thread','available']
 
     def __init__(self, name: str = None,
                  category: str = None,
@@ -155,7 +155,8 @@ class ThreadProperty(ModuleThread):
                  exposed=False,
                  logging=False,
                  interval=60,
-                 function=None):
+                 function=None,
+                 available=None):
 
         # self.parent_module = parent  # parent_module that provides this property, parents needs .name property
         self.category = category  # category for tree in GUI, like sensor, output, sound, network
@@ -168,6 +169,7 @@ class ThreadProperty(ModuleThread):
         self._logging = logging
         self.exposed = exposed
         self.events = []
+        self.available = [0,1]
         self.is_exclusive_output = False  # for unique access
         self.interval = interval
         self.function = function
@@ -178,6 +180,22 @@ class ThreadProperty(ModuleThread):
     @property
     def logging(self):
         return self._logging
+
+
+    @staticmethod
+    def min():
+        return None
+
+    @staticmethod
+    def max():
+        return None
+
+    @staticmethod
+    def step():
+        return None
+
+
+
 
     @logging.setter
     def logging(self, value):
@@ -242,7 +260,8 @@ class StaticProperty(object):
                  value=None,
                  description=None,
                  type=None,
-                 exposed=False):
+                 exposed=False,
+                 available=None):
         # self.parent_module = parent  # parent_module that provides this property, parents needs .name property
         self.category = category  # category for tree in GUI, like sensor, output, sound, network
         self.name = name  # name for this property
@@ -254,6 +273,23 @@ class StaticProperty(object):
     @staticmethod
     def update():
         pass
+
+    @staticmethod
+    def available():
+        return []
+
+    @staticmethod
+    def min():
+        return None
+
+    @staticmethod
+    def max():
+        return None
+
+    @staticmethod
+    def step():
+        return None
+
 
     @property
     def path(self):

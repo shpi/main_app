@@ -181,10 +181,10 @@ class BT_Xiaomi(QObject):
                      self.run_gatttool(MI_FLORA_HANDLE_MODE_CHANGE, sensor, "A01F")
                      sensor_data = self.run_gatttool(MI_FLORA_HANDLE_DATA_READ, sensor).decode()
                      temperature, sunlight, moisture, fertility = self.parse_sensor_data_mi_flora(sensor_data)
-                     self.properties[self._sensors[sensor]['custom_name'] + '_moisture'].value = moisture #in %
-                     self.properties[self._sensors[sensor]['custom_name'] + '_temperature'].value = temperature #in celsius 
-                     self.properties[self._sensors[sensor]['custom_name'] + '_light'].value = sunlight # in lux
-                     self.properties[self._sensors[sensor]['custom_name'] + '_fertility'].value = fertility  # in uS/cm
+                     self.properties[self._sensors[sensor]['custom_name'] + '_moisture'].value = int(moisture) #in %
+                     self.properties[self._sensors[sensor]['custom_name'] + '_temperature'].value = int(temperature * 1000) #in celsius 
+                     self.properties[self._sensors[sensor]['custom_name'] + '_light'].value = int(sunlight) # in lux
+                     self.properties[self._sensors[sensor]['custom_name'] + '_fertility'].value = int(fertility)  # in uS/cm
 
                     except subprocess.CalledProcessError as e:
                      logging.error(f"Failed to run gatttool: {e}")
