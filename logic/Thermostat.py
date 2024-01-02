@@ -298,7 +298,10 @@ class Thermostat(QObject):
 
         try:
 
-            self._actual_temp = self.inputs[self._temp_path].value
+           self._actual_temp = self.inputs[self._temp_path].value
+           if self._actual_temp == None:
+              return 'PENDING'
+           else:
             self.tempChanged.emit()
 
             if self._thermostat_mode == ThermostatModes.OFF:  # totally off

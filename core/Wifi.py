@@ -319,7 +319,7 @@ class Wifi(QObject):
                         new_devices.append(device)
                         if f'{device}' not in self.properties:
                             self.properties[f'{device}'] = EntityProperty(
-                                                                          category='core',
+                                                                          category='system',
                                                                           name= 'wifi_' + device,
                                                                           value=0,
                                                                           description='WIFI signal in %',
@@ -336,7 +336,7 @@ class Wifi(QObject):
                 if device not in new_devices:
                     if f'{device}' not in self.properties:
                         self.properties[f'{device}'] = EntityProperty(
-                                                                      category='core',
+                                                                      category='system',
                                                                       name= 'wifi_' +device,
                                                                       value=0,
                                                                       description='WIFI signal in %',

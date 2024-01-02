@@ -77,7 +77,7 @@ class MLX90615:
                                                       interval=60)
 
                         self._thread = ThreadProperty(
-                                                      name='mlx90615',
+                                                      name='input_dev_mlx90615',
                                                       category='threads',
                                                       value=1,
                                                       description='Thread for MLX90615',
@@ -113,8 +113,8 @@ class MLX90615:
             logging.info('skipping room temp calculation due to movement')
             return self._temp.value
 
-        if 'core/input_dev/lastinput' in self.inputs.entries and self.inputs.entries[
-            'core/input_dev/lastinput'].last_update + 30 > time.time():
+        if 'input_dev/lastinput' in self.inputs.entries and self.inputs.entries[
+            'input_dev/lastinput'].last_update + 30 > time.time():
             logging.info('skipping room temp calculation due to input')
             return self._temp.value
 
@@ -213,6 +213,7 @@ class MLX90615:
         if os.path.exists('/dev/' + self.id):
             with open('/dev/' + self.id, 'rb') as devfile:
                 while self._thread.value:
+                  try:
 
                     line = devfile.read(16)
                     (tempobj, tempamb, _, timestamp) = struct.unpack('<HHiq', line)
@@ -230,14 +231,12 @@ class MLX90615:
                     if abs(tempobj - self.object_mean) > self.delta:
                         logging.info('fast temp change: ' + str((self.object_mean - tempobj) * 50 / 1000))
                         self.last_movement = time.time()
-
-                        for function in self.inputs.entries['module/input_dev/mlx90615'].events:
-                            function('module/input_dev/mlx90615', 1) #abs(self.object_mean - tempobj))
+                        for function in self.inputs.entries['threads/input_dev_mlx90615'].events:
+                            function('threads/input_dev_mlx90615', 1) # abs(self.object_mean - tempobj))
 
                     self.object_mean = (self.object_mean * 9 + tempobj) // 10
 
-                    try:
-                        while (time.time() - self.inputs.entries['input_dev/lastinput'].last_update) < 1:
+                    while (time.time() - self.inputs.entries['input_dev/lastinput'].last_update) < 1:
                             logging.debug('halted mlx90615 thread due to inputdevice actions')
                             self.buffer_enable(0)
                             time.sleep(3)
@@ -245,7 +244,7 @@ class MLX90615:
                                 self.object_mean = self.single_shot('in_temp_object_raw')
                                 self.buffer_enable(1)
 
-                    except Exception as e:
+                  except Exception as e:
                         exception_type, exception_object, exception_traceback = sys.exc_info()
                         line_number = exception_traceback.tb_lineno
                         logging.error(f'error: {e} in line {line_number}')

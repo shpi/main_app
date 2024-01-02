@@ -142,9 +142,9 @@ class BT_Xiaomi(QObject):
     def run_gatttool(self, handle, mac, command=""):
      """Runs gatttool command and returns the output."""
      if command:
-        cmd = f"sudo gatttool -b {mac} --char-write-req -a {handle} -n {command}"
+        cmd = f"gatttool -b {mac} --char-write-req -a {handle} -n {command}"
         subprocess.check_output(cmd, shell=True)
-     cmd = f"sudo gatttool -b {mac} --char-read -a {handle}"
+     cmd = f"gatttool -b {mac} --char-read -a {handle}"
      output = subprocess.check_output(cmd, shell=True)
      return output
 
