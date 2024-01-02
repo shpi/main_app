@@ -17,7 +17,7 @@ class CPU:
         self.properties.append(EntityProperty(name='cpu_freq',
                                               category='core',
                                               entity='cpu',
-                                              parent=self,
+                                              
                                               call=CPU.get_cpu_freq,
                                               description='CPU freq sum over all cores (slow function)',
                                               type=DataType.INT,
@@ -25,9 +25,7 @@ class CPU:
         """
 
         self.properties.append(EntityProperty(name='cpu_load',
-                                              category='core',
-                                              entity='cpu',
-                                              parent=self,
+                                              category='system',
                                               call=CPU.cpu_usage,
                                               description='CPU usage %',
                                               type=DataType.PERCENT_INT,

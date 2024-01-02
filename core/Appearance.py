@@ -47,9 +47,8 @@ class Appearance(QObject):
         self._backlightlevel = 0
         self._blackfilter = 0
         self.settings = settings
-        self._module = EntityProperty(parent=self,
+        self._module = EntityProperty(
                                       category='module',
-                                      entity='core',
                                       name='appearance',
                                       value='NOT_INITIALIZED',
                                       description='Appearance Module for Backlight / Nightmode etc.',
@@ -83,10 +82,10 @@ class Appearance(QObject):
 
         self.possible_devs = list()
 
-        inputs.entries['core/input_dev/lastinput'].events.append(self.interrupt)
+        inputs.entries['input_dev/lastinput'].events.append(self.interrupt)
 
         for key in self.inputs.keys():
-            if key.startswith('module/input_dev') and self.inputs[key].type == DataType.THREAD:
+            if key.startswith('module/input_thread') and self.inputs[key].type == DataType.THREAD:
                 logging.debug(f"add to possible_devs: {key}")
                 self.possible_devs.append(key)
                 active = int(settings.value("appearance/" + key, 1))

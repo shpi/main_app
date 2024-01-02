@@ -60,9 +60,8 @@ class InputDevs:
         self.devs = dict()
         self.properties = dict()
 
-        self.properties['lastinput'] = EntityProperty(parent=self,
-                                                      category='core',
-                                                      entity='input_dev',
+        self.properties['lastinput'] = EntityProperty(
+                                                      category='input_dev',
                                                       name='lastinput',
                                                       description='Last active input',
                                                       type=DataType.STRING,
@@ -111,9 +110,7 @@ class InputDevs:
                             key = key.split(':')
                             # device['keys'][int(key[0])] = keydict
                             self.properties[f'{id}/key_{str(key[0])}'] = EntityProperty(
-                                parent=self,
-                                category='input_dev',
-                                entity=id,
+                                category='input_dev/' + id,
                                 name=str(key[0]),
                                 description=key[1],
                                 type=DataType.INT,
@@ -128,10 +125,8 @@ class InputDevs:
 
         for id, subdevice in self.devs.items():
             self.properties[f'{id}/thread'] = ThreadProperty(
-                name=id,
-                category='module',
-                entity='input_dev',
-                parent=self,
+                name= 'input_dev_' + id,
+                category='threads',
                 value=1,
                 description='Thread for ' + subdevice['name'],
                 interval=60,
@@ -163,9 +158,8 @@ class InputDevs:
                                 self.properties[f'{id}/key_{str(keycode)}'].value = value
 
                         except KeyError:
-                            self.properties[f'{id}/key_{str(keycode)}'] = EntityProperty(parent=self,
-                                                                                         category='input_dev',
-                                                                                         entity=id,
+                            self.properties[f'{id}/key_{str(keycode)}'] = EntityProperty(
+                                                                                         category='input_dev/' + id,
                                                                                          name=str(keycode),
                                                                                          description=str(keycode),
                                                                                          type=DataType.INT,

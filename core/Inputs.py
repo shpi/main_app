@@ -248,7 +248,7 @@ class InputsDict(QObject):
 
     @Slot(str)
     def set_searchlist(self, type_):
-        self.search.setFilterRegExp('^' + type_)
+        self.search.setFilterRegExp('^' + type_  +  '/[^/]*$')
 
     def register_timerschedule(self, key, interval):
         interval = int(interval)

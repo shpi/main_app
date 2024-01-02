@@ -22,9 +22,8 @@ class DiskStats:
         self.properties = dict()  # we need a dict here, because we update all values with a single update function
         self.last_diskstat = 0
 
-        self.properties['module'] = EntityProperty(parent=self,
+        self.properties['module'] = EntityProperty(
                                                    category='module',
-                                                   entity='core',
                                                    value='NOT_INITIALIZED',
                                                    name='disk',
                                                    description='disk stats module',
@@ -34,18 +33,16 @@ class DiskStats:
 
         self.properties['module'].last_update = time.time() - DiskStats.get_uptime()
 
-        self.properties['disk_usage'] = EntityProperty(parent=self,
-                                                       category='core',
-                                                       entity='disk',
+        self.properties['disk_usage'] = EntityProperty(
+                                                       category='system',
                                                        name='disk_usage',
                                                        description='disk usage',
                                                        type=DataType.INT,
                                                        call=DiskStats.disk_used,
                                                        interval=600)
 
-        self.properties['disk_total'] = StaticProperty(parent=self,
-                                                       category='core',
-                                                       entity='disk',
+        self.properties['disk_total'] = StaticProperty(
+                                                       category='system',
                                                        name='disk_size',
                                                        value=DiskStats.disk_total(),
                                                        description='disk total size',
@@ -72,9 +69,8 @@ class DiskStats:
                 if init:
 
                     for key, desc in list(zip(DiskStats._keys, DiskStats._descs)):
-                        self.properties[f'{line[2]}/{key}'] = EntityProperty(parent=self,
-                                                                             category='disk',
-                                                                             entity=line[2],
+                        self.properties[f'{line[2]}/{key}'] = EntityProperty(
+                                                                             category='disk/' + line[2],
                                                                              value=0,
                                                                              name=key,
                                                                              description=desc,

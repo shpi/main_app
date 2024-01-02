@@ -31,14 +31,13 @@ class MQTTClient(QObject):
 
 
 
-        self._enabled = int(settings.value("mqtt/enabled", 1))
+        self._enabled = int(settings.value("mqtt/enabled", '0'))
 
         self.properties = dict()
-        self.properties['general_shutter_call'] = EntityProperty(parent=self,
-                                                       category='core',
-                                                       entity='mqtt',
+        self.properties['general_shutter_call'] = EntityProperty(
+                                                       category='mqtt',
                                                        name='general_shutter_call',
-                                                       description='disk usage',
+                                                       description='General Call for shutter instances',
                                                        set=partial(self.publish,self._path + "/general_shutter_call"),
                                                        type=DataType.PERCENT_INT,
                                                        interval=0)

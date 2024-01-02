@@ -46,26 +46,23 @@ class Shutter(QObject):
 
         self.userinput = 0
 
-        self._module = EntityProperty(parent=self,
-                                      category='module/logic',
-                                      entity='shutter',
-                                      name=name,
+        self._module = EntityProperty(
+                                      category='module',
+                                      name= 'shutter_' + name,
                                       value='NOT_INITIALIZED',
                                       description='Shutter Module for two binary outputs',
                                       type=DataType.MODULE,
                                       interval=-1)
 
-        self._actual_position = EntityProperty(parent=self,
-                                               category='logic/shutter',
-                                               entity=name,
+        self._actual_position = EntityProperty(
+                                               category='logic/shutter/' + name,
                                                name='actual_position',
                                                description='actual position',
                                                type=DataType.PERCENT_FLOAT,
                                                interval=-1)
 
-        self._desired_position = EntityProperty(parent=self,
-                                                category='logic/shutter',
-                                                entity=name,
+        self._desired_position = EntityProperty(
+                                                category='logic/shutter/' + name,
                                                 name='desired_position',
                                                 description='desired position',
                                                 type=DataType.PERCENT_INT,

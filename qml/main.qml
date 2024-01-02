@@ -383,7 +383,6 @@ Repeater {
                 graphPopup.close()
                 graphLoader.sensorpath = ''
                 graphLoader.divider = 0
-                //console.log('JumpState: ' + appearance.jump_state)
             }
         }
     }

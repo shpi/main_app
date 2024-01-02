@@ -14,9 +14,8 @@ class Backlight:
         self.backlight_sysfs_path = False
         self.backlight_sysfs_max = 100  # fallback value
         self.backlight_sysfs_has_power = False
-        self._module = EntityProperty(parent=self,
+        self._module = EntityProperty(
                                       category='module',
-                                      entity='core',
                                       name='backlight',
                                       description='Backlight Module',
                                       type=DataType.MODULE,
@@ -48,10 +47,9 @@ class Backlight:
         self._properties = [self._module]
 
         if self.backlight_sysfs_path:
-            self._brightness = EntityProperty(parent=self,
-                                              category='core',
-                                              entity='backlight',
-                                              name='brightness',
+            self._brightness = EntityProperty(
+                                              category='system',
+                                              name='backlight_brightness',
                                               description='Backlight brightness in %',
                                               type=DataType.PERCENT_INT,
                                               call=self.get_brightness,

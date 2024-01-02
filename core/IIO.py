@@ -87,9 +87,8 @@ class IIO:
                 offset = 0
                 raw = None
 
-                self.properties[f'{dev.name}/{channel.id}'] = EntityProperty(parent=self,
-                                                                             category='sensor',
-                                                                             entity=dev.name,
+                self.properties[f'{dev.name}/{channel.id}'] = EntityProperty(
+                                                                             category='sensor/'+dev.name,
                                                                              name=channel.id,
                                                                              description=dev.name + ' ' + channel.id,
                                                                              type=Convert.iio_to_shpi(channel.type),
@@ -118,9 +117,8 @@ class IIO:
                     elif channel_attr.endswith('_available'):
                         if f'{dev.name}/{channel.id}/{channel_attr[:-10]}' not in self.properties:
                             self.properties[f'{dev.name}/{channel.id}/{channel_attr[:-10]}'] = EntityProperty(
-                                parent=self,
-                                category='sensor',
-                                entity=dev.name,
+                                
+                                category='sensor/' + dev.name,
                                 name=channel_attr[:-10],
                                 description=dev.name + ' ' + channel.id,
                                 type=DataType.FLOAT,
@@ -132,9 +130,8 @@ class IIO:
                     else:
                         if f'{dev.name}/{channel.id}/{channel_attr}' not in self.properties:
                             self.properties[f'{dev.name}/{channel.id}/{channel_attr}'] = EntityProperty(
-                                parent=self,
-                                category='sensor',
-                                entity=dev.name,
+                                
+                                category='sensor/' + dev.name,
                                 name=channel_attr,
                                 type=DataType.FLOAT,
                                 interval=-1)
@@ -176,9 +173,8 @@ class IIO:
                 elif device_attr.endswith('_available'):
                     if f'{dev.name}/{channel.id}/{device_attr[:-10]}' not in self.properties:
                         self.properties[f'{dev.name}/{channel.id}/{device_attr[:-10]}'] = EntityProperty(
-                            parent=self,
-                            category='sensor',
-                            entity=dev.name,
+                            
+                            category='sensor/' + dev.name,
                             name=device_attr[:-10],
                             description=dev.name + ' ' + channel.id + ' ' + device_attr[:-10],
                             type=DataType.UNDEFINED,
@@ -189,9 +185,8 @@ class IIO:
                 else:
                     if f'{dev.name}/{channel.id}/{device_attr}' not in self.properties:
                         self.properties[f'{dev.name}/{channel.id}/{device_attr}'] = EntityProperty(
-                            parent=self,
-                            category='sensor',
-                            entity=dev.name,
+                            
+                            category='sensor/' + dev.name,
                             name=device_attr,
                             description=dev.name + ' ' + channel.id + ' ' + device_attr,
                             type=DataType.UNDEFINED,

@@ -15,11 +15,10 @@ class AlsaRecord:
         self.input = dict()
         self.name = card
 
-        self._control = EntityProperty(parent=self,
-                                       category='sound',
-                                       entity=card,
+        self._control = EntityProperty(  #this is handled different then other threads, because it uses alsarecord process
+                                       category='threads',
                                        value=1,
-                                       name='thread',
+                                       name= 'audio_' + card,
                                        description='Microphone thread',
                                        type=DataType.THREAD,
                                        set=self.control,
@@ -32,11 +31,10 @@ class AlsaRecord:
         self.buffer = [b'' for x in range(self.buffersize)]
         self.rate = 44100
 
-        self.input = EntityProperty(parent=self,
+        self.input = EntityProperty(
                                     category='sound',
-                                    entity=card,
                                     value=0,
-                                    name='microphone',
+                                    name= card + '_microphone',
                                     description='Microphone volume',
                                     type=DataType.PERCENT_INT,
                                     interval=-1)

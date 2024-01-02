@@ -119,10 +119,9 @@ class Thermostat(QObject):
         self._actual_temp = None
         self._offset = 0
 
-        self._module = EntityProperty(parent=self,
-                                      category='module/logic',
-                                      entity='thermostat',
-                                      name=name,
+        self._module = EntityProperty(
+                                      category='module',
+                                      name='thermostat_' + name,
                                       value='NOT_INITIALIZED',
                                       description='Thermostat Module for binary output',
                                       type=DataType.MODULE,
@@ -132,8 +131,6 @@ class Thermostat(QObject):
     def get_inputs(self) -> list:
         return [self._module, ]
 
-    def delete_inputs(self):
-            del self.inputs.entries[self._module.path]
 
 
     @Signal

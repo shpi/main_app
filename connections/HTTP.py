@@ -36,10 +36,9 @@ class HTTP(QObject):
         self.module_inputs = dict()
         self.properties = dict()
 
-        self.properties['module'] = EntityProperty(parent=self,
+        self.properties['module'] = EntityProperty(
                                                    category='module',
-                                                   entity='connections',
-                                                   name=self.name,
+                                                   name='HTTP_' + self.name,
                                                    value='NOT_INITIALIZED',
                                                    call=self.update_vars,
                                                    description='HTTP Module for ' + self.name + '(' + self._ip + ')',
@@ -47,9 +46,8 @@ class HTTP(QObject):
                                                    interval=60)
 
         for sproperty in self._vars:
-            self.properties[sproperty] = EntityProperty(parent=self,
-                                                        category='connections/http',
-                                                        entity=self.name,
+            self.properties[sproperty] = EntityProperty(
+                                                        category='connections/http_' + self.name,
                                                         name=sproperty,
                                                         value=None,
                                                         description='place holder after init, module not initialized',
@@ -239,9 +237,8 @@ class HTTP(QObject):
     @Slot(str)
     def add_var(self, key):
         if key in self.module_inputs:
-            self.properties[key] = EntityProperty(parent=self,
-                                                  category='connections/http',
-                                                  entity=self.name,
+            self.properties[key] = EntityProperty(
+                                                  category='connections/http_' + self.name,
                                                   name=key,
                                                   call=partial(self.get_value, key),
                                                   set=partial(self.set_value, key) if 'set' in self.module_inputs[

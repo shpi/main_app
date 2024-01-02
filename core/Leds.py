@@ -22,9 +22,8 @@ class Led:
                     if os.path.exists(Led.ledpath + file + "/max_brightness"):
                         with open(Led.ledpath + file + "/max_brightness") as max_led:
                             lmax = int(max_led.readline())
-                            self.properties.append(EntityProperty(parent=self,
-                                                                  category='output',
-                                                                  entity='leds',
+                            self.properties.append(EntityProperty(
+                                                                  category='output/leds',
                                                                   name=file,
                                                                   min=0,
                                                                   max=100,

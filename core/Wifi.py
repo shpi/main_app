@@ -97,9 +97,8 @@ class Wifi(QObject):
         self._wpa_ip = ''
         self._wpa_type = ''
 
-        self.properties['module'] = EntityProperty(parent=self,
+        self.properties['module'] = EntityProperty(
                                                    category='module',
-                                                   entity='core',
                                                    name='wifi',
                                                    value='NOT_INITIALIZED',
                                                    description='WIFI WPA supplicant module',
@@ -319,10 +318,9 @@ class Wifi(QObject):
                             self.wifi_devices.append(device)
                         new_devices.append(device)
                         if f'{device}' not in self.properties:
-                            self.properties[f'{device}'] = EntityProperty(parent=self,
+                            self.properties[f'{device}'] = EntityProperty(
                                                                           category='core',
-                                                                          entity='wifi',
-                                                                          name=device,
+                                                                          name= 'wifi_' + device,
                                                                           value=0,
                                                                           description='WIFI signal in %',
                                                                           type=DataType.PERCENT_INT,
@@ -337,10 +335,9 @@ class Wifi(QObject):
             for device in self.wifi_devices:  # reset values before checking
                 if device not in new_devices:
                     if f'{device}' not in self.properties:
-                        self.properties[f'{device}'] = EntityProperty(parent=self,
+                        self.properties[f'{device}'] = EntityProperty(
                                                                       category='core',
-                                                                      entity='wifi',
-                                                                      name=device,
+                                                                      name= 'wifi_' +device,
                                                                       value=0,
                                                                       description='WIFI signal in %',
                                                                       type=DataType.PERCENT_INT,

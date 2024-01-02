@@ -74,9 +74,8 @@ class Weather(QObject):
         self._cities = CityModel()
         self._properties = {}
 
-        self._properties['module'] = EntityProperty(parent=self,
-                                                    category='module/info',
-                                                    entity=self.name,
+        self._properties['module'] = EntityProperty(
+                                                    category='module',
                                                     value='NOT_INITIALIZED',
                                                     name=self.name,
                                                     description='Weather module: ' + self.name,
@@ -85,62 +84,60 @@ class Weather(QObject):
                                                     interval=int(
                                                         settings.value('weather/' + self.name + '/interval', 1200)))
 
-        self._properties['sunrise'] = EntityProperty(parent=self, category='info/weather', entity=self.name,
+        self._properties['sunrise'] = EntityProperty( category='info/weather_' + self.name,
                                                      interval=-1, name='sunrise', description="sunrise time",
                                                      type=DataType.TIME,
                                                      value=settings.value('weather/' + self.name + "/sunrise", "6:00"))
-        self._properties['sunset'] = EntityProperty(parent=self, category='info/weather', entity=self.name, interval=-1,
+        self._properties['sunset'] = EntityProperty( category='info/weather_' + self.name, interval=-1,
                                                     name='sunset', description="sunset time", type=DataType.TIME,
                                                     value=settings.value('weather/' + self.name + "/sunset", "22:00"))
-        self._properties['current_pressure'] = EntityProperty(parent=self, category='info/weather', entity=self.name,
+        self._properties['current_pressure'] = EntityProperty( category='info/weather_' + self.name,
                                                               interval=-1, name='current_pressure',
                                                               description="pressure in Pa", type=DataType.PRESSURE)
-        self._properties['current_humidity'] = EntityProperty(parent=self, category='info/weather', entity=self.name,
+        self._properties['current_humidity'] = EntityProperty( category='info/weather_' + self.name,
                                                               interval=-1, name='current_humidity',
                                                               description="humidity in %", type=DataType.HUMIDITY)
-        self._properties['current_wind_speed'] = EntityProperty(parent=self, category='info/weather', entity=self.name,
+        self._properties['current_wind_speed'] = EntityProperty( category='info/weather_' + self.name,
                                                                 interval=-1, name='current_wind_speed',
                                                                 description="windspeed in kpH", type=DataType.VELOCITY)
-        self._properties['current_wind_deg'] = EntityProperty(parent=self, category='info/weather', entity=self.name,
+        self._properties['current_wind_deg'] = EntityProperty( category='info/weather_' + self.name,
                                                               interval=-1, name='current_wind_deg',
                                                               description="Wind direction in Degrees",
                                                               type=DataType.DIRECTION)
-        self._properties['current_clouds'] = EntityProperty(parent=self, category='info/weather', entity=self.name,
+        self._properties['current_clouds'] = EntityProperty( category='info/weather_' + self.name,
                                                             interval=-1, name='current_clouds',
                                                             description="Cloudiness in %", type=DataType.PERCENT_FLOAT)
-        self._properties['current_pop'] = EntityProperty(parent=self, category='info/weather', entity=self.name,
+        self._properties['current_pop'] = EntityProperty( category='info/weather_' + self.name,
                                                          interval=-1, name='current_pop',
                                                          description="Possibility of precipation in %",
                                                          type=DataType.PERCENT_FLOAT)
-        self._properties['current_uvi'] = EntityProperty(parent=self, category='info/weather', entity=self.name,
+        self._properties['current_uvi'] = EntityProperty( category='info/weather_' + self.name,
                                                          interval=-1, name='current_uvi', description="UV Index",
                                                          type=DataType.UVINDEX)
-        self._properties['current_rain'] = EntityProperty(parent=self, category='info/weather', entity=self.name,
+        self._properties['current_rain'] = EntityProperty( category='info/weather_' + self.name,
                                                           interval=-1, name='current_rain',
                                                           description="Rain per sqm in mm", type=DataType.HEIGHT)
-        self._properties['current_temp'] = EntityProperty(parent=self, category='info/weather', entity=self.name,
+        self._properties['current_temp'] = EntityProperty( category='info/weather_' + self.name,
                                                           interval=-1, name='current_temp',
                                                           value=0,
                                                           description="Temperature in °C", type=DataType.TEMPERATURE)
-        self._properties['current_weather_icon'] = EntityProperty(parent=self, category='info/weather',
-                                                                  entity=self.name, interval=-1,
+        self._properties['current_weather_icon'] = EntityProperty( category='info/weather_' + self.name, interval=-1,
                                                                   name='current_weather_icon',
                                                                   description="Weather icon", type=DataType.STRING)
-        self._properties['current_weather_desc'] = EntityProperty(parent=self, category='info/weather',
-                                                                  entity=self.name, interval=-1,
+        self._properties['current_weather_desc'] = EntityProperty( category='info/weather_' + self.name, interval=-1,
                                                                   name='current_weather_desc',
                                                                   description="Weather description",
                                                                   type=DataType.STRING)
-        self._properties['current_dew_point'] = EntityProperty(parent=self, category='info/weather', entity=self.name,
+        self._properties['current_dew_point'] = EntityProperty( category='info/weather_' + self.name,
                                                                interval=-1, name='current_dew_point',
                                                                description="dew point in °C", type=DataType.TEMPERATURE)
-        self._properties['city'] = EntityProperty(parent=self, category='info/weather', entity=self.name, interval=-1,
+        self._properties['city'] = EntityProperty( category='info/weather_' + self.name, interval=-1,
                                                   name='city', description="City", type=DataType.STRING,
                                                   value=settings.value('weather/' + self.name + "/city", ""))
-        self._properties['lat'] = EntityProperty(parent=self, category='info/weather', entity=self.name, interval=-1,
+        self._properties['lat'] = EntityProperty( category='info/weather_' + self.name, interval=-1,
                                                  name='lat', description="Latitude", type=DataType.LATITUDE,
                                                  value=settings.value('weather/' + self.name + "/lat", ""))
-        self._properties['lon'] = EntityProperty(parent=self, category='info/weather', entity=self.name, interval=-1,
+        self._properties['lon'] = EntityProperty( category='info/weather_' + self.name, interval=-1,
                                                  name='lon', description="Longitude", type=DataType.LONGITUDE,
                                                  value=settings.value('weather/' + self.name + "/lon", ""))
 

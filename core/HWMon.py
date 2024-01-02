@@ -62,9 +62,8 @@ class HWMon:
                     if channeltype == 'alarm':
                         channel_type = DataType.BOOL
 
-                    self._hwmon.append(EntityProperty(parent=self,
-                                                      category='sensor',
-                                                      entity=sensor_name,
+                    self._hwmon.append(EntityProperty(
+                                                      category='sensor/' + sensor_name,
                                                       name=channel_channel,
                                                       description=channel_desc,
                                                       type=channel_type,
@@ -89,9 +88,8 @@ class HWMon:
                     if channeltype == 'pwm':
                         max=255
 
-                    self._hwmon.append(EntityProperty(parent=self,
-                                                      category='output',
-                                                      entity=sensor_name,
+                    self._hwmon.append(EntityProperty(
+                                                      category='output/' + sensor_name,
                                                       min=min,
                                                       step=step,
                                                       max=max,

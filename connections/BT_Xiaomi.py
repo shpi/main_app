@@ -52,15 +52,14 @@ class BT_Xiaomi(QObject):
 
         #self.adapter = pygatt.GATTToolBackend()
         self._discovered_devices = {}
-        self.timeout = 10
+        self.timeout = 20
         self.process = None
         self._scanning = False
 
         self.properties = dict()
 
-        self.properties['module'] = EntityProperty(parent=self,
+        self.properties['module'] = EntityProperty(
                                                    category='module',
-                                                   entity='connections',
                                                    name='bt_xiaomi',
                                                    value='NOT_INITIALIZED',
                                                    call=self.update,
@@ -79,25 +78,22 @@ class BT_Xiaomi(QObject):
 
             if self._sensors[sensor]['type'] == 'mj_ht_v1':
 
-                self.properties[self._sensors[sensor]['custom_name'] + '_humidity'] = EntityProperty(parent=self,
-                                                        category='connections',
-                                                        entity='mj_ht_v1',
+                self.properties[self._sensors[sensor]['custom_name'] + '_humidity'] = EntityProperty(
+                                                        category='connections/mj_ht_v1',
                                                         name=self._sensors[sensor]['custom_name'] + '_humidity',
                                                         value=None,
                                                         description='Humidity',
                                                         type=DataType.HUMIDITY,
                                                         interval=-1)
-                self.properties[self._sensors[sensor]['custom_name'] + '_temperature'] = EntityProperty(parent=self,
-                                                        category='connections',
-                                                        entity='mj_ht_v1',
+                self.properties[self._sensors[sensor]['custom_name'] + '_temperature'] = EntityProperty(
+                                                        category='connections/mj_ht_v1',
                                                         name=self._sensors[sensor]['custom_name'] + '_temperature',
                                                         value=None,
                                                         description='Temperature',
                                                         type=DataType.TEMPERATURE,
                                                         interval=-1)
-                self.properties[self._sensors[sensor]['custom_name'] + '_battery'] = EntityProperty(parent=self,
-                                                        category='connections',
-                                                        entity='mj_ht_v1',
+                self.properties[self._sensors[sensor]['custom_name'] + '_battery'] = EntityProperty(
+                                                        category='connections/mj_ht_v1',
                                                         name=self._sensors[sensor]['custom_name'] + '_battery',
                                                         value=None,
                                                         description='Battery Level',
@@ -106,41 +102,36 @@ class BT_Xiaomi(QObject):
 
             elif self._sensors[sensor]['type'] == 'mi_flora':
 
-                self.properties[self._sensors[sensor]['custom_name'] + '_moisture'] = EntityProperty(parent=self,
-                                                        category='connections',
-                                                        entity='mi_flora',
+                self.properties[self._sensors[sensor]['custom_name'] + '_moisture'] = EntityProperty(
+                                                        category='connections/mi_flora',
                                                         name=self._sensors[sensor]['custom_name'] + '_moisture',
                                                         value=None,
                                                         description='Moisture',
                                                         type=DataType.HUMIDITY,
                                                         interval=-1)
-                self.properties[self._sensors[sensor]['custom_name'] + '_temperature'] = EntityProperty(parent=self,
-                                                        category='connections',
-                                                        entity='mi_flora',
+                self.properties[self._sensors[sensor]['custom_name'] + '_temperature'] = EntityProperty(
+                                                        category='connections/mi_flora',
                                                         name=self._sensors[sensor]['custom_name'] + '_temperature',
                                                         value=None,
                                                         description='Temperature',
                                                         type=DataType.TEMPERATURE,
                                                         interval=-1)
-                self.properties[self._sensors[sensor]['custom_name'] + '_battery'] = EntityProperty(parent=self,
-                                                        category='connections',
-                                                        entity='mi_flora',
+                self.properties[self._sensors[sensor]['custom_name'] + '_battery'] = EntityProperty(
+                                                        category='connections/mi_flora',
                                                         name=self._sensors[sensor]['custom_name'] + '_battery',
                                                         value=None,
                                                         description='Battery Level',
                                                         type=DataType.PERCENT_INT,
                                                         interval=-1)
-                self.properties[self._sensors[sensor]['custom_name'] + '_fertility'] = EntityProperty(parent=self,
-                                                        category='connections',
-                                                        entity='mi_flora',
+                self.properties[self._sensors[sensor]['custom_name'] + '_fertility'] = EntityProperty(
+                                                        category='connections/mi_flora',
                                                         name=self._sensors[sensor]['custom_name'] + '_fertility',
                                                         value=None,
                                                         description='Fertility',
                                                         type=DataType.CONDUCTIVITY,
                                                         interval=-1)
-                self.properties[self._sensors[sensor]['custom_name'] + '_light'] = EntityProperty(parent=self,
-                                                        category='connections',
-                                                        entity='mi_flora',
+                self.properties[self._sensors[sensor]['custom_name'] + '_light'] = EntityProperty(
+                                                        category='connections/mi_flora',
                                                         name=self._sensors[sensor]['custom_name'] + '_light',
                                                         value=None,
                                                         description='Light',
@@ -205,6 +196,7 @@ class BT_Xiaomi(QObject):
         """Starts the update process in a separate thread."""
         update_thread = threading.Thread(target=self.update_threaded)
         update_thread.start()
+        return 'OK'
 
 
     def get_inputs(self) -> list:
@@ -228,7 +220,7 @@ class BT_Xiaomi(QObject):
 
     @Slot()
     def scan_devices(self):
-        logging.error('start bluetooth scanning..')
+        logging.info('start bluetooth scanning..')
         self.stop_scan()  # Ensure no previous scan is running
         self.scanning = True
         #btmgmt -i hci0 power on
@@ -322,9 +314,9 @@ class BT_Xiaomi(QObject):
 
         # Stop the find command for the Bluetooth interface
         try:
-            subprocess.run(['btmgmt', '-i', 'hci0', 'stop-find'],input="")
+            subprocess.run(['btmgmt', '-i', 'hci0', 'stop-find'], input="", stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except Exception as e:
-            print(f"Error stopping Bluetooth find: {e}")
+            logging.error(f"Error stopping Bluetooth find: {e}")
 
         self.process = None
 

@@ -67,9 +67,8 @@ class MLX90615:
                         # np.full(self.buffer_size,fill_value=self.object_temperature, dtype=np.int16)
                         # data = [startvalue] * size
 
-                        self._module = EntityProperty(parent=self,
+                        self._module = EntityProperty(
                                                       category='module',
-                                                      entity='sensor',
                                                       name='mlx90615',
                                                       value='NOT_INITIALIZED',
                                                       description='Room temperature compensation module',
@@ -77,18 +76,16 @@ class MLX90615:
                                                       call=self.update,
                                                       interval=60)
 
-                        self._thread = ThreadProperty(entity='input_dev',
+                        self._thread = ThreadProperty(
                                                       name='mlx90615',
-                                                      category='module',
-                                                      parent=self,
+                                                      category='threads',
                                                       value=1,
                                                       description='Thread for MLX90615',
                                                       interval=60,
                                                       function=self.mlx_thread)
 
-                        self._temp = EntityProperty(parent=self,
-                                                    category='sensor',
-                                                    entity='mlx90615',
+                        self._temp = EntityProperty(
+                                                    category='sensor/mlx90615',
                                                     name='room_temperature',
                                                     value=self.object_temperature,
                                                     description='Room temperature stabilized',

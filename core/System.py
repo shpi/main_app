@@ -12,9 +12,7 @@ class SystemInfo:
         self.name = 'system'
 
         self.properties.append(StaticProperty(name='is64bit',
-                                              category='core',
-                                              entity='system',
-                                              parent=self,
+                                              category='system',
                                               value=SystemInfo.is64bit(),
                                               description='is 64bit System?',
                                               type=DataType.BOOL,
@@ -22,8 +20,6 @@ class SystemInfo:
 
         self.properties.append(StaticProperty(name='ram_amount',
                                               category='system',
-                                              entity='ram',
-                                              parent=self,
                                               value=SystemInfo.ram_amount(),
                                               description='installed ram in MB',
                                               type=DataType.INT,
@@ -31,8 +27,6 @@ class SystemInfo:
 
         self.properties.append(EntityProperty(name='ram_used',
                                               category='system',
-                                              entity='ram',
-                                              parent=self,
                                               call=SystemInfo.ram_used,
                                               description='used ram in MB',
                                               type=DataType.INT,
@@ -40,8 +34,6 @@ class SystemInfo:
 
         self.properties.append(EntityProperty(name='ram_free',
                                               category='system',
-                                              entity='ram',
-                                              parent=self,
                                               call=SystemInfo.ram_free,
                                               description='used ram in MB',
                                               type=DataType.INT,
@@ -49,17 +41,13 @@ class SystemInfo:
 
         self.properties.append(EntityProperty(name='ram_buff',
                                               category='system',
-                                              entity='ram',
-                                              parent=self,
                                               call=SystemInfo.ram_buff,
                                               description='used ram as buffer in MB',
                                               type=DataType.INT,
                                               interval=60))
 
         self.properties.append(EntityProperty(name='uptime',
-                                              category='core',
-                                              entity='system',
-                                              parent=self,
+                                              category='system',
                                               call=SystemInfo.get_uptime,
                                               description='uptime in seconds',
                                               type=DataType.INT,

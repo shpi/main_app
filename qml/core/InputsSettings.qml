@@ -59,7 +59,7 @@ Item {
                 width: parent.width
                 model: inputs.searchList
                 delegate: inputDelegate
-                visible:  inputs.files.length > 0
+                visible: inputs.files.length > 0
                 height: (200 + (inputsview.count * 80))
                 cacheBuffer: 100
             }
@@ -135,7 +135,14 @@ Item {
             MouseArea {
                 id: mouse
                 anchors.fill: parent
-                onClicked: {   var newPath = inputs.currentPath + "/" + modelData;
+                onClicked: {   var newPath = "";
+
+                               if (inputs.currentPath !== "") {
+                               newPath = inputs.currentPath + "/";
+                               }
+                               newPath += modelData;
+
+                               console.log(newPath);
                                inputs.set_searchlist(newPath);
                                inputs.set_path(newPath);
                            }

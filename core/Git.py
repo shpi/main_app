@@ -21,9 +21,8 @@ class Git(QObject):
         super().__init__()
         self.settings = settings
         self.properties = dict()
-        self.properties['module'] = EntityProperty(parent=self,
+        self.properties['module'] = EntityProperty(
                                                    category='module',
-                                                   entity='core',
                                                    name='git',
                                                    value='NOT_INITIALIZED',
                                                    description='Git update module',
@@ -65,9 +64,13 @@ class Git(QObject):
             logging.info(str(a))
         except Exception as e:
             logging.error(str(e))
+            return 'ERROR'
+
         self.check_updates()
         self.latest_update()
         self.gitChanged.emit()
+
+        return 'OK'
 
     def get_inputs(self):
         return self.properties.values()
