@@ -3,7 +3,7 @@
 import logging
 from enum import Enum
 
-from hardware.iio import ChannelType
+from core.iio import ChannelType
 
 
 class DataType(Enum):

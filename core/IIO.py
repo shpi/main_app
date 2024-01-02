@@ -6,7 +6,7 @@ import logging
 import sys
 from functools import partial
 
-import hardware.iio as iio
+import core.iio as iio
 from core.DataTypes import Convert, DataType
 from core.Property import EntityProperty
 

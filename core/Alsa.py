@@ -8,7 +8,7 @@ from subprocess import call, Popen, PIPE, DEVNULL
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty
-from hardware.AlsaRecord import AlsaRecord
+from core.AlsaRecord import AlsaRecord
 
 
 class AlsaMixer:

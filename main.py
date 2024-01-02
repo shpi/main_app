@@ -22,16 +22,15 @@ from core.MLX90615 import MLX90615
 from core.ModuleManager import ModuleManager
 from core.Wifi import Wifi
 from core.MQTT import MQTTClient
-from hardware.Alsa import AlsaMixer
-from hardware.Backlight import Backlight
-from hardware.CPU import CPU
-from hardware.Disk import DiskStats
-from hardware.HWMon import HWMon
-from hardware.IIO import IIO
-from hardware.InputDevs import InputDevs
-from hardware.Leds import Led
-from hardware.System import SystemInfo
-#from connections.BT_Xiaomi import BT_Xiaomi
+from core.Alsa import AlsaMixer
+from core.Backlight import Backlight
+from core.CPU import CPU
+from core.Disk import DiskStats
+from core.HWMon import HWMon
+from core.IIO import IIO
+from core.InputDevs import InputDevs
+from core.Leds import Led
+from core.System import SystemInfo
 
 import files
 
