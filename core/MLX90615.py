@@ -237,11 +237,11 @@ class MLX90615:
                     self.object_mean = (self.object_mean * 9 + tempobj) // 10
 
                     try:
-                        while (time.time() - self.inputs.entries['core/input_dev/lastinput'].last_update) < 1:
+                        while (time.time() - self.inputs.entries['input_dev/lastinput'].last_update) < 1:
                             logging.debug('halted mlx90615 thread due to inputdevice actions')
                             self.buffer_enable(0)
                             time.sleep(3)
-                            if (time.time() - self.inputs.entries['core/input_dev/lastinput'].last_update) > 2:
+                            if (time.time() - self.inputs.entries['input_dev/lastinput'].last_update) > 2:
                                 self.object_mean = self.single_shot('in_temp_object_raw')
                                 self.buffer_enable(1)
 
