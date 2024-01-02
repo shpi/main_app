@@ -98,7 +98,7 @@ class Appearance(QObject):
     def build_timezone_dict(self):
         result = subprocess.run(["timedatectl", "list-timezones"], capture_output=True, text=True)
         timezones = result.stdout.splitlines()
-        
+
         timezone_dict = defaultdict(list)
         for tz in timezones:
             parts = tz.split('/')
@@ -505,14 +505,14 @@ class Appearance(QObject):
         value = int(value)
         if value != self._backlightlevel:
             if value < 1:
-                self.inputs['core/backlight/brightness'].set(0)
+                self.inputs['system/backlight_brightness'].set(0)
 
             #elif value < 30:
             #    self.inputs['core/backlight/brightness'].set(1)
             #    self._blackfilter = ((100 - (value * 3.3)) / 100)
 
             elif value <= 100:
-                self.inputs['core/backlight/brightness'].set(value)
+                self.inputs['system/backlight_brightness'].set(value)
                 # mapping happens in backlight class int(self.mapFromTo(value, 30, 100, 1, 100)))
                 self._blackfilter = 0
 
