@@ -16,7 +16,6 @@ class ShowValue(QObject):
         self.settings = settings
         self.inputs = inputs
         self.name = name
-
         self._value_path = settings.value('showvalue/' + self.name + "/path", '')
 
         if self._value_path in self.inputs.entries:
@@ -25,9 +24,7 @@ class ShowValue(QObject):
             self._value = 0
 
         self.buffer = CircularBuffer(100, initialvalue=self._value)
-
         self._precision = int(settings.value('showvalue/' + self.name + "/precision", 1))
-
         self._icon = settings.value('showvalue/' + self.name + "/icon", '')
         self._divider = settings.value('showvalue/' + self.name + "/divider", '1000')
 
@@ -74,29 +71,22 @@ class ShowValue(QObject):
     def interval(self):
         return self.inputs.entries[self._value_path].interval
 
-    # @Property(str,notify=valueChanged)
+    # @Property(str,notify=settingsChanged)
     def precision(self):
         return self._precision
 
-    # @value_path.setter
+    # @precision.setter
     @Pre_5_15_2_fix(int, precision, notify=settingsChanged)
     def precision(self, key):
         self.settings.setValue('showvalue/' + self.name + "/precision", key)
         logging.info(self.settings.value('showvalue/' + self.name + "/precision", ''))
         self._precision = int(key)
+        self.settingsChanged.emit()
+        self.valueChanged.emit()
 
-    # @Property(str,notify=valueChanged)
-    def unit(self):
-        return self._unit
 
-    # @value_path.setter
-    @Pre_5_15_2_fix(int, unit, notify=settingsChanged)
-    def unit(self, key):
-        self.settings.setValue('showvalue/' + self.name + "/unit", key)
-        logging.info(self.settings.value('showvalue/' + self.name + "/unit", ''))
-        self._precision = str(key)
 
-    # @Property(str,notify=valueChanged)
+    # @Property(str,notify=settingsChanged)
     def value_path(self):
         return self._value_path
 
@@ -109,8 +99,10 @@ class ShowValue(QObject):
         self.inputs.register_event(key, self.ui_event)
         self.inputs.unregister_event(self._value_path, self.ui_event)
         self._value_path = key
+        self.settingsChanged.emit()
 
-    # @Property(str,notify=valueChanged)
+
+    # @Property(str,notify=settingsChanged)
     def icon(self):
         return self._icon
 
@@ -119,9 +111,9 @@ class ShowValue(QObject):
     def icon(self, key):
         self._icon = key
         self.settings.setValue('showvalue/' + self.name + "/icon", key)
-        self.valueChanged.emit()
+        self.settingsChanged.emit()
 
-    # @Property(str,notify=valueChanged)
+    # @Property(str,notify=settingsChanged)
     def divider(self):
         return str(self._divider)
 
@@ -132,6 +124,7 @@ class ShowValue(QObject):
         self._divider = float(key)
         self.settings.setValue('showvalue/' + self.name + "/divider", key)
         self.valueChanged.emit()
+        self.settingsChanged.emit()
 
     def is_number(self, string):
         try:

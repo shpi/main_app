@@ -3,10 +3,19 @@ import QtQuick.Controls 2.15
 
 import "qrc:/fonts"
 
-Rectangle {
+Flickable {
 
     property var icons: []
     property var listnames: []
+    property int selectedIconIndex: -1 // Property to track the selected icon index
+    property string instancename: modules.modules['UI']['ShowValue'][0]
+    contentHeight: list.implicitHeight + 100
+
+
+
+ function updateGridViewHeight() {
+        gridView.height = Math.ceil(icons.length / Math.floor(gridView.width / gridView.cellWidth)) * gridView.cellHeight + 70;
+    }
 
     function getIndexofList(path, mmodel) {
 
@@ -36,17 +45,13 @@ Rectangle {
                 icons.push(obj[prop])
             }
         }
+
+      updateGridViewHeight();
+
     }
 
-    property string instancename: modules.modules['UI']['ShowValue'][0]
-
-    color: "transparent"
 
 
-
-    Flickable {
-        anchors.fill: parent
-        contentHeight: list.implicitHeight + 100
 
 
         Text {
@@ -61,7 +66,7 @@ Rectangle {
         }
 
     Column {
-        width: parent.width * 0.9
+        width: parent.width * 0.95
         anchors.horizontalCenter: parent.horizontalCenter
         id: list
          anchors.top: title.bottom
@@ -70,10 +75,11 @@ Rectangle {
 
         Text {
 
-            text: "Value"
+            text: modules.loaded_instances['UI']['ShowValue'][instancename].value
             color: Colors.black
             font.bold: true
-            anchors.topMargin: 20
+            anchors.topMargin: 10
+            anchors.right: parent.right
         }
 
         TextField {
@@ -138,39 +144,81 @@ Rectangle {
             }
         }
 
-        ComboBox {
-            id: combo_icon
-            anchors.right: parent.right
-            width: 550
-            model: listnames
-
-            onActivated: {
-                modules.loaded_instances['UI']['ShowValue'][instancename].icon
-                        = icons[combo_icon.currentIndex]
-                iconpreview.text = icons[combo_icon.currentIndex]
-            }
 
 
+GridView {
+    id: gridView
+    width: parent.width
+    height: 0
+    interactive: false     
+    cellWidth: 120
+    cellHeight: 100
 
-            Label {
-                anchors.right: parent.left
-                anchors.rightMargin: 10
-                text: "Icon"
-                font.family: localFont.name
-                color: Colors.black
-            }
+header: Rectangle {
+                    width: parent.width
+                    height: 70
+                    color: "transparent"
 
-            Text {
-                text: icons[combo_icon.currentIndex]
-                id: iconpreview
-                font.family: localFont.name
-                font.pixelSize: 120
-                anchors.top: parent.bottom
-                anchors.topMargin: 10
-                anchors.horizontalCenter: parent.horizontalCenter
-                color: Colors.black
+                    Text {
+                        padding: 10
+                        anchors.right: parent.right
+                        width: implicitWidth
+                        text: "Icon"
+                        font.pixelSize: 30
+                        color: Colors.black
+                        height: 70
+                    }
+                 }
+
+
+    model: ListModel {
+        id: gridModel
+        Component.onCompleted: {
+            for (var i = 0; i < icons.length; ++i) {
+                append({"name": listnames[i], "icon": icons[i]})
             }
         }
+    }
+
+
+  delegate: Item {
+            width: gridView.cellWidth
+            height: gridView.cellHeight
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    selectedIconIndex = index // Update the selected index
+                    // Update your instance's icon value here
+                    modules.loaded_instances['UI']['ShowValue'][instancename].icon = model.icon
+                }
+            }
+
+            Column {
+                anchors.fill: parent
+                spacing: 5
+
+                Text {
+                    text: icon
+                    font.family: localFont.name
+                    font.pixelSize: 55
+                    color: selectedIconIndex === index ? "red" : Colors.black // Highlight selected icon
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                Text {
+                    text: name
+                    font.pixelSize: 16
+                    color: selectedIconIndex === index ? "red" : Colors.black // Highlight selected text
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+        }
+    }
+
+
+
+
 
         RoundButton {
             text: 'Delete Instance'
@@ -188,10 +236,9 @@ Rectangle {
 
     Component.onCompleted: {
         listProperty()
-        combo_icon.model = listnames
-        combo_icon.currentIndex = getIndexofList(
+        selectedIconIndex  = getIndexofList(
                     modules.loaded_instances['UI']['ShowValue'][instancename].icon,
                     icons)
     }
 }
-}
+

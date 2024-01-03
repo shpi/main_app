@@ -36,13 +36,16 @@ Item {
                 anchors.leftMargin: 30
             }
 
-            Rectangle {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.margins: 10
-                height: 1
-                color: "transparent"
-            }
+
+Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: 10
+                    height: 1
+                    color: "#424246"
+                }
+
+
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
@@ -99,39 +102,59 @@ Item {
         width: parent.width
         delegate: listDelegate
 
-        footer: Row {
+
+
+
+
+    footer: Column {
             spacing: 20
-            anchors.horizontalCenter: parent.horizontalCenter
+            width: parent.width
 
-            TextField {
+            Row {
+                anchors.bottomMargin: 20
+                spacing: 20
+                height: 100
+                anchors.horizontalCenter: parent.horizontalCenter
 
+                TextField {
+                    anchors.verticalCenter: parent.verticalCenter
                 id: instancename
                 font.pixelSize: 32
                 height: 50
-                width: 400
+                width: 600
                 placeholderText: 'Add new instance'
                 onActiveFocusChanged: keyboard(this)
-            }
 
-            RoundButton {
-                anchors.verticalCenter: parent.verticalCenter
-                radius: 20
-                height: 50
-                padding: 10
-                text: '<b>Add</b>'
-                font.pixelSize: 32
 
-                onClicked: {
-                    modules.add_instance(category, classname, instancename.text)
-                    instantview.model = modules.instances(category, classname)
-                    instantview.forceLayout()
-                    
+                    visible: true
+                }
+
+                RoundButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    radius: 20
+                    height: 50
+                    padding: 10
+                    text: '<b>Add</b>'
+                    font.pixelSize: 32
+
+                    onClicked: {
+                        var roomarr = modules.available_rooms
+                        roomarr.push(roomname_text.text)
+                        modules.available_rooms = roomarr
+                        roomview.model = modules.available_rooms
+                        roomview.forceLayout()
+                    }
                 }
             }
         }
-    }
 
 
 
+
+
+
+
+
+}
 
 }
