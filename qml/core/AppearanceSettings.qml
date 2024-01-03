@@ -555,7 +555,7 @@ Row {
     ComboBox {
         id: continentComboBox
         width: 250
-        model: appearance.continents()
+        model: appearance.continents
         onCurrentTextChanged: cityComboBox.model = appearance.cities(currentText)
     }
 

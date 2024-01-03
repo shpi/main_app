@@ -112,9 +112,11 @@ class Appearance(QObject):
 
         return timezone_dict
 
+    @Signal
+    def continentsChanged(self):
+        pass
 
-
-    @Slot(result='QVariantList')
+    @Property('QVariantList', notify=continentsChanged)
     def continents(self):
      return sorted(self._timezones.keys())
 
