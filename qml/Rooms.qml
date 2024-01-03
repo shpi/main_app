@@ -23,7 +23,9 @@ Item {
 
         delegate: listDelegate
 
-
+        footer: Rectangle { 
+                  height: 50 
+                  color: "transparent" }
 
 
         Component {

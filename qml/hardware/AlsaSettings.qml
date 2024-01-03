@@ -4,28 +4,22 @@ import QtQuick.Controls 2.15
 import "qrc:/fonts"
 
 Item {
+    ListView {
+        cacheBuffer: 20
+        anchors.fill: parent
+        clip: true
+        orientation: Qt.Vertical
+        id: inputsview
 
+        model: inputs.searchList
+        delegate: inputDelegate
 
+        header: Rectangle {
+            width: parent.width
+            height: 70
+            color: "transparent"
 
-        ListView {
-            cacheBuffer: 20
-            anchors.fill:parent
-
-            clip: true
-            orientation: Qt.Vertical
-            id: inputsview
-
-            model: inputs.searchList
-            delegate: inputDelegate
-
-            header:  Rectangle {
-
-                width: parent.width
-                height: 70
-                color: "transparent"
-
-                Text {
-
+            Text {
                 id: title
                 width: parent.width
                 text: 'Audio Settings'
@@ -35,58 +29,64 @@ Item {
                 anchors.left: parent.left
                 height: 70
                 padding: 10
-            }}
+            }
+        }
+
+        Component {
+            id: inputDelegate
+
+            Rectangle {
+                property int delindex: index
+
+                id: wrapper
+                height: 110
+                width: inputsview.width
+                color: index % 2 === 0 ? Colors.white : "transparent"
+
+                Row {
+                    spacing: 10
+                    width: parent.width
+                    height: parent.height
+
+                    Text {
+                        horizontalAlignment: Text.AlignHCenter
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: description + ' '
+                        font.pixelSize: 24
+                        color: Colors.black
+                        wrapMode: Text.WordWrap
+                        width: parent.width - 220
+                    }
+
+                    Loader {
+                        anchors.verticalCenter: parent.verticalCenter
+                        asynchronous: true
+                        sourceComponent: 
+
+        if (output === false) {
+            switch (type) {
+                case "percent_int": return gaugebar;
+                case "percent_float": return gaugebar;
+                default: return plaintext;
+            }
+        } else {
+            switch (type) {
+                case "boolean": return boolswitch;
+                case "thread": return boolswitch;
+                case "enum": return enumcombo;
+                case "integer": return intslider;
+                default: return textfield;
+            }
+        }
+    
 
 
-            Component {
-                id: inputDelegate
-
-                Rectangle {
-                    property int delindex: index
-                    property int sensorvalue: value
-
-                    id: wrapper
-                    height:      110
-
-                    width: inputsview.width
-                    color: index % 2 === 0 ? Colors.white : "transparent"
-                    Row {
-                        spacing: 10
-                        width: parent.width
-                        height: parent.height
-
-
-                        Text {
-                            horizontalAlignment: Text.AlignHCenter
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: description + ' '
-                            font.pixelSize: 24
-                            color: Colors.black
-                            wrapMode: Text.WordWrap
-                            width: parent.width - 220
-
-                        }
-
-                        //(output === '1' ? '' : value)
-                        Loader {
-                            //Component.onCompleted: console.log(type)
-                            anchors.verticalCenter: parent.verticalCenter
-                            //asynchronous: true
-                            sourceComponent: if (output === false)
-                                                 switch (type) {
-                                                 case "percent_int":
-                                                     return gaugebar
-                                                 default:
-                                                     return plaintext
-                                                 }
-                                             else
-                                                 return undefined
-
-                            Component {
+                          Component {
                                 id: plaintext
+
                                 Text {
                                     anchors.verticalCenter: parent.verticalCenter
-                                    text: sensorvalue
+                                    text: value
                                     width: 200
                                     font.pixelSize: 24
                                     color: Colors.black
@@ -95,6 +95,7 @@ Item {
 
                             Component {
                                 id: gaugebar
+
                                 Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
                                     width: 200
@@ -107,39 +108,21 @@ Item {
                                         height: parent.height - 2
                                         anchors.left: parent.left
                                         anchors.leftMargin: 1
-                                        width: ((parent.width - 2) / 100) * sensorvalue
+                                        width: ((parent.width - 2) / 100) * value
                                         color: Qt.rgba(1, 0.5, 0, 0.7)
                                     }
 
                                     Text {
                                         anchors.horizontalCenter: parent.horizontalCenter
                                         anchors.verticalCenter: parent.verticalCenter
-                                        text: sensorvalue + '%'
+                                        text: value + '%'
                                         font.pixelSize: 24
                                         color: Colors.black
                                     }
                                 }
                             }
-                        }
+                        
 
-                        Loader {
-                            anchors.verticalCenter: parent.verticalCenter
-                            asynchronous: true
-                            sourceComponent: if (output)
-                                                 switch (type) {
-                                                 case "boolean":
-                                                     return boolswitch
-                                                 case "thread":
-                                                     return boolswitch
-                                                 case "enum":
-                                                     return enumcombo
-                                                 case "integer":
-                                                     return intslider
-                                                 default:
-                                                     return textfield
-                                                 }
-                                             else
-                                                 return undefined
 
                             Component {
                                 id: textfield
@@ -147,14 +130,12 @@ Item {
                                 TextField {
                                     onActiveFocusChanged: keyboard(this)
                                     anchors.verticalCenter: parent.verticalCenter
-                                    //visible: output == '1' ? 1 : 0
                                     font.pixelSize: 24
                                     width: 200
                                     color: Colors.black
                                     placeholderText: (output == '1' ? value.toString(
                                                                           ) : '')
-                                    onEditingFinished: inputs.set(path,
-                                                                  this.text)
+                                    onEditingFinished: inputs.set(path, this.text)
                                 }
                             }
 
@@ -162,7 +143,6 @@ Item {
                                 id: boolswitch
 
                                 Switch {
-
                                     id: switchcontrol
                                     anchors.horizontalCenter: parent.horizontalCenter
 
@@ -190,9 +170,8 @@ Item {
                                         }
                                     }
 
-                                    checked: sensorvalue === 1 ? true : false
+                                    checked: value === 1 ? true : false
                                     anchors.verticalCenter: parent.verticalCenter
-                                    //visible: output == '1' ? 1 : 0
                                     width: 200
                                     onToggled: inputs.set(
                                                    path,
@@ -202,9 +181,9 @@ Item {
 
                             Component {
                                 id: enumcombo
+
                                 ComboBox {
-                                    currentIndex: parseInt(sensorvalue)
-                                    //visible: output == '1' ? 1 : 0
+                                    currentIndex: parseInt(value)
                                     width: 200
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     model: available
@@ -218,19 +197,33 @@ Item {
 
                                 Slider {
                                     from: min
-                                    value: sensorvalue
+                                    value: value
                                     width: 200
                                     to: max
                                     stepSize: step === 0 ? 1 : step
-                                    //onMoved: inputs.set(path, this.value)
                                     onPressedChanged: if (!this.pressed)
                                                           inputs.set(path,this.value)
                                 }
                             }
-                        }
+
+
+
+
+
+
+
+
+
+
+
+
                     }
                 }
             }
         }
     }
 
+
+
+
+}

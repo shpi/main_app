@@ -229,7 +229,7 @@ else:
     # Non-windows, possibly Posix system
     _iiolib = "iio"
 
-_lib = _cdll(find_library(_iiolib), use_errno=True, use_last_error=True)
+_lib = _cdll(find_library(_iiolib), use_errno=True) #use_last_error=True
 
 _get_backends_count = _lib.iio_get_backends_count
 _get_backends_count.restype = c_uint

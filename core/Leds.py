@@ -29,7 +29,7 @@ class Led:
                                                                   max=100,
                                                                   step=1,
                                                                   description='brightness of led in %',
-                                                                  type=DataType.PERCENT_FLOAT,
+                                                                  type=DataType.PERCENT_INT,
                                                                   value=100 / lmax * rawvalue,
                                                                   set=partial(self.set_brightness, file, lmax),
                                                                   call=partial(self.get_brightness, file, lmax),

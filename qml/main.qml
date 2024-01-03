@@ -5,8 +5,8 @@ import QtGraphicalEffects 1.15
 import QtQuick.Particles 2.15
 
 
-import "../fonts"
-
+//import "../fonts"
+import "qrc:/fonts"
 
 ApplicationWindow {
     id: window

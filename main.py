@@ -5,6 +5,7 @@ import signal
 import sys
 import threading
 import time
+import shiboken2
 
 from PySide2 import QtCore
 from PySide2.QtCore import QSettings, qInstallMessageHandler
@@ -192,9 +193,8 @@ if not qt_check_loop:
     t.start()
 
 
-filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "qml/main.qml")
-#engine.load("qrc:/qml/main.qml")
-engine.load("qml/main.qml")
+engine.load("qrc:/qml/main.qml")
+#engine.load("qml/main.qml")
 
 if not engine.rootObjects():
     sys.exit(-1)

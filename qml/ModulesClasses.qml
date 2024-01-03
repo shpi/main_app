@@ -23,7 +23,7 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                color: index % 2 === 0 ? "transparent" : Colors.white
+                color: index % 2 === 1 ? "transparent" : Colors.white
             }
 
             Text {
@@ -36,16 +36,13 @@ Item {
                 anchors.leftMargin: 30
             }
 
-
-Rectangle {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.margins: 10
-                    height: 1
-                    color: "#424246"
-                }
-
-
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.margins: 10
+                height: 1
+                color: "#424246"
+            }
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
@@ -67,11 +64,6 @@ Rectangle {
                                    "instancename": modelData
                                })
             }
-
-
-
-
-
         }
     }
 
@@ -80,9 +72,6 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
 
         id: instantview
-
-
-
 
         header: Rectangle {
 
@@ -102,59 +91,38 @@ Rectangle {
         width: parent.width
         delegate: listDelegate
 
-
-
-
-
-    footer: Column {
+        footer: Row {
+            height: 120
             spacing: 20
-            width: parent.width
+            anchors.horizontalCenter: parent.horizontalCenter
+            padding: 20
 
-            Row {
-                anchors.bottomMargin: 20
-                spacing: 20
-                height: 100
-                anchors.horizontalCenter: parent.horizontalCenter
+            TextField {
 
-                TextField {
-                    anchors.verticalCenter: parent.verticalCenter
                 id: instancename
                 font.pixelSize: 32
-                height: 50
+                height: 70
                 width: 600
                 placeholderText: 'Add new instance'
                 onActiveFocusChanged: keyboard(this)
+                anchors.verticalCenter: parent.verticalCenter
+            }
 
+            RoundButton {
+                anchors.verticalCenter: parent.verticalCenter
+                radius: 20
+                height: 70
+                padding: 10
+                text: '<b>Add</b>'
+                font.pixelSize: 32
 
-                    visible: true
-                }
-
-                RoundButton {
-                    anchors.verticalCenter: parent.verticalCenter
-                    radius: 20
-                    height: 50
-                    padding: 10
-                    text: '<b>Add</b>'
-                    font.pixelSize: 32
-
-                    onClicked: {
-                        var roomarr = modules.available_rooms
-                        roomarr.push(roomname_text.text)
-                        modules.available_rooms = roomarr
-                        roomview.model = modules.available_rooms
-                        roomview.forceLayout()
-                    }
+                onClicked: {
+                    modules.add_instance(category, classname, instancename.text)
+                    instantview.model = modules.instances(category, classname)
+                    instantview.forceLayout()
+                    
                 }
             }
         }
-
-
-
-
-
-
-
-
-}
-
+    }
 }

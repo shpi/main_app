@@ -327,12 +327,11 @@ class Appearance(QObject):
     def rangeChanged(self):
         pass
 
-    # @Property(int, notify=rangeChanged)
+    @Property(int, notify=rangeChanged)
     def minbacklight(self):
-        return int(self._min_backlight)
+        return self._min_backlight
 
-    # @minbacklight.setter
-    @Pre_5_15_2_fix(int, minbacklight, notify=rangeChanged)
+    @minbacklight.setter
     def minbacklight(self, min_):
         self._min_backlight = int(min_)
         self.settings.setValue("appearance/min", self._min_backlight)
@@ -349,12 +348,11 @@ class Appearance(QObject):
         self.settings.setValue("appearance/min_night", self._min_backlight_night)
         self.rangeChanged.emit()
 
-    # @Property(int, notify=rangeChanged)
+    @Property(int, notify=rangeChanged)
     def maxbacklight(self):
-        return int(self._max_backlight)
+        return self._max_backlight
 
-    # @maxbacklight.setter
-    @Pre_5_15_2_fix(int, maxbacklight, notify=rangeChanged)
+    @maxbacklight.setter
     def maxbacklight(self, max_):
         self._max_backlight = int(max_)
         self.rangeChanged.emit()

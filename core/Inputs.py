@@ -354,7 +354,7 @@ class InputsDict(QObject):
 
     @Property('QVariantList', notify=pathChanged)
     def folders(self):
-        return list(self.actualFolders)
+        return sorted(list(self.actualFolders))
 
     @Property('QVariantList', notify=pathChanged)
     def files(self):

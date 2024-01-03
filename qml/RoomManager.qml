@@ -31,9 +31,9 @@ Item {
             width: parent.width
 
             Row {
-                anchors.bottomMargin: 20
+                padding: 20
                 spacing: 20
-                height: 100
+                height: 120
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 TextField {
@@ -101,7 +101,6 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
                     anchors.rightMargin: 20
-                    font.pixelSize: 60
                     text: Icons.arrow
                     rotation: 270 
                     font.family: localFont.name

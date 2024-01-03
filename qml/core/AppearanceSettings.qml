@@ -3,34 +3,30 @@ import QtQuick.Controls 2.15
 import "qrc:/fonts"
 
 Item {
-    function formatText(count, modelData) {
-        var data = modelData
-        if (data.toString().length < 2)
-            return "0" + data
-        else
-            return data
-    }
 
-    function getMinutes(timestring) {
-        var minutes = timestring.split(':')[1]
-        return parseInt(minutes)
-    }
+function formatText(count, modelData) {
+    return modelData.toString().padStart(2, '0');
+}
 
-    function getHours(timestring) {
-        var hours = timestring.split(':')[0]
-        return parseInt(hours)
-    }
+function getMinutes(timestring) {
+    return parseInt(timestring.split(':')[1]);
+}
 
-    function getIndex(path, mmodel) {
-        for (var i = 0; i < mmodel.rowCount(); i++) {
-            var idx = mmodel.index(i, 0)
-            var value = mmodel.data(idx, Qt.UserRole + 1000)
-            if (path === value) {
-                return i
-            }
+function getHours(timestring) {
+    return parseInt(timestring.split(':')[0]);
+}
+
+
+
+function getIndex(path, mmodel) {
+    for (var i = 0; i < mmodel.rowCount(); i++) {
+        if (path === mmodel.data(mmodel.index(i, 0), Qt.UserRole + 1000)) {
+            return i;
         }
-        return 0
     }
+    return 0;
+}
+
 
     Flickable {
         anchors.fill: parent
@@ -53,17 +49,19 @@ Item {
 
             RangeSlider {
                 id: backlightslider
+                snapMode: RangeSlider.SnapAlways
                 from: 0
                 height: 100
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: parent.width - 130
 
                 to: 100
-                stepSize: 1
-                first.value: appearance.minbacklight
-                second.value: appearance.maxbacklight
-                second.onMoved: appearance.maxbacklight = second.value
-                first.onMoved: appearance.minbacklight = first.value
+                stepSize: 2
+                first.value: appearance.night === 0 ? appearance.minbacklight : appearance.minbacklight_night
+                second.value: appearance.night === 0 ? appearance.maxbacklight : appearance.maxbacklight_night
+
+                second.onMoved: if (appearance.night === 0) { appearance.maxbacklight = second.value } else { appearance.maxbacklight_night = second.value}
+                first.onMoved: if (appearance.night === 0 ) { appearance.minbacklight = first.value }  else { appearance.minbacklight_night = first.value}
 
                 background: Rectangle {
                     x: backlightslider.leftPadding
@@ -86,13 +84,13 @@ Item {
 
                 Label {
                     anchors.horizontalCenter: parent.first.handle.horizontalCenter
-                    text: parent.first.value
+                    text: Math.round(parent.first.value)
                     color: Colors.black
                 }
 
                 Label {
                     anchors.horizontalCenter: parent.second.handle.horizontalCenter
-                    text: parent.second.value
+                    text: Math.round(parent.second.value)
                     color: Colors.black
                 }
 
@@ -208,7 +206,7 @@ Item {
             }
 
             Text {
-                text: "Nightmode"
+                text: "Nightmode Settings"
                 font.bold: true
                 padding: 10
                 font.pixelSize: 32
@@ -233,6 +231,7 @@ Item {
             }
 
             Flow {
+                spacing: 20
                 anchors.horizontalCenter: parent.horizontalCenter
                 RadioButton {
                     checked: appearance.night_mode === 0
@@ -427,96 +426,11 @@ Item {
                 onActivated: appearance.stop_input_key = this.currentText
             }
 
-            Text {
-                text: "Nightmode Settings"
-                font.bold: true
-                padding: 10
-                font.pixelSize: 32
-                color: Colors.black
-                anchors.topMargin: 20
-            }
 
-            RangeSlider {
-                id: backlightslider_night
-                from: 0
-                height: 100
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: parent.width - 130
-
-                to: 100
-
-                stepSize: 1
-                first.value: appearance.minbacklight_night
-                second.value: appearance.maxbacklight_night
-                second.onMoved: appearance.maxbacklight_night = second.value
-                first.onMoved: appearance.minbacklight_night = first.value
-
-                background: Rectangle {
-                    x: backlightslider_night.leftPadding
-                    y: backlightslider_night.topPadding
-                       + backlightslider_night.availableHeight / 2 - height / 2
-                    implicitWidth: 200
-                    implicitHeight: 8
-                    width: backlightslider_night.availableWidth
-                    height: implicitHeight
-                    radius: 2
-                    color: "#bdbebf"
-
-                    Rectangle {
-                        x: backlightslider_night.first.visualPosition * parent.width
-                        width: backlightslider_night.second.visualPosition * parent.width - x
-                        height: parent.height
-                        color: "#21be2b"
-                        radius: 2
-                    }
-                }
-
-                Label {
-                    anchors.horizontalCenter: parent.first.handle.horizontalCenter
-                    text: parent.first.value
-                    color: Colors.black
-                }
-
-                Label {
-                    anchors.horizontalCenter: parent.second.handle.horizontalCenter
-                    text: parent.second.value
-                    color: Colors.black
-                }
-
-                Label {
-                    text: "MIN"
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.right: parent.left
-                    color: Colors.black
-                }
-
-                Label {
-                    text: "MAX"
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.right
-                    color: Colors.black
-                }
-            }
-
-
-            /* CheckBox { checked: appearance.invert_at_night === 1 ? true : false
-               Text {
-               anchors.left: parent.right
-               anchors.leftMargin: 10
-               color: Colors.black
-               text: 'Invert Colors in Nightmode' }
-               onCheckStateChanged:
-               {
-                   appearance.invert_at_night =  this.checked
-                  }
-    }*/
             CheckBox {
-                anchors.leftMargin: 20
+                anchors.rightMargin: 20
                 Text {
-
-
                     anchors.verticalCenter: parent.verticalCenter
-
                     wrapMode: Text.WordWrap
                     width: parent.parent.width - 40
                     anchors.topMargin: 20
@@ -548,18 +462,21 @@ Item {
 
 Row {
 
-   spacing: 10
+   spacing: 20
+   height: 60
    anchors.horizontalCenter: parent.horizontalCenter
 
 
     ComboBox {
         id: continentComboBox
         width: 250
+        height:60
         model: appearance.continents
         onCurrentTextChanged: cityComboBox.model = appearance.cities(currentText)
     }
 
     ComboBox {
+        height: 60
         id: cityComboBox
         width: 250
         visible: cityComboBox.count > 0       
@@ -567,6 +484,7 @@ Row {
     }
 
     Button {
+        height: 60
         text: "Set"
         onClicked: appearance.set_timezone(continentComboBox.currentText, cityComboBox.currentText)
     }
@@ -609,7 +527,6 @@ Row {
 
 
             Text {
-
                 text: "Tracked Input Devices"
                 font.bold: true
                 padding: 10
@@ -622,16 +539,17 @@ Row {
                 width: parent.width
                 model: appearance.devices
                 CheckBox {
-                    anchors.leftMargin: 20
+                    anchors.leftMargin: 30
                     checked: appearance.selected_device(modelData)
-                    height: subtext.height + 10
+                    height: subtext.height + 20
 
                     Text {
                         id: subtext
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.left: parent.left
-                        anchors.leftMargin: 40
+                        anchors.leftMargin: 45
                         color: Colors.black
+                        font.pixelSize: 24
                         text: appearance.device_description(modelData)
                         wrapMode: Text.WordWrap
                         width: parent.parent.width - 45
@@ -640,9 +558,15 @@ Row {
                         appearance.setDeviceTrack(modelData, this.checked)
                     }
                 }
+
+}
+
+            Rectangle {height: 50
+                      color: "transparent"
+                      width: parent.width    
+                 }
             }
         }
-    }
 
     Component.onCompleted: {
 

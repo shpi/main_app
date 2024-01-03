@@ -34,7 +34,7 @@
         <file>qml/core/InputsSettings.qml</file>
         <file>qml/core/WifiSettings.qml</file>
         <file>qml/core/MQTTSettings.qml</file>
-         <file>qml/core/LoggingSettings.qml</file>
+        <file>qml/core/LoggingSettings.qml</file>
         <file>qml/core/AppearanceSettings.qml</file>
         <file>qml/ModulesClasses.qml</file>
         <file>qml/Pictures.qml</file>
@@ -46,6 +46,7 @@
         <file>qml/info/Weather.qml</file>
         <file>qml/info/WeatherSettings.qml</file>
         <file>qml/Room.qml</file>
+        <file>qml/RoomEdit.qml</file>
         <file>qml/screensaver/Screensaver.qml</file>
         <file>qml/ui/PieChartSettings.qml</file>
         <file>qml/ui/MultiShutterSettings.qml</file>

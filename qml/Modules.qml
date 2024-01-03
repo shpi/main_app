@@ -16,7 +16,7 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                color: index % 2 === 0 ? "transparent" : Colors.white
+                color: index % 2 === 1 ? "transparent" : Colors.white
             }
 
             Text {
@@ -88,7 +88,7 @@ Item {
         header: Rectangle {
 
             width: parent.width
-            height: 70
+            height: 50
             color: "transparent"
             Text {
                 padding: 10
@@ -98,9 +98,13 @@ Item {
                 font.pixelSize: 32
             }
         }
-
+        height: 90 * modules.instances(category,'').length
         model: modules.instances(category, '')
         anchors.fill: parent
         delegate: listDelegate
+
+        footer: Rectangle {height: 50
+                           color: "transparent"}
+
     }
 }
