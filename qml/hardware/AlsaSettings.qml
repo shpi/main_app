@@ -1,24 +1,19 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
-
 import "qrc:/fonts"
 
 Item {
     ListView {
-        cacheBuffer: 20
+        id: inputsview
         anchors.fill: parent
         clip: true
-        orientation: Qt.Vertical
-        id: inputsview
-
+        cacheBuffer: 20
         model: inputs.searchList
         delegate: inputDelegate
-
-        header: Rectangle {
+        header:  Rectangle {
             width: parent.width
             height: 70
             color: "transparent"
-
             Text {
                 id: title
                 width: parent.width
@@ -32,117 +27,122 @@ Item {
             }
         }
 
-        Component {
-            id: inputDelegate
 
-            Rectangle {
-                property int delindex: index
-
-                id: wrapper
-                height: 110
-                width: inputsview.width
-                color: index % 2 === 0 ? Colors.white : "transparent"
-
-                Row {
-                    spacing: 10
-                    width: parent.width
-                    height: parent.height
-
-                    Text {
-                        horizontalAlignment: Text.AlignHCenter
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: description + ' '
-                        font.pixelSize: 24
-                        color: Colors.black
-                        wrapMode: Text.WordWrap
-                        width: parent.width - 220
-                    }
-
-                    Loader {
-                        anchors.verticalCenter: parent.verticalCenter
-                        asynchronous: true
-                        sourceComponent: 
-
-        if (output === false) {
-            switch (type) {
-                case "percent_int": return gaugebar;
-                case "percent_float": return gaugebar;
-                default: return plaintext;
-            }
-        } else {
-            switch (type) {
-                case "boolean": return boolswitch;
-                case "thread": return boolswitch;
-                case "enum": return enumcombo;
-                case "integer": return intslider;
-                default: return textfield;
-            }
-        }
     
 
+    Component {
+        id: inputDelegate
+        Rectangle {
+            id: wrapper
+            property int sensorvalue: value
+            property int slidermin: min !== undefined ? min : 0 // Default to 0 if min is undefined
+            property int slidermax: max !== undefined ? max : 100 // Default to 100 if max is undefined
 
-                          Component {
-                                id: plaintext
 
-                                Text {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    text: value
-                                    width: 200
-                                    font.pixelSize: 24
-                                    color: Colors.black
-                                }
+
+            height: 110
+            width: inputsview.width
+            color: index % 2 === 0 ? Colors.white : "transparent"
+
+            Row {
+                spacing: 10
+                width: parent.width
+                height: parent.height
+
+                Text {
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: description + ' '
+                    font.pixelSize: 24
+                    color: Colors.black
+                    wrapMode: Text.WordWrap
+                    width: parent.width - 220
+                }
+
+                Loader {
+                    anchors.verticalCenter: parent.verticalCenter
+                    asynchronous: true
+                    sourceComponent: selectSourceComponent(output, type)
+
+                    function selectSourceComponent(output, type) {
+                        if (output === false) {
+                            switch (type) {
+                                case "percent_int": return gaugebar
+                                default: return plaintext
+                            }
+                        } else {
+                            switch (type) {
+                                case "boolean":
+                                case "thread": return boolswitch
+                                case "enum": return enumcombo
+                                case "integer": return intslider
+                                default: return textfield
                             }
 
-                            Component {
-                                id: gaugebar
+                        }
 
-                                Rectangle {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: 200
-                                    height: 30
-                                    color: "darkgrey"
-                                    border.color: Colors.black
-
-                                    Rectangle {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        height: parent.height - 2
-                                        anchors.left: parent.left
-                                        anchors.leftMargin: 1
-                                        width: ((parent.width - 2) / 100) * value
-                                        color: Qt.rgba(1, 0.5, 0, 0.7)
-                                    }
-
-                                    Text {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: value + '%'
-                                        font.pixelSize: 24
-                                        color: Colors.black
-                                    }
-                                }
-                            }
-                        
+                    }
 
 
-                            Component {
-                                id: textfield
+        // Component Definitions
+    Component {
+        id: plaintext
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            text: sensorvalue
+            width: 200
+            font.pixelSize: 24
+            color: Colors.black
+        }
+    }
 
-                                TextField {
-                                    onActiveFocusChanged: keyboard(this)
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    font.pixelSize: 24
-                                    width: 200
-                                    color: Colors.black
-                                    placeholderText: (output == '1' ? value.toString(
-                                                                          ) : '')
-                                    onEditingFinished: inputs.set(path, this.text)
-                                }
-                            }
+    Component {
+        id: gaugebar
+        Rectangle {
+            anchors.verticalCenter: parent.verticalCenter
+            width: 200
+            height: 30
+            color: "darkgrey"
+            border.color: Colors.black
 
-                            Component {
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                height: parent.height - 2
+                anchors.left: parent.left
+                anchors.leftMargin: 1
+                width: ((parent.width - 2) / 100) * sensorvalue
+                color: Qt.rgba(1, 0.5, 0, 0.7)
+            }
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                text: sensorvalue + '%'
+                font.pixelSize: 24
+                color: Colors.black
+            }
+        }
+    }
+
+    Component {
+        id: textfield
+        TextField {
+            onActiveFocusChanged: keyboard(this)
+            anchors.verticalCenter: parent.verticalCenter
+            font.pixelSize: 24
+            width: 200
+            color: Colors.black
+            placeholderText: (output == '1' ? sensorvalue.toString() : '')
+            onEditingFinished: inputs.set(path, this.text)
+        }
+    }
+
+
+ Component {
                                 id: boolswitch
 
                                 Switch {
+
                                     id: switchcontrol
                                     anchors.horizontalCenter: parent.horizontalCenter
 
@@ -170,8 +170,9 @@ Item {
                                         }
                                     }
 
-                                    checked: value === 1 ? true : false
+                                    checked: sensorvalue === 1 ? true : false
                                     anchors.verticalCenter: parent.verticalCenter
+                                    //visible: output == '1' ? 1 : 0
                                     width: 200
                                     onToggled: inputs.set(
                                                    path,
@@ -179,51 +180,36 @@ Item {
                                 }
                             }
 
-                            Component {
-                                id: enumcombo
 
-                                ComboBox {
-                                    currentIndex: parseInt(value)
-                                    width: 200
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    model: available
-                                    onActivated: inputs.set(path,
-                                                            this.currentIndex)
-                                }
-                            }
+    Component {
+        id: enumcombo
+        ComboBox {
+            currentIndex: parseInt(sensorvalue)
+            width: 200
+            anchors.horizontalCenter: parent.horizontalCenter
+            model: available
+            onActivated: inputs.set(path, this.currentIndex)
+        }
+    }
 
-                            Component {
-                                id: intslider
-
-                                Slider {
-                                    from: min
-                                    value: value
-                                    width: 200
-                                    to: max
-                                    stepSize: step === 0 ? 1 : step
-                                    onPressedChanged: if (!this.pressed)
-                                                          inputs.set(path,this.value)
-                                }
-                            }
-
-
-
-
-
-
-
-
-
-
-
-
-                    }
-                }
-            }
+    Component {
+        id: intslider
+        Slider {
+            from: slidermin
+            value: sensorvalue
+            width: 200
+            to: slidermax
+            stepSize: step === 0 ? 1 : step
+            onPressedChanged: if (!this.pressed) inputs.set(path, this.value)
         }
     }
 
 
 
+                }
+            }
+        }
+    }
 
+}
 }

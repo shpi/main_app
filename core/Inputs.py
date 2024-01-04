@@ -528,8 +528,10 @@ class InputsDict(QObject):
                      logging.error(f'{e}, {exception_type}  {line_number}')
 
     @Slot(str, str)
+    @Slot(str, int)
+    @Slot(str, float)
     def set(self, key, value):
-        logging.debug('set:' + key + ':' + value)
+        logging.debug('set:' + key + ':' + str(value))
         if key in self.entries and self.entries[key].is_output:
             if self.entries[key].type == DataType.PERCENT_INT:
                 self.entries[key].set(float(value))

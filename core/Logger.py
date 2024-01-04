@@ -22,7 +22,7 @@ class LogModel(QAbstractListModel):
             # 261: b"process",
             # 262: b"processName",
             # 263: b"args",
-            # 264: b"module",
+            Qt.UserRole + 264: b"module",
             # 265: b"filename",
             Qt.UserRole + 266: b"levelno",
             # 267: b"exc_text",
@@ -80,6 +80,7 @@ class MessageHandler(logging.Handler):
     def emit(self, record):
         self.format(record)
         self.model.appendRow({b'levelno': record.levelno,
-                              b'msg': f'{record.module} - {record.funcName}: {record.msg}',
+                              b'module': record.module,
+                              b'msg': f'{record.funcName}: {record.msg}',
                               b'levelname': record.levelname,
                               b'asctime': record.asctime})

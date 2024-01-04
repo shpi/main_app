@@ -51,7 +51,7 @@ class AlsaRecord:
         self._control.value = self.check_process()
 
     def control(self, onoff):
-        logging.error('Microphone thread controll called with: ' + str(onoff))
+        logging.info('Microphone thread control called with: ' + str(onoff))
         self._control.value = onoff
         self.check_process()
 

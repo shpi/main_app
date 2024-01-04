@@ -80,9 +80,9 @@ class AlsaMixer:
                 if value: self.playback_cards.append(card_name)
 
                 cards.append(EntityProperty(
-                                            category='sound/' + card_name,
+                                            category='sound',
                                             value=value,
-                                            name='play',
+                                            name=card_name + '_play',
                                             description=card_desc + ' on/off',
                                             type=DataType.BOOL,
                                             set=partial(self.power_device, card_name),
@@ -241,13 +241,13 @@ class AlsaMixer:
                         # interfaces[f"alsa/{card_name}/control/{interface['id']}/{i}"] = interface.copy()
 
                         interfaces.append(EntityProperty(
-                                                         category='sound/' + card_name,
+                                                         category='sound',
                                                          value=value,
                                                          min=interface.get('min', None),
                                                          max=interface.get('max', None),
                                                          step=interface.get('step', None),
                                                          available=interface.get('available', None),
-                                                         name=f"control_{interface['id']}_{i}",
+                                                         name=f"{card_name}_control_{interface['id']}_{i}",
                                                          description=interface['description'],
                                                          type=interface['type'],
                                                          call=partial(AlsaMixer.get_control, card_name, interface['id'],

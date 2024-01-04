@@ -90,7 +90,6 @@ class Wifi(QObject):
         self.wifi_devices = Wifi.get_wifi_devs()
 
         self._networks = WifiNetworkModel([], self.settings)
-
         self._wpa_state = ''
         self._wpa_bssid = ''
         self._wpa_ssid = ''
@@ -104,7 +103,7 @@ class Wifi(QObject):
                                                    description='WIFI WPA supplicant module',
                                                    type=DataType.MODULE,
                                                    call=self.read_signal,
-                                                   interval=10)
+                                                   interval=30)
 
         self.read_signal()
 
@@ -116,7 +115,7 @@ class Wifi(QObject):
     def get_wifi_devs(stat_path='/proc/net/dev'):
         wifidevs = []
         if not os.path.isfile(stat_path):
-            return
+            return wifidevs
 
         with open(stat_path) as net_file:
             for line in net_file:
@@ -306,7 +305,8 @@ class Wifi(QObject):
             logging.error(f'{e} in line {line_number}')
 
     def read_signal(self):
-        new_devices = list()
+        if len(self.wifi_devices):
+         self.wpa_status(self.wpa_device)
         if os.path.isfile('/proc/net/wireless'):
             with open('/proc/net/wireless', 'r') as rf:
                 line = rf.readline()
@@ -316,7 +316,6 @@ class Wifi(QObject):
                         device = line[0].rstrip(":")
                         if device not in self.wifi_devices:
                             self.wifi_devices.append(device)
-                        new_devices.append(device)
                         if f'{device}' not in self.properties:
                             self.properties[f'{device}'] = EntityProperty(
                                                                           category='system',
@@ -331,23 +330,6 @@ class Wifi(QObject):
                         # self.properties[f'{device}']['status'] = line[1]
                         # self.properties[f'{device}']['quality'] = line[2]
                         # self.properties[f'{device}']['noise'] = line[4]
-
-            for device in self.wifi_devices:  # reset values before checking
-                if device not in new_devices:
-                    if f'{device}' not in self.properties:
-                        self.properties[f'{device}'] = EntityProperty(
-                                                                      category='system',
-                                                                      name= 'wifi_' +device,
-                                                                      value=0,
-                                                                      description='WIFI signal in %',
-                                                                      type=DataType.PERCENT_INT,
-                                                                      interval=-1)
-                    logging.info('wifi signal lost? device: ' + device)
-                    self.properties[f'{device}'].value = 0
-                    # self.properties[f'{device}']['status'] = 0
-                    # self.properties[f'{device}']['level'] = 0
-                    # self.properties[f'{device}']['noise'] = 0
-                    # self.properties[f'{device}']['type'] = DataType.PERCENT_INT
 
             self.signalsChanged.emit()
             return 'OK'
