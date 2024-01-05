@@ -533,7 +533,13 @@ class InputsDict(QObject):
     def set(self, key, value):
         logging.debug('set:' + key + ':' + str(value))
         if key in self.entries and self.entries[key].is_output:
-            if self.entries[key].type == DataType.PERCENT_INT:
+            if self.entries[key].type == DataType.BYTE:
+                value = int(value)
+                if value >= 0 and value <= 255:
+                 self.entries[key].set(value)
+                else:
+                 logging.error('set:' + key + ' not in byte range.')
+            elif self.entries[key].type == DataType.PERCENT_INT:
                 self.entries[key].set(float(value))
             elif self.entries[key].type == DataType.INT:
                 self.entries[key].set(int(value))

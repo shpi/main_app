@@ -245,7 +245,7 @@ class ThreadProperty(ModuleThread):
 
 class FakeEvents:
     def append(fakeself, value):
-        logging.debug('This is a static property, so no events will happen :-) ' + str(value))
+        logging.debug('Static property: ' + str(value))
 
 
 class StaticProperty(object):

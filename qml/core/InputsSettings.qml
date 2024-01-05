@@ -78,7 +78,6 @@ Flickable {
                 padding: 10
                 id: inputpath
                 anchors.left: parent.left
-                //width: implicitWidth
                 text: "/" + inputs.currentPath
                 font.pixelSize: 30
                 color: Colors.black
@@ -88,7 +87,6 @@ Flickable {
                 padding: 10
                 id: inputtitle
                 anchors.right: parent.right
-                //width: implicitWidth
                 text: "System Props"
                 font.bold: true
                 font.pixelSize: 32
@@ -269,12 +267,10 @@ Flickable {
         border.color: "#bdbebf"
     }
 
-
-
                                     from: pmin
                                     value: parseInt(pvalue)
                                     to: pmax
-                                    onMoved: if (!this.pressed)  inputs.set(ppath,this.value)
+                                    onMoved: inputs.set(path,this.value)
 
 
 

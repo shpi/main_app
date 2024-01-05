@@ -95,6 +95,7 @@ class Wifi(QObject):
         self._wpa_ssid = ''
         self._wpa_ip = ''
         self._wpa_type = ''
+        self.wpa_device = None
 
         self.properties['module'] = EntityProperty(
                                                    category='module',
@@ -305,7 +306,7 @@ class Wifi(QObject):
             logging.error(f'{e} in line {line_number}')
 
     def read_signal(self):
-        if len(self.wifi_devices):
+        if self.wpa_device is not None:
          self.wpa_status(self.wpa_device)
         if os.path.isfile('/proc/net/wireless'):
             with open('/proc/net/wireless', 'r') as rf:

@@ -126,6 +126,7 @@ class HWMon:
         logging.debug(f' writing {value} to output')
         value = str(int(value))
         if not os.path.isfile(f'/sys/class/hwmon/{channelid}/{channel}'):
+            logging.error(f'/sys/class/hwmon/{channelid}/{channel} does not exist')
             return False
 
         try:
