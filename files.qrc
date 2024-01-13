@@ -38,6 +38,7 @@
         <file>qml/core/AppearanceSettings.qml</file>
         <file>qml/ModulesClasses.qml</file>
         <file>qml/Pictures.qml</file>
+        <file>qml/connections/BT_XiaomiSettings.qml</file>
         <file>qml/weather/WeatherFull.qml</file>
         <file>qml/weather/WeatherGraph_old.qml</file>
         <file>qml/weather/WeatherDays.qml</file>

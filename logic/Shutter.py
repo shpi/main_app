@@ -312,7 +312,7 @@ class Shutter(QObject):
                         self.time_start = time.time()
                         self.start_position = self._actual_position.value
                     else:
-                     self._actual_position.value = self.start_position +  ((100 / self._down_time) * (time.time() - self.time_start))
+                     self._actual_position.value = int(self.start_position +  ((100 / self._down_time) * (time.time() - self.time_start)))
                      #self._residue_time = (
                      #                             self._desired_position.value - self._actual_position.value) * (
                      #                             self._down_time / 100)
@@ -339,8 +339,8 @@ class Shutter(QObject):
                         self.time_start = time.time()
                         self.start_position = self._actual_position.value
                     else:
-                     self._actual_position.value = self.start_position - \
-                                                  (100 / self._up_time) * (time.time() - self.time_start)
+                     self._actual_position.value = int(self.start_position - \
+                                                  (100 / self._up_time) * (time.time() - self.time_start))
                      #self._residue_time = (
                      #                             self._actual_position.value - self._desired_position.value) * (
                      #                             self._up_time / 100)

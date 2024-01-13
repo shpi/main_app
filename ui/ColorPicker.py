@@ -21,8 +21,8 @@ class ColorPicker(QObject):
         self._green_path = settings.value('colorpicker/' + self.name + "/green_path", '')
         self._blue_path = settings.value('colorpicker/' + self.name + "/blue_path", '')
 
-    def delete_inputs(self):
-        pass
+    def get_inputs(self):
+        return []
 
     @Signal
     def pathChanged(self):

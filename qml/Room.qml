@@ -83,15 +83,15 @@ Item {
 
 
 
-              /*  Text {
+                Text {
                     id: textitem
                     color: Colors.black
                     font.pixelSize: 24
                     text: model[2]
-                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.top: parent.bottom
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
-               */
+               
 
                /* layer.enabled: true
                             layer.effect: DropShadow {

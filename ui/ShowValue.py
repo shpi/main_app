@@ -132,6 +132,8 @@ class ShowValue(QObject):
             return True
         except ValueError:
             return False
+        except TypeError:
+            return False
 
     @Property(str, notify=valueChanged)
     def value(self):

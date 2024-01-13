@@ -8,7 +8,6 @@ import "qrc:/fonts"
 Rectangle {
     id: root
     property string instancename: parent.instancename != undefined ? parent.instancename : modules.modules['UI']['PieChart'][0]
-    property var instance: modules.loaded_instances['UI']['PieChart'][instancename]
     property bool shifted: false
     property real minimal: parent.width > parent.height ? parent.height : parent.width
     property bool iconview: parent.iconview !== undefined ? parent.iconview : false
@@ -35,13 +34,24 @@ Rectangle {
     color: Colors.whitetrans
     clip: true
 
-    Repeater {
+Connections {
+        target: modules.loaded_instances['UI']['PieChart'][instancename]
+        function onValuesChanged() {
+        //shaperepeater.model = []
+        shaperepeater.model = modules.loaded_instances['UI']['PieChart'][instancename].values;
 
-        model: instance.values
+        }
+}
+
+
+    Repeater {
+        id: shaperepeater
+        model: modules.loaded_instances['UI']['PieChart'][instancename].values
+       
 
         Shape {
-            property real startangle: root.instance.angle(index)
-            property real sweepangle: (360 / root.instance.sum) * root.instance.values[index]
+            property real startangle: modules.loaded_instances['UI']['PieChart'][instancename].angle(index)
+            property real sweepangle: (360 / modules.loaded_instances['UI']['PieChart'][instancename].sum) * modules.loaded_instances['UI']['PieChart'][instancename].values[index]
             property real centerangle: sweepangle/2 + startangle
 
 
@@ -76,7 +86,7 @@ Rectangle {
             ShapePath {
                 strokeWidth: 2
                 strokeColor: Colors.black
-                fillColor: root.instance.colors[index]
+                fillColor: modules.loaded_instances['UI']['PieChart'][instancename].colors[index]
                 startX: graphShape2.width / 2 + shiftx
                 startY: graphShape2.height / 2 + shifty
 
@@ -116,10 +126,10 @@ Rectangle {
                 color: Colors.black
                 x: graphShape2.width / 2 + Math.cos(degToRad(centerangle)) * graphShape2.width / 4 - this.width/2
                 y: graphShape2.height / 2 + Math.sin(degToRad(centerangle)) * graphShape2.width / 4
-                text: root.instance.names[index]
+                text: modules.loaded_instances['UI']['PieChart'][instancename].names[index]
                 font.pixelSize:16
                 rotation: centerangle - 90
-                visible: root.iconview ? false : true
+                visible: true //root.iconview ? false : true
             }
 
 

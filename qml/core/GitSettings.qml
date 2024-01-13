@@ -190,7 +190,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: messageDialog.text2
                     color: Colors.black
-                    font.pixelSize: 20
+                    font.pixelSize: 14
                 }
 
                 RoundButton {

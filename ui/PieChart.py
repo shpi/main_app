@@ -22,8 +22,8 @@ class PieChart(QObject):
             self._values[value_path] = self.inputs.entries[value_path].value
             self.inputs.register_event(value_path, self.ui_event)
 
-    def delete_inputs(self):
-        pass
+    def get_inputs(self):
+        return []
 
     @Signal
     def position_pathChanged(self):
@@ -77,9 +77,13 @@ class PieChart(QObject):
     @Slot(str)
     def add_path(self, value):
 
+        if value not in self._values:
+         self._values[value] = self.inputs.entries[value].value
+
         self._value_path.append(value)
         self.settings.setValue('piechart/' + self.name + "/value_path", self._value_path)
         self.inputs.register_event(value, self.ui_event)
+        self.valuesChanged.emit()
         self.position_pathChanged.emit()
 
     @Slot(str)
@@ -87,6 +91,9 @@ class PieChart(QObject):
 
         if value in self._value_path:
             self._value_path.remove(value)
+            if value in self._values:
+             del self._values[value]
             self.inputs.unregister_event(value, self.ui_event)
             self.settings.setValue('piechart/' + self.name + "/value_path", self._value_path)
+            self.valuesChanged.emit()
             self.position_pathChanged.emit()

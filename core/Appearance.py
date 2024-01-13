@@ -37,6 +37,7 @@ class NightModes:
 class Appearance(QObject):
 
 
+
     def __init__(self, inputs, settings: QSettings):
         super().__init__()
         self.executor = ThreadPoolExecutor(max_workers=2)
@@ -70,7 +71,6 @@ class Appearance(QObject):
         self._night_mode_end = settings.value("appearance/night_mode_end", '00:00')
 
         self._jump_timer = int(settings.value("appearance/jump_timer", 20))
-        self._jump_state = 0
         self._dim_timer = int(settings.value("appearance/dim_timer", 100))
         self._off_timer = int(settings.value("appearance/off_timer", 300))
 
@@ -478,24 +478,20 @@ class Appearance(QObject):
                 self.set_backlight(self._max_backlight)
             self.state = 'ACTIVE'
 
-        if self._jump_state == 0 and self._jump_timer > 0 and self._jump_timer + self.lastuserinput < time.time():
+        if  self._jump_timer > 0 and self._jump_timer + self.lastuserinput < time.time():
             logging.debug(f"jump to home, timer: {self._jump_timer}, lastuserinput: {self.lastuserinput}")
-            self._jump_state = 1
-            self.jump_stateChanged.emit()
+            self.jump.emit()
 
         return status
 
     @Signal
-    def jump_stateChanged(self):
+    def jump(self):
         pass
 
     @Property(int, notify=blackChanged)
     def backlightlevel(self):
         return int(self._backlightlevel)
 
-    @Property(bool, notify=jump_stateChanged)
-    def jump_state(self):
-        return bool(self._jump_state)
 
     def set_backlight(self, value):
         self.executor.submit(self._set_backlight, value)
@@ -528,8 +524,6 @@ class Appearance(QObject):
       if value > 1:
         if self.state in ('OFF', 'SLEEP'):
             self.state = 'ACTIVE'
-            self._jump_state = 0
-            self.jump_stateChanged.emit()
             self.set_backlight(self._max_backlight_night if self._night else self._max_backlight)
             logging.debug(f"Changed state to {self.state}, last input: {self.lastuserinput}")
 

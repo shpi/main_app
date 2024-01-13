@@ -4,6 +4,10 @@ import "qrc:/fonts"
 
 Item {
 
+     signal refreshRoomInstances (string roomName)
+
+
+
     Rectangle {
 
         color: "transparent"
@@ -52,6 +56,18 @@ Item {
                 Repeater {
                     id: screensaverRow
                     model: modules.rooms['Home']
+
+
+                       Connections {
+                      target: modules // Replace 'someObject' with the object emitting the signal
+                      
+                      function onRefreshRoomInstances(roomname) {
+
+                                  console.log('Refresh room instances from ' + roomname);
+                                  screensaverRow.model = [];
+                                  screensaverRow.model = modules.rooms[roomname];
+    } }
+
 
                     Rectangle {
 

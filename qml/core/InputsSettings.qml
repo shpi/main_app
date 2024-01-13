@@ -133,8 +133,8 @@ Flickable {
                 sourceComponent: {
                     if (output === false) {
                         switch (type) {
-                            case "percent_int": return rawtext; //gaugebar;
-                            case "percent_float": return rawtext; //gaugebar;
+                            case "percent_int": return gaugebar;
+                            case "percent_float": return gaugebar;
                             default: return rawtext;
                         }
                     } else {
@@ -167,6 +167,33 @@ Flickable {
 
 
 
+ Component {
+        id: gaugebar
+        Rectangle {
+            anchors.verticalCenter: parent.verticalCenter
+            width: 200
+            height: 30
+            color: "darkgrey"
+            border.color: Colors.black
+
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                height: parent.height - 2
+                anchors.left: parent.left
+                anchors.leftMargin: 1
+                width: ((parent.width - 2) / 100) * parseInt(pvalue)
+                color: Qt.rgba(1, 0.5, 0, 0.7)
+            }
+
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                text: pvalue + '%'
+                font.pixelSize: 24
+                color: Colors.black
+            }
+        }
+    }
 
 
 

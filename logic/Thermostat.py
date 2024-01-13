@@ -96,6 +96,7 @@ class Schedule:
 
 class Thermostat(QObject):
 
+
     def __init__(self, name, inputs, settings: QSettings):
         super().__init__()
         self.name = name
@@ -115,9 +116,17 @@ class Thermostat(QObject):
         self._away_temp = float(settings.value("thermostat/" + self.name + '/away_temp', 16))
 
         self._hysteresis = int(settings.value("thermostat/" + self.name + '/hysteresis', 100))
-        self._heating_state = 0
         self._actual_temp = None
         self._offset = 0
+
+        self._heating_state = EntityProperty(
+                                      category='logic',
+                                      name='thermostat_' + name + '_state',
+                                      value=0,
+                                      description='Thermostat heating state',
+                                      type=DataType.BOOL,
+                                      call=None,
+                                      interval=-1)
 
         self._module = EntityProperty(
                                       category='module',
@@ -129,7 +138,7 @@ class Thermostat(QObject):
                                       interval=10)
 
     def get_inputs(self) -> list:
-        return [self._module, ]
+        return [self._module, self._heating_state]
 
 
 
@@ -271,18 +280,18 @@ class Thermostat(QObject):
         self.pathChanged.emit()
 
     def heating_state(self):
-        return str(self._heating_state)
+        return str(self._heating_state.value)
 
     @Pre_5_15_2_fix(str, heating_state, notify=heatingStateChanged)
     def heating_state(self, value):
-        self._heating_state = int(value)
+        self._heating_state.value = int(value)
         # self.settings.setValue("thermostat/" + self.name + '/heating_state', value)
         self.heatingStateChanged.emit()
 
     def set_state(self, value):
-        if int(value) != self._heating_state:
+        if int(value) != self._heating_state.value:
             logging.info('set heating to ' + str(value))
-            self._heating_state = int(value)
+            self._heating_state.value = int(value)
             self.inputs[self._heating_contact_path].set(bool(value))
             self.heatingStateChanged.emit()
 

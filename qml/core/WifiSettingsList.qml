@@ -18,7 +18,6 @@ Item {
         orientation: Qt.Vertical
         id: inputsview
         onModelChanged: {
-            busy.running = false
             inputsview.selectednetwork = -1
         }
 
@@ -152,13 +151,4 @@ Item {
         }
     }
 
-    BusyIndicator {
-            width: parent.width / 3
-            height: width
-
-            palette.dark: "#1E90FF"
-            anchors.centerIn: parent
-            id: busy
-            running: true
-        }
 }

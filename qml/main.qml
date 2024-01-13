@@ -357,6 +357,16 @@ Repeater {
 }
 
 
+        Loader {
+            property SwipeView swipeView: view
+            asynchronous: true
+            id: fingerpaint
+            property bool _isCurrentItem: SwipeView.isCurrentItem
+            source: "fingerpaint.qml"
+        }
+
+  
+
 
     }
 
@@ -377,8 +387,9 @@ Repeater {
 
     Connections {
         target: appearance
-        function onJump_stateChanged() {
-            if (appearance.jump_state) {
+        function onJump() {
+                console.log("jump state fired")
+                if (view.interactive == true) {
                 view.currentIndex = 1
                 graphPopup.close()
                 graphLoader.sensorpath = ''
@@ -391,8 +402,7 @@ Repeater {
 
         interval: 30000
         repeat: true
-        running: (appearance.jump_state
-                  && appearance.backlightlevel > 0) //to make ui more fluent
+        running: (appearance.backlightlevel > 0) //to make ui more fluent
         onTriggered: {
 
 

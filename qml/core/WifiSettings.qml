@@ -23,6 +23,25 @@ Item {
 
         }
 
+         Item {
+             anchors.right: parent.right
+             anchors.top: parent.top
+             width: 220
+             height: 60
+
+            ComboBox {
+                id: actualDevice
+                anchors.centerIn:parent
+                width: 200
+                height: 40
+                model: wifi.devices
+                font.pixelSize:32
+                onPressedChanged: wifi.wpa_status(actualDevice.currentText)
+
+            }
+            }
+
+
 
     Column {
         spacing: 20
@@ -32,45 +51,12 @@ Item {
         width: parent.width * 0.9
 
 
-
-
-        Row {
-            spacing: 20
-            anchors.horizontalCenter: parent.horizontalCenter
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: 'Wifi device'
-                font.family: localFont.name
-                color: Colors.black
-                font.pixelSize: 24
-            }
-
-            ComboBox {
-
-                id: actualDevice
-                anchors.verticalCenter: parent.verticalCenter
-                width: 200
-                model: wifi.devices
-
-                onPressedChanged: wifi.wpa_status(actualDevice.currentText)
-
-            }}
-
-
         Row {
 
             spacing: 20
             anchors.horizontalCenter: parent.horizontalCenter
 
 
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: 'Signal:'
-                font.family: localFont.name
-                font.pixelSize: 24
-                color: Colors.black
-            }
             ProgressBar {
                 id: wifiStrength
                 anchors.verticalCenter: parent.verticalCenter
@@ -101,7 +87,7 @@ Item {
                     Text {
                     anchors.centerIn: parent
                     font.pixelSize: 24
-                    text: wifi.signal + '%'
+                    text: 'Signal ' +  wifi.signal + '%'
                     color: Colors.black
                     }
 
@@ -114,7 +100,7 @@ Item {
 
 
 
- /*       Row {
+       Row {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 20
 
@@ -132,7 +118,9 @@ Item {
                 color: Colors.black
                 anchors.verticalCenter: parent.verticalCenter
             }
-} */
+} 
+
+
         Row {
             spacing: 20
             anchors.horizontalCenter: parent.horizontalCenter
@@ -174,7 +162,7 @@ Item {
             }
 
 }
-        Row {
+/*        Row {
             spacing: 20
             anchors.horizontalCenter: parent.horizontalCenter
 
@@ -193,7 +181,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
-
+*/
         RoundButton {
 
             padding: 5

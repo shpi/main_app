@@ -1,33 +1,81 @@
+import QtQuick 2.15
+import QtQuick.Controls 2.15
+import QtQuick.Controls 1.4
 
-/*
- *
- * Copyright (c) 2014 Robin Burchell <robin.burchell@viroteck.net>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-import QtQuick 2.0
 import "qrc:/fonts"
 
 Rectangle {
-    width: 640
-    height: 480
+    anchors.fill: parent
     color: "black"
+
+
+    // Properties for paint color and width
+    property color selectedColor: "red"
+    property int lineWidth: 5
+
+    // Button to clear the canvas
+    Button {
+        id: clearButton
+        text: "Clear"
+        anchors.top: lockswipe.bottom
+        anchors.right: parent.right
+        anchors.margins: 10
+        onClicked: {
+            myCanvas.clear();
+        }
+    }
+
+    // Button to toggle swipe
+    Button {
+        id:lockswipe
+        text: swipeView && !swipeView.interactive ? "Unlock Swiping" : "Lock Swiping"
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: 10
+        z: 1
+        onClicked: {
+            if (swipeView) {
+                swipeView.interactive = !swipeView.interactive;
+            }
+        }
+    }
+
+    // Color picker for selecting paint color
+    ComboBox {
+        id: colorPicker
+        model: ["red", "blue", "green", "yellow", "black"]
+        anchors.top: clearButton.bottom
+        anchors.right: parent.right
+        anchors.margins: 10
+        onCurrentTextChanged: {
+            selectedColor = currentText;
+        }
+    }
+
+    // Slider for selecting line width
+    Slider {
+        id: widthSlider
+        anchors.top: colorPicker.bottom
+        anchors.right: parent.right
+        anchors.margins: 10
+        minimumValue: 1
+        maximumValue: 10
+        onValueChanged: {
+            lineWidth = value;
+        }
+    }
+
+
+Button {
+    text: "Save Image"
+    anchors.top: widthSlider.bottom
+    anchors.right: parent.right
+    anchors.margins: 10
+    onClicked: {
+        myCanvas.saveCanvasImage();
+    }
+}
+
 
     Canvas {
         id: myCanvas
@@ -37,7 +85,32 @@ Rectangle {
 
         property var colors: ["#00BFFF", "#FF69B4", "#F0E68C", "#ADD8E6", "#FFA07A", "#9370DB", "#98FB98", "#DDA0DD", "#FF6347", "#40E0D0"]
 
-        onPaint: {
+        anchors.rightMargin: 100
+
+        function clear() {
+            var ctx = getContext('2d');
+            ctx.clearRect(0, 0, width, height);
+            lastPosById = {};
+            posById = {};
+
+
+
+        requestPaint(); // Request a repaint to update the canvas immediately
+   
+        }     
+
+
+function saveCanvasImage() {
+        var now = new Date();
+        var fileName = Qt.formatDateTime(now, "MM-dd-hh-mm") + ".jpg";
+
+        myCanvas.grabToImage(function(result) {
+            result.saveToFile("backgrounds/paint-" + fileName);
+        });
+    }
+
+
+   onPaint: {
             var ctx = getContext('2d')
             if (lastPosById == undefined) {
                 lastPosById = {}
@@ -45,7 +118,10 @@ Rectangle {
             }
 
             for (var id in lastPosById) {
-                ctx.strokeStyle = colors[id % colors.length]
+                //ctx.strokeStyle = colors[id % colors.length]
+         
+                ctx.strokeStyle = selectedColor;
+                ctx.lineWidth = lineWidth;
                 ctx.beginPath()
                 ctx.moveTo(lastPosById[id].x, lastPosById[id].y)
                 ctx.lineTo(posById[id].x, posById[id].y)

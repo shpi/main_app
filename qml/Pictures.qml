@@ -6,12 +6,41 @@ import "qrc:/fonts"
 
 Item {
 
+Rectangle {
+    anchors.fill:parent
+    color: "transparent"
+
+
     GridView {
-        anchors.fill: parent
+        anchors.centerIn:parent
+        height: parent.height - 40
+        width: 380 * 2
         cellWidth: 380
         cellHeight: 230
         model: folderModel
         delegate: fileDelegate
+        header:  Rectangle {
+        id: inforect
+        width: parent.width
+        border.color: "red"
+        border.width: 1
+        color: "transparent"
+        height: infotext.implicitHeight
+        Text {
+
+        id: infotext
+        anchors.centerIn:parent
+        width: parent.width
+        padding: 20
+        color: Colors.black
+        text: "You can upload new images here: " + wifi.wpa_ip + ":" + httpserver.port + "/upload"
+        wrapMode: Text.WrapAnywhere
+        }
+
+        }
+
+
+
     }
 
     FolderListModel {
@@ -24,10 +53,10 @@ Item {
         id: fileDelegate
 
         Rectangle {
-            width: 350
-            height: 210
+            width: 380
+            height: 230
             color: "transparent"
-
+            
             Image {
                 anchors.centerIn: parent
                 width: 300
@@ -55,8 +84,13 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: fileName
                 color: Colors.black
-                font.pixelSize: 24
+                font.pixelSize: 20
+                width: parent.width                
+                wrapMode: Text.WrapAnywhere
+                horizontalAlignment: Text.AlignHCenter
+
             }
         }
     }
+}
 }

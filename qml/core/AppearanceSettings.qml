@@ -35,27 +35,22 @@ function getIndex(path, mmodel) {
         id : settingsModel
         ListElement {
             name : "Backlight Range"
-            expanded : true
             component : "backlightrange"
         }
         ListElement {
             name : "Timing Settings"
-            expanded : false
             component : "timingsettings"
         }
         ListElement {
             name : "Nightmode Settings"
-            expanded : false
             component : "nightmodesettings"
         }
         ListElement {
             name : "Timezone Setting"
-            expanded : false
             component : "timezonesettings"
         }
         ListElement {
             name : "Tracked Input Devices "
-            expanded : false
             component : "trackeddevices"
         }
     }
@@ -66,15 +61,20 @@ function getIndex(path, mmodel) {
         anchors.fill : parent
         id : settingsview
         model : settingsModel
+        footer: Rectangle { color: "transparent"
+                            height: 50 }
         delegate : Rectangle {
             id : settingsDelegate
             width: settingsview.width
-            height : expanded
+            height : settingsview.currentIndex == index
                 ? 80 + delegateLoader.implicitHeight
                 : 80
             color : index % 2 === 0
                 ? "transparent"
-                : Colors.whitetrans
+                : Colors.white
+
+
+
             Text {
                 id : textitem
                 color : Colors.black
@@ -88,7 +88,7 @@ function getIndex(path, mmodel) {
                 MouseArea {
                     anchors.fill : parent
                     onClicked : {
-                        model.expanded = !model.expanded
+                        settingsview.currentIndex = index
                     }
                 }
             }
@@ -106,7 +106,7 @@ function getIndex(path, mmodel) {
                 anchors.right : parent.right
                 anchors.rightMargin : 20
                 text : Icons.arrow
-                rotation : expanded
+                rotation : settingsview.currentIndex == index
                     ? 0
                     : 270
                 font.family : localFont.name
@@ -117,8 +117,8 @@ function getIndex(path, mmodel) {
                 id : delegateLoader
                 anchors.top : seperator.bottom
                 width : parent.width
-                visible : expanded
-                active : expanded
+                visible : settingsview.currentIndex == index
+               
                 sourceComponent : switch (component) {
                     case "nightmodesettings":
                         return nightmodesettings

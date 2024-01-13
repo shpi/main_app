@@ -81,7 +81,7 @@ Rectangle {
             Text {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                text: "Red"
+                text: "Green"
                 font.pixelSize: 24
                 color: Colors.black
                 wrapMode: Text.WordWrap

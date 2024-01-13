@@ -20,6 +20,9 @@ import connections.HTTP
 import connections.BT_Xiaomi
 
 class ModuleManager(QObject):
+
+    refreshRoomInstances = Signal(str)
+
     def __init__(self, inputs, settings: QSettings):
         super().__init__()
 
@@ -108,6 +111,8 @@ class ModuleManager(QObject):
 
 
 
+
+
     @Signal
     def modulesChanged(self):
         pass
@@ -138,6 +143,8 @@ class ModuleManager(QObject):
             self._rooms[roomname].append(room)
             self.settings.setValue(f"room/{roomname}", self._rooms[roomname])
             self.roomsChanged.emit()
+            self.refreshRoomInstances.emit(roomname)
+
 
     @Slot(str, str)
     def del_from_room(self, roomname, room):
@@ -146,6 +153,9 @@ class ModuleManager(QObject):
             self._rooms[roomname].remove(room)
             self.settings.setValue(f"room/{roomname}", self._rooms[roomname])
             self.roomsChanged.emit()
+            logging.info("send signal refreshRoomInstances for room " + roomname)
+            self.refreshRoomInstances.emit(roomname)
+
 
     # @Property('QVariantList', notify=modulesChanged)
     def available_rooms(self) -> list:
@@ -212,8 +222,16 @@ class ModuleManager(QObject):
                 logging.debug(e)
         self.modulesChanged.emit()
 
+
     @Slot(str, str, str)
     def remove_instance(self, category, classname, instancename):
+
+        #first clear qml instances within rooms
+        for room in self._rooms.keys():
+           self.del_from_room(room, f'{category}/{classname}/{instancename}')
+
+
+
         self._modules[category][classname].remove(instancename)
         self.settings.setValue(category + "/" + classname, self._modules[category][classname])
 
@@ -221,9 +239,13 @@ class ModuleManager(QObject):
             if subproperty.path in self.inputs.entries:
                 del self.inputs.entries[subproperty.path]
 
+        self.inputs.updateKeys()
 
         del self._instances[category][classname][instancename]
         self.modulesChanged.emit()
+
+
+
 
     @Slot(str, str, result='QVariantList')
     def instances(self, category, classname):

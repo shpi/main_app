@@ -28,10 +28,12 @@ class MQTTClient(QObject):
         self._tls_enabled = int(settings.value("mqtt/tls_enabled", '0'))
         self._user = str(settings.value("mqtt/user", ''))
         self._password = str(settings.value("mqtt/password", ''))
-
+        self.is_connected = False
 
 
         self._enabled = int(settings.value("mqtt/enabled", '0'))
+        self._available_properties = {}  # Dictionary to store properties with their paths
+
 
         self.properties = dict()
         self.properties['general_shutter_call'] = EntityProperty(
@@ -42,32 +44,74 @@ class MQTTClient(QObject):
                                                        type=DataType.PERCENT_INT,
                                                        interval=0)
 
-        def on_connect(client, userdata, flags, rc):
-            
 
-            client.subscribe(
-            [
-                (self._path+"/general_shutter_call", 1), 
-            ]
-            )
+        self.client = mqtt.Client()
 
-        def on_message( client, userdata, msg):
+
+        self.client.on_connect = self.on_connect
+        self.client.on_message = self.on_message
+        self.client.on_disconnect = self.on_disconnect
+
+
+        if self._enabled:
+            self.start_mqtt()
+
+
+
+
+    def on_connect(self, client, userdata, flags, rc):
+
+            logging.error("subscribing to channels")
+
+            client.subscribe([
+            (self._path+"/general_shutter_call", 1),
+            (self._path + "/#", 1),  # Replace with your actual main topic
+            ])
+
+
+
+            if rc == 0:
+                self.is_connected = True
+                logging.error("Connected to MQTT Broker")
+            else:
+                logging.error(f"Failed to connect to MQTT Broker: Error code {rc}")
+
+
+
+    def on_disconnect(self, client, userdata, rc):
+            # Update connection status when disconnected
+            self.is_connected = False
+            logging.error("Disconnected from MQTT Broker")
+
+
+
+    def on_message(self, client, userdata, msg):
 
             if msg.topic == self._path + "/general_shutter_call":
                self.properties['general_shutter_call'].value = int(msg.payload.decode("utf-8"))
                logging.info("GENERAL SHUTTER CALL " + str(self.properties['general_shutter_call'].value))
             #client.username_pw_set(config.MQTT_USER, config.MQTT_PW)
+            else:
+                self.update_properties(msg.topic, msg.payload)
 
 
-        self.client = mqtt.Client()
-        self.client.on_connect = on_connect
-        self.client.on_message = on_message
 
-        if self._enabled:
-            self.start_mqtt()
+
+    def update_properties(self, topic, payload):
+        # Store the raw payload using the topic path as the key
+           if topic not in self._available_properties:
+               self.properties_changed.emit()
+               logging.error('NEW MQTT TOPIC: ' + str(topic))
+
+           self._available_properties[topic] = payload.decode('utf-8')  # Decoding assuming payload is a string
+
+
+
+
+
 
     def start_mqtt(self):
-            logging.info("Starting MQTT Client ...")
+            logging.error("Starting MQTT Client ...")
             try:
              if self._tls_enabled > 0:
                     #openssl s_client -host mqtt.broker.hostname.com -port 8883 -showcerts
@@ -75,16 +119,16 @@ class MQTTClient(QObject):
                     self.client.tls_insecure_set(True)
              if self._user != '':
                 self.client.username_pw_set(username=self._user, password=self._password)
-                self.client.connect(self._host, self._port, 60)
-                self.client.loop_start()
+             self.client.connect(self._host, self._port, 60)
+             self.client.loop_start()
             except:
                 logging.error("MQTT Client connection error.")
                 self._enabled = 0
                 pass
 
 
-
     def stop_mqtt(self):
+        logging.error('stop mqtt client...')
         try:
           self.client.disconnect()
           self.client.loop_stop()
@@ -106,10 +150,18 @@ class MQTTClient(QObject):
     def settings_changed(self):
         pass
 
+    @Signal
+    def properties_changed(self):
+        pass
+
 
     def get_inputs(self) -> list:
         return list(self.properties.values())
 
+
+
+    def available_properties(self):
+        return self._available_properties
 
 
     # @Property(int, notify=settings_changed)

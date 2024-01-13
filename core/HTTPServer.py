@@ -299,7 +299,7 @@ class HTTPServer(QObject):
 
     # @Property(int, notify=dim_timer_changed)
     def port(self):
-        return int(self._dim_timer)
+        return int(self._port)
 
     @Pre_5_15_2_fix(int, port, notify=port_changed)
     def port(self, value):

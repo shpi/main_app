@@ -8,7 +8,7 @@ Item {
     ListModel {
         id: pageModel
         ListElement {
-            title: "System Variables"
+            title: "System Properties"
             page: "core/InputsSettings.qml"
         }
         ListElement {

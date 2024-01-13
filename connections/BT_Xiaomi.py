@@ -22,7 +22,8 @@ from core.Toolbox import Pre_5_15_2_fix
 MI_FLORA_HANDLE_FIRMWARE_AND_BATTERY = "0x38"
 MI_FLORA_HANDLE_MODE_CHANGE = "0x33"
 MI_FLORA_HANDLE_DATA_READ = "0x35"
-
+MJ_HT_V1_HANDLE_DATA_READ = "0x10"
+MJ_HT_V1_HANDLE_BATTERY = "0x18"
 
 
 
@@ -139,31 +140,83 @@ class BT_Xiaomi(QObject):
                                                         interval=-1)
 
 
-    def run_gatttool(self, handle, mac, command=""):
+    def run_gatttool(self, handle, mac, command="", listen=False):
      """Runs gatttool command and returns the output."""
-     if command:
+     try:
+      if command and not listen:
         cmd = f"gatttool -b {mac} --char-write-req -a {handle} -n {command}"
-        subprocess.check_output(cmd, shell=True)
-     cmd = f"gatttool -b {mac} --char-read -a {handle}"
-     output = subprocess.check_output(cmd, shell=True)
-     return output
+        output = subprocess.check_output(cmd, shell=True, timeout=10)
+        print(cmd)
+        print(output)
+        if output is not None:
+         return (output)
+      elif listen and listen:
+        #gatttool -b 4C:65:A8:D0:81:70 --char-write-req --handle=0x10 -n 0100 --listen
+        cmd = f"gatttool -b {mac} --char-write-req --handle={handle} -n {command} --listen"
+        output = subprocess.check_output(cmd, shell=True, timeout=7)
+        print(cmd)
+        print(output)
+        if output is not None:
+         return (output)
+      else:
+       cmd = f"gatttool -b {mac} --char-read -a {handle}"
+       output = subprocess.check_output(cmd, shell=True, timeout=10)
+       print(cmd)
+      print(output)
+      if output is not None:
+       return (output)
+
+     except subprocess.TimeoutExpired as e:
+            print(e.output)  # This will print the partial output received before the timeout
+            if e.output is not None:
+             return (e.output)
+     return b""
 
 
     def parse_firmware_battery_data_mi_flora(self,data):
-        """Parse the firmware and battery data."""
+     """Parse the firmware and battery data."""
+     try:
         bytes_data = bytes.fromhex(data.split("value/descriptor: ")[1].strip())
         battery, firmware = struct.unpack('<xB5s', bytes_data)
         firmware = firmware.partition(b'\0')[0]  # Remove trailing null bytes
         return battery, firmware.decode()
-
+     except:
+        return None, None
 
     def parse_sensor_data_mi_flora(self,data):
      """Parse the sensor data."""
-     bytes_data = bytes.fromhex(data.split("value/descriptor: ")[1].strip())
-     temperature, sunlight, moisture, fertility = struct.unpack('<hxIBHxxxxxx', bytes_data)
-     temperature /= 10.0  # Convert to Celsius
-     return temperature, sunlight, moisture, fertility
+     try:
+      bytes_data = bytes.fromhex(data.split("value/descriptor: ")[1].strip())
+      temperature, sunlight, moisture, fertility = struct.unpack('<hxIBHxxxxxx', bytes_data)
+      temperature /= 10.0  # Convert to Celsius
+      return temperature, sunlight, moisture, fertility
+     except: 
+      return 0, 0 ,0 , 0
 
+
+    def parse_sensor_data_mj_ht_v1(self, sensor_data):
+     # Split the sensor data by newlines
+     lines = sensor_data.split('\n')
+
+     for line in lines:
+        if 'Notification handle' in line:
+            parts = line.split(': ')
+            if len(parts) > 1:
+                value_part = parts[1]
+                hex_part = ''.join(char for char in value_part if char in "0123456789abcdefABCDEF")
+
+                try:
+                    ascii_string = bytes.fromhex(hex_part).decode('utf-8').rstrip('\x00')
+                    # Assuming the format is "T=xx.x H=yy.y"
+                    parts = ascii_string.split()
+                    if len(parts) >= 2:
+                        temperature_str = parts[0][2:]  # After "T="
+                        humidity_str = parts[1][2:]     # After "H="
+                        return float(temperature_str), float(humidity_str.rstrip('\x00'))
+                except ValueError as e:
+                    print("Error converting hex to ASCII:", e)
+      # Return a default value if no data is found or an error occurs
+     return None, None
 
 
 
@@ -189,6 +242,25 @@ class BT_Xiaomi(QObject):
                     except subprocess.CalledProcessError as e:
                      logging.error(f"Failed to run gatttool: {e}")
 
+            if self.sensors[sensor]['type'] == 'mj_ht_v1':
+                try:
+
+                     sensor_data = self.run_gatttool(MJ_HT_V1_HANDLE_DATA_READ, sensor, "0100", listen=True).decode()
+                     temperature, humidity = self.parse_sensor_data_mj_ht_v1(sensor_data)
+                     if humidity is not None:
+                      self.properties[self._sensors[sensor]['custom_name'] + '_humidity'].value = int(humidity) #in %
+                      self.properties[self._sensors[sensor]['custom_name'] + '_temperature'].value = int(temperature * 1000) #in celsius 
+
+                     # Run gatttool command to get battery data
+                     battery_data = self.run_gatttool(MJ_HT_V1_HANDLE_BATTERY, sensor).decode()
+                     battery_hex = battery_data.split(": ")[1].strip()
+                     # Converting the hex value to an integer
+                     batt = int(battery_hex, 16)
+                     self.properties[self._sensors[sensor]['custom_name'] + '_battery'].value = batt #in %
+
+
+                except subprocess.CalledProcessError as e:
+                     logging.error(f"Failed to run gatttool: {e}")
 
 
 
@@ -282,7 +354,8 @@ class BT_Xiaomi(QObject):
         elif device['address'].startswith('C4:7C:8D') and device['name'] == 'Flower mate':
             return 'mi_flora'
 
-
+        elif device['address'].startswith('4C:65:A8') and device['name'] == "MJ_HT_V1":
+            return 'mj_ht_v1'
 
         return 'unknown'
 

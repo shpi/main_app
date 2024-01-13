@@ -41,7 +41,7 @@ logs = LogModel()
 handler = MessageHandler(logs)
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.ERROR,
     format='%(asctime)s %(msecs)03d %(module)s - %(funcName)s: %(message)s',
     datefmt='%m-%d %H:%M:%S',
     handlers=[
@@ -180,6 +180,7 @@ engine.rootContext().setContextProperty("logs", logs)
 engine.rootContext().setContextProperty("inputs", inputs)
 engine.rootContext().setContextProperty('wifi', core_modules['wifi'])
 engine.rootContext().setContextProperty('git', core_modules['git'])
+engine.rootContext().setContextProperty('httpserver', core_modules['httpserver'])
 engine.rootContext().setContextProperty("appearance", core_modules['appearance'])
 engine.rootContext().setContextProperty("mqttclient", core_modules['mqttclient'])
 

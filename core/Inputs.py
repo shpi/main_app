@@ -50,8 +50,8 @@ class InputListModelDict(QAbstractListModel):
 
     def data(self, index, role=Qt.DisplayRole):
         if 0 <= index.row() < self.rowCount() and index.isValid():
-            item = self.entries[self._keys[index.row()]]
-            try:
+                item = self.entries[self._keys[index.row()]]
+
                 if role == InputListModel.PathRole:
                     return self._keys[index.row()]
                 elif role == InputListModel.ValueRole:
@@ -73,8 +73,7 @@ class InputListModelDict(QAbstractListModel):
                         return 0
                 else:
                     return 'unknown role'
-            except Exception as e:
-                logging.error(str(e))
+
 
     def roleNames(self):
         roles = dict()
@@ -130,6 +129,7 @@ class InputListModel(QAbstractListModel):
      if not (0 <= index.row() < self.rowCount() and index.isValid()):
         return None
 
+
      item = self.entries[self._keys[index.row()]]
 
      role_dispatcher = {
@@ -152,53 +152,6 @@ class InputListModel(QAbstractListModel):
 
      return role_dispatcher.get(role, 'unknown role')
 
-
-
-    def dataold(self, index, role=Qt.DisplayRole):
-        if 0 <= index.row() < self.rowCount() and index.isValid():
-            item = self.entries[self._keys[index.row()]]
-            try:
-                if role == InputListModel.PathRole:
-                    return self._keys[index.row()]
-
-                elif role == InputListModel.RawvalueRole:
-                   return str(item.value)
-
-                elif role == InputListModel.ValueRole:
-                    if item.type == DataType.TEMPERATURE:
-                     if item.value is not None:
-                        return str( round(item.value / 1000, 2) ) + "°C"
-                     else:
-                        return "None"
-                    return str(item.value)
-
-                elif role == InputListModel.OutputRole:
-                    return item.is_output
-                elif role == InputListModel.TypeRole:
-                    return Convert.type_to_str(item.type)
-                elif role == InputListModel.DescriptionRole:
-                    return item.description
-                elif role == InputListModel.IntervalRole:
-                    return item.interval
-                elif role == InputListModel.ExposedRole:
-                    return item.exposed
-                elif role == InputListModel.LoggingRole:
-                    return item.logging
-                elif role == InputListModel.AvailableRole:
-                    return item.available
-                elif role == InputListModel.MinRole:
-                    return item.min
-                elif role == InputListModel.MaxRole:
-                    return item.max
-                elif role == InputListModel.StepRole:
-                    return item.step
-                else:
-                    return 'unknown role'
-
-            except Exception as e:
-                exception_type, exception_object, exception_traceback = sys.exc_info()
-                line_number = exception_traceback.tb_lineno
-                logging.error(f'{self._keys[index.row()]} error {exception_type}: {e} in line {line_number}')
 
     def roleNames(self):
         roles = dict()
@@ -264,6 +217,9 @@ class InputsDict(QObject):
     @Signal
     def pathChanged(self):
         pass
+
+    def updateKeys(self):
+        self.completelist.updateKeys()
 
     @Property(QObject, notify=dataChanged)
     def inputList(self):
