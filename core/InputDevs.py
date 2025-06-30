@@ -4,6 +4,7 @@ import subprocess
 import sys
 from enum import Enum
 from functools import partial
+from keymap.keymap import get_keycodes
 
 from core.DataTypes import DataType
 from core.Property import EntityProperty, ThreadProperty
@@ -135,24 +136,33 @@ class InputDevs:
                     device['event'] = list(
                         filter(lambda x: x.startswith('event'), events))
 
-                    p = subprocess.Popen(["keymap/keymap", ''.join(filter(str.isdigit, str(device['event'])))],
-                                         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                    #p = subprocess.Popen(["keymap/keymap", ''.join(filter(str.isdigit, str(device['event'])))],
+                    #                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
-                    keys = p.communicate()[0]
+                    #keys = p.communicate()[0]
 
-                    keys = set(keys.decode().strip().split('\n'))
+                    #keys = set(keys.decode().strip().split('\n'))
+
+
+                    event_num = ''.join(filter(str.isdigit, str(device['event'])))
+                    try:
+                        keys_map = get_keycodes(int(event_num))
+                    except OSError:
+                        keys_map = {}
+
+                    keys = keys_map.items()
 
                     device['keys'] = dict()
 
-                    for key in keys:
+                    for keycode, name in keys:
 
                         try:
-                            key = key.split(':')
+                            #key = key.split(':')
                             # device['keys'][int(key[0])] = keydict
-                            self.properties[f'{id}/key_{str(key[0])}'] = EntityProperty(
+                            self.properties[f'{id}/key_{str(keycode)}'] = EntityProperty(
                                 category='input_dev/' + id,
-                                name=str(key[0]),
-                                description=key[1],
+                                name=str(keycode),
+                                description=name,
                                 type=DataType.INT,
                                 interval=-1)
 
