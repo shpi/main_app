@@ -79,6 +79,45 @@ class IIO:
             logging.error(f'Error writing to {channel} on {id}: {e}')
             return None
 
+    @staticmethod
+    def is_writable(path):
+        """Check if a sysfs attribute is writable without altering its value.
+
+        The method rewrites the current value and verifies it remains
+        unchanged. If the value unexpectedly differs after the write, it tries
+        to restore the original contents and reports the attribute as not
+        writable.
+        """
+        if not os.path.exists(path):
+            return False
+        try:
+            with open(path, 'r+') as f:
+                original = f.read()
+                f.seek(0)
+                f.write(original)
+                f.flush()
+                f.seek(0)
+                after = f.read()
+
+                if after != original:
+                    logging.warning(
+                        f'Write test altered {path}; attempting to restore')
+                    f.seek(0)
+                    f.write(original)
+                    f.flush()
+                    f.seek(0)
+                    restored = f.read()
+                    if restored != original:
+                        logging.error(
+                            f'Failed to restore original value for {path}')
+                    return False
+
+            return True
+        except Exception as e:
+            logging.debug(f'Write access test failed for {path}: {e}')
+            return False
+
+
     def _device_info(self, dev):
         for channel in dev.channels:
             logging.debug(f'Processing channel: {channel.id}, Name: {channel.name or ""}, Output: {channel.output}')
@@ -117,7 +156,7 @@ class IIO:
                     elif channel_attr.endswith('_available'):
                         if f'{dev.name}/{channel.id}/{channel_attr[:-10]}' not in self.properties:
                             self.properties[f'{dev.name}/{channel.id}/{channel_attr[:-10]}'] = EntityProperty(
-                                
+
                                 category='sensor/' + dev.name,
                                 name=channel_attr[:-10],
                                 description=dev.name + ' ' + channel.id,
@@ -130,7 +169,7 @@ class IIO:
                     else:
                         if f'{dev.name}/{channel.id}/{channel_attr}' not in self.properties:
                             self.properties[f'{dev.name}/{channel.id}/{channel_attr}'] = EntityProperty(
-                                
+
                                 category='sensor/' + dev.name,
                                 name=channel_attr,
                                 type=DataType.FLOAT,
@@ -143,17 +182,11 @@ class IIO:
 
                         #attr_file_path = f'/sys/bus/iio/devices/{dev.id}/{channel.attrs[channel_attr].filename}'
 
-                        if os.path.exists(f'/sys/bus/iio/devices/{dev.id}/{channel.attrs[channel_attr].filename}') and os.access(f'/sys/bus/iio/devices/{dev.id}/{channel.attrs[channel_attr].filename}', os.W_OK):
-                                logging.debug(f'{dev.name}/{channel.id}/{channel_attr} is writeable? Lets check')
-                                logging.debug(f'/sys/bus/iio/devices/{dev.id}/{channel.attrs[channel_attr].filename}')
-                                try:
-                                      IIO.write_iio(dev.id, channel.attrs[channel_attr].filename, channel.attrs[channel_attr].value.rstrip())
+                        file_path = f'/sys/bus/iio/devices/{dev.id}/{channel.attrs[channel_attr].filename}'
+                        if IIO.is_writable(file_path):
+                                logging.debug(f'{dev.name}/{channel.id}/{channel_attr} is writeable, registering setter')
+                                self.properties[f'{dev.name}/{channel.id}/{channel_attr}'].set = partial(IIO.write_iio, dev.id, channel.attrs[channel_attr].filename)
 
-                                except Exception as e:
-                                      logging.error(f'Error writing {dev.name}/{channel.id}/{channel_attr}: {e}')
-
-                                finally:
-                                      self.properties[f'{dev.name}/{channel.id}/{channel_attr}'].set = partial(IIO.write_iio, dev.id, channel.attrs[channel_attr].filename)
 
                 if raw is not None:
                     self.properties[f'{dev.name}/{channel.id}'].value = (float(raw) + float(offset)) * float(scale)
@@ -173,7 +206,7 @@ class IIO:
                 elif device_attr.endswith('_available'):
                     if f'{dev.name}/{channel.id}/{device_attr[:-10]}' not in self.properties:
                         self.properties[f'{dev.name}/{channel.id}/{device_attr[:-10]}'] = EntityProperty(
-                            
+
                             category='sensor/' + dev.name,
                             name=device_attr[:-10],
                             description=dev.name + ' ' + channel.id + ' ' + device_attr[:-10],
@@ -185,7 +218,7 @@ class IIO:
                 else:
                     if f'{dev.name}/{channel.id}/{device_attr}' not in self.properties:
                         self.properties[f'{dev.name}/{channel.id}/{device_attr}'] = EntityProperty(
-                            
+
                             category='sensor/' + dev.name,
                             name=device_attr,
                             description=dev.name + ' ' + channel.id + ' ' + device_attr,
@@ -196,20 +229,8 @@ class IIO:
                     self.properties[f'{dev.name}/{channel.id}/{device_attr}'].call = partial(IIO.read_iio, dev.id, dev.attrs[device_attr].filename)
 
 
-                    if os.path.exists(f'/sys/bus/iio/devices/{dev.id}/{dev.attrs[device_attr].filename}') and os.access(f'/sys/bus/iio/devices/{dev.id}/{dev.attrs[device_attr].filename}', os.W_OK):
-                            file_stat = os.stat(f'/sys/bus/iio/devices/{dev.id}/{dev.attrs[device_attr].filename}')
-                            if (file_stat.st_mode & stat.S_IWUSR):
 
-                                logging.debug(f'{dev.name}/{channel.id}/{device_attr} is writeable? Lets check')
-                                logging.debug(f'/sys/bus/iio/devices/{dev.id}/{dev.attrs[device_attr].filename}')
-                                try:
-                                    IIO.write_iio(dev.id, dev.attrs[device_attr].filename, dev.attrs[device_attr].value)
-                                except Exception as e:
-                                    logging.error(f'Error writing {dev.name}/{channel.id}/{device_attr}: {e}')
-
-                                finally:
-                                    self.properties[f'{dev.name}/{channel.id}/{device_attr}'].set = partial(IIO.write_iio, dev.id, dev.attrs[device_attr].filename)
-
-# Add any additional functionality or script entry point below if needed
-
-
+                    file_path = f'/sys/bus/iio/devices/{dev.id}/{dev.attrs[device_attr].filename}'
+                    if IIO.is_writable(file_path):
+                            logging.debug(f'{dev.name}/{channel.id}/{device_attr} is writeable, registering setter')
+                            self.properties[f'{dev.name}/{channel.id}/{device_attr}'].set = partial(IIO.write_iio, dev.id, dev.attrs[device_attr].filename)
