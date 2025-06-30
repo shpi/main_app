@@ -47,7 +47,36 @@ def EvHexToStr(events):
 
 
 def createId(x):
-    return x in ('1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')
+    return x in ('0','1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')
+
+
+
+def generate_id(name):
+    # 1. lowercase
+    name = name.lower()
+
+    # 2. umlaute ersetzen
+    replacements = {'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss'}
+    for umlaut, repl in replacements.items():
+        name = name.replace(umlaut, repl)
+
+    # 3. leerzeichen zu _
+    name = name.replace(' ', '_')
+
+    # 4. nicht erlaubte zeichen entfernen
+    name = ''.join(c for c in name if c.isalnum() or c == '_')
+
+    # 5. kürzen bei >30 zeichen
+    if len(name) > 30:
+        parts = name.split('_')
+        while len('_'.join(parts)) > 30:
+            longest = max((p for p in parts if len(p) > 1), key=len, default=None)
+            if not longest:
+                break
+            parts[parts.index(longest)] = longest[:-1]
+        name = '_'.join(parts)
+
+    return name
 
 
 class InputDevs:
@@ -69,20 +98,31 @@ class InputDevs:
 
 
         with open(self.FILENAME, 'r') as f:
+            device = None
+            id = None
 
             while True:
                 line = f.readline()
 
                 if not line:
+                    if device and id:
+                     self.devs[id] = device
                     break
 
                 if line.startswith('I: Bus='):
+                    if device and id:
+                        self.devs[id] = device
                     device = dict()
+                    id = None
 
-                    id = (''.join(filter(createId, line)))
+                    #id = (''.join(filter(createId, line)))
 
                 if line.startswith('N: Name='):
+
                     device['name'] = line[len('N: Name='):].strip('"\n')
+                    id = generate_id( device['name'])
+
+
 
                 if line.startswith('B: EV'):
                     eventsHex = [int(x, base=16) for x in line[6:].split()]
@@ -119,7 +159,6 @@ class InputDevs:
                         except IndexError:
                             pass
 
-                self.devs[id] = device
 
         f.close()
 
