@@ -400,7 +400,7 @@ class BT_Xiaomi(QObject):
 
     @Property(int)
     def singleton(self):
-        return singleton
+        return BT_Xiaomi.singleton
 
     @Property('QVariantMap', notify=devicesScanned)
     def discovered_devices(self):
