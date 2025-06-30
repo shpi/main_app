@@ -248,7 +248,7 @@ class InputsDict(QObject):
 
     @Slot(str, result=int)
     def getIndex(self, path):
-        return self.completeList._keys.index(path)
+        return self.completelist._keys.index(path)
 
     @Slot(str)
     def set_searchlist(self, type_):
