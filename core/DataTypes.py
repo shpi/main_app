@@ -60,6 +60,9 @@ class DataType(Enum):
     DIRECTION = 37  # degrees 0-360′
     HEIGHT = 38  # mm
 
+    # Additional sensor types
+    FREQUENCY = 39  # Hertz
+
     # Electricity (from sensors)
     CURRENT = 40  # float, Ampere
     VOLTAGE = 41  # float, Volt
@@ -172,6 +175,7 @@ class Convert:
                          DataType.CONCENTRATION: 'concentration',
                          DataType.UVINDEX: 'uvindex',
                          DataType.GRAVITY: 'gravity',
+                         DataType.FREQUENCY: 'frequency',
                          DataType.CURRENT: 'current',
                          DataType.VOLTAGE: 'voltage',
                          DataType.RESISTANCE: 'resistance',
