@@ -61,6 +61,7 @@ class DataType(Enum):
     HEIGHT = 38  # mm
 
     # Electricity (from sensors)
+    FREQUENCY = 39  # Hertz integer
     CURRENT = 40  # float, Ampere
     VOLTAGE = 41  # float, Volt
     RESISTANCE = 42  # float, Ohms
@@ -173,6 +174,7 @@ class Convert:
                          DataType.UVINDEX: 'uvindex',
                          DataType.GRAVITY: 'gravity',
                          DataType.CURRENT: 'current',
+                         DataType.FREQUENCY: 'frequency',
                          DataType.VOLTAGE: 'voltage',
                          DataType.RESISTANCE: 'resistance',
                          DataType.CAPACITANCE: 'capacitance',

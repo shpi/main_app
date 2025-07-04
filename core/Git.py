@@ -125,7 +125,6 @@ class Git(QObject):
 
     @Slot()
     def reboot(self):
-        os.system('reboot')
         os.system('sudo reboot')
 
     @Slot(result=str)

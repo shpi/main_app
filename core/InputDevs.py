@@ -200,7 +200,7 @@ class InputDevs:
                     if evtype == 1:  # type 1 = key, we watch only keys!
 
                         try:
-                            if ismouse: self.properties['lastinput'].value = 2 if value else 0
+                            if ismouse: self.properties['lastinput'].value = 1 if value else 0
 
                             else:
                                 if value: self.properties[f'{id}/thread'].value = 1  # helps to track activity on input device

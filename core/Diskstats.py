@@ -33,28 +33,13 @@ class DiskStats:
 
         self.properties['module'].last_update = time.time() - DiskStats.get_uptime()
 
-        self.properties['disk_usage'] = EntityProperty(
-                                                       category='system',
-                                                       name='disk_usage',
-                                                       description='disk usage',
-                                                       type=DataType.INT,
-                                                       call=DiskStats.disk_used,
-                                                       interval=600)
-
-        self.properties['disk_total'] = StaticProperty(
-                                                       category='system',
-                                                       name='disk_size',
-                                                       value=DiskStats.disk_total(),
-                                                       description='disk total size',
-                                                       type=DataType.INT)
-
         self.update(init=True)
 
     def update(self, init=False):
 
         oldtime = self.properties['module'].last_update
         self.properties['module'].value = 'OK'
-        quotient = self.properties['module'].last_update - oldtime
+        quotient =  max(1, (self.properties['module'].last_update - oldtime))
 
         with open(DiskStats.stat_path) as stat_file:
             for line in stat_file:
@@ -89,20 +74,3 @@ class DiskStats:
     def get_inputs(self) -> list:
         return self.properties.values()
 
-    @staticmethod
-    def disk_total():
-        # total used free
-        # /proc/properties for io rates
-        return list(shutil.disk_usage("/"))[0]
-
-    @staticmethod
-    def disk_used():
-        # total used free
-        # /proc/properties for io rates
-        return list(shutil.disk_usage("/"))[1]
-
-    @staticmethod
-    def get_uptime(stat_path='/proc/uptime'):
-        if os.path.isfile(stat_path):
-            with open(stat_path) as stat_file:
-                return int(float(next(stat_file).split()[0]))

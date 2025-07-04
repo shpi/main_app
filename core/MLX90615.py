@@ -35,6 +35,26 @@ class MLX90615:
                         self.buffer_enable(1)
                         self.delta = 0.5 * 50
 
+                        emissivity_path = os.path.join(
+                            self.ospath, 'in_temp_object_calibemissivity')
+                        if os.path.isfile(emissivity_path):
+                            try:
+                                with open(emissivity_path, 'r+') as ef:
+                                    emissivity = float(ef.read().strip())
+                                    if abs(emissivity - 1.0) > 1e-6:
+                                        logging.warning(
+                                            f"{emissivity_path} is {emissivity} - expected 1.0; resetting")
+                                        if os.access(emissivity_path, os.W_OK):
+                                            ef.seek(0)
+                                            ef.write('1.0')
+                                            ef.truncate()
+                                        else:
+                                            logging.error(
+                                                f"Cannot write to {emissivity_path}")
+                            except Exception as e:
+                                logging.error(
+                                    f"Failed to check/set emissivity at {emissivity_path}: {e}")
+
                         self.inputs = inputs
                         self.settings = settings
 

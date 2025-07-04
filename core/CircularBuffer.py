@@ -6,7 +6,7 @@ import shiboken2
 from PySide2.QtGui import QPolygonF
 
 class CircularBuffer:
-    def __init__(self, length=100, initialvalue=0, dtype=np.float):
+    def __init__(self, length=100, initialvalue=0, dtype=float):
         super(CircularBuffer, self).__init__()
         self._time = np.full(length, np.datetime64(int(time.time() * 1000), 'ms'), dtype='datetime64[ms]')
         self._data = np.full(length, initialvalue, dtype=dtype)
@@ -73,7 +73,7 @@ class CircularBuffer:
         size = self.length()
         polyline = QPolygonF(size)
         buffer = (ctypes.c_double * 2 * size).from_address(shiboken2.getCppPointer(polyline.data())[0])
-        memory = np.frombuffer(buffer, np.float)
+        memory = np.frombuffer(buffer, float)
 
         time_data = self.time(size)
         data = self.data(size)

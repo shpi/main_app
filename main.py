@@ -25,8 +25,7 @@ from core.Wifi import Wifi
 from core.MQTT import MQTTClient
 from core.Alsa import AlsaMixer
 from core.Backlight import Backlight
-from core.CPU import CPU
-from core.Disk import DiskStats
+from core.Diskstats import DiskStats
 from core.HWMon import HWMon
 from core.IIO import IIO
 from core.InputDevs import InputDevs
@@ -41,7 +40,7 @@ logs = LogModel()
 handler = MessageHandler(logs)
 
 logging.basicConfig(
-    level=logging.ERROR,
+    level=logging.DEBUG,
     format='%(asctime)s %(msecs)03d %(module)s - %(funcName)s: %(message)s',
     datefmt='%m-%d %H:%M:%S',
     handlers=[
@@ -124,15 +123,9 @@ inputs = InputsDict(settings, core_modules['mqttclient'])
 
 core_modules['mqttclient'].inputs = inputs
 
-core_modules['systeminfo'] = SystemInfo()
-core_modules['cpu'] = CPU()
-core_modules['iio'] = IIO()
-core_modules['leds'] = Led()
-core_modules['hwmon'] = HWMon()
 core_modules['git'] = Git(settings)
-core_modules['disk'] = DiskStats()
+#core_modules['diskstats'] = DiskStats() # Diskstats like wbps rbps, not needed yet, reads /proc/diskstats
 core_modules['inputdevs'] = InputDevs()
-core_modules['backlight'] = Backlight()
 core_modules['wifi'] = Wifi(settings)
 core_modules['httpserver'] = HTTPServer(inputs, settings)
 core_modules['mlx90615'] = MLX90615(inputs, settings)
@@ -141,6 +134,15 @@ core_modules['alsamixer'] = AlsaMixer(inputs, settings)
 
 for core_module in core_modules:
     inputs.add(core_modules[core_module].get_inputs())
+
+#static modules
+
+inputs.add(SystemInfo.get_inputs())
+inputs.add(Backlight.get_inputs())
+inputs.add(Led.get_inputs())
+inputs.add(HWMon.get_inputs())
+inputs.add(IIO.get_inputs())
+
 
 core_modules['appearance'] = Appearance(inputs, settings)
 
@@ -154,8 +156,8 @@ def killThreads():
         if key.endswith('thread'):
             inputs.entries[key].set(0)
 
-    httpserver.server.shutdown()
-    httpserver.server_thread.join()
+    core_modules['httpserver'].server.shutdown()
+    core_modules['httpserver'].server_thread.join()
 
 
 # debug = QQmlDebuggingEnabler()

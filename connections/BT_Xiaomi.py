@@ -146,28 +146,30 @@ class BT_Xiaomi(QObject):
       if command and not listen:
         cmd = f"gatttool -b {mac} --char-write-req -a {handle} -n {command}"
         output = subprocess.check_output(cmd, shell=True, timeout=10)
-        print(cmd)
-        print(output)
+        #print(cmd)
+        #print(output)
         if output is not None:
          return (output)
       elif listen and listen:
         #gatttool -b 4C:65:A8:D0:81:70 --char-write-req --handle=0x10 -n 0100 --listen
         cmd = f"gatttool -b {mac} --char-write-req --handle={handle} -n {command} --listen"
         output = subprocess.check_output(cmd, shell=True, timeout=7)
-        print(cmd)
-        print(output)
+        #print(cmd)
+        #print(output)
         if output is not None:
          return (output)
       else:
        cmd = f"gatttool -b {mac} --char-read -a {handle}"
        output = subprocess.check_output(cmd, shell=True, timeout=10)
-       print(cmd)
-      print(output)
+       #print(cmd)
+       #print(output)
       if output is not None:
        return (output)
 
      except subprocess.TimeoutExpired as e:
-            print(e.output)  # This will print the partial output received before the timeout
+            #print(e.output)  # This will print the partial output received before the timeout
+            logging.error(f"Error: {e.output}")
+
             if e.output is not None:
              return (e.output)
      return b""
@@ -214,7 +216,8 @@ class BT_Xiaomi(QObject):
                         humidity_str = parts[1][2:]     # After "H="
                         return float(temperature_str), float(humidity_str.rstrip('\x00'))
                 except ValueError as e:
-                    print("Error converting hex to ASCII:", e)
+                    logging.error(f"Error converting hex to ASCII: {e}")
+
       # Return a default value if no data is found or an error occurs
      return None, None
 
@@ -379,7 +382,7 @@ class BT_Xiaomi(QObject):
             except OSError:
                 pass  # Process could have already terminated
         except Exception as e:
-            print(f"Error terminating process: {e}")
+            logging.error(f"Error terminating process: {e}")
 
         # Make sure the subprocess resources are cleaned up
         if self.process:

@@ -132,7 +132,7 @@ class Thermostat(QObject):
                                       category='module',
                                       name='thermostat_' + name,
                                       value='NOT_INITIALIZED',
-                                      description='Thermostat Module for binary output',
+                                      description='Thermostat Module for single relay output',
                                       type=DataType.MODULE,
                                       call=self.update,
                                       interval=10)
@@ -397,22 +397,6 @@ class Thermostat(QObject):
 
         return schedule
 
-
-    def convert_schedule_old(self, value):
-        value = [i.strip(';').split(';') for i in value.strip().split('\n')]
-
-        for a in range(0, len(value)):
-            for b in range(0, len(value[a])):
-                if ':' in value[a][b]:
-                    value[a][b] = list(map(int, value[a][b].split(':')))  # tuple didnt work with qml
-
-            if len(value[a]):
-                try:
-                    value[a] = sorted(value[a], key=lambda tup: tup[0])
-                except IndexError:
-                    pass
-
-        return value
 
     @Slot(str)
     def save_schedule(self, value):
